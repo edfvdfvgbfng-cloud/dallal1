@@ -1,0 +1,3 @@
+Force Railway rebuild - 2026-08-25-05-45 - Remove temporary logging
+- Removed all temporary session_engine logging code
+- This eliminates the AttributeError during login

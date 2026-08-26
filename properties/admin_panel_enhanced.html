@@ -1,0 +1,985 @@
+{% extends 'properties/dashboard_base.html' %}
+{% load static %}
+{% load humanize %}
+
+{% block title %}لوحة تحكم الإدارة الاحترافية{% endblock %}
+{% block dashboard_title %}لوحة تحكم <span>الإدارة الاحترافية</span>{% endblock %}
+
+{% block dashboard_actions %}
+<a href="{% url 'dashboard' %}" class="btn btn-outline">لوحة التحكم الرئيسية</a>
+<a href="{% url 'admin_users_list' %}" class="btn btn-primary">👥 إدارة المستخدمين</a>
+<a href="{% url 'admin_brokers_management' %}" class="btn btn-success">🏛️ إدارة الدلالين</a>
+<a href="{% url 'admin_properties_list' %}" class="btn btn-info">🏢 إدارة العقارات</a>
+<a href="{% url 'admin_subscriptions_list' %}" class="btn btn-warning">💳 إدارة الاشتراكات</a>
+<a href="{% url 'admin_notifications_list' %}" class="btn btn-info">🔔 إدارة الإشعارات</a>
+<a href="{% url 'admin_realtime_monitoring' %}" class="btn btn-purple">📡 المراقبة اللحظية</a>
+<a href="{% url 'admin_analytics_panel' %}" class="btn btn-primary">📊 التحليلات المتقدمة</a>
+<a href="{% url 'admin_reports_panel' %}" class="btn btn-danger">📈 التقارير</a>
+<a href="/admin/" target="_blank" class="btn btn-dark">🔧 Django Admin</a>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+.admin-dashboard {
+  background: linear-gradient(135deg, #0f0f23 0%, #1a1a2e 50%, #16213e 100%);
+  min-height: 100vh;
+  padding: 2rem;
+}
+
+/* Header */
+.dashboard-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 2rem;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.dashboard-title {
+  color: #fff;
+  font-size: 1.8rem;
+  font-weight: 800;
+}
+
+.dashboard-subtitle {
+  color: rgba(255, 255, 255, 0.6);
+  font-size: 0.9rem;
+  margin-top: 0.5rem;
+}
+
+/* Real-time Indicator */
+.realtime-badge {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  background: rgba(34, 197, 94, 0.2);
+  border: 1px solid rgba(34, 197, 94, 0.3);
+  border-radius: 20px;
+  color: #22c55e;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.realtime-dot {
+  width: 8px;
+  height: 8px;
+  background: #22c55e;
+  border-radius: 50%;
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.5; transform: scale(1.2); }
+}
+
+/* Stats Grid */
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+.stat-card {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 16px;
+  padding: 1.5rem;
+  backdrop-filter: blur(10px);
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.stat-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: linear-gradient(90deg, var(--card-color-1), var(--card-color-2));
+}
+
+.stat-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+.stat-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 1rem;
+}
+
+.stat-icon {
+  font-size: 2rem;
+  background: var(--icon-bg);
+  width: 50px;
+  height: 50px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.stat-trend {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.25rem 0.75rem;
+  border-radius: 20px;
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.stat-trend.up {
+  background: rgba(34, 197, 94, 0.2);
+  color: #22c55e;
+}
+
+.stat-trend.down {
+  background: rgba(239, 68, 68, 0.2);
+  color: #ef4444;
+}
+
+.stat-value {
+  font-size: 2.5rem;
+  font-weight: 800;
+  color: #fff;
+  margin-bottom: 0.5rem;
+}
+
+.stat-label {
+  color: rgba(255, 255, 255, 0.6);
+  font-size: 0.9rem;
+  margin-bottom: 0.75rem;
+}
+
+.stat-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.8rem;
+  color: rgba(255, 255, 255, 0.5);
+}
+
+/* Charts Section */
+.charts-section {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+.chart-card {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 16px;
+  padding: 1.5rem;
+  backdrop-filter: blur(10px);
+}
+
+.chart-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+}
+
+.chart-title {
+  color: #fff;
+  font-size: 1.1rem;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.chart-controls {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.chart-btn {
+  padding: 0.4rem 0.8rem;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  background: rgba(255, 255, 255, 0.05);
+  color: #fff;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-size: 0.85rem;
+}
+
+.chart-btn:hover,
+.chart-btn.active {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.3);
+}
+
+.chart-container {
+  height: 300px;
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+}
+
+/* Activity Feed */
+.activity-feed {
+  max-height: 400px;
+  overflow-y: auto;
+}
+
+.activity-item {
+  display: flex;
+  gap: 1rem;
+  padding: 1rem;
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: 10px;
+  margin-bottom: 0.75rem;
+  transition: all 0.3s ease;
+  border: 1px solid transparent;
+}
+
+.activity-item:hover {
+  background: rgba(255, 255, 255, 0.05);
+  border-color: rgba(255, 255, 255, 0.1);
+}
+
+.activity-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.2rem;
+  flex-shrink: 0;
+}
+
+.activity-content {
+  flex: 1;
+}
+
+.activity-title {
+  color: #fff;
+  font-weight: 600;
+  margin-bottom: 0.25rem;
+  font-size: 0.95rem;
+}
+
+.activity-description {
+  color: rgba(255, 255, 255, 0.6);
+  font-size: 0.85rem;
+  margin-bottom: 0.5rem;
+}
+
+.activity-time {
+  color: rgba(255, 255, 255, 0.4);
+  font-size: 0.75rem;
+}
+
+/* Quick Actions */
+.quick-actions-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1rem;
+  margin-bottom: 2rem;
+}
+
+.quick-action-card {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  padding: 1.5rem;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  text-decoration: none;
+  color: #fff;
+}
+
+.quick-action-card:hover {
+  background: rgba(255, 255, 255, 0.1);
+  transform: translateY(-3px);
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+.quick-action-icon {
+  font-size: 2rem;
+  margin-bottom: 0.75rem;
+}
+
+.quick-action-title {
+  font-weight: 600;
+  margin-bottom: 0.25rem;
+}
+
+.quick-action-description {
+  font-size: 0.8rem;
+  color: rgba(255, 255, 255, 0.5);
+}
+
+/* System Status */
+.system-status {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 1rem;
+  margin-bottom: 2rem;
+}
+
+.status-item {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  padding: 1rem;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.status-indicator {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.status-indicator.online {
+  background: #22c55e;
+  box-shadow: 0 0 10px rgba(34, 197, 94, 0.5);
+}
+
+.status-indicator.warning {
+  background: #f59e0b;
+  box-shadow: 0 0 10px rgba(245, 158, 11, 0.5);
+}
+
+.status-indicator.offline {
+  background: #ef4444;
+  box-shadow: 0 0 10px rgba(239, 68, 68, 0.5);
+}
+
+.status-content {
+  flex: 1;
+}
+
+.status-label {
+  color: rgba(255, 255, 255, 0.6);
+  font-size: 0.8rem;
+  margin-bottom: 0.25rem;
+}
+
+.status-value {
+  color: #fff;
+  font-weight: 600;
+  font-size: 0.95rem;
+}
+
+/* Pending Tasks */
+.pending-tasks {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 16px;
+  padding: 1.5rem;
+}
+
+.section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+}
+
+.section-title {
+  color: #fff;
+  font-size: 1.1rem;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.task-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem;
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: 10px;
+  margin-bottom: 0.75rem;
+  border: 1px solid transparent;
+  transition: all 0.3s ease;
+}
+
+.task-item:hover {
+  background: rgba(255, 255, 255, 0.05);
+  border-color: rgba(255, 255, 255, 0.1);
+}
+
+.task-info {
+  flex: 1;
+}
+
+.task-title {
+  color: #fff;
+  font-weight: 600;
+  margin-bottom: 0.25rem;
+  font-size: 0.95rem;
+}
+
+.task-meta {
+  color: rgba(255, 255, 255, 0.5);
+  font-size: 0.8rem;
+}
+
+.task-actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.task-btn {
+  padding: 0.4rem 0.8rem;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.8rem;
+  transition: all 0.3s ease;
+}
+
+.task-btn.approve {
+  background: #22c55e;
+  color: #fff;
+}
+
+.task-btn.reject {
+  background: #ef4444;
+  color: #fff;
+}
+
+.task-btn:hover {
+  opacity: 0.8;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .charts-section {
+    grid-template-columns: 1fr;
+  }
+  
+  .dashboard-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  
+  .stats-grid {
+    grid-template-columns: 1fr;
+  }
+}
+</style>
+{% endblock %}
+
+{% block dashboard_content %}
+<div class="admin-dashboard">
+  <!-- Header -->
+  <div class="dashboard-header">
+    <div>
+      <h1 class="dashboard-title">لوحة تحكم الإدارة الاحترافية</h1>
+      <p class="dashboard-subtitle">مرحباً {{ request.user.username }} - آخر دخول: {{ request.user.last_login|date:"Y-m-d H:i" }}</p>
+    </div>
+    <div class="realtime-badge">
+      <div class="realtime-dot"></div>
+      <span>تحديث لحظي</span>
+    </div>
+  </div>
+  
+  <!-- Quick Actions -->
+  <div class="quick-actions-grid">
+    <a href="{% url 'admin_users_list' %}" class="quick-action-card">
+      <div class="quick-action-icon">👥</div>
+      <div class="quick-action-title">إدارة المستخدمين</div>
+      <div class="quick-action-description">إدارة وتعديل المستخدمين</div>
+    </a>
+    <a href="{% url 'admin_properties_list' %}" class="quick-action-card">
+      <div class="quick-action-icon">🏢</div>
+      <div class="quick-action-title">إدارة العقارات</div>
+      <div class="quick-action-description">إدارة وموافقة العقارات</div>
+    </a>
+    <a href="{% url 'admin_subscriptions_list' %}" class="quick-action-card">
+      <div class="quick-action-icon">💳</div>
+      <div class="quick-action-title">إدارة الاشتراكات</div>
+      <div class="quick-action-description">إدارة وتجديد الاشتراكات</div>
+    </a>
+    <a href="{% url 'admin_notifications_list' %}" class="quick-action-card">
+      <div class="quick-action-icon">🔔</div>
+      <div class="quick-action-title">إدارة الإشعارات</div>
+      <div class="quick-action-description">إرسال وإدارة الإشعارات</div>
+    </a>
+    <a href="{% url 'admin_realtime_monitoring' %}" class="quick-action-card">
+      <div class="quick-action-icon">📡</div>
+      <div class="quick-action-title">المراقبة اللحظية</div>
+      <div class="quick-action-description">مراقبة النظام والمستخدمين</div>
+    </a>
+    <a href="{% url 'admin_analytics_panel' %}" class="quick-action-card">
+      <div class="quick-action-icon">📊</div>
+      <div class="quick-action-title">التحليلات المتقدمة</div>
+      <div class="quick-action-description">تحليلات وإحصائيات مفصلة</div>
+    </a>
+  </div>
+  
+  <!-- Stats Grid -->
+  <div class="stats-grid">
+    <div class="stat-card" style="--card-color-1: #4ecdc4; --card-color-2: #44a08d; --icon-bg: rgba(78, 205, 196, 0.2);">
+      <div class="stat-header">
+        <div class="stat-icon">🏢</div>
+        <div class="stat-trend up">
+          <span>↑</span>
+          <span>+12%</span>
+        </div>
+      </div>
+      <div class="stat-value">{{ total_properties|default:"0"|intcomma }}</div>
+      <div class="stat-label">إجمالي العقارات</div>
+      <div class="stat-footer">
+        <span>نشط: {{ active_properties|default:"0"|intcomma }}</span>
+        <span>تم بيعه: {{ sold_properties|default:"0"|intcomma }}</span>
+      </div>
+    </div>
+    
+    <div class="stat-card" style="--card-color-1: #6366f1; --card-color-2: #8b5cf6; --icon-bg: rgba(99, 102, 241, 0.2);">
+      <div class="stat-header">
+        <div class="stat-icon">👥</div>
+        <div class="stat-trend up">
+          <span>↑</span>
+          <span>+8%</span>
+        </div>
+      </div>
+      <div class="stat-value">{{ total_users|default:"0"|intcomma }}</div>
+      <div class="stat-label">إجمالي المستخدمين</div>
+      <div class="stat-footer">
+        <span>نشط: {{ active_users|default:"0"|intcomma }}</span>
+        <span>دلال: {{ total_brokers|default:"0"|intcomma }}</span>
+      </div>
+    </div>
+    
+    <div class="stat-card" style="--card-color-1: #f59e0b; --card-color-2: #f97316; --icon-bg: rgba(245, 158, 11, 0.2);">
+      <div class="stat-header">
+        <div class="stat-icon">💳</div>
+        <div class="stat-trend up">
+          <span>↑</span>
+          <span>+15%</span>
+        </div>
+      </div>
+      <div class="stat-value">{{ total_subscriptions|default:"0"|intcomma }}</div>
+      <div class="stat-label">الاشتراكات النشطة</div>
+      <div class="stat-footer">
+        <span>إيرادات اليوم: ${{ daily_revenue|default:"0"|intcomma }}</span>
+        <span>المتوسط: ${{ avg_revenue|default:"0"|intcomma }}</span>
+      </div>
+    </div>
+    
+    <div class="stat-card" style="--card-color-1: #ec4899; --card-color-2: #f43f5e; --icon-bg: rgba(236, 72, 153, 0.2);">
+      <div class="stat-header">
+        <div class="stat-icon">📊</div>
+        <div class="stat-trend down">
+          <span>↓</span>
+          <span>-3%</span>
+        </div>
+      </div>
+      <div class="stat-value">{{ total_views|default:"0"|intcomma }}</div>
+      <div class="stat-label">المشاهدات اليومية</div>
+      <div class="stat-footer">
+        <span>اليوم: {{ today_views|default:"0"|intcomma }}</span>
+        <span>الأمس: {{ yesterday_views|default:"0"|intcomma }}</span>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Charts Section -->
+  <div class="charts-section">
+    <div class="chart-card">
+      <div class="chart-header">
+        <h3 class="chart-title">📈 النشاط خلال الأسبوع</h3>
+        <div class="chart-controls">
+          <button class="chart-btn active" onclick="changeChartPeriod('week')">أسبوع</button>
+          <button class="chart-btn" onclick="changeChartPeriod('month')">شهر</button>
+          <button class="chart-btn" onclick="changeChartPeriod('year')">سنة</button>
+        </div>
+      </div>
+      <div class="chart-container">
+        <canvas id="activityChart" style="width: 100%; height: 100%;"></canvas>
+      </div>
+    </div>
+    
+    <div class="chart-card">
+      <div class="chart-header">
+        <h3 class="chart-title">🔥 النشاط الأخير</h3>
+      </div>
+      <div class="activity-feed">
+        <div class="activity-item">
+          <div class="activity-icon" style="background: rgba(78, 205, 196, 0.2);">🏠</div>
+          <div class="activity-content">
+            <div class="activity-title">عقار جديد تم إضافته</div>
+            <div class="activity-description">شقة في بغداد - $150,000</div>
+            <div class="activity-time">منذ 5 دقائق</div>
+          </div>
+        </div>
+        <div class="activity-item">
+          <div class="activity-icon" style="background: rgba(99, 102, 241, 0.2);">👤</div>
+          <div class="activity-content">
+            <div class="activity-title">مستخدم جديد مسجل</div>
+            <div class="activity-description">أحمد محمد - بغداد</div>
+            <div class="activity-time">منذ 15 دقيقة</div>
+          </div>
+        </div>
+        <div class="activity-item">
+          <div class="activity-icon" style="background: rgba(245, 158, 11, 0.2);">💳</div>
+          <div class="activity-content">
+            <div class="activity-title">اشتراك جديد تم تفعيله</div>
+            <div class="activity-description">خطة الذهب - سنوي</div>
+            <div class="activity-time">منذ 30 دقيقة</div>
+          </div>
+        </div>
+        <div class="activity-item">
+          <div class="activity-icon" style="background: rgba(236, 72, 153, 0.2);">⭐</div>
+          <div class="activity-content">
+            <div class="activity-title">تقييم جديد تم إضافته</div>
+            <div class="activity-description">5 نجوم - شقة في البصرة</div>
+            <div class="activity-time">منذ ساعة</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Geographic Distribution Chart -->
+  <div class="chart-card" style="margin-bottom: 2rem;">
+    <div class="chart-header">
+      <h3 class="chart-title">🗺️ التوزيع الجغرافي - المحافظات (19)</h3>
+      <select class="chart-filter" onchange="updateGeographicChart(this.value)" style="padding: 0.4rem 0.8rem; border: 1px solid rgba(255, 255, 255, 0.2); background: rgba(255, 255, 255, 0.05); color: #fff; border-radius: 6px; cursor: pointer;">
+        <option value="all" selected>الكل</option>
+        <option value="active">النشطين</option>
+        <option value="verified">الموثقين</option>
+      </select>
+    </div>
+    <div class="chart-container" style="height: 400px;">
+      <canvas id="geographicChart" style="width: 100%; height: 100%;"></canvas>
+    </div>
+  </div>
+  
+  <!-- System Status -->
+  <div class="system-status">
+    <div class="status-item">
+      <div class="status-indicator online"></div>
+      <div class="status-content">
+        <div class="status-label">حالة الخادم</div>
+        <div class="status-value">مشتغل</div>
+      </div>
+    </div>
+    <div class="status-item">
+      <div class="status-indicator online"></div>
+      <div class="status-content">
+        <div class="status-label">قاعدة البيانات</div>
+        <div class="status-value">مشتغلة</div>
+      </div>
+    </div>
+    <div class="status-item">
+      <div class="status-indicator warning"></div>
+      <div class="status-content">
+        <div class="status-label">استخدام الذاكرة</div>
+        <div class="status-value">65%</div>
+      </div>
+    </div>
+    <div class="status-item">
+      <div class="status-indicator online"></div>
+      <div class="status-content">
+        <div class="status-label">المستخدمين المتصلين</div>
+        <div class="status-value">{{ online_users|default:"0"|intcomma }}</div>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Pending Tasks -->
+  <div class="pending-tasks">
+    <div class="section-header">
+      <h3 class="section-title">⏳ المهام المعلقة</h3>
+      <a href="#" style="color: #4ecdc4; text-decoration: none; font-size: 0.9rem;">عرض الكل</a>
+    </div>
+    
+    <div class="task-item">
+      <div class="task-info">
+        <div class="task-title">موافقة على عقار جديد</div>
+        <div class="task-meta">شقة في الكرادة - بغداد</div>
+      </div>
+      <div class="task-actions">
+        <button class="task-btn approve">✅ موافقة</button>
+        <button class="task-btn reject">❌ رفض</button>
+      </div>
+    </div>
+    
+    <div class="task-item">
+      <div class="task-info">
+        <div class="task-title">طلب تجديد اشتراك</div>
+        <div class="task-meta">محمد علي - خطة الفضة</div>
+      </div>
+      <div class="task-actions">
+        <button class="task-btn approve">✅ موافقة</button>
+        <button class="task-btn reject">❌ رفض</button>
+      </div>
+    </div>
+    
+    <div class="task-item">
+      <div class="task-info">
+        <div class="task-title">تقرير عن مستخدم</div>
+        <div class="task-meta">احمد كريم - سلوك مشبوه</div>
+      </div>
+      <div class="task-actions">
+        <button class="task-btn approve">🔍 مراجعة</button>
+        <button class="task-btn reject">🚫 تجاهل</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// Governorates data
+const iraqGovernorates = [
+  { name: 'بغداد', code: 'BAG', color: '#4ecdc4' },
+  { name: 'البصرة', code: 'BAS', color: '#44a08d' },
+  { name: 'نينوى', code: 'NIN', color: '#6366f1' },
+  { name: 'أربيل', code: 'ERB', color: '#8b5cf6' },
+  { name: 'النجف', code: 'NAJ', color: '#ec4899' },
+  { name: 'كربلاء', code: 'KAR', color: '#f43f5e' },
+  { name: 'بابل', code: 'BAB', color: '#f59e0b' },
+  { name: 'ذي قار', code: 'DHI', color: '#f97316' },
+  { name: 'ديالى', code: 'DIA', color: '#eab308' },
+  { name: 'كركوك', code: 'KIR', color: '#84cc16' },
+  { name: 'الأنبار', code: 'ANB', color: '#22c55e' },
+  { name: 'واسط', code: 'WAS', color: '#10b981' },
+  { name: 'ميسان', code: 'MUT', color: '#14b8a6' },
+  { name: 'المثنى', code: 'MUTH', color: '#06b6d4' },
+  { name: 'القادسية', code: 'QAD', color: '#0ea5e9' },
+  { name: 'صلاح الدين', code: 'SAL', color: '#3b82f6' },
+  { name: 'دهوك', code: 'DUH', color: '#6366f1' },
+  { name: 'السليمانية', code: 'SUL', color: '#8b5cf6' },
+  { name: 'حلبجة', code: 'HAL', color: '#a855f7' }
+];
+
+// Geographic chart rendering
+function renderGeographicChart(filter = 'all') {
+  const canvas = document.getElementById('geographicChart');
+  if (!canvas) return;
+  
+  const ctx = canvas.getContext('2d');
+  const width = canvas.parentElement.clientWidth;
+  const height = 400;
+  
+  canvas.width = width;
+  canvas.height = height;
+  
+  // Clear canvas
+  ctx.clearRect(0, 0, width, height);
+  
+  // Background
+  ctx.fillStyle = 'rgba(0, 0, 0, 0.2)';
+  ctx.fillRect(0, 0, width, height);
+  
+  // Get governorate data from backend or use generated data
+  let data = [];
+  {% if governorate_stats %}
+  data = [
+    {% for stat in governorate_stats %}
+    { name: '{{ stat.name }}', code: '{{ stat.code }}', value: {{ stat.count }}, color: '#4ecdc4' },
+    {% endfor %}
+  ];
+  {% else %}
+  // Generate random data for demo
+  data = iraqGovernorates.map(gov => ({
+    ...gov,
+    value: Math.floor(Math.random() * 100) + 20
+  }));
+  {% endif %}
+  
+  // Sort by value
+  data.sort((a, b) => b.value - a.value);
+  
+  // Calculate scales
+  const maxVal = Math.max(...data.map(d => d.value));
+  const padding = 50;
+  const chartWidth = width - padding * 2;
+  const chartHeight = height - padding * 2;
+  
+  // Draw horizontal bar chart
+  const barHeight = (chartHeight / data.length) - 5;
+  
+  data.forEach((item, index) => {
+    const y = padding + index * (barHeight + 5);
+    const barWidth = (item.value / maxVal) * (chartWidth - 150);
+    
+    // Draw bar
+    const gradient = ctx.createLinearGradient(y, 0, y + barWidth, 0);
+    gradient.addColorStop(0, item.color);
+    gradient.addColorStop(1, item.color + '80');
+    
+    ctx.fillStyle = gradient;
+    ctx.beginPath();
+    ctx.roundRect(padding, y, barWidth, barHeight, 5);
+    ctx.fill();
+    
+    // Draw governorate name
+    ctx.fillStyle = '#fff';
+    ctx.font = '12px Tajawal, Arial';
+    ctx.textAlign = 'right';
+    ctx.fillText(item.name, padding - 10, y + barHeight / 2 + 4);
+    
+    // Draw value
+    ctx.fillStyle = '#fff';
+    ctx.font = 'bold 12px Arial';
+    ctx.textAlign = 'left';
+    ctx.fillText(item.value, padding + barWidth + 10, y + barHeight / 2 + 4);
+  });
+  
+  // Draw title
+  ctx.fillStyle = '#fff';
+  ctx.font = 'bold 14px Tajawal, Arial';
+  ctx.textAlign = 'center';
+  ctx.fillText(`عدد العقارات حسب المحافظة (${data.length})`, width / 2, padding - 20);
+}
+
+function updateGeographicChart(filter) {
+  renderGeographicChart(filter);
+}
+
+// Chart rendering
+function renderChart() {
+  const canvas = document.getElementById('activityChart');
+  if (!canvas) return;
+  
+  const ctx = canvas.getContext('2d');
+  const width = canvas.parentElement.clientWidth;
+  const height = 300;
+  
+  canvas.width = width;
+  canvas.height = height;
+  
+  // Clear canvas
+  ctx.clearRect(0, 0, width, height);
+  
+  // Background
+  ctx.fillStyle = 'rgba(0, 0, 0, 0.2)';
+  ctx.fillRect(0, 0, width, height);
+  
+  // Generate data
+  const data = Array.from({length: 7}, () => Math.floor(Math.random() * 100) + 20);
+  const labels = ['السبت', 'الأحد', 'الاثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة'];
+  
+  // Calculate scales
+  const maxVal = Math.max(...data);
+  const padding = 40;
+  const chartWidth = width - padding * 2;
+  const chartHeight = height - padding * 2;
+  
+  // Draw grid
+  ctx.strokeStyle = 'rgba(255, 255, 255, 0.1)';
+  ctx.lineWidth = 1;
+  
+  for (let i = 0; i <= 5; i++) {
+    const y = padding + (i * chartHeight / 5);
+    ctx.beginPath();
+    ctx.moveTo(padding, y);
+    ctx.lineTo(width - padding, y);
+    ctx.stroke();
+  }
+  
+  // Draw line chart
+  ctx.beginPath();
+  ctx.strokeStyle = '#4ecdc4';
+  ctx.lineWidth = 3;
+  
+  data.forEach((val, i) => {
+    const x = padding + (i * chartWidth / (data.length - 1));
+    const y = height - padding - (val / maxVal * chartHeight);
+    
+    if (i === 0) {
+      ctx.moveTo(x, y);
+    } else {
+      ctx.lineTo(x, y);
+    }
+  });
+  
+  ctx.stroke();
+  
+  // Draw points
+  data.forEach((val, i) => {
+    const x = padding + (i * chartWidth / (data.length - 1));
+    const y = height - padding - (val / maxVal * chartHeight);
+    
+    ctx.beginPath();
+    ctx.arc(x, y, 6, 0, Math.PI * 2);
+    ctx.fillStyle = '#4ecdc4';
+    ctx.fill();
+    
+    // Draw value
+    ctx.fillStyle = '#fff';
+    ctx.font = '12px Arial';
+    ctx.textAlign = 'center';
+    ctx.fillText(val, x, y - 15);
+  });
+  
+  // Draw labels
+  ctx.fillStyle = 'rgba(255, 255, 255, 0.6)';
+  ctx.font = '11px Arial';
+  ctx.textAlign = 'center';
+  
+  labels.forEach((label, i) => {
+    const x = padding + (i * chartWidth / (labels.length - 1));
+    ctx.fillText(label, x, height - 10);
+  });
+}
+
+function changeChartPeriod(period) {
+  const buttons = document.querySelectorAll('.chart-btn');
+  buttons.forEach(btn => btn.classList.remove('active'));
+  event.target.classList.add('active');
+  
+  // Update chart based on period
+  renderChart();
+}
+
+// Initialize
+document.addEventListener('DOMContentLoaded', () => {
+  renderChart();
+  renderGeographicChart();
+  
+  // Responsive charts
+  window.addEventListener('resize', () => {
+    renderChart();
+    renderGeographicChart();
+  });
+  
+  // Real-time updates simulation
+  setInterval(() => {
+    updateStats();
+  }, 30000);
+});
+
+function updateStats() {
+  // Simulate real-time updates
+  const statValues = document.querySelectorAll('.stat-value');
+  statValues.forEach(num => {
+    const currentValue = parseInt(num.textContent.replace(/,/g, ''));
+    const change = Math.floor(Math.random() * 3) - 1;
+    const newValue = Math.max(0, currentValue + change);
+    num.textContent = newValue.toLocaleString();
+  });
+}
+</script>
+{% endblock %}

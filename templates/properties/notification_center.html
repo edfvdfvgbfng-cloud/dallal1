@@ -1,0 +1,526 @@
+{% extends "properties/dashboard_base.html" %}
+{% load static %}
+
+{% block title %}مركز الإشعارات{% endblock %}
+{% block dashboard_title %}مركز الإشعارات{% endblock %}
+
+{% block dashboard_subtitle %}
+<p style="margin:4px 0 0;color:var(--text-muted);font-size:0.9rem;">
+  إدارة إشعاراتك وإعدادات التنبيهات في الوقت الفعلي
+</p>
+{% endblock %}
+
+{% block dashboard_actions %}
+<a href="{% url 'dashboard' %}" class="btn btn-outline btn-sm">← لوحة التحكم</a>
+<button onclick="markAllRead()" class="btn btn-primary btn-sm">✅ تعليم الكل كمقروء</button>
+<a href="{% url 'notification_settings' %}" class="btn btn-outline btn-sm">⚙️ الإعدادات</a>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+  .notification-center {
+    background: var(--bg-primary, #0B0B0B);
+    min-height: calc(100vh - var(--header-height, 72px));
+    padding: 2rem;
+  }
+
+  .notification-stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+    margin-bottom: 2rem;
+  }
+
+  .stat-card {
+    background: var(--card-bg, #161616);
+    border: 1px solid var(--border-primary, rgba(255, 122, 0, 0.15));
+    border-radius: var(--radius-lg, 16px);
+    padding: 1.5rem;
+    text-align: center;
+    box-shadow: var(--shadow-lg, 0 10px 15px rgba(0, 0, 0, 0.5));
+    transition: all 0.3s ease;
+  }
+
+  .stat-card:hover {
+    border-color: var(--primary, #FF7A00);
+    transform: translateY(-4px);
+    box-shadow: 0 15px 25px rgba(255, 122, 0, 0.2);
+  }
+
+  .stat-icon {
+    font-size: 2rem;
+    margin-bottom: 0.5rem;
+  }
+
+  .stat-number {
+    font-size: 2rem;
+    font-weight: 700;
+    color: var(--text-primary, #FFFFFF);
+    margin-bottom: 0.25rem;
+  }
+
+  .stat-label {
+    color: var(--text-muted, rgba(255, 255, 255, 0.7));
+    font-size: 0.9rem;
+  }
+
+  .notification-filters {
+    background: var(--card-bg, #161616);
+    border: 1px solid var(--border-primary, rgba(255, 122, 0, 0.15));
+    border-radius: var(--radius-lg, 16px);
+    padding: 1.5rem;
+    margin-bottom: 2rem;
+    box-shadow: var(--shadow-lg, 0 10px 15px rgba(0, 0, 0, 0.5));
+  }
+
+  .filter-row {
+    display: flex;
+    gap: 1rem;
+    flex-wrap: wrap;
+    align-items: center;
+  }
+
+  .filter-btn {
+    padding: 0.6rem 1.2rem;
+    border: 1px solid var(--border-primary, rgba(255, 122, 0, 0.15));
+    border-radius: var(--radius-sm, 8px);
+    background: var(--bg-secondary, #1a1a1a);
+    color: var(--text-primary, #FFFFFF);
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-weight: 500;
+  }
+
+  .filter-btn:hover,
+  .filter-btn.active {
+    background: var(--primary, #FF7A00);
+    border-color: var(--primary, #FF7A00);
+    transform: translateY(-2px);
+  }
+
+  .search-input {
+    flex: 1;
+    min-width: 250px;
+    padding: 0.6rem 1rem;
+    border: 1px solid var(--border-primary, rgba(255, 122, 0, 0.15));
+    border-radius: var(--radius-sm, 8px);
+    background: var(--bg-secondary, #1a1a1a);
+    color: var(--text-primary, #FFFFFF);
+  }
+
+  .search-input:focus {
+    outline: none;
+    border-color: var(--primary, #FF7A00);
+    box-shadow: 0 0 0 3px rgba(255, 122, 0, 0.2);
+  }
+
+  .notification-list {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  .notification-item {
+    background: var(--card-bg, #161616);
+    border: 1px solid var(--border-primary, rgba(255, 122, 0, 0.15));
+    border-radius: var(--radius-lg, 16px);
+    padding: 1.5rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: var(--shadow-lg, 0 10px 15px rgba(0, 0, 0, 0.5));
+  }
+
+  .notification-item:hover {
+    border-color: var(--primary, #FF7A00);
+    transform: translateX(8px);
+    box-shadow: 0 15px 25px rgba(255, 122, 0, 0.2);
+  }
+
+  .notification-item.unread {
+    border-left: 4px solid var(--primary, #FF7A00);
+    background: rgba(255, 122, 0, 0.05);
+  }
+
+  .notification-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 0.75rem;
+  }
+
+  .notification-type {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.4rem 0.8rem;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    font-weight: 600;
+  }
+
+  .type-info {
+    background: rgba(59, 130, 246, 0.2);
+    color: #3b82f6;
+  }
+
+  .type-success {
+    background: rgba(34, 197, 94, 0.2);
+    color: #22c55e;
+  }
+
+  .type-warning {
+    background: rgba(245, 158, 11, 0.2);
+    color: #f59e0b;
+  }
+
+  .type-danger {
+    background: rgba(239, 68, 68, 0.2);
+    color: #ef4444;
+  }
+
+  .type-system {
+    background: rgba(255, 122, 0, 0.2);
+    color: #FF7A00;
+  }
+
+  .notification-title {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--text-primary, #FFFFFF);
+    margin-bottom: 0.5rem;
+  }
+
+  .notification-content {
+    color: var(--text-secondary, #B5B5B5);
+    font-size: 0.95rem;
+    margin-bottom: 0.75rem;
+  }
+
+  .notification-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 0.85rem;
+    color: var(--text-muted, rgba(255, 255, 255, 0.5));
+  }
+
+  .notification-footer a {
+    color: var(--primary, #FF7A00);
+    text-decoration: none;
+    transition: all 0.3s ease;
+  }
+
+  .notification-footer a:hover {
+    color: #ff9500;
+    text-decoration: underline;
+  }
+
+  .notification-actions {
+    display: flex;
+    gap: 0.5rem;
+  }
+
+  .action-btn {
+    padding: 0.4rem 0.8rem;
+    border: 1px solid var(--border-primary, rgba(255, 122, 0, 0.15));
+    border-radius: var(--radius-sm, 6px);
+    background: var(--bg-secondary, #1a1a1a);
+    color: var(--text-primary, #FFFFFF);
+    cursor: pointer;
+    font-size: 0.8rem;
+    transition: all 0.3s ease;
+  }
+
+  .action-btn:hover {
+    background: var(--primary, #FF7A00);
+    border-color: var(--primary, #FF7A00);
+    transform: translateY(-2px);
+  }
+
+  .empty-state {
+    text-align: center;
+    padding: 4rem 2rem;
+    color: var(--text-muted, rgba(255, 255, 255, 0.5));
+  }
+
+  .empty-state-icon {
+    font-size: 4rem;
+    margin-bottom: 1rem;
+  }
+
+  .empty-state-text {
+    font-size: 1.25rem;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+    color: var(--text-primary, #FFFFFF);
+  }
+
+  .empty-state-subtext {
+    font-size: 0.95rem;
+    color: var(--text-muted, rgba(255, 255, 255, 0.6));
+  }
+
+  .real-time-indicator {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 1rem;
+    background: rgba(34, 197, 94, 0.2);
+    border-radius: 20px;
+    font-size: 0.85rem;
+    color: #22c55e;
+  }
+
+  .pulse {
+    width: 8px;
+    height: 8px;
+    background: #22c55e;
+    border-radius: 50%;
+    animation: pulse 2s infinite;
+  }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.5; }
+  }
+
+  @media (max-width: 768px) {
+    .notification-center {
+      padding: 1rem;
+    }
+
+    .notification-stats {
+      grid-template-columns: repeat(2, 1fr);
+      gap: 1rem;
+    }
+
+    .stat-card {
+      padding: 1.25rem;
+    }
+
+    .stat-number {
+      font-size: 1.75rem;
+    }
+
+    .filter-row {
+      flex-direction: column;
+      align-items: stretch;
+    }
+    
+    .search-input {
+      min-width: 100%;
+    }
+
+    .notification-item {
+      padding: 1.25rem;
+    }
+
+    .notification-title {
+      font-size: 1rem;
+    }
+
+    .notification-content {
+      font-size: 0.9rem;
+    }
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="notification-center">
+  <!-- Real-time Indicator -->
+  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+    <div class="real-time-indicator">
+      <div class="pulse"></div>
+      <span>تحديث فوري</span>
+    </div>
+    <div style="color: var(--text-muted, rgba(255, 255, 255, 0.5)); font-size: 0.9rem;">
+      آخر تحديث: <span id="lastUpdate">الآن</span>
+    </div>
+  </div>
+
+  <!-- Stats Cards -->
+  <div class="notification-stats">
+    <div class="stat-card">
+      <div class="stat-icon">🔔</div>
+      <div class="stat-number">{{ notifications|length }}</div>
+      <div class="stat-label">إجمالي الإشعارات</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon">📬</div>
+      <div class="stat-number">{{ unread_count }}</div>
+      <div class="stat-label">غير مقروء</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon">✅</div>
+      <div class="stat-number">{{ notifications|length|add:unread_count|default:0 }}</div>
+      <div class="stat-label">مقروء</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon">📁</div>
+      <div class="stat-number">{{ archived_count|default:0 }}</div>
+      <div class="stat-label">مؤرشف</div>
+    </div>
+  </div>
+
+  <!-- Filters -->
+  <div class="notification-filters">
+    <div class="filter-row">
+      <button class="filter-btn {% if filter_type == 'all' %}active{% endif %}" onclick="filterNotifications('all')">
+        الكل ({{ notifications|length }})
+      </button>
+      <button class="filter-btn {% if filter_type == 'unread' %}active{% endif %}" onclick="filterNotifications('unread')">
+        غير مقروء ({{ unread_count }})
+      </button>
+      <button class="filter-btn {% if filter_type == 'read' %}active{% endif %}" onclick="filterNotifications('read')">
+        مقروء
+      </button>
+      <button class="filter-btn {% if filter_type == 'archived' %}active{% endif %}" onclick="filterNotifications('archived')">
+        مؤرشف
+      </button>
+      <input type="text" id="searchInput" placeholder="بحث في الإشعارات..." class="search-input" value="{{ search_query }}">
+      <button onclick="searchNotifications()" class="filter-btn">🔍 بحث</button>
+    </div>
+  </div>
+
+  <!-- Notifications List -->
+  <div class="notification-list">
+    {% if notifications %}
+      {% for recipient in notifications %}
+      <div class="notification-item {% if not recipient.is_read %}unread{% endif %}" onclick="viewNotification({{ recipient.notification.id }})">
+        <div class="notification-header">
+          <div class="notification-type type-{{ recipient.notification.notification_type|default:'system' }}">
+            <span>
+              {% if recipient.notification.notification_type == 'info' %}ℹ️
+              {% elif recipient.notification.notification_type == 'success' %}✅
+              {% elif recipient.notification.notification_type == 'warning' %}⚠️
+              {% elif recipient.notification.notification_type == 'danger' %}🚨
+              {% else %}🔔
+              {% endif %}
+            </span>
+            <span>{{ recipient.notification.get_notification_type_display|default:'نظام' }}</span>
+          </div>
+          <div class="notification-actions">
+            <button onclick="event.stopPropagation(); deleteNotification({{ recipient.notification.id }})" class="action-btn" title="حذف">🗑️</button>
+          </div>
+        </div>
+        <h3 class="notification-title">{{ recipient.notification.title }}</h3>
+        <p class="notification-content">{{ recipient.notification.message|default:'' }}</p>
+        <div class="notification-footer">
+          <span>📅 {{ recipient.notification.created_at|date:"Y-m-d H:i" }}</span>
+          {% if recipient.notification.metadata %}
+          <span>🔗 <a href="#" onclick="event.stopPropagation(); handleNotificationAction('{{ recipient.notification.metadata.action_url|default:'#' }}')">{{ recipient.notification.metadata.action_text|default:'عرض التفاصيل' }}</a></span>
+          {% endif %}
+        </div>
+      </div>
+      {% endfor %}
+    {% else %}
+    <div class="empty-state">
+      <div class="empty-state-icon">📭</div>
+      <div class="empty-state-text">لا توجد إشعارات</div>
+      <div class="empty-state-subtext">ستتلقى إشعارات عند حدوث نشاطات على حسابك</div>
+    </div>
+    {% endif %}
+  </div>
+</div>
+
+<script>
+// Real-time updates
+setInterval(() => {
+  fetch('/api/notifications/check-new/')
+    .then(response => response.json())
+    .then(data => {
+      if (data.has_new) {
+        updateLastUpdate();
+        showNewNotificationBadge(data.count);
+      }
+    });
+}, 30000); // Check every 30 seconds
+
+function updateLastUpdate() {
+  const now = new Date();
+  document.getElementById('lastUpdate').textContent = now.toLocaleTimeString('ar-EG');
+}
+
+function showNewNotificationBadge(count) {
+  document.title = `(${count}) مركز الإشعارات`;
+}
+
+function markAllRead() {
+  fetch('/api/notifications/mark-all-read/', {
+    method: 'POST',
+    headers: {
+      'X-CSRFToken': getCSRFToken(),
+      'Content-Type': 'application/json'
+    }
+  })
+  .then(response => response.json())
+  .then(data => {
+    if (data.success) {
+      alert('تم تعليم جميع الإشعارات كمقروء');
+      location.reload();
+    }
+  });
+}
+
+function viewNotification(notificationId) {
+  fetch(`/api/notifications/${notificationId}/mark-read/`, {
+    method: 'POST',
+    headers: {
+      'X-CSRFToken': getCSRFToken(),
+      'Content-Type': 'application/json'
+    }
+  })
+  .then(response => response.json())
+  .then(data => {
+    if (data.success) {
+      window.location.href = `/notifications/${notificationId}/`;
+    }
+  });
+}
+
+function deleteNotification(notificationId) {
+  if (confirm('هل أنت متأكد من حذف هذا الإشعار؟')) {
+    fetch(`/api/notifications/${notificationId}/delete/`, {
+      method: 'POST',
+      headers: {
+        'X-CSRFToken': getCSRFToken(),
+        'Content-Type': 'application/json'
+      }
+    })
+    .then(response => response.json())
+    .then(data => {
+      if (data.success) {
+        location.reload();
+      }
+    });
+  }
+}
+
+function filterNotifications(type) {
+  window.location.href = `?filter=${type}`;
+}
+
+function searchNotifications() {
+  const searchTerm = document.getElementById('searchInput').value;
+  window.location.href = `?search=${searchTerm}`;
+}
+
+function handleNotificationAction(url) {
+  if (url && url !== '#') {
+    window.location.href = url;
+  }
+}
+
+function getCSRFToken() {
+  return document.querySelector('[name=csrfmiddlewaretoken]')?.value || '';
+}
+
+// Search on Enter key
+document.getElementById('searchInput').addEventListener('keypress', function(e) {
+  if (e.key === 'Enter') {
+    searchNotifications();
+  }
+});
+</script>
+{% endblock %}

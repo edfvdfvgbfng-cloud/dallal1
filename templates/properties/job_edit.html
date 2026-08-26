@@ -1,0 +1,353 @@
+{% extends 'properties/base.html' %}
+
+{% block title %}تعديل فرصة عمل - دلال{% endblock %}
+
+{% block content %}
+<div class="container" style="padding: 40px 20px;">
+    <div class="page-header" style="text-align: center; margin-bottom: 40px;">
+        <h1 style="font-size: 32px; margin-bottom: 10px;">✏️ تعديل فرصة العمل</h1>
+        <p style="color: rgba(255,255,255,0.7);">تعديل معلومات فرصة العمل</p>
+    </div>
+
+    <div class="form-container" style="background: rgba(255,255,255,0.05); padding: 40px; border-radius: 12px; max-width: 800px; margin: 0 auto;">
+        <form method="POST" action="{% url 'job_edit' job.pk %}" enctype="multipart/form-data" style="display: flex; flex-direction: column; gap: 25px;">
+            {% csrf_token %}
+            
+            <!-- Company Information -->
+            <div class="form-section">
+                <h3 style="margin-bottom: 20px; color: #667eea;">🏢 معلومات الشركة</h3>
+                
+                <div style="margin-bottom: 20px;">
+                    <label style="display: block; margin-bottom: 8px; color: rgba(255,255,255,0.7);">اسم الشركة *</label>
+                    <input type="text" name="company_name" required value="{{ job.company_name }}"
+                           style="width: 100%; padding: 12px 20px; border: 2px solid rgba(255,255,255,0.1); border-radius: 8px; background: rgba(255,255,255,0.1); color: white;">
+                </div>
+                
+                <div style="margin-bottom: 20px;">
+                    <label style="display: block; margin-bottom: 8px; color: rgba(255,255,255,0.7);">شعار الشركة</label>
+                    {% if job.company_logo %}
+                    <img src="{{ job.company_logo.url }}" alt="شعار الشركة" style="width: 100px; height: 100px; border-radius: 50%; object-fit: cover; margin-bottom: 10px;">
+                    {% endif %}
+                    <input type="file" name="company_logo" accept="image/*"
+                           style="width: 100%; padding: 12px 20px; border: 2px solid rgba(255,255,255,0.1); border-radius: 8px; background: rgba(255,255,255,0.1); color: white;">
+                </div>
+                
+                <div style="margin-bottom: 20px;">
+                    <label style="display: block; margin-bottom: 8px; color: rgba(255,255,255,0.7);">الموقع الإلكتروني</label>
+                    <input type="url" name="company_website" value="{{ job.company_website }}" placeholder="https://"
+                           style="width: 100%; padding: 12px 20px; border: 2px solid rgba(255,255,255,0.1); border-radius: 8px; background: rgba(255,255,255,0.1); color: white;">
+                </div>
+            </div>
+            
+            <!-- Job Information -->
+            <div class="form-section">
+                <h3 style="margin-bottom: 20px; color: #667eea;">💼 معلومات الوظيفة</h3>
+                
+                <div style="margin-bottom: 20px;">
+                    <label style="display: block; margin-bottom: 8px; color: rgba(255,255,255,0.7);">المسمى الوظيفي *</label>
+                    <input type="text" name="job_title" required value="{{ job.job_title }}"
+                           style="width: 100%; padding: 12px 20px; border: 2px solid rgba(255,255,255,0.1); border-radius: 8px; background: rgba(255,255,255,0.1); color: white;">
+                </div>
+                
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; margin-bottom: 20px;">
+                    <div>
+                        <label style="display: block; margin-bottom: 8px; color: rgba(255,255,255,0.7);">نوع العمل *</label>
+                        <select name="job_type" required
+                                style="width: 100%; padding: 12px 20px; border: 2px solid rgba(255,255,255,0.1); border-radius: 8px; background: rgba(255,255,255,0.1); color: white;">
+                            <option value="">اختر نوع العمل</option>
+                            <option value="full_time" {% if job.job_type == 'full_time' %}selected{% endif %}>دوام كامل</option>
+                            <option value="part_time" {% if job.job_type == 'part_time' %}selected{% endif %}>دوام جزئي</option>
+                            <option value="freelance" {% if job.job_type == 'freelance' %}selected{% endif %}>عمل حر</option>
+                            <option value="remote" {% if job.job_type == 'remote' %}selected{% endif %}>عن بعد</option>
+                            <option value="internship" {% if job.job_type == 'internship' %}selected{% endif %}>تدريب</option>
+                            <option value="contract" {% if job.job_type == 'contract' %}selected{% endif %}>عقد مؤقت</option>
+                        </select>
+                    </div>
+                    
+                    <div>
+                        <label style="display: block; margin-bottom: 8px; color: rgba(255,255,255,0.7);">الراتب *</label>
+                        <select name="salary_range" required
+                                style="width: 100%; padding: 12px 20px; border: 2px solid rgba(255,255,255,0.1); border-radius: 8px; background: rgba(255,255,255,0.1); color: white;">
+                            <option value="">اختر الراتب</option>
+                            <option value="under_500k" {% if job.salary_range == 'under_500k' %}selected{% endif %}>أقل من 500 ألف</option>
+                            <option value="500k_1m" {% if job.salary_range == '500k_1m' %}selected{% endif %}>500 ألف - مليون</option>
+                            <option value="1m_2m" {% if job.salary_range == '1m_2m' %}selected{% endif %}>مليون - مليوني دينار</option>
+                            <option value="over_2m" {% if job.salary_range == 'over_2m' %}selected{% endif %}>أكثر من مليوني دينار</option>
+                            <option value="negotiable" {% if job.salary_range == 'negotiable' %}selected{% endif %}>قابل للتفاوض</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div style="margin-bottom: 20px;">
+                    <label style="display: block; margin-bottom: 8px; color: rgba(255,255,255,0.7);">المجال/الحقل *</label>
+                    <input type="text" name="field" required value="{{ job.field }}" placeholder="مثال: تقنية، هندسة، طبي..."
+                           style="width: 100%; padding: 12px 20px; border: 2px solid rgba(255,255,255,0.1); border-radius: 8px; background: rgba(255,255,255,0.1); color: white;">
+                </div>
+                
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; margin-bottom: 20px;">
+                    <div>
+                        <label style="display: block; margin-bottom: 8px; color: rgba(255,255,255,0.7);">المؤهل المطلوب *</label>
+                        <select name="education" required
+                                style="width: 100%; padding: 12px 20px; border: 2px solid rgba(255,255,255,0.1); border-radius: 8px; background: rgba(255,255,255,0.1); color: white;">
+                            <option value="">اختر المؤهل</option>
+                            <option value="none" {% if job.education == 'none' %}selected{% endif %}>بدون شهادة</option>
+                            <option value="high_school" {% if job.education == 'high_school' %}selected{% endif %}>إعدادية</option>
+                            <option value="diploma" {% if job.education == 'diploma' %}selected{% endif %}>دبلوم</option>
+                            <option value="bachelor" {% if job.education == 'bachelor' %}selected{% endif %}>بكالوريوس</option>
+                            <option value="master" {% if job.education == 'master' %}selected{% endif %}>ماجستير</option>
+                            <option value="phd" {% if job.education == 'phd' %}selected{% endif %}>دكتوراه</option>
+                        </select>
+                    </div>
+                    
+                    <div>
+                        <label style="display: block; margin-bottom: 8px; color: rgba(255,255,255,0.7);">الخبرة المطلوبة *</label>
+                        <select name="experience" required
+                                style="width: 100%; padding: 12px 20px; border: 2px solid rgba(255,255,255,0.1); border-radius: 8px; background: rgba(255,255,255,0.1); color: white;">
+                            <option value="">اختر الخبرة</option>
+                            <option value="none" {% if job.experience == 'none' %}selected{% endif %}>بدون خبرة</option>
+                            <option value="1_year" {% if job.experience == '1_year' %}selected{% endif %}>سنة</option>
+                            <option value="2_years" {% if job.experience == '2_years' %}selected{% endif %}>سنتان</option>
+                            <option value="3_years" {% if job.experience == '3_years' %}selected{% endif %}>3 سنوات</option>
+                            <option value="5_years" {% if job.experience == '5_years' %}selected{% endif %}>5 سنوات</option>
+                            <option value="10_plus" {% if job.experience == '10_plus' %}selected{% endif %}>أكثر من 10 سنوات</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Location -->
+            <div class="form-section">
+                <h3 style="margin-bottom: 20px; color: #667eea;">📍 الموقع</h3>
+                
+                <div style="margin-bottom: 20px;">
+                    <label style="display: block; margin-bottom: 8px; color: rgba(255,255,255,0.7);">الموقع *</label>
+                    <select name="location_type" required onchange="toggleLocationFields()"
+                            style="width: 100%; padding: 12px 20px; border: 2px solid rgba(255,255,255,0.1); border-radius: 8px; background: rgba(255,255,255,0.1); color: white;">
+                        <option value="">اختر الموقع</option>
+                        <option value="inside_iraq" {% if job.location_type == 'inside_iraq' %}selected{% endif %}>داخل العراق</option>
+                        <option value="outside_iraq" {% if job.location_type == 'outside_iraq' %}selected{% endif %}>خارج العراق</option>
+                    </select>
+                </div>
+                
+                <div id="inside-iraq-fields" style="display: {% if job.location_type == 'inside_iraq' %}block{% else %}none{% endif %};">
+                    <div style="margin-bottom: 20px;">
+                        <label style="display: block; margin-bottom: 8px; color: rgba(255,255,255,0.7);">المحافظة</label>
+                        <select name="governorate"
+                                style="width: 100%; padding: 12px 20px; border: 2px solid rgba(255,255,255,0.1); border-radius: 8px; background: rgba(255,255,255,0.1); color: white;">
+                            <option value="">اختر المحافظة</option>
+                            <option value="بغداد" {% if job.governorate == 'بغداد' %}selected{% endif %}>بغداد</option>
+                            <option value="البصرة" {% if job.governorate == 'البصرة' %}selected{% endif %}>البصرة</option>
+                            <option value="نينوى" {% if job.governorate == 'نينوى' %}selected{% endif %}>نينوى</option>
+                            <option value="أربيل" {% if job.governorate == 'أربيل' %}selected{% endif %}>أربيل</option>
+                            <option value="النجف" {% if job.governorate == 'النجف' %}selected{% endif %}>النجف</option>
+                            <option value="كربلاء" {% if job.governorate == 'كربلاء' %}selected{% endif %}>كربلاء</option>
+                            <option value="بابل" {% if job.governorate == 'بابل' %}selected{% endif %}>بابل</option>
+                            <option value="ديالى" {% if job.governorate == 'ديالى' %}selected{% endif %}>ديالى</option>
+                            <option value="واسط" {% if job.governorate == 'واسط' %}selected{% endif %}>واسط</option>
+                            <option value="صلاح الدين" {% if job.governorate == 'صلاح الدين' %}selected{% endif %}>صلاح الدين</option>
+                            <option value="الأنبار" {% if job.governorate == 'الأنبار' %}selected{% endif %}>الأنبار</option>
+                            <option value="ذي قار" {% if job.governorate == 'ذي قار' %}selected{% endif %}>ذي قار</option>
+                            <option value="ميسان" {% if job.governorate == 'ميسان' %}selected{% endif %}>ميسان</option>
+                            <option value="المثنى" {% if job.governorate == 'المثنى' %}selected{% endif %}>المثنى</option>
+                            <option value="القادسية" {% if job.governorate == 'القادسية' %}selected{% endif %}>القادسية</option>
+                            <option value="كركوك" {% if job.governorate == 'كركوك' %}selected{% endif %}>كركوك</option>
+                            <option value="السليمانية" {% if job.governorate == 'السليمانية' %}selected{% endif %}>السليمانية</option>
+                            <option value="دهوك" {% if job.governorate == 'دهوك' %}selected{% endif %}>دهوك</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div id="outside-iraq-fields" style="display: {% if job.location_type == 'outside_iraq' %}block{% else %}none{% endif %};">
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; margin-bottom: 20px;">
+                        <div>
+                            <label style="display: block; margin-bottom: 8px; color: rgba(255,255,255,0.7);">الدولة</label>
+                            <select name="country"
+                                    style="width: 100%; padding: 12px 20px; border: 2px solid rgba(255,255,255,0.1); border-radius: 8px; background: rgba(255,255,255,0.1); color: white;">
+                                <option value="">اختر الدولة</option>
+                                {% for country in countries %}
+                                <option value="{{ country.id }}" {% if job.country_id == country.id %}selected{% endif %}>{{ country.name_ar }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        
+                        <div>
+                            <label style="display: block; margin-bottom: 8px; color: rgba(255,255,255,0.7);">المدينة</label>
+                            <input type="text" name="city" value="{{ job.city }}"
+                                   style="width: 100%; padding: 12px 20px; border: 2px solid rgba(255,255,255,0.1); border-radius: 8px; background: rgba(255,255,255,0.1); color: white;">
+                        </div>
+                    </div>
+                </div>
+                
+                <div style="margin-bottom: 20px;">
+                    <label style="display: block; margin-bottom: 8px; color: rgba(255,255,255,0.7);">العنوان التفصيلي</label>
+                    <input type="text" name="address" value="{{ job.address }}"
+                           style="width: 100%; padding: 12px 20px; border: 2px solid rgba(255,255,255,0.1); border-radius: 8px; background: rgba(255,255,255,0.1); color: white;">
+                </div>
+            </div>
+            
+            <!-- Description -->
+            <div class="form-section">
+                <h3 style="margin-bottom: 20px; color: #667eea;">📝 التفاصيل</h3>
+                
+                <div style="margin-bottom: 20px;">
+                    <label style="display: block; margin-bottom: 8px; color: rgba(255,255,255,0.7);">وصف الوظيفة *</label>
+                    <textarea name="description" required rows="5"
+                              style="width: 100%; padding: 12px 20px; border: 2px solid rgba(255,255,255,0.1); border-radius: 8px; background: rgba(255,255,255,0.1); color: white; resize: vertical;">{{ job.description }}</textarea>
+                </div>
+                
+                <div style="margin-bottom: 20px;">
+                    <label style="display: block; margin-bottom: 8px; color: rgba(255,255,255,0.7);">المسؤوليات</label>
+                    <textarea name="responsibilities" rows="4"
+                              style="width: 100%; padding: 12px 20px; border: 2px solid rgba(255,255,255,0.1); border-radius: 8px; background: rgba(255,255,255,0.1); color: white; resize: vertical;">{{ job.responsibilities }}</textarea>
+                </div>
+                
+                <div style="margin-bottom: 20px;">
+                    <label style="display: block; margin-bottom: 8px; color: rgba(255,255,255,0.7);">المزايا</label>
+                    <textarea name="benefits" rows="4"
+                              style="width: 100%; padding: 12px 20px; border: 2px solid rgba(255,255,255,0.1); border-radius: 8px; background: rgba(255,255,255,0.1); color: white; resize: vertical;">{{ job.benefits }}</textarea>
+                </div>
+                
+                <div style="margin-bottom: 20px;">
+                    <label style="display: block; margin-bottom: 8px; color: rgba(255,255,255,0.7);">المهارات المطلوبة</label>
+                    <textarea name="skills" rows="4"
+                              style="width: 100%; padding: 12px 20px; border: 2px solid rgba(255,255,255,0.1); border-radius: 8px; background: rgba(255,255,255,0.1); color: white; resize: vertical;">{{ job.skills }}</textarea>
+                </div>
+            </div>
+            
+            <!-- Contact Information -->
+            <div class="form-section">
+                <h3 style="margin-bottom: 20px; color: #667eea;">📞 معلومات التواصل</h3>
+                
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; margin-bottom: 20px;">
+                    <div>
+                        <label style="display: block; margin-bottom: 8px; color: rgba(255,255,255,0.7);">رقم الهاتف</label>
+                        <input type="tel" name="contact_phone" value="{{ job.contact_phone }}"
+                               style="width: 100%; padding: 12px 20px; border: 2px solid rgba(255,255,255,0.1); border-radius: 8px; background: rgba(255,255,255,0.1); color: white;">
+                    </div>
+                    
+                    <div>
+                        <label style="display: block; margin-bottom: 8px; color: rgba(255,255,255,0.7);">واتساب</label>
+                        <input type="tel" name="whatsapp" value="{{ job.whatsapp }}"
+                               style="width: 100%; padding: 12px 20px; border: 2px solid rgba(255,255,255,0.1); border-radius: 8px; background: rgba(255,255,255,0.1); color: white;">
+                    </div>
+                </div>
+                
+                <div style="margin-bottom: 20px;">
+                    <label style="display: block; margin-bottom: 8px; color: rgba(255,255,255,0.7);">البريد الإلكتروني</label>
+                    <input type="email" name="contact_email" value="{{ job.contact_email }}"
+                           style="width: 100%; padding: 12px 20px; border: 2px solid rgba(255,255,255,0.1); border-radius: 8px; background: rgba(255,255,255,0.1); color: white;">
+                </div>
+            </div>
+            
+            <!-- Media -->
+            <div class="form-section">
+                <h3 style="margin-bottom: 20px; color: #667eea;">📷 الوسائط</h3>
+                
+                <div style="margin-bottom: 20px;">
+                    <label style="display: block; margin-bottom: 8px; color: rgba(255,255,255,0.7);">صورة الغلاف</label>
+                    {% if job.cover_image %}
+                    <img src="{{ job.cover_image.url }}" alt="صورة الغلاف" style="width: 100%; max-height: 200px; object-fit: cover; border-radius: 8px; margin-bottom: 10px;">
+                    {% endif %}
+                    <input type="file" name="cover_image" accept="image/*"
+                           style="width: 100%; padding: 12px 20px; border: 2px solid rgba(255,255,255,0.1); border-radius: 8px; background: rgba(255,255,255,0.1); color: white;">
+                </div>
+                
+                <div style="margin-bottom: 20px;">
+                    <label style="display: block; margin-bottom: 8px; color: rgba(255,255,255,0.7);">صور إضافية</label>
+                    {% if job.images.exists %}
+                    <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); gap: 10px; margin-bottom: 10px;">
+                        {% for image in job.images.all %}
+                        <img src="{{ image.image.url }}" alt="صورة" style="width: 100px; height: 100px; object-fit: cover; border-radius: 8px;">
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+                    <input type="file" name="images" accept="image/*" multiple
+                           style="width: 100%; padding: 12px 20px; border: 2px solid rgba(255,255,255,0.1); border-radius: 8px; background: rgba(255,255,255,0.1); color: white;">
+                </div>
+                
+                <div style="margin-bottom: 20px;">
+                    <label style="display: block; margin-bottom: 8px; color: rgba(255,255,255,0.7);">فيديوهات</label>
+                    {% if job.videos.exists %}
+                    <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px; margin-bottom: 10px;">
+                        {% for video in job.videos.all %}
+                        <div style="width: 150px; height: 100px; background: rgba(255,255,255,0.1); border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 24px;">🎬</div>
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+                    <input type="file" name="videos" accept="video/*" multiple
+                           style="width: 100%; padding: 12px 20px; border: 2px solid rgba(255,255,255,0.1); border-radius: 8px; background: rgba(255,255,255,0.1); color: white;">
+                </div>
+            </div>
+            
+            <!-- Options -->
+            <div class="form-section">
+                <h3 style="margin-bottom: 20px; color: #667eea;">⚙️ خيارات</h3>
+                
+                <div style="display: flex; gap: 20px; flex-wrap: wrap;">
+                    <label style="display: flex; align-items: center; gap: 10px; cursor: pointer;">
+                        <input type="checkbox" name="is_featured" {% if job.is_featured %}checked{% endif %} style="width: 20px; height: 20px;">
+                        <span>⭐ مميز</span>
+                    </label>
+                    
+                    <label style="display: flex; align-items: center; gap: 10px; cursor: pointer;">
+                        <input type="checkbox" name="is_urgent" {% if job.is_urgent %}checked{% endif %} style="width: 20px; height: 20px;">
+                        <span>🔥 عاجل</span>
+                    </label>
+                </div>
+            </div>
+            
+            <!-- Submit -->
+            <div style="display: flex; gap: 15px; flex-wrap: wrap;">
+                <button type="submit" 
+                        style="flex: 1; padding: 15px 30px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border: none; border-radius: 8px; color: white; cursor: pointer; font-size: 16px; min-width: 200px;">
+                    💾 حفظ التغييرات
+                </button>
+                <a href="{% url 'my_jobs' %}" 
+                   style="padding: 15px 30px; background: rgba(255,255,255,0.1); border: none; border-radius: 8px; color: white; text-decoration: none; text-align: center;">
+                    إلغاء
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<style>
+.form-section {
+    padding: 20px;
+    background: rgba(255,255,255,0.02);
+    border-radius: 8px;
+}
+
+input, select, textarea {
+    color: white;
+}
+
+input::placeholder, textarea::placeholder {
+    color: rgba(255,255,255,0.5);
+}
+
+select option {
+    background: #1a1a2e;
+    color: white;
+}
+</style>
+
+<script>
+function toggleLocationFields() {
+    const locationType = document.querySelector('select[name="location_type"]').value;
+    const insideFields = document.getElementById('inside-iraq-fields');
+    const outsideFields = document.getElementById('outside-iraq-fields');
+    
+    if (locationType === 'inside_iraq') {
+        insideFields.style.display = 'block';
+        outsideFields.style.display = 'none';
+    } else if (locationType === 'outside_iraq') {
+        insideFields.style.display = 'none';
+        outsideFields.style.display = 'block';
+    } else {
+        insideFields.style.display = 'none';
+        outsideFields.style.display = 'none';
+    }
+}
+</script>
+{% endblock %}

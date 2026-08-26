@@ -1,0 +1,1059 @@
+{% extends "properties/base.html" %}
+{% load static %}
+
+{% block title %}إعدادات الحساب - دلال{% endblock %}
+
+{% block extra_css %}
+<style>
+  :root {
+    --bg-primary: #0a0a0a;
+    --bg-secondary: #1a1a1a;
+    --bg-tertiary: #2a2a2a;
+    --border-color: rgba(255, 122, 0, 0.2);
+    --text-primary: #ffffff;
+    --text-secondary: #a0a0a0;
+    --text-muted: #6a6a6a;
+    --accent-orange: #ff7a00;
+    --accent-orange-light: #ff9a40;
+    --accent-orange-dark: #ea580c;
+    --success: #22c55e;
+    --warning: #f59e0b;
+    --danger: #ef4444;
+    --card-bg: rgba(26, 26, 26, 0.8);
+  }
+
+  * {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+  }
+
+  body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background: var(--bg-primary);
+    color: var(--text-primary);
+    min-height: 100vh;
+  }
+
+  .settings-container {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 24px;
+    background: var(--bg-primary);
+  }
+
+  .settings-header {
+    margin-bottom: 32px;
+    text-align: center;
+  }
+
+  .settings-header h1 {
+    font-size: 2.5rem;
+    color: var(--text-primary);
+    margin-bottom: 8px;
+  }
+
+  .settings-header p {
+    color: var(--text-secondary);
+    font-size: 1.1rem;
+  }
+
+  .settings-nav {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 32px;
+    justify-content: center;
+    background: var(--bg-secondary);
+    padding: 12px;
+    border-radius: 12px;
+    border: 1px solid var(--border-color);
+  }
+
+  .settings-nav-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 20px;
+    background: transparent;
+    border: 1px solid transparent;
+    border-radius: 8px;
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+
+  .settings-nav-item:hover {
+    background: var(--bg-tertiary);
+    color: var(--text-primary);
+  }
+
+  .settings-nav-item.active {
+    background: linear-gradient(135deg, var(--accent-orange) 0%, var(--accent-orange-light) 100%);
+    border-color: var(--accent-orange);
+    color: white;
+    box-shadow: 0 4px 15px rgba(255, 122, 0, 0.3);
+  }
+
+  .settings-nav-item i {
+    font-size: 1rem;
+  }
+
+  .settings-section {
+    display: none;
+    animation: fadeIn 0.3s ease;
+  }
+
+  .settings-section.active {
+    display: block;
+  }
+
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+      transform: translateY(10px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  .settings-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+    gap: 24px;
+  }
+
+  .settings-card {
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: 16px;
+    padding: 24px;
+    backdrop-filter: blur(10px);
+    transition: all 0.3s ease;
+  }
+
+  .settings-card:hover {
+    transform: translateY(-4px);
+    border-color: var(--accent-orange);
+    box-shadow: 0 8px 24px rgba(255, 122, 0, 0.15);
+  }
+
+  .settings-card h3 {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-size: 1.2rem;
+    color: var(--text-primary);
+    margin-bottom: 20px;
+    font-weight: 600;
+  }
+
+  .settings-card h3 .icon {
+    font-size: 1.5rem;
+  }
+
+  .info-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 14px 0;
+    border-bottom: 1px solid rgba(255, 122, 0, 0.1);
+  }
+
+  .info-item:last-child {
+    border-bottom: none;
+  }
+
+  .info-label {
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .info-label i {
+    font-size: 0.9rem;
+    color: var(--accent-orange);
+  }
+
+  .info-value {
+    color: var(--text-primary);
+    font-weight: 500;
+    font-size: 0.95rem;
+  }
+
+  .status-active {
+    color: var(--success);
+    font-weight: 600;
+  }
+
+  .status-inactive {
+    color: var(--text-muted);
+    font-weight: 600;
+  }
+
+  .progress-container {
+    margin: 20px 0;
+  }
+
+  .progress-text {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 8px;
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+  }
+
+  .progress-bar {
+    height: 8px;
+    background: var(--bg-tertiary);
+    border-radius: 4px;
+    overflow: hidden;
+  }
+
+  .progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--accent-orange), var(--accent-orange-light));
+    border-radius: 4px;
+    transition: width 0.3s ease;
+  }
+
+  .switch {
+    position: relative;
+    display: inline-block;
+    width: 50px;
+    height: 26px;
+  }
+
+  .switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+  }
+
+  .slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: var(--bg-tertiary);
+    transition: 0.4s;
+    border-radius: 26px;
+  }
+
+  .slider:before {
+    position: absolute;
+    content: "";
+    height: 20px;
+    width: 20px;
+    left: 3px;
+    bottom: 3px;
+    background-color: white;
+    transition: 0.4s;
+    border-radius: 50%;
+  }
+
+  input:checked + .slider {
+    background-color: var(--accent-orange);
+  }
+
+  input:checked + .slider:before {
+    transform: translateX(24px);
+  }
+
+  .slider.round {
+    border-radius: 34px;
+  }
+
+  .slider.round:before {
+    border-radius: 50%;
+  }
+
+  .quick-settings-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 12px;
+  }
+
+  .quick-setting-btn {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    padding: 16px 12px;
+    background: var(--bg-tertiary);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+
+  .quick-setting-btn:hover {
+    background: var(--accent-orange);
+    border-color: var(--accent-orange);
+    transform: translateY(-2px);
+  }
+
+  .quick-setting-icon {
+    font-size: 1.5rem;
+  }
+
+  .quick-setting-label {
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+    text-align: center;
+  }
+
+  .quick-setting-status {
+    font-size: 0.7rem;
+    color: var(--text-muted);
+  }
+
+  .btn-primary {
+    display: inline-block;
+    padding: 12px 24px;
+    background: linear-gradient(135deg, var(--accent-orange) 0%, var(--accent-orange-light) 100%);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
+    text-decoration: none;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 15px rgba(255, 122, 0, 0.2);
+  }
+
+  .btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(255, 122, 0, 0.4);
+  }
+
+  .btn-warning {
+    display: inline-block;
+    padding: 12px 24px;
+    background: var(--warning);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+
+  .btn-warning:hover {
+    background: #d97706;
+    transform: translateY(-2px);
+  }
+
+  .btn-danger {
+    display: inline-block;
+    padding: 12px 24px;
+    background: var(--danger);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+
+  .btn-danger:hover {
+    background: #dc2626;
+    transform: translateY(-2px);
+  }
+
+  .alert {
+    padding: 12px 16px;
+    border-radius: 8px;
+    margin: 12px 0;
+    font-size: 0.85rem;
+  }
+
+  .alert-info {
+    background: rgba(59, 130, 246, 0.1);
+    border: 1px solid rgba(59, 130, 246, 0.3);
+    color: #60a5fa;
+  }
+
+  .alert-warning {
+    background: rgba(245, 158, 11, 0.1);
+    border: 1px solid rgba(245, 158, 11, 0.3);
+    color: #fbbf24;
+  }
+
+  .alert-danger {
+    background: rgba(239, 68, 68, 0.1);
+    border: 1px solid rgba(239, 68, 68, 0.3);
+    color: #f87171;
+  }
+
+  .empty-state {
+    text-align: center;
+    padding: 40px 20px;
+    color: var(--text-muted);
+  }
+
+  .empty-state i {
+    font-size: 3rem;
+    margin-bottom: 16px;
+    color: var(--text-secondary);
+  }
+
+  .profile-image-container {
+    text-align: center;
+    margin-bottom: 20px;
+  }
+
+  .profile-image {
+    width: 100px;
+    height: 100px;
+    border-radius: 50%;
+    background: var(--bg-tertiary);
+    margin: 0 auto 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 2rem;
+    border: 2px solid var(--border-color);
+    overflow: hidden;
+  }
+
+  .profile-image img {
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    object-fit: cover;
+  }
+
+  .form-control {
+    width: 100%;
+    padding: 10px 14px;
+    background: var(--bg-tertiary);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    color: var(--text-primary);
+    font-size: 0.9rem;
+    margin: 8px 0;
+  }
+
+  .form-control:focus {
+    outline: none;
+    border-color: var(--accent-orange);
+    box-shadow: 0 0 0 3px rgba(255, 122, 0, 0.1);
+  }
+
+  .form-control::placeholder {
+    color: var(--text-muted);
+  }
+
+  /* Responsive */
+  @media (max-width: 768px) {
+    .settings-container {
+      padding: 16px;
+    }
+
+    .settings-header h1 {
+      font-size: 1.75rem;
+    }
+
+    .settings-nav {
+      flex-direction: column;
+    }
+
+    .settings-nav-item {
+      width: 100%;
+      justify-content: center;
+    }
+
+    .settings-grid {
+      grid-template-columns: 1fr;
+    }
+
+    .quick-settings-grid {
+      grid-template-columns: repeat(2, 1fr);
+    }
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="settings-container">
+  <div class="settings-header">
+    <h1>إعدادات الحساب</h1>
+    <p>إدارة وإعدادات حسابك الشخصي</p>
+  </div>
+
+  <div class="settings-nav">
+    <button class="settings-nav-item active" data-section="profile">
+      <i class="fas fa-user"></i> الملف الشخصي
+    </button>
+    <button class="settings-nav-item" data-section="security">
+      <i class="fas fa-shield-alt"></i> الأمان
+    </button>
+    <button class="settings-nav-item" data-section="notifications">
+      <i class="fas fa-bell"></i> الإشعارات
+    </button>
+    <button class="settings-nav-item" data-section="privacy">
+      <i class="fas fa-lock"></i> الخصوصية
+    </button>
+    <button class="settings-nav-item" data-section="preferences">
+      <i class="fas fa-cog"></i> التفضيلات
+    </button>
+    <button class="settings-nav-item" data-section="favorites">
+      <i class="fas fa-heart"></i> المفضلة
+    </button>
+    <button class="settings-nav-item" data-section="messages">
+      <i class="fas fa-envelope"></i> الرسائل
+    </button>
+    <button class="settings-nav-item" data-section="activity">
+      <i class="fas fa-history"></i> النشاط
+    </button>
+    <button class="settings-nav-item" data-section="account">
+      <i class="fas fa-user-cog"></i> إدارة الحساب
+    </button>
+  </div>
+
+  <!-- Profile Section -->
+  <div class="settings-section active" id="profile-section">
+    <div class="settings-grid">
+      <div class="settings-card">
+        <h3><span class="icon">👤</span> المعلومات الأساسية</h3>
+        
+        <!-- Profile Image -->
+        <div style="text-align: center; margin-bottom: 20px;">
+          <div style="width: 100px; height: 100px; border-radius: 50%; background: var(--bg-tertiary); margin: 0 auto 12px; display: flex; align-items: center; justify-content: center; font-size: 2rem; border: 2px solid var(--border-color);">
+            {% if user.profile.profile_image %}
+            <img src="{{ user.profile.profile_image.url }}" alt="صورة الملف" style="width: 100%; height: 100%; border-radius: 50%; object-fit: cover;">
+            {% else %}
+            👤
+            {% endif %}
+          </div>
+          <a href="{% url 'account_management' %}" class="btn-primary" style="font-size: 0.8rem; padding: 8px 16px;">تغيير الصورة</a>
+        </div>
+        
+        <div class="info-item">
+          <span class="info-label"><i class="fas fa-user"></i> اسم المستخدم:</span>
+          <span class="info-value">{{ user.username }}</span>
+        </div>
+        <div class="info-item">
+          <span class="info-label"><i class="fas fa-envelope"></i> البريد الإلكتروني:</span>
+          <span class="info-value">{{ user.email }}</span>
+        </div>
+        <div class="info-item">
+          <span class="info-label"><i class="fas fa-phone"></i> رقم الهاتف:</span>
+          <span class="info-value">{% if user.profile.phone %}{{ user.profile.phone }}{% else %}غير محدد{% endif %}</span>
+        </div>
+        <div class="info-item">
+          <span class="info-label"><i class="fas fa-map-marker-alt"></i> المحافظة:</span>
+          <span class="info-value">{% if user.profile.governorate %}{{ user.profile.governorate }}{% else %}غير محدد{% endif %}</span>
+        </div>
+        <div class="info-item">
+          <span class="info-label"><i class="fas fa-city"></i> المدينة:</span>
+          <span class="info-value">{% if user.profile.city %}{{ user.profile.city }}{% else %}غير محدد{% endif %}</span>
+        </div>
+        <a href="{% url 'account_management' %}" class="btn-primary" style="margin-top: 15px;">تعديل الملف الشخصي</a>
+      </div>
+
+      <div class="settings-card">
+        <h3><span class="icon">📊</span> إحصائيات الحساب</h3>
+        <div class="info-item">
+          <span class="info-label"><i class="fas fa-home"></i> العقارات:</span>
+          <span class="info-value">0</span>
+        </div>
+        <div class="info-item">
+          <span class="info-label"><i class="fas fa-heart"></i> المفضلة:</span>
+          <span class="info-value">0</span>
+        </div>
+        <div class="info-item">
+          <span class="info-label"><i class="fas fa-comment"></i> التعليقات:</span>
+          <span class="info-value">0</span>
+        </div>
+        <div class="info-item">
+          <span class="info-label"><i class="fas fa-eye"></i> المشاهدات:</span>
+          <span class="info-value">0</span>
+        </div>
+        <div class="info-item">
+          <span class="info-label"><i class="fas fa-calendar"></i> تاريخ التسجيل:</span>
+          <span class="info-value">{{ user.date_joined|date:"Y-m-d" }}</span>
+        </div>
+        <div class="info-item">
+          <span class="info-label"><i class="fas fa-clock"></i> آخر نشاط:</span>
+          <span class="info-value">أقل من ساعة</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Security Section -->
+  <div class="settings-section" id="security-section">
+    <div class="settings-grid">
+      <div class="settings-card">
+        <h3><span class="icon">🔒</span> الأمان</h3>
+        <div class="info-item">
+          <span class="info-label"><i class="fas fa-shield-alt"></i> المصادقة الثنائية:</span>
+          <span class="info-value">
+            <span class="status-inactive">غير مفعلة</span>
+          </span>
+        </div>
+        <div class="info-item">
+          <span class="info-label"><i class="fas fa-clock"></i> آخر تغيير لكلمة المرور:</span>
+          <span class="info-value">لم يتم التغيير</span>
+        </div>
+        <div class="info-item">
+          <span class="info-label"><i class="fas fa-history"></i> آخر تسجيل دخول:</span>
+          <span class="info-value">اليوم</span>
+        </div>
+        <div class="info-item">
+          <span class="info-label"><i class="fas fa-laptop"></i> الأجهزة المتصلة:</span>
+          <span class="info-value">1 جهاز</span>
+        </div>
+        <a href="{% url 'security_settings' %}" class="btn-primary" style="margin-top: 15px;">تغيير كلمة المرور</a>
+        <button class="btn-primary" style="margin-top: 10px; background: var(--success);">تفعيل المصادقة الثنائية</button>
+      </div>
+
+      <div class="settings-card">
+        <h3><span class="icon">🛡️</span> حماية إضافية</h3>
+        <div class="info-item">
+          <span class="info-label"><i class="fas fa-mobile-alt"></i> تأكيد تسجيل الدخول:</span>
+          <span class="info-value">
+            <label class="switch">
+              <input type="checkbox" checked>
+              <span class="slider round"></span>
+            </label>
+          </span>
+        </div>
+        <div class="info-item">
+          <span class="info-label"><i class="fas fa-envelope"></i> تنبيه الدخول:</span>
+          <span class="info-value">
+            <label class="switch">
+              <input type="checkbox" checked>
+              <span class="slider round"></span>
+            </label>
+          </span>
+        </div>
+        <div class="info-item">
+          <span class="info-label"><i class="fas fa-clock"></i> الجلسة التلقائية:</span>
+          <span class="info-value">30 يوم</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Notifications Section -->
+  <div class="settings-section" id="notifications-section">
+    <div class="settings-grid">
+      <div class="settings-card">
+        <h3><span class="icon">🔔</span> الإشعارات</h3>
+        <div class="info-item">
+          <span class="info-label"><i class="fas fa-home"></i> إشعارات العقارات الجديدة:</span>
+          <span class="info-value">
+            <span class="status-inactive">معطلة</span>
+          </span>
+        </div>
+        <div class="info-item">
+          <span class="info-label"><i class="fas fa-envelope"></i> إشعارات الرسائل:</span>
+          <span class="info-value">
+            <span class="status-inactive">معطلة</span>
+          </span>
+        </div>
+        <div class="info-item">
+          <span class="info-label"><i class="fas fa-at"></i> إشعارات البريد الإلكتروني:</span>
+          <span class="info-value">
+            <span class="status-active">مفعلة</span>
+          </span>
+        </div>
+        <div class="info-item">
+          <span class="info-label"><i class="fas fa-bell"></i> إشعارات النظام:</span>
+          <span class="info-value">
+            <span class="status-active">مفعلة</span>
+          </span>
+        </div>
+        <a href="{% url 'message_notification_settings' %}" class="btn-primary" style="margin-top: 15px;">تعديل إعدادات الإشعارات</a>
+      </div>
+
+      <div class="settings-card">
+        <h3><span class="icon">📧</span> تفضيلات الإشعارات</h3>
+        <div class="info-item">
+          <span class="info-label"><i class="fas fa-clock"></i> تلخيص الإشعارات:</span>
+          <span class="info-value">فوري</span>
+        </div>
+        <div class="info-item">
+          <span class="info-label"><i class="fas fa-volume-down"></i> صوت الإشعارات:</span>
+          <span class="info-value">افتراضي</span>
+        </div>
+        <div class="info-item">
+          <span class="info-label"><i class="fas fa-mobile-alt"></i> إشعارات Push:</span>
+          <span class="info-value">
+            <label class="switch">
+              <input type="checkbox" checked>
+              <span class="slider round"></span>
+            </label>
+          </span>
+        </div>
+        <div class="info-item">
+          <span class="info-label"><i class="fas fa-envelope-open"></i> ملخص يومي:</span>
+          <span class="info-value">
+            <label class="switch">
+              <input type="checkbox">
+              <span class="slider round"></span>
+            </label>
+          </span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Privacy Section -->
+  <div class="settings-section" id="privacy-section">
+    <div class="settings-card">
+      <h3><span class="icon">🔐</span> الخصوصية</h3>
+      <div class="info-item">
+        <span class="info-label"><i class="fas fa-phone"></i> إظهار رقم الهاتف:</span>
+        <span class="info-value">
+          <span class="status-active">نعم</span>
+        </span>
+      </div>
+      <div class="info-item">
+        <span class="info-label"><i class="fas fa-envelope"></i> إظهار البريد الإلكتروني:</span>
+        <span class="info-value">
+          <span class="status-inactive">لا</span>
+        </span>
+      </div>
+      <div class="info-item">
+        <span class="info-label"><i class="fas fa-users"></i> من يمكنه مراسلتي:</span>
+        <span class="info-value">الجميع</span>
+      </div>
+      <a href="{% url 'privacy_settings' %}" class="btn-primary" style="margin-top: 15px;">تعديل إعدادات الخصوصية</a>
+    </div>
+  </div>
+
+  <!-- Preferences Section -->
+  <div class="settings-section" id="preferences-section">
+    <div class="settings-grid">
+      <div class="settings-card">
+        <h3><span class="icon">⚙️</span> التفضيلات</h3>
+
+        <!-- Progress Bar -->
+        <div class="progress-container">
+          <div class="progress-text">
+            <span>اكتمال الملف الشخصي</span>
+            <span>65%</span>
+          </div>
+          <div class="progress-bar">
+            <div class="progress-fill" style="width: 65%;"></div>
+          </div>
+        </div>
+
+        <div class="info-item">
+          <span class="info-label"><i class="fas fa-moon"></i> الوضع الليلي:</span>
+          <span class="info-value">
+            <label class="switch">
+              <input type="checkbox" id="dark-mode-toggle" checked>
+              <span class="slider round"></span>
+            </label>
+          </span>
+        </div>
+
+        <div class="info-item">
+          <span class="info-label"><i class="fas fa-bell"></i> الإشعارات:</span>
+          <span class="info-value">
+            <label class="switch">
+              <input type="checkbox" id="notifications-toggle" checked>
+              <span class="slider round"></span>
+            </label>
+          </span>
+        </div>
+
+        <div class="info-item">
+          <span class="info-label"><i class="fas fa-language"></i> اللغة:</span>
+          <span class="info-value">ar</span>
+        </div>
+
+        <div class="info-item">
+          <span class="info-label"><i class="fas fa-dollar-sign"></i> العملة:</span>
+          <span class="info-value">IQD</span>
+        </div>
+
+        <div class="info-item">
+          <span class="info-label"><i class="fas fa-th"></i> طريقة عرض العقارات:</span>
+          <span class="info-value">grid</span>
+        </div>
+
+        <div class="info-item">
+          <span class="info-label"><i class="fas fa-list-ol"></i> عدد العقارات في الصفحة:</span>
+          <span class="info-value">12</span>
+        </div>
+
+        <a href="{% url 'preferences_settings' %}" class="btn-primary" style="margin-top: 15px;">تعديل التفضيلات</a>
+      </div>
+
+      <div class="settings-card">
+        <h3><span class="icon">📱</span> الإعدادات السريعة</h3>
+
+        <div class="quick-settings-grid">
+          <button class="quick-setting-btn" onclick="toggleSetting('location')">
+            <span class="quick-setting-icon">📍</span>
+            <span class="quick-setting-label">الموقع</span>
+            <span class="quick-setting-status">مفعل</span>
+          </button>
+
+          <button class="quick-setting-btn" onclick="toggleSetting('camera')">
+            <span class="quick-setting-icon">📷</span>
+            <span class="quick-setting-label">الكاميرا</span>
+            <span class="quick-setting-status">مفعل</span>
+          </button>
+
+          <button class="quick-setting-btn" onclick="toggleSetting('microphone')">
+            <span class="quick-setting-icon">🎤</span>
+            <span class="quick-setting-label">الميكروفون</span>
+            <span class="quick-setting-status">معطل</span>
+          </button>
+
+          <button class="quick-setting-btn" onclick="toggleSetting('storage')">
+            <span class="quick-setting-icon">💾</span>
+            <span class="quick-setting-label">التخزين</span>
+            <span class="quick-setting-status">مفعل</span>
+          </button>
+
+          <button class="quick-setting-btn" onclick="toggleSetting('cookies')">
+            <span class="quick-setting-icon">🍪</span>
+            <span class="quick-setting-label">الكوكيز</span>
+            <span class="quick-setting-status">مفعل</span>
+          </button>
+
+          <button class="quick-setting-btn" onclick="toggleSetting('cache')">
+            <span class="quick-setting-icon">🗄️</span>
+            <span class="quick-setting-label">الذاكرة المؤقتة</span>
+            <span class="quick-setting-status">مفعل</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Favorites Section -->
+  <div class="settings-section" id="favorites-section">
+    <div class="settings-card">
+      <h3><span class="icon">❤️</span> العقارات المفضلة</h3>
+      <div class="empty-state">
+        <i class="fas fa-heart"></i>
+        <p>لا توجد عقارات مفضلة</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Messages Section -->
+  <div class="settings-section" id="messages-section">
+    <div class="settings-grid">
+      <div class="settings-card">
+        <h3><span class="icon">💬</span> الرسائل</h3>
+        <div class="info-item">
+          <span class="info-label"><i class="fas fa-ban"></i> المستخدمون المحظورون:</span>
+          <span class="info-value">0</span>
+        </div>
+        <div class="info-item">
+          <span class="info-label"><i class="fas fa-envelope"></i> الرسائل غير المقروء:</span>
+          <span class="info-value">0</span>
+        </div>
+        <div class="info-item">
+          <span class="info-label"><i class="fas fa-archive"></i> الرسائل المؤرشفة:</span>
+          <span class="info-value">0</span>
+        </div>
+        <a href="{% url 'broker_messaging' %}" class="btn-primary" style="margin-top: 15px;">إدارة الرسائل</a>
+      </div>
+
+      <div class="settings-card">
+        <h3><span class="icon">⚙️</span> إعدادات المراسلة</h3>
+        <div class="info-item">
+          <span class="info-label"><i class="fas fa-users"></i> من يمكنه مراسلتي:</span>
+          <span class="info-value">الجميع</span>
+        </div>
+        <div class="info-item">
+          <span class="info-label"><i class="fas fa-bell"></i> إشعارات الرسائل:</span>
+          <span class="info-value">
+            <label class="switch">
+              <input type="checkbox" checked>
+              <span class="slider round"></span>
+            </label>
+          </span>
+        </div>
+        <div class="info-item">
+          <span class="info-label"><i class="fas fa-volume-up"></i> صوت الإشعارات:</span>
+          <span class="info-value">مفعل</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Activity Section -->
+  <div class="settings-section" id="activity-section">
+    <div class="settings-grid">
+      <div class="settings-card">
+        <h3><span class="icon">📊</span> النشاط</h3>
+        <div class="info-item">
+          <span class="info-label"><i class="fas fa-search"></i> عمليات البحث المحفوظة:</span>
+          <span class="info-value">0</span>
+        </div>
+        <div class="info-item">
+          <span class="info-label"><i class="fas fa-eye"></i> العقارات المشاهدة مؤخراً:</span>
+          <span class="info-value">0</span>
+        </div>
+        <div class="info-item">
+          <span class="info-label"><i class="fas fa-history"></i> سجل النشاط:</span>
+          <span class="info-value">نشط</span>
+        </div>
+        <div class="info-item">
+          <span class="info-label"><i class="fas fa-calendar"></i> آخر تسجيل دخول:</span>
+          <span class="info-value">اليوم</span>
+        </div>
+        <a href="{% url 'activity_page' %}" class="btn-primary" style="margin-top: 15px;">عرض النشاط الكامل</a>
+      </div>
+
+      <div class="settings-card">
+        <h3><span class="icon">📈</span> الإحصائيات</h3>
+        <div class="info-item">
+          <span class="info-label"><i class="fas fa-eye"></i> إجمالي المشاهدات:</span>
+          <span class="info-value">12</span>
+        </div>
+        <div class="info-item">
+          <span class="info-label"><i class="fas fa-users"></i> الملفات المشاهدة:</span>
+          <span class="info-value">5</span>
+        </div>
+        <div class="info-item">
+          <span class="info-label"><i class="fas fa-clock"></i> متوسط وقت البقاء:</span>
+          <span class="info-value">5 دقائق</span>
+        </div>
+        <div class="info-item">
+          <span class="info-label"><i class="fas fa-star"></i> التقييمات:</span>
+          <span class="info-value">0</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Account Section -->
+  <div class="settings-section" id="account-section">
+    <div class="settings-grid">
+      <div class="settings-card">
+        <h3><span class="icon">📥</span> تنزيل البيانات</h3>
+        <p>يمكنك تنزيل جميع بياناتك بصيغة JSON</p>
+        <div class="alert alert-info">
+          <i class="fas fa-info-circle"></i>
+          البيانات تشمل: الملف الشخصي، الإعدادات، المفضلة، عمليات البحث
+        </div>
+        <form action="{% url 'account_management' %}" method="POST">
+          {% csrf_token %}
+          <input type="hidden" name="action" value="download">
+          <button type="submit" class="btn-primary">
+            <i class="fas fa-download"></i> تنزيل بياناتي
+          </button>
+        </form>
+      </div>
+
+      <div class="settings-card" style="border: 2px solid var(--warning); background: linear-gradient(135deg, rgba(245, 158, 11, 0.1) 0%, var(--bg-secondary) 100%);">
+        <h3><span class="icon">⏸️</span> تعطيل الحساب مؤقتاً</h3>
+        <p>يمكنك تعطيل حسابك مؤقتاً وإعادة تفعيله في أي وقت</p>
+        <div class="alert alert-warning">
+          <i class="fas fa-exclamation-triangle"></i>
+          <strong>تنبيه:</strong> سيتم تسجيل خروجك من جميع الأجهزة
+        </div>
+        <form action="{% url 'account_management' %}" method="POST" onsubmit="return confirm('هل أنت متأكد من تعطيل حسابك؟');">
+          {% csrf_token %}
+          <input type="hidden" name="action" value="disable">
+          <input type="text" name="reason" placeholder="سبب التعطيل (اختياري)" class="form-control">
+          <button type="submit" class="btn-warning">
+            <i class="fas fa-pause-circle"></i> تعطيل الحساب
+          </button>
+        </form>
+      </div>
+
+      <div class="settings-card" style="border: 2px solid var(--danger); background: linear-gradient(135deg, rgba(239, 68, 68, 0.1) 0%, var(--bg-secondary) 100%);">
+        <h3><span class="icon">🗑️</span> حذف الحساب نهائياً</h3>
+        <p style="color: var(--danger); font-weight: 600;">تحذير: هذا الإجراء لا يمكن التراجع عنه</p>
+        <div class="alert alert-danger">
+          <i class="fas fa-exclamation-triangle"></i>
+          <strong>تحذير خطير:</strong> سيتم حذف جميع بياناتك بما في ذلك المفضلة، الرسائل، وعمليات البحث المحفوظة.
+        </div>
+        <form action="{% url 'account_management' %}" method="POST" onsubmit="return confirm('هل أنت متأكد من حذف حسابك نهائياً؟ هذا الإجراء لا يمكن التراجع عنه.');">
+          {% csrf_token %}
+          <input type="hidden" name="action" value="delete">
+          <button type="submit" class="btn-danger">
+            <i class="fas fa-trash"></i> حذف الحساب نهائياً
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  // Navigation
+  const navItems = document.querySelectorAll('.settings-nav-item');
+  const sections = document.querySelectorAll('.settings-section');
+
+  navItems.forEach(item => {
+    item.addEventListener('click', function() {
+      const section = this.dataset.section;
+
+      // Update nav
+      navItems.forEach(nav => nav.classList.remove('active'));
+      this.classList.add('active');
+
+      // Update sections
+      sections.forEach(sec => sec.classList.remove('active'));
+      document.getElementById(section + '-section').classList.add('active');
+    });
+  });
+
+  // Quick settings toggle
+  window.toggleSetting = function(setting) {
+    const btn = event.currentTarget;
+    const status = btn.querySelector('.quick-setting-status');
+    
+    if (status.textContent === 'مفعل') {
+      status.textContent = 'معطل';
+      btn.style.opacity = '0.7';
+    } else {
+      status.textContent = 'مفعل';
+      btn.style.opacity = '1';
+    }
+  };
+
+  // Dark mode toggle
+  const darkModeToggle = document.getElementById('dark-mode-toggle');
+  if (darkModeToggle) {
+    darkModeToggle.addEventListener('change', function() {
+      document.documentElement.setAttribute('data-theme', this.checked ? 'dark' : 'light');
+      localStorage.setItem('theme', this.checked ? 'dark' : 'light');
+    });
+  }
+
+  // Notifications toggle
+  const notificationsToggle = document.getElementById('notifications-toggle');
+  if (notificationsToggle) {
+    notificationsToggle.addEventListener('change', function() {
+      // Save to backend via AJAX
+      fetch('/api/settings/notifications/', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+        },
+        body: JSON.stringify({ enabled: this.checked })
+      });
+    });
+  }
+});
+</script>
+{% endblock %}

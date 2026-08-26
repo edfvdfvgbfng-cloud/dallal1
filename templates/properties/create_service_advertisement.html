@@ -1,0 +1,513 @@
+{% extends 'properties/base.html' %}
+
+{% block extra_css %}
+<!-- Leaflet CSS -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<link rel="stylesheet" href="https://unpkg.com/leaflet-draw@1.0.4/dist/leaflet.draw.css" />
+{% endblock %}
+
+{% block title %}إنشاء إعلان خدمة{% endblock %}
+
+{% block content %}
+<div class="container">
+  <div class="create-ad-wrapper" style="max-width: 800px; margin: 40px auto;">
+    <div class="create-ad-header" style="text-align: center; margin-bottom: 30px;">
+      <h1 style="font-size: 2rem; color: var(--text); margin: 0 0 10px 0;">📢 إنشاء إعلان خدمة</h1>
+      <p style="color: var(--text-light); margin: 0;">أنشئ إعلاناً لخدماتك ووصل للعملاء</p>
+    </div>
+
+    <form method="post" class="ad-form" style="background: var(--card-bg); padding: 30px; border-radius: var(--radius); border: 1px solid var(--border);" enctype="multipart/form-data">
+      {% csrf_token %}
+      
+      <div class="form-section" style="margin-bottom: 30px;">
+        <h3 style="color: var(--text); margin: 0 0 20px 0; border-bottom: 2px solid var(--border); padding-bottom: 10px;">معلومات الإعلان</h3>
+        
+        <div class="form-group" style="margin-bottom: 20px;">
+          <label style="display: block; margin-bottom: 8px; color: var(--text); font-weight: 600;">عنوان الإعلان *</label>
+          {{ form.title }}
+        </div>
+        
+        <div class="form-group" style="margin-bottom: 20px;">
+          <label style="display: block; margin-bottom: 8px; color: var(--text); font-weight: 600;">نوع الخدمة *</label>
+          {{ form.service_type }}
+        </div>
+        
+        <div class="form-group" style="margin-bottom: 20px;">
+          <label style="display: block; margin-bottom: 8px; color: var(--text); font-weight: 600;">وصف الإعلان *</label>
+          {{ form.description }}
+        </div>
+      </div>
+
+      <div class="form-section" style="margin-bottom: 30px;">
+        <h3 style="color: var(--text); margin: 0 0 20px 0; border-bottom: 2px solid var(--border); padding-bottom: 10px;">تفاصيل المشروع</h3>
+        
+        <div class="form-group" style="margin-bottom: 20px;">
+          <label style="display: block; margin-bottom: 8px; color: var(--text); font-weight: 600;">نوع المشروع</label>
+          {{ form.project_type }}
+        </div>
+        
+        <div class="form-group" style="margin-bottom: 20px;">
+          <label style="display: block; margin-bottom: 8px; color: var(--text); font-weight: 600;">الموقع</label>
+          {{ form.location }}
+        </div>
+        
+        <div class="form-group" style="margin-bottom: 20px;">
+          <label style="display: block; margin-bottom: 8px; color: var(--text); font-weight: 600;">المحافظة</label>
+          {{ form.governorate }}
+        </div>
+        
+        <div class="form-group" style="margin-bottom: 20px;">
+          <label style="display: block; margin-bottom: 8px; color: var(--text); font-weight: 600;">المدينة</label>
+          <input type="text" name="city" class="form-control">
+        </div>
+        
+        <div class="form-group" style="margin-bottom: 20px;">
+          <label style="display: block; margin-bottom: 8px; color: var(--text); font-weight: 600;">القضاء</label>
+          <input type="text" name="district" class="form-control">
+        </div>
+        
+        <div class="form-group" style="margin-bottom: 20px;">
+          <label style="display: block; margin-bottom: 8px; color: var(--text); font-weight: 600;">الناحية</label>
+          <input type="text" name="subdistrict" class="form-control">
+        </div>
+        
+        <div class="form-group" style="margin-bottom: 20px;">
+          <label style="display: block; margin-bottom: 8px; color: var(--text); font-weight: 600;">المنطقة</label>
+          <input type="text" name="area" class="form-control">
+        </div>
+        
+        <div class="form-group" style="margin-bottom: 20px;">
+          <label style="display: block; margin-bottom: 8px; color: var(--text); font-weight: 600;">الحي</label>
+          <input type="text" name="neighborhood" class="form-control">
+        </div>
+        
+        <div class="form-group" style="margin-bottom: 20px;">
+          <label style="display: block; margin-bottom: 8px; color: var(--text); font-weight: 600;">المحلة</label>
+          <input type="text" name="mahalla" class="form-control">
+        </div>
+        
+        <div class="form-group" style="margin-bottom: 20px;">
+          <label style="display: block; margin-bottom: 8px; color: var(--text); font-weight: 600;">البلوك</label>
+          <input type="text" name="block" class="form-control">
+        </div>
+        
+        <div class="form-group" style="margin-bottom: 20px;">
+          <label style="display: block; margin-bottom: 8px; color: var(--text); font-weight: 600;">الشارع</label>
+          <input type="text" name="street" class="form-control">
+        </div>
+        
+        <div class="form-group" style="margin-bottom: 20px;">
+          <label style="display: block; margin-bottom: 8px; color: var(--text); font-weight: 600;">الزقاق</label>
+          <input type="text" name="alley" class="form-control">
+        </div>
+        
+        <div class="form-group" style="margin-bottom: 20px;">
+          <label style="display: block; margin-bottom: 8px; color: var(--text); font-weight: 600;">رقم الدار</label>
+          <input type="text" name="house_number" class="form-control">
+        </div>
+        
+        <div class="form-group" style="margin-bottom: 20px;">
+          <label style="display: block; margin-bottom: 8px; color: var(--text); font-weight: 600;">رقم العقار</label>
+          <input type="text" name="property_number" class="form-control">
+        </div>
+        
+        <div class="form-group" style="margin-bottom: 20px;">
+          <label style="display: block; margin-bottom: 8px; color: var(--text); font-weight: 600;">أقرب نقطة دالة</label>
+          <input type="text" name="landmark" class="form-control">
+        </div>
+        
+        <div class="form-group" style="margin-bottom: 20px;">
+          <label style="display: block; margin-bottom: 8px; color: var(--text); font-weight: 600;">العنوان التفصيلي</label>
+          {{ form.location }}
+        </div>
+      </div>
+
+      <div class="form-section" style="margin-bottom: 30px;">
+        <h3 style="color: var(--text); margin: 0 0 20px 0; border-bottom: 2px solid var(--border); padding-bottom: 10px;">الموقع الجغرافي</h3>
+        
+        <div class="form-group" style="margin-bottom: 20px;">
+          <label style="display: block; margin-bottom: 8px; color: var(--text); font-weight:600;">خط العرض</label>
+          <div style="display: flex; gap: 10px;">
+            <input type="number" step="any" name="latitude" class="form-control" placeholder="مثال: 33.3152" id="latitude-input-service">
+            <button type="button" onclick="getLocationGPSService()" class="btn btn-secondary" style="white-space: nowrap; padding: 12px 15px;">
+              📍 GPS
+            </button>
+          </div>
+        </div>
+        
+        <div class="form-group" style="margin-bottom: 20px;">
+          <label style="display: block; margin-bottom: 8px; color: var(--text); font-weight: 600;">خط الطول</label>
+          <input type="number" step="any" name="longitude" class="form-control" placeholder="مثال: 44.3661" id="longitude-input-service">
+        </div>
+        
+        <div class="form-group" style="margin-bottom: 20px;">
+          <label style="display: block; margin-bottom: 8px; color: var(--text); font-weight: 600;">معاينة الموقع على الخريطة</label>
+          <div style="position: relative;">
+            <div id="location-preview-map-service" style="height: 300px; border-radius: var(--radius); border: 1px solid var(--border);"></div>
+            <div style="position: absolute; top: 10px; right: 10px; z-index: 1000; display: flex; gap: 5px;">
+              <button type="button" class="btn btn-secondary" onclick="changeMapLayer('service', 'osm')" style="padding: 5px 10px; font-size: 12px;">OpenStreetMap</button>
+              <button type="button" class="btn btn-secondary" onclick="changeMapLayer('service', 'satellite')" style="padding: 5px 10px; font-size: 12px;">Satellite</button>
+              <button type="button" class="btn btn-secondary" onclick="changeMapLayer('service', 'terrain')" style="padding: 5px 10px; font-size: 12px;">Terrain</button>
+              <button type="button" class="btn btn-secondary" onclick="changeMapLayer('service', 'dark')" style="padding: 5px 10px; font-size: 12px;">Dark</button>
+              <button type="button" class="btn btn-secondary" onclick="toggleMapFullscreen('service')" style="padding: 5px 10px; font-size: 12px;">⛶</button>
+            </div>
+          </div>
+          <p style="font-size: 0.8rem; color: var(--text-light); margin-top: 5px;">
+            * اضغط على "GPS" لتحديد موقعك تلقائياً أو انقر على الخريطة لتحديد الموقع يدوياً
+          </p>
+        </div>
+        
+        <div class="form-group" style="margin-bottom: 20px;">
+          <label style="display: flex; align-items: center; gap: 10px; color: var(--text); font-weight: 600; cursor: pointer;">
+            <input type="checkbox" name="enable_gps" id="enable-gps-service" style="width: 20px; height: 20px;">
+            <span>📍 نشر GPS - إظهار الموقع على خريطة المنصة</span>
+          </label>
+          <p style="font-size: 0.8rem; color: var(--text-light); margin-top: 5px;">
+            عند تفعيل هذا الخيار، سيظهر موقع الخدمة على خريطة المنصة الرئيسية
+          </p>
+        </div>
+      </div>
+
+      <div class="form-section" style="margin-bottom: 30px;">
+        <h3 style="color: var(--text); margin: 0 0 20px 0; border-bottom: 2px solid var(--border); padding-bottom: 10px;">السعر والوقت</h3>
+        
+        <div class="form-group" style="margin-bottom: 20px;">
+          <label style="display: block; margin-bottom: 8px; color: var(--text); font-weight: 600;">السعر</label>
+          {{ form.price }}
+        </div>
+        
+        <div class="form-group" style="margin-bottom: 20px;">
+          <label style="display: block; margin-bottom: 8px; color: var(--text); font-weight: 600;">وصف السعر</label>
+          {{ form.price_description }}
+        </div>
+        
+        <div class="form-group" style="margin-bottom: 20px;">
+          <label style="display: block; margin-bottom: 8px; color: var(--text); font-weight: 600;">وقت الإنجاز</label>
+          {{ form.completion_time }}
+        </div>
+      </div>
+
+      <div class="form-section" style="margin-bottom: 30px;">
+        <h3 style="color: var(--text); margin: 0 0 20px 0; border-bottom: 2px solid var(--border); padding-bottom: 10px;">التفاصيل</h3>
+        
+        <div class="form-group" style="margin-bottom: 20px;">
+          <label style="display: block; margin-bottom: 8px; color: var(--text); font-weight: 600;">ما يشمله العرض</label>
+          {{ form.includes }}
+        </div>
+        
+        <div class="form-group" style="margin-bottom: 20px;">
+          <label style="display: block; margin-bottom: 8px; color: var(--text); font-weight: 600;">المتطلبات</label>
+          {{ form.requirements }}
+        </div>
+      </div>
+
+      <div class="form-section" style="margin-bottom: 30px;">
+        <h3 style="color: var(--text); margin: 0 0 20px 0; border-bottom: 2px solid var(--border); padding-bottom: 10px;">الوسائط</h3>
+        
+        <div class="form-group" style="margin-bottom: 20px;">
+          <label style="display: block; margin-bottom: 8px; color: var(--text); font-weight: 600;">صورة الغلاف</label>
+          {{ form.cover_image }}
+        </div>
+        
+        <div class="form-group" style="margin-bottom: 20px;">
+          <label style="display: flex; align-items: center; gap: 10px; color: var(--text); font-weight: 600;">
+            {{ form.is_featured }}
+            <span>جعل الإعلان مميزاً</span>
+          </label>
+          <small style="color: var(--text-light);">الإعلانات المميزة تظهر أولاً في نتائج البحث</small>
+        </div>
+      </div>
+
+      <div class="form-actions" style="display: flex; gap: 15px; justify-content: flex-end;">
+        <button type="submit" class="btn btn-primary" style="background: var(--gradient-primary); color: white; border: none; padding: 12px 24px; border-radius: var(--radius); font-size: 1rem; font-weight: 600; cursor: pointer;">نشر الإعلان</button>
+        <a href="{% url 'service_provider_dashboard' %}" class="btn btn-outline" style="background: transparent; color: var(--text); border: 2px solid var(--border); padding: 12px 24px; border-radius: var(--radius); font-size: 1rem; font-weight: 600; cursor: pointer; text-decoration: none;">إلغاء</a>
+      </div>
+    </form>
+  </div>
+</div>
+
+<style>
+.form-control {
+  width: 100%;
+  padding: 12px 15px;
+  border: 2px solid var(--border);
+  border-radius: var(--radius);
+  background: white;
+  color: var(--text);
+  font-size: 1rem;
+}
+
+.form-control:focus {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(255, 107, 53, 0.1);
+}
+
+.btn-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 15px rgba(255, 107, 53, 0.3);
+}
+
+.btn-outline:hover {
+  border-color: var(--primary);
+  color: var(--primary);
+}
+</style>
+
+<!-- Leaflet JS -->
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://unpkg.com/leaflet-draw@1.0.4/dist/leaflet.draw.js"></script>
+
+<script>
+// Global variables for service map
+let mapService = null;
+let markerService = null;
+let drawnItemsService = null;
+let currentLayerService = 'osm';
+let isFullscreenService = false;
+
+// Initialize the service location preview map
+function initServiceMap() {
+    const lat = document.getElementById('latitude-input-service').value || 33.3152;
+    const lng = document.getElementById('longitude-input-service').value || 44.3661;
+    
+    if (mapService) {
+        mapService.remove();
+    }
+    
+    mapService = L.map('location-preview-map-service').setView([lat, lng], 13);
+    
+    // Default OpenStreetMap layer
+    updateMapLayer('service', 'osm');
+    
+    // Add draw control
+    drawnItemsService = new L.FeatureGroup();
+    mapService.addLayer(drawnItemsService);
+    
+    const drawControl = new L.Control.Draw({
+        draw: {
+            polygon: {
+                allowIntersection: false,
+                showArea: true
+            },
+            polyline: true,
+            rectangle: true,
+            circle: false,
+            marker: true,
+            circlemarker: false
+        },
+        edit: {
+            featureGroup: drawnItemsService,
+            remove: true
+        }
+    });
+    mapService.addControl(drawControl);
+    
+    // Handle draw events
+    mapService.on(L.Draw.Event.CREATED, function(event) {
+        const layer = event.layer;
+        drawnItemsService.addLayer(layer);
+        
+        if (event.layerType === 'marker') {
+            const latlng = layer.getLatLng();
+            document.getElementById('latitude-input-service').value = latlng.lat;
+            document.getElementById('longitude-input-service').value = latlng.lng;
+            
+            if (markerService) {
+                mapService.removeLayer(markerService);
+            }
+            markerService = layer;
+        }
+    });
+    
+    // Click on map to add marker
+    mapService.on('click', function(e) {
+        const lat = e.latlng.lat;
+        const lng = e.latlng.lng;
+        
+        document.getElementById('latitude-input-service').value = lat;
+        document.getElementById('longitude-input-service').value = lng;
+        
+        if (markerService) {
+            mapService.removeLayer(markerService);
+        }
+        
+        markerService = L.marker([lat, lng]).addTo(mapService);
+    });
+    
+    // Add initial marker if coordinates exist
+    if (document.getElementById('latitude-input-service').value && 
+        document.getElementById('longitude-input-service').value) {
+        markerService = L.marker([lat, lng]).addTo(mapService);
+    }
+}
+
+// Get GPS location for service
+function getLocationGPSService() {
+    if (!navigator.geolocation) {
+        alert('متصفحك لا يدعم تحديد الموقع الجغرافي');
+        return;
+    }
+    
+    const button = event.target;
+    button.disabled = true;
+    button.textContent = '⏳ جاري تحديد الموقع...';
+    
+    navigator.geolocation.getCurrentPosition(
+        function(position) {
+            const lat = position.coords.latitude;
+            const lng = position.coords.longitude;
+            
+            document.getElementById('latitude-input-service').value = lat;
+            document.getElementById('longitude-input-service').value = lng;
+            
+            if (mapService) {
+                mapService.setView([lat, lng], 16);
+                if (markerService) {
+                    mapService.removeLayer(markerService);
+                }
+                markerService = L.marker([lat, lng]).addTo(mapService);
+            }
+            
+            button.disabled = false;
+            button.textContent = '📍 GPS';
+            
+            alert('تم تحديد الموقع بنجاح!');
+        },
+        function(error) {
+            button.disabled = false;
+            button.textContent = '📍 GPS';
+            
+            let errorMessage = '';
+            switch(error.code) {
+                case error.PERMISSION_DENIED:
+                    errorMessage = 'تم رفض إذن الوصول للموقع. يرجى تفعيل خدمة الموقع في متصفحك والمحاولة مرة أخرى.';
+                    break;
+                case error.POSITION_UNAVAILABLE:
+                    errorMessage = 'معلومات الموقع غير متوفرة حالياً. يرجى المحاولة مرة أخرى.';
+                    break;
+                case error.TIMEOUT:
+                    errorMessage = 'انتهت مهلة تحديد الموقع. يرجى المحاولة مرة أخرى.';
+                    break;
+                default:
+                    errorMessage = 'حدث خطأ أثناء تحديد الموقع. يرجى المحاولة مرة أخرى.';
+            }
+            alert(errorMessage);
+        },
+        {
+            enableHighAccuracy: true,
+            timeout: 30000,
+            maximumAge: 0
+        }
+    );
+}
+
+// Change map layer
+function changeMapLayer(prefix, layerType) {
+    currentLayerService = layerType;
+    updateMapLayer(prefix, layerType);
+}
+
+function updateMapLayer(prefix, layerType) {
+    if (!mapService) return;
+    
+    // Remove all tile layers
+    mapService.eachLayer(function(layer) {
+        if (layer instanceof L.TileLayer) {
+            mapService.removeLayer(layer);
+        }
+    });
+    
+    let tileUrl = '';
+    let attribution = '';
+    
+    switch(layerType) {
+        case 'osm':
+            tileUrl = 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png';
+            attribution = '© OpenStreetMap contributors';
+            break;
+        case 'satellite':
+            tileUrl = 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}';
+            attribution = '© Esri';
+            break;
+        case 'terrain':
+            tileUrl = 'https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png';
+            attribution = '© OpenTopoMap';
+            break;
+        case 'dark':
+            tileUrl = 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png';
+            attribution = '© CartoDB';
+            break;
+        default:
+            tileUrl = 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png';
+            attribution = '© OpenStreetMap contributors';
+    }
+    
+    L.tileLayer(tileUrl, {
+        attribution: attribution,
+        maxZoom: 19
+    }).addTo(mapService);
+}
+
+// Toggle map fullscreen
+function toggleMapFullscreen(prefix) {
+    const mapContainer = document.getElementById('location-preview-map-service');
+    
+    if (!isFullscreenService) {
+        mapContainer.style.position = 'fixed';
+        mapContainer.style.top = '0';
+        mapContainer.style.left = '0';
+        mapContainer.style.width = '100vw';
+        mapContainer.style.height = '100vh';
+        mapContainer.style.zIndex = '9999';
+        isFullscreenService = true;
+    } else {
+        mapContainer.style.position = 'relative';
+        mapContainer.style.top = 'auto';
+        mapContainer.style.left = 'auto';
+        mapContainer.style.width = '100%';
+        mapContainer.style.height = '300px';
+        mapContainer.style.zIndex = '1';
+        isFullscreenService = false;
+    }
+    
+    if (mapService) {
+        setTimeout(() => {
+            mapService.invalidateSize();
+        }, 100);
+    }
+}
+
+// Initialize map when page loads
+document.addEventListener('DOMContentLoaded', function() {
+    initServiceMap();
+    
+    // Update map when coordinates change manually
+    document.getElementById('latitude-input-service').addEventListener('change', function() {
+        const lat = parseFloat(this.value);
+        const lng = parseFloat(document.getElementById('longitude-input-service').value);
+        
+        if (lat && lng && mapService) {
+            mapService.setView([lat, lng], 16);
+            if (markerService) {
+                mapService.removeLayer(markerService);
+            }
+            markerService = L.marker([lat, lng]).addTo(mapService);
+        }
+    });
+    
+    document.getElementById('longitude-input-service').addEventListener('change', function() {
+        const lng = parseFloat(this.value);
+        const lat = parseFloat(document.getElementById('latitude-input-service').value);
+        
+        if (lat && lng && mapService) {
+            mapService.setView([lat, lng], 16);
+            if (markerService) {
+                mapService.removeLayer(markerService);
+            }
+            markerService = L.marker([lat, lng]).addTo(mapService);
+        }
+    });
+});
+</script>
+{% endblock %}

@@ -1,0 +1,362 @@
+{% extends 'properties/base.html' %}
+{% load static %}
+
+{% block title %}محادثة مع {{ conversation.broker.user.username }} | دلال{% endblock %}
+
+{% block extra_css %}
+<style>
+.chat-container {
+    background: var(--bg-primary, #0B0B0B);
+    min-height: calc(100vh - var(--header-height, 72px));
+    display: flex;
+    flex-direction: column;
+}
+
+.chat-header {
+    background: var(--card-bg, #161616);
+    border: 1px solid var(--border-primary, rgba(255, 122, 0, 0.15));
+    border-radius: var(--radius-lg, 16px);
+    padding: 1.5rem;
+    margin: 2rem 2rem 1rem 2rem;
+    box-shadow: var(--shadow-lg, 0 10px 15px rgba(0, 0, 0, 0.5));
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.broker-avatar {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    background: var(--bg-secondary, #1a1a1a);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    border: 2px solid var(--primary, #FF7A00);
+}
+
+.broker-info {
+    flex: 1;
+}
+
+.broker-name {
+    color: var(--text-primary, #FFFFFF);
+    font-size: 1.2rem;
+    font-weight: 600;
+    margin: 0;
+}
+
+.broker-office {
+    color: var(--text-muted, rgba(255, 255, 255, 0.7));
+    font-size: 0.9rem;
+    margin: 0.25rem 0 0 0;
+}
+
+.chat-status {
+    background: rgba(34, 197, 94, 0.2);
+    color: #22c55e;
+    padding: 0.25rem 0.75rem;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    font-weight: 600;
+}
+
+.chat-messages {
+    flex: 1;
+    margin: 0 2rem;
+    background: var(--card-bg, #161616);
+    border: 1px solid var(--border-primary, rgba(255, 122, 0, 0.15));
+    border-radius: var(--radius-lg, 16px);
+    padding: 1.5rem;
+    overflow-y: auto;
+    max-height: 500px;
+    box-shadow: var(--shadow-lg, 0 10px 15px rgba(0, 0, 0, 0.5));
+}
+
+.message {
+    margin-bottom: 1rem;
+    display: flex;
+    flex-direction: column;
+}
+
+.message.sent {
+    align-items: flex-end;
+}
+
+.message.received {
+    align-items: flex-start;
+}
+
+.message-content {
+    max-width: 70%;
+    padding: 1rem;
+    border-radius: var(--radius-lg, 16px);
+    position: relative;
+}
+
+.message.sent .message-content {
+    background: var(--primary, #FF7A00);
+    color: white;
+}
+
+.message.received .message-content {
+    background: var(--bg-secondary, #1a1a1a);
+    color: var(--text-primary, #FFFFFF);
+    border: 1px solid var(--border-primary, rgba(255, 122, 0, 0.15));
+}
+
+.message-text {
+    word-wrap: break-word;
+    line-height: 1.4;
+}
+
+.message-image {
+    max-width: 100%;
+    border-radius: var(--radius-sm, 8px);
+    margin-top: 0.5rem;
+}
+
+.message-time {
+    font-size: 0.75rem;
+    color: var(--text-muted, rgba(255, 255, 255, 0.5));
+    margin-top: 0.25rem;
+}
+
+.message-sender {
+    font-size: 0.8rem;
+    color: var(--text-muted, rgba(255, 255, 255, 0.7));
+    margin-bottom: 0.25rem;
+}
+
+.chat-input-area {
+    background: var(--card-bg, #161616);
+    border: 1px solid var(--border-primary, rgba(255, 122, 0, 0.15));
+    border-radius: var(--radius-lg, 16px);
+    padding: 1.5rem;
+    margin: 1rem 2rem 2rem 2rem;
+    box-shadow: var(--shadow-lg, 0 10px 15px rgba(0, 0, 0, 0.5));
+}
+
+.chat-form {
+    display: flex;
+    gap: 1rem;
+    align-items: flex-end;
+}
+
+.message-input {
+    flex: 1;
+    background: var(--bg-secondary, #1a1a1a);
+    border: 1px solid var(--border-primary, rgba(255, 122, 0, 0.15));
+    border-radius: var(--radius-sm, 8px);
+    color: var(--text-primary, #FFFFFF);
+    padding: 0.75rem 1rem;
+    resize: none;
+    min-height: 50px;
+}
+
+.message-input:focus {
+    outline: none;
+    border-color: var(--primary, #FF7A00);
+    box-shadow: 0 0 0 3px rgba(255, 122, 0, 0.2);
+}
+
+.send-button {
+    background: var(--primary, #FF7A00);
+    border-color: var(--primary, #FF7A00);
+    color: white;
+    padding: 0.75rem 1.5rem;
+    border-radius: var(--radius-sm, 8px);
+    font-weight: 600;
+    transition: all 0.3s ease;
+    min-height: 50px;
+}
+
+.send-button:hover {
+    background: #ff9500;
+    border-color: #ff9500;
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(255, 122, 0, 0.3);
+}
+
+.attach-button {
+    background: var(--bg-secondary, #1a1a1a);
+    border: 1px solid var(--border-primary, rgba(255, 122, 0, 0.15));
+    color: var(--text-primary, #FFFFFF);
+    padding: 0.75rem 1rem;
+    border-radius: var(--radius-sm, 8px);
+    transition: all 0.3s ease;
+    min-height: 50px;
+}
+
+.attach-button:hover {
+    border-color: var(--primary, #FF7A00);
+}
+
+.expiry-info {
+    background: rgba(255, 122, 0, 0.1);
+    border: 1px solid rgba(255, 122, 0, 0.3);
+    color: #FF7A00;
+    padding: 0.75rem;
+    border-radius: var(--radius-sm, 8px);
+    margin: 0 2rem 1rem 2rem;
+    text-align: center;
+    font-size: 0.9rem;
+}
+
+.back-button {
+    background: var(--bg-secondary, #1a1a1a);
+    border: 1px solid var(--border-primary, rgba(255, 122, 0, 0.15));
+    color: var(--text-primary, #FFFFFF);
+    padding: 0.5rem 1rem;
+    border-radius: var(--radius-sm, 8px);
+    text-decoration: none;
+    transition: all 0.3s ease;
+}
+
+.back-button:hover {
+    border-color: var(--primary, #FF7A00);
+}
+
+@media (max-width: 768px) {
+    .chat-header,
+    .chat-messages,
+    .chat-input-area,
+    .expiry-info {
+        margin-left: 1rem;
+        margin-right: 1rem;
+    }
+
+    .message-content {
+        max-width: 85%;
+    }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="chat-container">
+    <div class="chat-header">
+        <a href="{% url 'broker_conversation_list' %}" class="back-button">
+            <i class="fas fa-arrow-right"></i>
+        </a>
+        <div class="broker-avatar">
+            {% if conversation.broker.profile_image %}
+                <img src="{{ conversation.broker.profile_image.url }}" alt="{{ conversation.broker.user.username }}" style="width: 100%; height: 100%; border-radius: 50%; object-fit: cover;">
+            {% else %}
+                <i class="fas fa-user"></i>
+            {% endif %}
+        </div>
+        <div class="broker-info">
+            <h3 class="broker-name">{{ conversation.broker.user.username }}</h3>
+            <p class="broker-office">{{ conversation.broker.office_name|default:"دلال" }}</p>
+        </div>
+        {% if conversation.is_active %}
+            <span class="chat-status">نشط</span>
+        {% else %}
+            <span class="chat-status" style="background: rgba(255, 122, 0, 0.2); color: #FF7A00;">منتهي</span>
+        {% endif %}
+    </div>
+    
+    <div class="expiry-info">
+        <i class="fas fa-clock"></i>
+        تنتهي المحادثة: {{ conversation.expires_at|date:"Y-m-d H:i" }}
+    </div>
+    
+    <div class="chat-messages" id="chat-messages">
+        {% for message in messages %}
+            <div class="message {% if message.sender == request.user %}sent{% else %}received{% endif %}">
+                {% if message.sender != request.user %}
+                    <div class="message-sender">{{ message.sender.username }}</div>
+                {% endif %}
+                <div class="message-content">
+                    {% if message.message_type == 'text' %}
+                        <div class="message-text">{{ message.content }}</div>
+                    {% elif message.message_type == 'image' and message.image %}
+                        <img src="{{ message.image.url }}" alt="صورة" class="message-image">
+                    {% elif message.message_type == 'file' and message.file %}
+                        <a href="{{ message.file.url }}" class="message-text" target="_blank">
+                            <i class="fas fa-file"></i> {{ message.file.name }}
+                        </a>
+                    {% elif message.message_type == 'property' and message.property_ref %}
+                        <div class="message-text">
+                            <i class="fas fa-home"></i>
+                            <a href="{% url 'property_detail' message.property_ref.id %}" target="_blank">
+                                {{ message.property_ref.title }}
+                            </a>
+                        </div>
+                    {% endif %}
+                    <div class="message-time">
+                        {{ message.created_at|date:"H:i" }}
+                        {% if message.is_read %}
+                            <i class="fas fa-check-double"></i>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        {% empty %}
+            <div style="text-align: center; color: var(--text-muted, rgba(255, 255, 255, 0.5)); padding: 2rem;">
+                <i class="fas fa-comments" style="font-size: 2rem; margin-bottom: 1rem;"></i>
+                <p>ابدأ المحادثة بإرسال رسالة</p>
+            </div>
+        {% endfor %}
+    </div>
+    
+    {% if conversation.is_active %}
+        <div class="chat-input-area">
+            <form method="post" class="chat-form" enctype="multipart/form-data">
+                {% csrf_token %}
+                <button type="button" class="attach-button" onclick="document.getElementById('image-input').click()">
+                    <i class="fas fa-image"></i>
+                </button>
+                <input type="file" id="image-input" name="image" accept="image/*" style="display: none;" onchange="previewImage(this)">
+                
+                <button type="button" class="attach-button" onclick="document.getElementById('file-input').click()">
+                    <i class="fas fa-paperclip"></i>
+                </button>
+                <input type="file" id="file-input" name="file" style="display: none;">
+                
+                {{ form.content }}
+                {{ form.message_type }}
+                {{ form.property_ref }}
+                
+                <button type="submit" class="send-button">
+                    <i class="fas fa-paper-plane"></i>
+                </button>
+            </form>
+        </div>
+    {% else %}
+        <div style="text-align: center; padding: 2rem; color: var(--text-muted, rgba(255, 255, 255, 0.7));">
+            <i class="fas fa-lock" style="font-size: 2rem; margin-bottom: 1rem;"></i>
+            <p>المحادثة منتهية الصلاحية</p>
+        </div>
+    {% endif %}
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Scroll to bottom of messages
+    const chatMessages = document.getElementById('chat-messages');
+    if (chatMessages) {
+        chatMessages.scrollTop = chatMessages.scrollHeight;
+    }
+    
+    // Auto-refresh messages every 30 seconds
+    setInterval(function() {
+        if ({{ conversation.is_active|lower }}) {
+            location.reload();
+        }
+    }, 30000);
+});
+
+function previewImage(input) {
+    if (input.files && input.files[0]) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            // You can add image preview logic here
+        };
+        reader.readAsDataURL(input.files[0]);
+    }
+}
+</script>
+{% endblock %}

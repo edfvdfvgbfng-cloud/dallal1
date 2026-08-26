@@ -1,0 +1,152 @@
+{% extends 'properties/base.html' %}
+
+{% block title %}المواعيد المحجوزة{% endblock %}
+
+{% block content %}
+<div class="container">
+  <div class="form-card" style="max-width: 1200px; margin: 40px auto;">
+    <div class="form-header" style="text-align: center; margin-bottom: 30px;">
+      <h1 style="font-size: 2rem; color: var(--text); margin: 0 0 10px 0;">📅 المواعيد المحجوزة</h1>
+      <p style="color: var(--text-light); margin: 0;">إدارة المواعيد المحجوزة معك</p>
+    </div>
+
+    <!-- Filter Section -->
+    <div style="margin-bottom: 30px; padding: 20px; background: var(--card-bg); border-radius: var(--radius); border: 1px solid var(--border);">
+      <form method="get" style="display: flex; gap: 15px; align-items: center; flex-wrap: wrap;">
+        <label style="color: var(--text); font-weight: 600;">تصفية حسب الحالة:</label>
+        <select name="status" class="form-control" style="flex: 1; max-width: 200px;">
+          <option value="">الكل</option>
+          <option value="pending" {% if status_filter == 'pending' %}selected{% endif %}>قيد الانتظار</option>
+          <option value="confirmed" {% if status_filter == 'confirmed' %}selected{% endif %}>مؤكد</option>
+          <option value="completed" {% if status_filter == 'completed' %}selected{% endif %}>مكتمل</option>
+          <option value="cancelled" {% if status_filter == 'cancelled' %}selected{% endif %}>ملغي</option>
+          <option value="no_show" {% if status_filter == 'no_show' %}selected{% endif %}>لم يحضر</option>
+        </select>
+        <button type="submit" class="btn btn-primary">تصفية</button>
+        <a href="{% url 'broker_appointments_list' %}" class="btn btn-outline">إعادة تعيين</a>
+      </form>
+    </div>
+
+    <!-- Appointments List -->
+    <div style="background: var(--card-bg); border-radius: var(--radius); border: 1px solid var(--border); overflow: hidden;">
+      {% if appointments %}
+        <table class="data-table" style="width: 100%; border-collapse: collapse;">
+          <thead>
+            <tr style="background: rgba(255, 122, 0, 0.1);">
+              <th style="padding: 15px; text-align: right; color: var(--text); border-bottom: 2px solid var(--border);">المستخدم</th>
+              <th style="padding: 15px; text-align: right; color: var(--text); border-bottom: 2px solid var(--border);">نوع الموعد</th>
+              <th style="padding: 15px; text-align: right; color: var(--text); border-bottom: 2px solid var(--border);">التاريخ</th>
+              <th style="padding: 15px; text-align: right; color: var(--text); border-bottom: 2px solid var(--border);">الوقت</th>
+              <th style="padding: 15px; text-align: right; color: var(--text); border-bottom: 2px solid var(--border);">الحالة</th>
+              <th style="padding: 15px; text-align: right; color: var(--text); border-bottom: 2px solid var(--border);">إجراءات</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for appointment in appointments %}
+            <tr style="border-bottom: 1px solid var(--border);">
+              <td style="padding: 15px; color: var(--text);">
+                <strong>{{ appointment.user.username }}</strong>
+                {% if appointment.user.email %}
+                <br><small style="color: var(--text-light);">{{ appointment.user.email }}</small>
+                {% endif %}
+              </td>
+              <td style="padding: 15px; color: var(--text);">
+                {{ appointment.get_appointment_type_display }}
+                {% if appointment.property %}
+                <br><small style="color: var(--text-light);">{{ appointment.property.display_title }}</small>
+                {% endif %}
+              </td>
+              <td style="padding: 15px; color: var(--text);">{{ appointment.appointment_date }}</td>
+              <td style="padding: 15px; color: var(--text);">{{ appointment.appointment_time }}</td>
+              <td style="padding: 15px;">
+                <span class="status-badge status-{{ appointment.status }}" style="padding: 4px 12px; border-radius: 20px; font-size: 0.85rem; font-weight: 600;">
+                  {{ appointment.get_status_display }}
+                </span>
+              </td>
+              <td style="padding: 15px;">
+                <a href="{% url 'broker_appointment_detail' appointment.id %}" class="btn btn-sm btn-primary">عرض التفاصيل</a>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+
+        <!-- Pagination -->
+        {% if appointments.has_other_pages %}
+        <div style="padding: 20px; text-align: center; border-top: 1px solid var(--border);">
+          <div style="display: inline-flex; gap: 10px;">
+            {% if appointments.has_previous %}
+            <a href="?page={{ appointments.previous_page_number }}{% if status_filter %}&status={{ status_filter }}{% endif %}" class="btn btn-outline">السابق</a>
+            {% endif %}
+            
+            <span style="padding: 10px 20px; color: var(--text);">
+              صفحة {{ appointments.number }} من {{ appointments.paginator.num_pages }}
+            </span>
+            
+            {% if appointments.has_next %}
+            <a href="?page={{ appointments.next_page_number }}{% if status_filter %}&status={{ status_filter }}{% endif %}" class="btn btn-outline">التالي</a>
+            {% endif %}
+          </div>
+        </div>
+        {% endif %}
+      {% else %}
+        <div style="text-align: center; padding: 60px 20px; color: var(--text-light);">
+          <div style="font-size: 4rem; margin-bottom: 16px; opacity: 0.5;">📅</div>
+          <h3 style="font-size: 1.5rem; margin: 0 0 8px 0; color: var(--text);">لا توجد مواعيد</h3>
+          <p>لم يتم حجز أي مواعيد معك بعد</p>
+        </div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+
+<style>
+.form-control {
+  padding: 12px 15px;
+  border: 2px solid var(--border);
+  border-radius: var(--radius);
+  background: white;
+  color: var(--text);
+  font-size: 1rem;
+}
+
+.btn-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 15px rgba(255, 107, 53, 0.3);
+}
+
+.btn-outline:hover {
+  border-color: var(--primary);
+  color: var(--primary);
+}
+
+.status-badge {
+  display: inline-block;
+}
+
+.status-badge.status-pending {
+  background: rgba(255, 152, 0, 0.2);
+  color: #ff9800;
+}
+
+.status-badge.status-confirmed {
+  background: rgba(76, 175, 80, 0.2);
+  color: #4caf50;
+}
+
+.status-badge.status-completed {
+  background: rgba(33, 150, 243, 0.2);
+  color: #2196f3;
+}
+
+.status-badge.status-cancelled {
+  background: rgba(244, 67, 54, 0.2);
+  color: #f44336;
+}
+
+.status-badge.status-no_show {
+  background: rgba(158, 158, 158, 0.2);
+  color: #9e9e9e;
+}
+</style>
+{% endblock %}

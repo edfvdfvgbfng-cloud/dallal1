@@ -1,0 +1,322 @@
+{% extends 'properties/base.html' %}
+{% load custom_filters %}
+
+{% block title %}إعلانات البناء - دلال{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-lg-12">
+            <div class="page-header mb-4">
+                <h1 class="page-title">إعلانات البناء المستهدفة</h1>
+                <p class="page-subtitle">ابحث عن فرص البناء المثالية لمشروعك</p>
+            </div>
+            
+            <!-- Search and Filter Form -->
+            <div class="search-panel mb-4">
+                <form method="get" class="search-form">
+                    <div class="row">
+                        <div class="col-md-3">
+                            <div class="form-group">
+                                <label>بحث</label>
+                                <input type="text" name="q" class="form-control" placeholder="ابحث في الإعلانات..." value="{{ search_form.q.value|default:'' }}">
+                            </div>
+                        </div>
+                        <div class="col-md-2">
+                            <div class="form-group">
+                                <label>المحافظة</label>
+                                <select name="governorate" class="form-control">
+                                    <option value="">كل المحافظات</option>
+                                    {% for value, label in search_form.governorate.field.choices %}
+                                        {% if value != '' %}
+                                            <option value="{{ value }}" {% if search_form.governorate.value == value %}selected{% endif %}>{{ label }}</option>
+                                        {% endif %}
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-2">
+                            <div class="form-group">
+                                <label>نوع العقار</label>
+                                <select name="property_type" class="form-control">
+                                    <option value="">كل الأنواع</option>
+                                    <option value="house" {% if search_form.property_type.value == 'house' %}selected{% endif %}>بيت</option>
+                                    <option value="apartment" {% if search_form.property_type.value == 'apartment' %}selected{% endif %}>شقة</option>
+                                    <option value="villa" {% if search_form.property_type.value == 'villa' %}selected{% endif %}>فيلا</option>
+                                    <option value="building" {% if search_form.property_type.value == 'building' %}selected{% endif %}>بناية</option>
+                                    <option value="commercial" {% if search_form.property_type.value == 'commercial' %}selected{% endif %}>تجاري</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-2">
+                            <div class="form-group">
+                                <label>نوع الإعلان</label>
+                                <select name="ad_type" class="form-control">
+                                    <option value="">كل الأنواع</option>
+                                    <option value="general" {% if search_form.ad_type.value == 'general' %}selected{% endif %}>عام</option>
+                                    <option value="specific" {% if search_form.ad_type.value == 'specific' %}selected{% endif %}>محدد</option>
+                                    <option value="urgent" {% if search_form.ad_type.value == 'urgent' %}selected{% endif %}>عاجل</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-2">
+                            <div class="form-group">
+                                <label>الترتيب</label>
+                                <select name="sort" class="form-control">
+                                    <option value="newest" {% if search_form.sort.value == 'newest' %}selected{% endif %}>الأحدث</option>
+                                    <option value="budget_asc" {% if search_form.sort.value == 'budget_asc' %}selected{% endif %}>الميزانية من الأقل للأعلى</option>
+                                    <option value="budget_desc" {% if search_form.sort.value == 'budget_desc' %}selected{% endif %}>الميزانية من الأعلى للأقل</option>
+                                    <option value="popular" {% if search_form.sort.value == 'popular' %}selected{% endif %}>الأكثر مشاهدة</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-1">
+                            <div class="form-group">
+                                <label>&nbsp;</label>
+                                <button type="submit" class="btn btn-primary w-100">بحث</button>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            
+            <!-- Create Advertisement Button -->
+            {% if user.is_authenticated %}
+            <div class="text-center mb-4">
+                <a href="{% url 'create_advertisement' %}" class="btn btn-success">
+                    <i class="fas fa-plus-circle"></i> إنشاء إعلان بناء جديد
+                </a>
+            </div>
+            {% endif %}
+            
+            <!-- Advertisements Grid -->
+            <div class="advertisements-grid">
+                {% if advertisements %}
+                    <div class="row">
+                        {% for ad in advertisements %}
+                        <div class="col-lg-4 col-md-6 mb-4">
+                            <div class="ad-card {% if ad.is_featured %}featured{% endif %}">
+                                <div class="ad-header">
+                                    <span class="ad-type">{{ ad.get_ad_type_display }}</span>
+                                    {% if ad.is_featured %}
+                                    <span class="featured-badge">
+                                        <i class="fas fa-star"></i> مميز
+                                    </span>
+                                    {% endif %}
+                                </div>
+                                <div class="ad-body">
+                                    <h3 class="ad-title">{{ ad.title }}</h3>
+                                    <p class="ad-description">{{ ad.description|truncatewords:20 }}</p>
+                                    
+                                    <div class="ad-details">
+                                        <div class="detail-item">
+                                            <i class="fas fa-building"></i>
+                                            <span>{{ ad.get_property_type_display }}</span>
+                                        </div>
+                                        <div class="detail-item">
+                                            <i class="fas fa-map-marker-alt"></i>
+                                            <span>{{ ad.get_governorate_display }}</span>
+                                        </div>
+                                        <div class="detail-item">
+                                            <i class="fas fa-coins"></i>
+                                            <span>{{ ad.min_budget|number_format }} - {{ ad.max_budget|number_format }} د.ع</span>
+                                        </div>
+                                        <div class="detail-item">
+                                            <i class="fas fa-ruler-combined"></i>
+                                            <span>{{ ad.estimated_area }} م²</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="ad-footer">
+                                    <div class="ad-stats">
+                                        <span><i class="fas fa-eye"></i> {{ ad.views_count }}</span>
+                                        <span><i class="fas fa-comments"></i> {{ ad.responses_count }}</span>
+                                    </div>
+                                    <a href="{% url 'advertisement_detail' ad.id %}" class="btn btn-primary btn-sm">
+                                        عرض التفاصيل
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    
+                    <!-- Pagination -->
+                    {% if advertisements.has_other_pages %}
+                    <div class="pagination-container text-center">
+                        <nav>
+                            <ul class="pagination">
+                                {% if advertisements.has_previous %}
+                                    <li class="page-item">
+                                        <a class="page-link" href="?page={{ advertisements.previous_page_number }}">السابق</a>
+                                    </li>
+                                {% endif %}
+                                
+                                {% for num in advertisements.paginator.page_range %}
+                                    {% if advertisements.number == num %}
+                                        <li class="page-item active">
+                                            <span class="page-link">{{ num }}</span>
+                                        </li>
+                                    {% else %}
+                                        <li class="page-item">
+                                            <a class="page-link" href="?page={{ num }}">{{ num }}</a>
+                                        </li>
+                                    {% endif %}
+                                {% endfor %}
+                                
+                                {% if advertisements.has_next %}
+                                    <li class="page-item">
+                                        <a class="page-link" href="?page={{ advertisements.next_page_number }}">التالي</a>
+                                    </li>
+                                {% endif %}
+                            </ul>
+                        </nav>
+                    </div>
+                    {% endif %}
+                {% else %}
+                    <div class="empty-state text-center py-5">
+                        <i class="fas fa-search fa-3x text-muted mb-3"></i>
+                        <h3>لا توجد إعلانات</h3>
+                        <p class="text-muted">لم يتم العثور على إعلانات تطابق بحثك</p>
+                        {% if user.is_authenticated %}
+                        <a href="{% url 'create_advertisement' %}" class="btn btn-primary mt-3">
+                            إنشاء إعلان جديد
+                        </a>
+                        {% endif %}
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+.search-panel {
+    background: white;
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+}
+
+.search-form .form-group label {
+    font-weight: 600;
+    margin-bottom: 5px;
+}
+
+.advertisements-grid {
+    margin-top: 20px;
+}
+
+.ad-card {
+    background: white;
+    border-radius: 10px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    overflow: hidden;
+    transition: transform 0.3s, box-shadow 0.3s;
+}
+
+.ad-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 5px 20px rgba(0,0,0,0.15);
+}
+
+.ad-card.featured {
+    border: 2px solid #ffc107;
+}
+
+.ad-header {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 15px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.ad-type {
+    background: rgba(255,255,255,0.2);
+    padding: 5px 10px;
+    border-radius: 20px;
+    font-size: 0.9em;
+}
+
+.featured-badge {
+    background: #ffc107;
+    color: #333;
+    padding: 5px 10px;
+    border-radius: 20px;
+    font-size: 0.9em;
+    font-weight: 600;
+}
+
+.ad-body {
+    padding: 20px;
+}
+
+.ad-title {
+    font-size: 1.2em;
+    font-weight: 600;
+    margin-bottom: 10px;
+    color: #333;
+}
+
+.ad-description {
+    color: #666;
+    margin-bottom: 15px;
+    line-height: 1.5;
+}
+
+.ad-details {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-bottom: 15px;
+}
+
+.detail-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.9em;
+    color: #555;
+}
+
+.detail-item i {
+    color: #667eea;
+}
+
+.ad-footer {
+    background: #f8f9fa;
+    padding: 15px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.ad-stats {
+    display: flex;
+    gap: 15px;
+    font-size: 0.9em;
+    color: #666;
+}
+
+.ad-stats span {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.empty-state {
+    background: white;
+    border-radius: 10px;
+    padding: 40px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+}
+
+.pagination-container {
+    margin-top: 30px;
+}
+</style>
+{% endblock %}

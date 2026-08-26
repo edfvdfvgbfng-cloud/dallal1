@@ -1,0 +1,127 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ company.name }} - دلال{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <!-- Company Header -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <div class="row align-items-center">
+                <div class="col-md-2">
+                    {% if company.logo %}
+                    <img src="{{ company.logo.url }}" alt="{{ company.name }}" class="img-fluid rounded">
+                    {% else %}
+                    <div class="text-center text-muted">
+                        <i class="fas fa-building fa-3x"></i>
+                    </div>
+                    {% endif %}
+                </div>
+                <div class="col-md-10">
+                    <h1 class="mb-2">{{ company.name }}</h1>
+                    {% if company.name_en %}
+                    <p class="text-muted mb-2">{{ company.name_en }}</p>
+                    {% endif %}
+                    <p class="mb-2">{{ company.description }}</p>
+                    <div class="d-flex align-items-center gap-3">
+                        <span class="badge bg-warning">
+                            <i class="fas fa-star"></i> {{ company.rating|floatformat:1 }}
+                        </span>
+                        <span class="text-muted">{{ company.reviews_count }} تقييم</span>
+                        {% if company.is_verified %}
+                        <span class="badge bg-success">موثقة</span>
+                        {% endif %}
+                        {% if company.is_featured %}
+                        <span class="badge bg-primary">مميزة</span>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Company Info -->
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">معلومات الاتصال</h5>
+                    <p><i class="fas fa-phone"></i> {{ company.phone }}</p>
+                    {% if company.whatsapp %}
+                    <p><i class="fab fa-whatsapp"></i> {{ company.whatsapp }}</p>
+                    {% endif %}
+                    <p><i class="fas fa-envelope"></i> {{ company.email }}</p>
+                    {% if company.website %}
+                    <p><i class="fas fa-globe"></i> <a href="{{ company.website }}" target="_blank">{{ company.website }}</a></p>
+                    {% endif %}
+                    <p><i class="fas fa-map-marker-alt"></i> {{ company.address }}, {{ company.city }}</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">تفاصيل الشركة</h5>
+                    <p><strong>نوع الشركة:</strong> {{ company.get_company_type_display }}</p>
+                    <p><strong>نطاق السفر:</strong> {{ company.get_travel_scope_display }}</p>
+                    <p><strong>نوع السفر:</strong> {{ company.get_travel_type_display }}</p>
+                    {% if company.departure_time %}
+                    <p><strong>وقت الانطلاق:</strong> {{ company.departure_time }}</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Travel Packages -->
+    <div class="card">
+        <div class="card-body">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h3 class="card-title mb-0">رحلات السفر</h3>
+                <a href="{% url 'travel_package_create' company.id %}" class="btn btn-primary">
+                    <i class="fas fa-plus"></i> إضافة رحلة
+                </a>
+            </div>
+            
+            {% if packages %}
+            <div class="row">
+                {% for package in packages %}
+                <div class="col-md-4 mb-4">
+                    <div class="card h-100">
+                        {% if package.cover_image %}
+                        <img src="{{ package.cover_image.url }}" alt="{{ package.title }}" class="card-img-top" style="height: 200px; object-fit: cover;">
+                        {% endif %}
+                        <div class="card-body">
+                            <h5 class="card-title">{{ package.title }}</h5>
+                            <p class="card-text text-muted">{{ package.destination }}</p>
+                            <p class="card-text">
+                                <strong>السعر:</strong> {{ package.price }} {{ package.price_currency }}
+                                {% if package.discount_price %}
+                                <span class="badge bg-danger">{{ package.discount_percentage }}% خصم</span>
+                                {% endif %}
+                            </p>
+                            <p class="card-text">
+                                <i class="fas fa-calendar"></i> {{ package.departure_date|date:"Y-m-d" }}
+                            </p>
+                            <p class="card-text">
+                                <i class="fas fa-users"></i> {{ package.available_seats }}/{{ package.max_participants }} مقاعد متاحة
+                            </p>
+                            <a href="{% url 'travel_package_detail' package.pk package.slug %}" class="btn btn-primary w-100">
+                                التفاصيل والحجز
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <div class="text-center py-5">
+                <i class="fas fa-plane fa-3x text-muted mb-3"></i>
+                <p class="text-muted">لا توجد رحلات حالياً</p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

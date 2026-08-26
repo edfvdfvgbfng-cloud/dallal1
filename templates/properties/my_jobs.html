@@ -1,0 +1,113 @@
+{% extends 'properties/base.html' %}
+
+{% block title %}فرص العمل المنشورة - دلال{% endblock %}
+
+{% block content %}
+<div class="container" style="padding: 40px 20px;">
+    <div class="page-header" style="text-align: center; margin-bottom: 40px;">
+        <h1 style="font-size: 32px; margin-bottom: 10px;">💼 فرص العمل المنشورة</h1>
+        <p style="color: rgba(255,255,255,0.7);">إدارة فرص العمل التي نشرتها</p>
+    </div>
+
+    <div class="actions-bar" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; flex-wrap: wrap; gap: 15px;">
+        <a href="{% url 'job_create' %}" 
+           style="padding: 12px 24px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border: none; border-radius: 8px; color: white; text-decoration: none;">
+            ➕ نشر فرصة عمل جديدة
+        </a>
+        <a href="{% url 'dashboard' %}" 
+           style="padding: 12px 24px; background: rgba(255,255,255,0.1); border: none; border-radius: 8px; color: white; text-decoration: none;">
+            ← العودة للوحة التحكم
+        </a>
+    </div>
+
+    <div class="jobs-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(350px, 1fr)); gap: 25px;">
+        {% for job in jobs %}
+        <div class="job-card" style="background: rgba(255,255,255,0.05); border-radius: 12px; overflow: hidden; transition: transform 0.3s ease;">
+            {% if job.is_featured %}
+            <div style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); padding: 8px 15px; text-align: center;">
+                <span style="color: white; font-weight: bold;">⭐ مميز</span>
+            </div>
+            {% endif %}
+            
+            {% if job.is_urgent %}
+            <div style="background: linear-gradient(135deg, #ff6b6b 0%, #ee5a24 100%); padding: 8px 15px; text-align: center;">
+                <span style="color: white; font-weight: bold;">🔥 عاجل</span>
+            </div>
+            {% endif %}
+            
+            <div style="padding: 20px;">
+                <!-- Company Info -->
+                <div style="display: flex; align-items: center; gap: 15px; margin-bottom: 15px;">
+                    {% if job.company_logo %}
+                    <img src="{{ job.company_logo.url }}" alt="{{ job.company_name }}" style="width: 50px; height: 50px; border-radius: 50%; object-fit: cover;">
+                    {% else %}
+                    <div style="width: 50px; height: 50px; border-radius: 50%; background: rgba(255,255,255,0.1); display: flex; align-items: center; justify-content: center; font-size: 24px;">🏢</div>
+                    {% endif %}
+                    <div>
+                        <h3 style="font-size: 16px; margin: 0;">{{ job.company_name }}</h3>
+                        <p style="color: rgba(255,255,255,0.6); margin: 5px 0; font-size: 12px;">{{ job.get_job_type_display }}</p>
+                    </div>
+                </div>
+                
+                <!-- Job Title -->
+                <h4 style="font-size: 18px; margin-bottom: 15px;">💼 {{ job.job_title }}</h4>
+                
+                <!-- Job Details -->
+                <div style="margin-bottom: 15px;">
+                    <p style="color: rgba(255,255,255,0.7); margin: 5px 0;">📍 {% if job.location_type == 'inside_iraq' %}{{ job.governorate }}{% else %}{% if job.country %}{{ job.country.name_ar }}{% else %}{{ job.city }}{% endif %}{% endif %}</p>
+                    <p style="color: rgba(255,255,255,0.7); margin: 5px 0;">💰 {{ job.get_salary_range_display }}</p>
+                    <p style="color: rgba(255,255,255,0.7); margin: 5px 0;">🎓 {{ job.get_education_display }}</p>
+                    <p style="color: rgba(255,255,255,0.7); margin: 5px 0;">👨‍💼 {{ job.get_experience_display }}</p>
+                </div>
+                
+                <!-- Status -->
+                <div style="margin-bottom: 15px;">
+                    {% if job.is_active %}
+                    <span style="background: rgba(34, 197, 94, 0.2); color: #22C55E; padding: 5px 12px; border-radius: 20px; font-size: 12px;">✓ نشط</span>
+                    {% else %}
+                    <span style="background: rgba(239, 68, 68, 0.2); color: #EF4444; padding: 5px 12px; border-radius: 20px; font-size: 12px;">✗ غير نشط</span>
+                    {% endif %}
+                </div>
+                
+                <!-- Posted Time -->
+                <div style="margin-bottom: 15px;">
+                    <p style="color: rgba(255,255,255,0.5); font-size: 12px;">⏰ {{ job.created_at|date:"Y-m-d H:i" }}</p>
+                    <p style="color: rgba(255,255,255,0.5); font-size: 12px;">👁️ {{ job.views_count }} مشاهدة</p>
+                </div>
+                
+                <!-- Action Buttons -->
+                <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                    <a href="{% url 'job_detail' job.pk %}" 
+                       style="flex: 1; padding: 10px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border: none; border-radius: 8px; color: white; text-align: center; text-decoration: none; min-width: 100px;">
+                        📄 عرض
+                    </a>
+                    <a href="{% url 'job_edit' job.pk %}" 
+                       style="padding: 10px 20px; background: rgba(255,255,255,0.1); border: none; border-radius: 8px; color: white; text-align: center; text-decoration: none;">
+                        ✏️ تعديل
+                    </a>
+                    <a href="{% url 'job_delete' job.pk %}" 
+                       style="padding: 10px 20px; background: rgba(239, 68, 68, 0.2); border: none; border-radius: 8px; color: #EF4444; text-align: center; text-decoration: none;">
+                        🗑️ حذف
+                    </a>
+                </div>
+            </div>
+        </div>
+        {% empty %}
+        <div style="grid-column: 1 / -1; text-align: center; padding: 60px 20px;">
+            <p style="font-size: 18px; color: rgba(255,255,255,0.7); margin-bottom: 20px;">لم تقم بنشر أي فرص عمل بعد</p>
+            <a href="{% url 'job_create' %}" 
+               style="display: inline-block; padding: 15px 30px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border: none; border-radius: 8px; color: white; text-decoration: none;">
+                ➕ نشر أول فرصة عمل
+            </a>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+<style>
+.job-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+}
+</style>
+{% endblock %}

@@ -1,0 +1,36 @@
+# Force Railway rebuild - 2026-08-24-15-05 - Fix static files handling
+[phases.setup]
+nixPkgs = ["python312", "gcc", "pkg-config", "postgresql"]
+
+[phases.build]
+cmds = [
+    "pip install --upgrade pip",
+    "pip install -r requirements.txt",
+    "echo '=== Checking and preparing static files ==='",
+    "echo 'Creating static directory if not exists:'",
+    "mkdir -p static staticfiles logs media",
+    "echo '=== Running Django commands ==='",
+    "python manage.py makemigrations --noinput",
+    "python manage.py migrate --noinput",
+    "python manage.py collectstatic --noinput --clear",
+    "echo '=== Checking staticfiles after collectstatic ==='",
+    "ls -la staticfiles/",
+]
+
+[phases.start]
+cmd = "python run_server.py"
+
+[static]
+# Handle static files properly - use templates directory as fallback
+include = ["templates/**", "static/**", "staticfiles/**"]
+
+[variables]
+DEBUG = "False"
+PORT = "8080"
+PYTHONUNBUFFERED = "1"
+PYTHONPATH = "/app"
+DJANGO_SETTINGS_MODULE = "dalal_project.settings"
+ALLOW_SQLITE_FALLBACK = "False"
+GUNICORN_WORKERS = "2"
+GUNICORN_TIMEOUT = "120"
+GUNICORN_LOG_LEVEL = "debug"

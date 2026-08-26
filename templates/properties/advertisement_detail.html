@@ -1,0 +1,474 @@
+{% extends 'properties/base.html' %}
+{% load custom_filters %}
+
+{% block title %}{{ advertisement.title }} - دلال{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-lg-8">
+            <div class="advertisement-detail">
+                <div class="detail-header">
+                    <div class="header-content">
+                        <h1 class="ad-title">{{ advertisement.title }}</h1>
+                        <div class="ad-meta">
+                            <span class="meta-item">
+                                <i class="fas fa-user"></i>
+                                {{ advertisement.user.username }}
+                            </span>
+                            <span class="meta-item">
+                                <i class="fas fa-calendar"></i>
+                                {{ advertisement.created_at|date:"Y-m-d" }}
+                            </span>
+                            <span class="meta-item">
+                                <i class="fas fa-eye"></i>
+                                {{ advertisement.views_count }} مشاهدة
+                            </span>
+                            <span class="meta-item">
+                                <i class="fas fa-comments"></i>
+                                {{ advertisement.responses_count }} رد
+                            </span>
+                        </div>
+                    </div>
+                    <div class="header-actions">
+                        {% if is_owner %}
+                        <a href="{% url 'update_advertisement' advertisement.id %}" class="btn btn-secondary btn-sm">
+                            <i class="fas fa-edit"></i> تعديل
+                        </a>
+                        <a href="{% url 'delete_advertisement' advertisement.id %}" class="btn btn-danger btn-sm">
+                            <i class="fas fa-trash"></i> حذف
+                        </a>
+                        {% endif %}
+                    </div>
+                </div>
+                
+                <div class="detail-body">
+                    <div class="section">
+                        <h3>وصف المشروع</h3>
+                        <p>{{ advertisement.description }}</p>
+                    </div>
+                    
+                    <div class="section">
+                        <h3>تفاصيل المشروع</h3>
+                        <div class="project-details">
+                            <div class="detail-row">
+                                <span class="label">نوع المشروع:</span>
+                                <span class="value">{{ advertisement.project_type }}</span>
+                            </div>
+                            <div class="detail-row">
+                                <span class="label">نوع العقار المطلوب:</span>
+                                <span class="value">{{ advertisement.get_property_type_display }}</span>
+                            </div>
+                            <div class="detail-row">
+                                <span class="label">المساحة المقدرة:</span>
+                                <span class="value">{{ advertisement.estimated_area }} م²</span>
+                            </div>
+                            <div class="detail-row">
+                                <span class="label">المدة المتوقعة:</span>
+                                <span class="value">{{ advertisement.timeline_months }} أشهر</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="section">
+                        <h3>الموقع المفضل</h3>
+                        <div class="location-details">
+                            <div class="detail-row">
+                                <span class="label">المحافظة:</span>
+                                <span class="value">{{ advertisement.get_governorate_display }}</span>
+                            </div>
+                            {% if advertisement.city %}
+                            <div class="detail-row">
+                                <span class="label">المدينة:</span>
+                                <span class="value">{{ advertisement.city }}</span>
+                            </div>
+                            {% endif %}
+                            {% if advertisement.district %}
+                            <div class="detail-row">
+                                <span class="label">القضاء:</span>
+                                <span class="value">{{ advertisement.district }}</span>
+                            </div>
+                            {% endif %}
+                            {% if advertisement.area %}
+                            <div class="detail-row">
+                                <span class="label">المنطقة:</span>
+                                <span class="value">{{ advertisement.area }}</span>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <div class="section">
+                        <h3>الميزانية والجدول الزمني</h3>
+                        <div class="budget-details">
+                            <div class="detail-row">
+                                <span class="label">الحد الأدنى للميزانية:</span>
+                                <span class="value">{{ advertisement.min_budget|number_format }} د.ع</span>
+                            </div>
+                            <div class="detail-row">
+                                <span class="label">الحد الأقصى للميزانية:</span>
+                                <span class="value">{{ advertisement.max_budget|number_format }} د.ع</span>
+                            </div>
+                            <div class="detail-row">
+                                <span class="label">المدة المتوقعة:</span>
+                                <span class="value">{{ advertisement.timeline_months }} أشهر</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="section">
+                        <h3>طرق التواصل</h3>
+                        <div class="contact-details">
+                            <div class="detail-row">
+                                <span class="label">رقم الهاتف:</span>
+                                <span class="value">{{ advertisement.phone }}</span>
+                            </div>
+                            <div class="detail-row">
+                                <span class="label">البريد الإلكتروني:</span>
+                                <span class="value">{{ advertisement.email }}</span>
+                            </div>
+                            <div class="detail-row">
+                                <span class="label">طريقة التواصل المفضلة:</span>
+                                <span class="value">{{ advertisement.get_preferred_contact_method_display }}</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    {% if can_respond %}
+                    <div class="section action-section">
+                        <a href="{% url 'respond_to_advertisement' advertisement.id %}" class="btn btn-primary btn-lg">
+                            <i class="fas fa-reply"></i> الرد على هذا الإعلان
+                        </a>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <!-- Related Ads -->
+            {% if related_ads %}
+            <div class="related-ads mt-4">
+                <h3>إعلانات مشابهة</h3>
+                <div class="row">
+                    {% for ad in related_ads %}
+                    <div class="col-lg-6 mb-3">
+                        <div class="related-ad-card">
+                            <h4>{{ ad.title }}</h4>
+                            <p>{{ ad.description|truncatewords:15 }}</p>
+                            <div class="ad-details-mini">
+                                <span><i class="fas fa-map-marker-alt"></i> {{ ad.get_governorate_display }}</span>
+                                <span><i class="fas fa-coins"></i> {{ ad.min_budget|number_format }} د.ع</span>
+                            </div>
+                            <a href="{% url 'advertisement_detail' ad.id %}" class="btn btn-sm btn-outline-primary">عرض التفاصيل</a>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+        </div>
+        
+        <div class="col-lg-4">
+            <div class="sidebar">
+                <!-- Ad Owner Info -->
+                <div class="sidebar-card">
+                    <h3>معلومات المعلن</h3>
+                    <div class="owner-info">
+                        <div class="owner-avatar">
+                            <i class="fas fa-user-circle fa-3x"></i>
+                        </div>
+                        <div class="owner-details">
+                            <h4>{{ advertisement.user.username }}</h4>
+                            <p class="text-muted">ناشر إعلان</p>
+                        </div>
+                    </div>
+                    {% if can_respond %}
+                    <div class="owner-actions">
+                        <a href="{% url 'respond_to_advertisement' advertisement.id %}" class="btn btn-primary btn-block">
+                            <i class="fas fa-envelope"></i> إرسال رسالة
+                        </a>
+                    </div>
+                    {% endif %}
+                </div>
+                
+                <!-- Ad Statistics -->
+                <div class="sidebar-card">
+                    <h3>إحصائيات الإعلان</h3>
+                    <div class="stats-grid">
+                        <div class="stat-item">
+                            <div class="stat-value">{{ advertisement.views_count }}</div>
+                            <div class="stat-label">المشاهدات</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-value">{{ advertisement.responses_count }}</div>
+                            <div class="stat-label">الردود</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-value">{{ advertisement.matched_count }}</div>
+                            <div class="stat-label">المطابقات</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Ad Status -->
+                <div class="sidebar-card">
+                    <h3>حالة الإعلان</h3>
+                    <div class="status-info">
+                        <div class="status-row">
+                            <span class="status-label">الحالة:</span>
+                            <span class="status-value status-{{ advertisement.status }}">
+                                {{ advertisement.get_status_display }}
+                            </span>
+                        </div>
+                        <div class="status-row">
+                            <span class="status-label">نوع الإعلان:</span>
+                            <span class="status-value">{{ advertisement.get_ad_type_display }}</span>
+                        </div>
+                        {% if advertisement.expires_at %}
+                        <div class="status-row">
+                            <span class="status-label">تاريخ الانتهاء:</span>
+                            <span class="status-value">{{ advertisement.expires_at|date:"Y-m-d" }}</span>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+                
+                {% if is_owner %}
+                <!-- Owner Actions -->
+                <div class="sidebar-card">
+                    <h3>إجراءات المالك</h3>
+                    <div class="owner-actions-list">
+                        <a href="{% url 'advertisement_responses' advertisement.id %}" class="btn btn-outline-primary btn-block mb-2">
+                            <i class="fas fa-comments"></i> عرض الردود ({{ advertisement.responses_count }})
+                        </a>
+                        <a href="{% url 'advertisement_matches' advertisement.id %}" class="btn btn-outline-success btn-block mb-2">
+                            <i class="fas fa-search"></i> عرض المطابقات ({{ advertisement.matched_count }})
+                        </a>
+                        <a href="{% url 'update_advertisement' advertisement.id %}" class="btn btn-outline-secondary btn-block mb-2">
+                            <i class="fas fa-edit"></i> تعديل الإعلان
+                        </a>
+                        <a href="{% url 'delete_advertisement' advertisement.id %}" class="btn btn-outline-danger btn-block">
+                            <i class="fas fa-trash"></i> حذف الإعلان
+                        </a>
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+.advertisement-detail {
+    background: white;
+    border-radius: 10px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    overflow: hidden;
+}
+
+.detail-header {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.header-content h1 {
+    margin: 0;
+    font-size: 1.5em;
+}
+
+.ad-meta {
+    display: flex;
+    gap: 20px;
+    margin-top: 10px;
+    font-size: 0.9em;
+}
+
+.meta-item {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.detail-body {
+    padding: 20px;
+}
+
+.section {
+    margin-bottom: 30px;
+    padding-bottom: 20px;
+    border-bottom: 1px solid #eee;
+}
+
+.section:last-child {
+    border-bottom: none;
+}
+
+.section h3 {
+    color: #333;
+    margin-bottom: 15px;
+    font-size: 1.2em;
+}
+
+.project-details, .location-details, .budget-details, .contact-details {
+    display: grid;
+    gap: 15px;
+}
+
+.detail-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 10px;
+    background: #f8f9fa;
+    border-radius: 5px;
+}
+
+.detail-row .label {
+    font-weight: 600;
+    color: #555;
+}
+
+.detail-row .value {
+    color: #333;
+}
+
+.action-section {
+    text-align: center;
+    padding: 20px;
+    background: #f8f9fa;
+    border-radius: 10px;
+}
+
+.related-ads {
+    background: white;
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+}
+
+.related-ad-card {
+    background: #f8f9fa;
+    padding: 15px;
+    border-radius: 8px;
+    margin-bottom: 10px;
+}
+
+.related-ad-card h4 {
+    margin: 0 0 10px 0;
+    font-size: 1.1em;
+}
+
+.ad-details-mini {
+    display: flex;
+    gap: 15px;
+    margin: 10px 0;
+    font-size: 0.9em;
+    color: #666;
+}
+
+.sidebar {
+    position: sticky;
+    top: 20px;
+}
+
+.sidebar-card {
+    background: white;
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    margin-bottom: 20px;
+}
+
+.sidebar-card h3 {
+    margin-top: 0;
+    color: #333;
+    font-size: 1.1em;
+    border-bottom: 2px solid #667eea;
+    padding-bottom: 10px;
+}
+
+.owner-info {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    margin-bottom: 15px;
+}
+
+.owner-avatar {
+    color: #667eea;
+}
+
+.owner-details h4 {
+    margin: 0;
+    font-size: 1.1em;
+}
+
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+    text-align: center;
+}
+
+.stat-item {
+    padding: 10px;
+    background: #f8f9fa;
+    border-radius: 8px;
+}
+
+.stat-value {
+    font-size: 1.5em;
+    font-weight: 600;
+    color: #667eea;
+}
+
+.stat-label {
+    font-size: 0.8em;
+    color: #666;
+}
+
+.status-info {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.status-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 8px 0;
+    border-bottom: 1px solid #eee;
+}
+
+.status-label {
+    font-weight: 600;
+    color: #555;
+}
+
+.status-value {
+    color: #333;
+}
+
+.status-active {
+    color: #28a745;
+}
+
+.status-pending {
+    color: #ffc107;
+}
+
+.status-completed {
+    color: #17a2b8;
+}
+
+.owner-actions-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+</style>
+{% endblock %}

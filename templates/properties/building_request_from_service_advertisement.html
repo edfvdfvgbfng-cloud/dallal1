@@ -1,0 +1,195 @@
+{% extends 'properties/base.html' %}
+
+{% block title %}إنشاء طلب بناء من إعلان مقاول{% endblock %}
+
+{% block content %}
+<div class="container" style="max-width: 800px; margin: 40px auto; padding: 20px;">
+  <div class="card" style="padding: 30px; border-radius: 15px; box-shadow: 0 4px 20px rgba(0,0,0,0.1);">
+    <div style="text-align: center; margin-bottom: 30px;">
+      <h1 style="font-size: 2rem; font-weight: 800; margin-bottom: 10px;">🏗️ إنشاء طلب بناء من إعلان مقاول</h1>
+      <p style="color: var(--text-muted);">سيتم إنشاء طلب بناء مرتبط بإعلان المقاول: {{ service_ad.title }}</p>
+    </div>
+
+    {% if messages %}
+      {% for message in messages %}
+        <div class="alert alert-{{ message.tags }}" style="margin-bottom: 20px; padding: 15px; border-radius: 8px;">
+          {{ message }}
+        </div>
+      {% endfor %}
+    {% endif %}
+
+    <form method="post" class="building-request-form">
+      {% csrf_token %}
+      
+      <!-- Service Provider Info - Read Only -->
+      <div style="background: linear-gradient(135deg, rgba(17, 153, 142, 0.1) 0%, rgba(17, 153, 142, 0.05) 100%); padding: 25px; border-radius: 12px; margin-bottom: 30px; border: 2px solid rgba(17, 153, 142, 0.3);">
+        <h3 style="margin-bottom: 20px; color: #11998e; font-size: 1.3rem; font-weight: 700;">🏢 صاحب الخدمة المحدد</h3>
+        
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px;">
+          <div>
+            <label style="display: block; margin-bottom: 8px; font-weight: 600; color: #11998e;">اسم العمل</label>
+            <div style="padding: 12px; background: rgba(255,255,255,0.9); border-radius: 8px; border: 2px solid #11998e; font-weight: 700; font-size: 1.1rem;">
+              {{ service_provider.business_name }}
+            </div>
+          </div>
+          
+          <div>
+            <label style="display: block; margin-bottom: 8px; font-weight: 600; color: #11998e;">نوع الخدمة</label>
+            <div style="padding: 12px; background: rgba(255,255,255,0.9); border-radius: 8px; border: 2px solid #11998e; font-weight: 700; font-size: 1.1rem;">
+              {{ service_type }}
+            </div>
+          </div>
+          
+          <div>
+            <label style="display: block; margin-bottom: 8px; font-weight: 600; color: #11998e;">الهاتف</label>
+            <div style="padding: 12px; background: rgba(255,255,255,0.9); border-radius: 8px; border: 2px solid #11998e; font-weight: 700; font-size: 1.1rem;">
+              {% if service_provider.phone %}{{ service_provider.phone }}{% else %}غير محدد{% endif %}
+            </div>
+          </div>
+          
+          <div>
+            <label style="display: block; margin-bottom: 8px; font-weight: 600; color: #11998e;">المحافظة</label>
+            <div style="padding: 12px; background: rgba(255,255,255,0.9); border-radius: 8px; border: 2px solid #11998e; font-weight: 700; font-size: 1.1rem;">
+              {{ service_provider.get_governorate_display }}
+            </div>
+          </div>
+        </div>
+        
+        <div style="margin-top: 15px; padding: 12px; background: rgba(17, 153, 142, 0.2); border-radius: 8px; text-align: center; color: #11998e; font-weight: 600;">
+          ℹ️ سيتم إرسال هذا الطلب مباشرة إلى {{ service_provider.business_name }}
+        </div>
+      </div>
+      
+      <!-- Advertisement Info - Read Only -->
+      <div style="background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(102, 126, 234, 0.05) 100%); padding: 25px; border-radius: 12px; margin-bottom: 30px; border: 2px solid rgba(102, 126, 234, 0.3);">
+        <h3 style="margin-bottom: 20px; color: #667eea; font-size: 1.3rem; font-weight: 700;">📋 تفاصيل الإعلان</h3>
+        
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px;">
+          <div>
+            <label style="display: block; margin-bottom: 8px; font-weight: 600; color: #667eea;">عنوان الإعلان</label>
+            <div style="padding: 12px; background: rgba(255,255,255,0.9); border-radius: 8px; border: 2px solid #667eea; font-weight: 700; font-size: 1.1rem;">
+              {{ service_ad.title }}
+            </div>
+          </div>
+          
+          <div>
+            <label style="display: block; margin-bottom: 8px; font-weight: 600; color: #667eea;">السعر</label>
+            <div style="padding: 12px; background: rgba(255,255,255,0.9); border-radius: 8px; border: 2px solid #667eea; font-weight: 700; font-size: 1.1rem;">
+              {% if service_ad.price %}{{ service_ad.price }} د.ع{% else %}غير محدد{% endif %}
+            </div>
+          </div>
+          
+          <div>
+            <label style="display: block; margin-bottom: 8px; font-weight: 600; color: #667eea;">وقت الإنجاز</label>
+            <div style="padding: 12px; background: rgba(255,255,255,0.9); border-radius: 8px; border: 2px solid #667eea; font-weight: 700; font-size: 1.1rem;">
+              {{ service_ad.completion_time|default:"غير محدد" }}
+            </div>
+          </div>
+          
+          <div>
+            <label style="display: block; margin-bottom: 8px; font-weight: 600; color: #667eea;">الموقع</label>
+            <div style="padding: 12px; background: rgba(255,255,255,0.9); border-radius: 8px; border: 2px solid #667eea; font-weight: 700; font-size: 1.1rem;">
+              {{ service_ad.location|default:"غير محدد" }}
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <div class="form-section" style="margin-bottom: 30px;">
+        <h3 style="margin-bottom: 20px;">📍 معلومات المشروع</h3>
+        
+        <div class="form-group" style="margin-bottom: 20px;">
+          <label for="governorate" style="display: block; margin-bottom: 8px; font-weight: 600;">المحافظة *</label>
+          {{ form.governorate }}
+        </div>
+        
+        <div class="form-group" style="margin-bottom: 20px;">
+          <label for="city" style="display: block; margin-bottom: 8px; font-weight: 600;">المدينة *</label>
+          {{ form.city }}
+        </div>
+        
+        <div class="form-group" style="margin-bottom: 20px;">
+          <label for="project_type" style="display: block; margin-bottom: 8px; font-weight: 600;">نوع المشروع *</label>
+          {{ form.project_type }}
+        </div>
+        
+        <div class="form-group" style="margin-bottom: 20px;">
+          <label for="estimated_area" style="display: block; margin-bottom: 8px; font-weight: 600;">المساحة المقدرة (م²) *</label>
+          {{ form.estimated_area }}
+        </div>
+        
+        <div class="form-group" style="margin-bottom: 20px;">
+          <label for="estimated_budget" style="display: block; margin-bottom: 8px; font-weight: 600;">الميزانية المقدرة (د.ع)</label>
+          {{ form.estimated_budget }}
+        </div>
+      </div>
+      
+      <div class="form-section" style="margin-bottom: 30px;">
+        <h3 style="margin-bottom: 20px;">📝 التفاصيل</h3>
+        
+        <div class="form-group" style="margin-bottom: 20px;">
+          <label for="description" style="display: block; margin-bottom: 8px; font-weight: 600;">الوصف *</label>
+          {{ form.description }}
+        </div>
+        
+        <div class="form-group" style="margin-bottom: 20px;">
+          <label for="requirements" style="display: block; margin-bottom: 8px; font-weight: 600;">المتطلبات</label>
+          {{ form.requirements }}
+        </div>
+      </div>
+      
+      <div class="form-group" style="margin-bottom: 30px;">
+        <button type="submit" class="btn btn-primary btn-lg" style="width: 100%; padding: 15px; font-size: 1.1rem;">
+          🏗️ إنشاء طلب البناء
+        </button>
+      </div>
+      
+      <div style="text-align: center;">
+        <a href="{% url 'public_service_advertisements' %}" style="color: var(--text-muted); text-decoration: none;">
+          ← العودة إلى إعلانات الخدمات
+        </a>
+      </div>
+    </form>
+  </div>
+</div>
+
+<style>
+.form-group input,
+.form-group select,
+.form-group textarea {
+  width: 100%;
+  padding: 12px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  font-size: 1rem;
+  background: var(--card-bg);
+  color: var(--text);
+}
+
+.form-group textarea {
+  min-height: 120px;
+  resize: vertical;
+}
+
+.form-section {
+  padding: 20px;
+  background: var(--card-bg);
+  border-radius: 10px;
+  border: 1px solid var(--border);
+}
+
+.btn-primary {
+  background: linear-gradient(135deg, #ff8c00 0%, #ff6600 100%);
+  border: none;
+  color: white;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+.btn-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 15px rgba(255, 140, 0, 0.3);
+}
+</style>
+{% endblock %}

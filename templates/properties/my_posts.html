@@ -1,0 +1,717 @@
+{% extends 'properties/dashboard_base.html' %}
+{% load static %}
+
+{% block title %}منشوراتي{% endblock %}
+
+{% block dashboard_title %}منشوراتي{% endblock %}
+
+{% block dashboard_subtitle %}
+<p style="margin:4px 0 0;color:var(--text-muted);font-size:0.9rem;">
+  إدارة جميع منشوراتك ومتابعة الوقت المتبقي لكل منشور
+</p>
+{% endblock %}
+
+{% block dashboard_actions %}
+<a href="{% url 'dynamic_add_property' %}" class="btn btn-primary btn-sm">➕ إضافة عقار</a>
+<a href="{% url 'dashboard' %}" class="btn btn-outline btn-sm">← لوحة التحكم</a>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+  .my-posts-container {
+    background: var(--bg-primary, #0B0B0B);
+    min-height: calc(100vh - var(--header-height, 72px));
+    padding: 2rem;
+  }
+
+  /* Stats Cards */
+  .stats-cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+    margin-bottom: 2rem;
+  }
+
+  .stat-card {
+    background: var(--card-bg, #161616);
+    border: 1px solid var(--border-primary, rgba(255, 122, 0, 0.15));
+    border-radius: var(--radius-lg, 16px);
+    padding: 1.5rem;
+    text-align: center;
+  }
+
+  .stat-icon {
+    font-size: 2rem;
+    margin-bottom: 0.5rem;
+  }
+
+  .stat-number {
+    font-size: 2rem;
+    font-weight: 700;
+    color: var(--text-primary, #FFFFFF);
+    margin-bottom: 0.25rem;
+  }
+
+  .stat-label {
+    color: var(--text-muted, rgba(255, 255, 255, 0.7));
+    font-size: 0.9rem;
+  }
+
+  /* Search and Filter Section */
+  .search-filter-section {
+    background: var(--card-bg, #161616);
+    border: 1px solid var(--border-primary, rgba(255, 122, 0, 0.15));
+    border-radius: var(--radius-lg, 16px);
+    padding: 1.5rem;
+    margin-bottom: 2rem;
+  }
+
+  .search-filter-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+    flex-wrap: wrap;
+    gap: 1rem;
+  }
+
+  .search-filter-header h3 {
+    margin: 0;
+    font-size: 1.2rem;
+    color: var(--text-primary, #FFFFFF);
+  }
+
+  .search-filter-row {
+    display: flex;
+    gap: 1rem;
+    flex-wrap: wrap;
+    align-items: center;
+  }
+
+  .search-input {
+    flex: 1;
+    min-width: 250px;
+    padding: 0.75rem 1rem;
+    border: 1px solid var(--border-primary, rgba(255, 122, 0, 0.15));
+    border-radius: 8px;
+    background: var(--bg-secondary, #1a1a1a);
+    color: var(--text-primary, #FFFFFF);
+    font-size: 0.95rem;
+  }
+
+  .search-input:focus {
+    outline: none;
+    border-color: var(--primary, #FF7A00);
+  }
+
+  .filter-select {
+    padding: 0.75rem 1rem;
+    border: 1px solid var(--border-primary, rgba(255, 122, 0, 0.15));
+    border-radius: 8px;
+    background: var(--bg-secondary, #1a1a1a);
+    color: var(--text-primary, #FFFFFF);
+    font-size: 0.95rem;
+    cursor: pointer;
+  }
+
+  .export-buttons {
+    display: flex;
+    gap: 0.5rem;
+  }
+
+  .export-btn {
+    padding: 0.6rem 1rem;
+    border: 1px solid var(--border-primary, rgba(255, 122, 0, 0.15));
+    border-radius: 8px;
+    background: var(--bg-secondary, #1a1a1a);
+    color: var(--text-primary, #FFFFFF);
+    cursor: pointer;
+    font-size: 0.9rem;
+    transition: all 0.3s ease;
+  }
+
+  .export-btn:hover {
+    background: var(--primary, #FF7A00);
+    border-color: var(--primary, #FF7A00);
+  }
+
+  /* Posts Grid */
+  .posts-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+    gap: 1.5rem;
+    margin-top: 2rem;
+  }
+
+  .post-card {
+    background: var(--card-bg, #161616);
+    border: 1px solid var(--border-primary, rgba(255, 122, 0, 0.15));
+    border-radius: var(--radius-lg, 16px);
+    overflow: hidden;
+    transition: all 0.3s ease;
+    position: relative;
+  }
+
+  .post-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 30px rgba(255, 122, 0, 0.2);
+    border-color: var(--primary, #FF7A00);
+  }
+
+  .post-card.featured {
+    border: 2px solid #FFD700;
+    box-shadow: 0 0 20px rgba(255, 215, 0, 0.3);
+  }
+
+  .post-card.promoted {
+    border: 2px solid #FF6B6B;
+    box-shadow: 0 0 20px rgba(255, 107, 107, 0.3);
+  }
+
+  .post-card.featured::before {
+    content: '⭐ مميز';
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    background: linear-gradient(135deg, #FFD700 0%, #FFA500 100%);
+    color: #000;
+    padding: 5px 12px;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    font-weight: 700;
+    z-index: 10;
+  }
+
+  .post-card.promoted::before {
+    content: '🔥 ممول';
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    background: linear-gradient(135deg, #FF6B6B 0%, #FF4444 100%);
+    color: #fff;
+    padding: 5px 12px;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    font-weight: 700;
+    z-index: 10;
+  }
+
+  .post-image {
+    width: 100%;
+    height: 200px;
+    object-fit: cover;
+    background: var(--bg-secondary, #1a1a1a);
+  }
+
+  .post-content {
+    padding: 1.5rem;
+  }
+
+  .post-title {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--text-primary, #FFFFFF);
+    margin: 0 0 0.75rem 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .post-info {
+    display: flex;
+    gap: 0.75rem;
+    margin-bottom: 1rem;
+    flex-wrap: wrap;
+  }
+
+  .post-info-item {
+    background: rgba(255, 255, 255, 0.05);
+    padding: 0.4rem 0.8rem;
+    border-radius: 6px;
+    font-size: 0.85rem;
+    color: var(--text-muted, rgba(255, 255, 255, 0.7));
+  }
+
+  .time-remaining {
+    background: linear-gradient(135deg, #FF7A00 0%, #FF5500 100%);
+    color: white;
+    padding: 0.75rem;
+    border-radius: 8px;
+    margin-bottom: 1rem;
+    text-align: center;
+  }
+
+  .time-label {
+    font-size: 0.8rem;
+    opacity: 0.9;
+    margin-bottom: 0.25rem;
+  }
+
+  .time-value {
+    font-size: 1.2rem;
+    font-weight: 700;
+    font-family: 'Courier New', monospace;
+  }
+
+  .time-expired {
+    background: linear-gradient(135deg, #666 0%, #444 100%);
+  }
+
+  .post-actions {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+  }
+
+  .action-btn {
+    flex: 1;
+    padding: 0.6rem 1rem;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 0.9rem;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    text-decoration: none;
+    text-align: center;
+  }
+
+  .btn-edit {
+    background: var(--primary, #FF7A00);
+    color: white;
+  }
+
+  .btn-edit:hover {
+    background: #FF5500;
+  }
+
+  .btn-delete {
+    background: #EF4444;
+    color: white;
+  }
+
+  .btn-delete:hover {
+    background: #DC2626;
+  }
+
+  .btn-view {
+    background: #3B82F6;
+    color: white;
+  }
+
+  .btn-view:hover {
+    background: #2563EB;
+  }
+
+  .btn-featured {
+    background: #FFD700;
+    color: #000;
+  }
+
+  .btn-featured:hover {
+    background: #FFA500;
+  }
+
+  .btn-promoted {
+    background: #FF6B6B;
+    color: white;
+  }
+
+  .btn-promoted:hover {
+    background: #FF4444;
+  }
+
+  .empty-state {
+    text-align: center;
+    padding: 4rem 2rem;
+    color: var(--text-muted, rgba(255, 255, 255, 0.5));
+  }
+
+  .empty-state-icon {
+    font-size: 4rem;
+    margin-bottom: 1rem;
+  }
+
+  .empty-state-text {
+    font-size: 1.2rem;
+    margin-bottom: 0.5rem;
+  }
+
+  .empty-state-subtext {
+    font-size: 0.9rem;
+    margin-bottom: 2rem;
+  }
+
+  .pagination {
+    display: flex;
+    justify-content: center;
+    gap: 0.5rem;
+    margin-top: 2rem;
+  }
+
+  .pagination-btn {
+    padding: 0.5rem 1rem;
+    border: 1px solid var(--border-primary, rgba(255, 122, 0, 0.15));
+    background: var(--card-bg, #161616);
+    color: var(--text-primary, #FFFFFF);
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    text-decoration: none;
+  }
+
+  .pagination-btn:hover,
+  .pagination-btn.active {
+    background: var(--primary, #FF7A00);
+    border-color: var(--primary, #FF7A00);
+  }
+
+  @media (max-width: 768px) {
+    .posts-grid {
+      grid-template-columns: 1fr;
+    }
+    
+    .search-filter-row {
+      flex-direction: column;
+      align-items: stretch;
+    }
+    
+    .search-input {
+      min-width: 100%;
+    }
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="my-posts-container">
+  <!-- Stats Cards -->
+  <div class="stats-cards">
+    <div class="stat-card">
+      <div class="stat-icon">📝</div>
+      <div class="stat-number">{{ total_properties }}</div>
+      <div class="stat-label">إجمالي المنشورات</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon">⭐</div>
+      <div class="stat-number">{{ featured_count }}</div>
+      <div class="stat-label">منشورات مميزة</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon">🔥</div>
+      <div class="stat-number">{{ promoted_count }}</div>
+      <div class="stat-label">منشورات ممولة</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon">⏰</div>
+      <div class="stat-number">{{ active_count }}</div>
+      <div class="stat-label">منشورات نشطة</div>
+    </div>
+  </div>
+
+  <!-- Search and Filter Section -->
+  <div class="search-filter-section">
+    <div class="search-filter-header">
+      <h3>🔍 البحث والفلاتر</h3>
+      <div class="export-buttons">
+        <button onclick="exportData('csv')" class="export-btn">📥 CSV</button>
+        <button onclick="exportData('excel')" class="export-btn">📊 Excel</button>
+        <button onclick="exportData('pdf')" class="export-btn">📄 PDF</button>
+      </div>
+    </div>
+    <div class="search-filter-row">
+      <input type="text" id="searchInput" placeholder="بحث بالعنوان أو الموقع..." class="search-input">
+      <select id="statusFilter" class="filter-select">
+        <option value="">جميع الحالات</option>
+        <option value="active">نشط</option>
+        <option value="expired">منتهي</option>
+      </select>
+      <select id="typeFilter" class="filter-select">
+        <option value="">جميع الأنواع</option>
+        <option value="featured">مميز</option>
+        <option value="promoted">ممول</option>
+        <option value="normal">عادي</option>
+      </select>
+      <select id="sortFilter" class="filter-select">
+        <option value="newest">الأحدث</option>
+        <option value="oldest">الأقدم</option>
+        <option value="title">العنوان</option>
+        <option value="price">السعر</option>
+      </select>
+      <button onclick="applyFilters()" class="export-btn" style="background: var(--primary, #FF7A00); border-color: var(--primary, #FF7A00);">🔍 تطبيق</button>
+      <button onclick="resetFilters()" class="export-btn">🔄 إعادة تعيين</button>
+    </div>
+  </div>
+
+  <!-- Posts Grid -->
+  <div class="posts-grid">
+    {% for item in page_obj %}
+    <div class="post-card {% if item.is_featured %}featured{% endif %} {% if item.is_promoted %}promoted{% endif %}">
+      {% if item.property.gallery_images.first %}
+      <img src="{{ item.property.gallery_images.first.image.url }}" alt="{{ item.property.title }}" class="post-image">
+      {% else %}
+      <div class="post-image" style="display: flex; align-items: center; justify-content: center; color: var(--text-muted);">
+        <span style="font-size: 3rem;">🏠</span>
+      </div>
+      {% endif %}
+      
+      <div class="post-content">
+        <h3 class="post-title">{{ item.property.title }}</h3>
+        
+        <div class="post-info">
+          <div class="post-info-item">📍 {{ item.property.location }}</div>
+          <div class="post-info-item">💰 {{ item.property.price }}</div>
+          <div class="post-info-item">📅 {{ item.property.created_at|date:"Y-m-d" }}</div>
+        </div>
+        
+        <div class="time-remaining {% if item.time_remaining == 0 %}time-expired{% endif %}">
+          <div class="time-label">الوقت المتبقي</div>
+          <div class="time-value" data-seconds="{{ item.time_remaining }}">
+            {% if item.time_remaining %}
+              {% widthratio item.time_remaining 86400 1 as days %}
+              {% widthratio item.time_remaining|add:86400 86400 1 as days_total %}
+              {% if days > 0 %}
+                {{ days }} يوم
+              {% else %}
+                {% widthratio item.time_remaining 3600 1 as hours %}
+                {% if hours > 0 %}
+                  {{ hours }} ساعة
+                {% else %}
+                  {% widthratio item.time_remaining 60 1 as minutes %}
+                  {{ minutes }} دقيقة
+                {% endif %}
+              {% endif %}
+            {% else %}
+              منتهي
+            {% endif %}
+          </div>
+        </div>
+        
+        <div class="post-actions">
+          <a href="{% url 'property_detail' item.property.slug %}" class="action-btn btn-view">👀 عرض</a>
+          <a href="{% url 'edit_property' item.property.id %}" class="action-btn btn-edit">✏️ تعديل</a>
+          <button onclick="deletePost({{ item.property.id }})" class="action-btn btn-delete">🗑️ حذف</button>
+          {% if has_featured %}
+            <button onclick="toggleFeatured({{ item.property.id }}, {% if item.is_featured %}false{% else %}true{% endif %})" class="action-btn btn-featured">
+              {% if item.is_featured %}⭐ إلغاء التمييز{% else %}⭐ تمييز{% endif %}
+            </button>
+            <button onclick="togglePromoted({{ item.property.id }}, {% if item.is_promoted %}false{% else %}true{% endif %})" class="action-btn btn-promoted">
+              {% if item.is_promoted %}🔥 إلغاء التمويل{% else %}🔥 تمويل{% endif %}
+            </button>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+    {% empty %}
+    <div class="empty-state" style="grid-column: 1 / -1;">
+      <div class="empty-state-icon">📭</div>
+      <div class="empty-state-text">لا توجد منشورات</div>
+      <div class="empty-state-subtext">ابدأ بإضافة عقارك الأول</div>
+      <a href="{% url 'dynamic_add_property' %}" class="btn btn-primary">➕ إضافة عقار</a>
+    </div>
+    {% endfor %}
+  </div>
+
+  {% if page_obj.has_other_pages %}
+  <div class="pagination">
+    {% if page_obj.has_previous %}
+    <a href="?page={{ page_obj.previous_page_number }}" class="pagination-btn">السابق</a>
+    {% endif %}
+    
+    <span class="pagination-btn active">صفحة {{ page_obj.number }} من {{ page_obj.paginator.num_pages }}</span>
+    
+    {% if page_obj.has_next %}
+    <a href="?page={{ page_obj.next_page_number }}" class="pagination-btn">التالي</a>
+    {% endif %}
+  </div>
+  {% endif %}
+</div>
+
+<script>
+function deletePost(propertyId) {
+  if (confirm('هل أنت متأكد من حذف هذا المنشور؟ هذا الإجراء لا يمكن التراجع عنه.')) {
+    fetch(`/dashboard/delete/${propertyId}/`, {
+      method: 'POST',
+      headers: {
+        'X-CSRFToken': getCSRFToken(),
+        'Content-Type': 'application/json'
+      }
+    })
+    .then(response => response.json())
+    .then(data => {
+      if (data.success) {
+        alert('تم حذف المنشور بنجاح');
+        location.reload();
+      } else {
+        alert('حدث خطأ في الحذف');
+      }
+    })
+    .catch(error => {
+      console.error('Error:', error);
+      alert('حدث خطأ في الاتصال');
+    });
+  }
+}
+
+function toggleFeatured(propertyId, isFeatured) {
+  fetch(`/api/property/${propertyId}/toggle-featured/`, {
+    method: 'POST',
+    headers: {
+      'X-CSRFToken': getCSRFToken(),
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({ is_featured: isFeatured })
+  })
+  .then(response => response.json())
+  .then(data => {
+    if (data.success) {
+      alert(isFeatured ? 'تم تمييز المنشور بنجاح' : 'تم إلغاء التمييز بنجاح');
+      location.reload();
+    } else {
+      alert('حدث خطأ: ' + (data.error || 'غير معروف'));
+    }
+  })
+  .catch(error => {
+    console.error('Error:', error);
+    alert('حدث خطأ في الاتصال');
+  });
+}
+
+function togglePromoted(propertyId, isPromoted) {
+  fetch(`/api/property/${propertyId}/toggle-promoted/`, {
+    method: 'POST',
+    headers: {
+      'X-CSRFToken': getCSRFToken(),
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({ is_promoted: isPromoted })
+  })
+  .then(response => response.json())
+  .then(data => {
+    if (data.success) {
+      alert(isPromoted ? 'تم تمويل المنشور بنجاح' : 'تم إلغاء التمويل بنجاح');
+      location.reload();
+    } else {
+      alert('حدث خطأ: ' + (data.error || 'غير معروف'));
+    }
+  })
+  .catch(error => {
+    console.error('Error:', error);
+    alert('حدث خطأ في الاتصال');
+  });
+}
+
+function getCSRFToken() {
+  return document.querySelector('[name=csrfmiddlewaretoken]')?.value || '';
+}
+
+// Update time remaining every minute
+setInterval(() => {
+  document.querySelectorAll('.time-value[data-seconds]').forEach(element => {
+    let seconds = parseInt(element.dataset.seconds);
+    if (seconds > 0) {
+      seconds -= 60;
+      element.dataset.seconds = seconds;
+      
+      if (seconds > 86400) {
+        const days = Math.floor(seconds / 86400);
+        element.textContent = days + ' يوم';
+      } else if (seconds > 3600) {
+        const hours = Math.floor(seconds / 3600);
+        element.textContent = hours + ' ساعة';
+      } else if (seconds > 60) {
+        const minutes = Math.floor(seconds / 60);
+        element.textContent = minutes + ' دقيقة';
+      } else {
+        element.textContent = 'منتهي';
+        element.parentElement.classList.add('time-expired');
+      }
+    }
+  });
+}, 60000);
+
+// Search and Filter Functions
+function applyFilters() {
+  const searchTerm = document.getElementById('searchInput').value;
+  const statusFilter = document.getElementById('statusFilter').value;
+  const typeFilter = document.getElementById('typeFilter').value;
+  const sortFilter = document.getElementById('sortFilter').value;
+  
+  const params = new URLSearchParams();
+  if (searchTerm) params.append('search', searchTerm);
+  if (statusFilter) params.append('status', statusFilter);
+  if (typeFilter) params.append('type', typeFilter);
+  if (sortFilter) params.append('sort', sortFilter);
+  
+  window.location.href = '{% url "my_posts" %}?' + params.toString();
+}
+
+function resetFilters() {
+  window.location.href = '{% url "my_posts" %}';
+}
+
+// Search on Enter key
+document.getElementById('searchInput').addEventListener('keypress', function(e) {
+  if (e.key === 'Enter') {
+    applyFilters();
+  }
+});
+
+// Export Data Functions
+function exportData(format) {
+  const posts = [];
+  document.querySelectorAll('.post-card').forEach(card => {
+    const title = card.querySelector('.post-title').textContent;
+    const location = card.querySelector('.post-info-item:nth-child(1)').textContent.replace('📍 ', '');
+    const price = card.querySelector('.post-info-item:nth-child(2)').textContent.replace('💰 ', '');
+    const date = card.querySelector('.post-info-item:nth-child(3)').textContent.replace('📅 ', '');
+    const time = card.querySelector('.time-value').textContent;
+    
+    posts.push({
+      title,
+      location,
+      price,
+      date,
+      time_remaining: time
+    });
+  });
+  
+  switch(format) {
+    case 'csv':
+      exportCSV(posts);
+      break;
+    case 'excel':
+      exportExcel(posts);
+      break;
+    case 'pdf':
+      exportPDF(posts);
+      break;
+  }
+}
+
+function exportCSV(data) {
+  const headers = ['العنوان', 'الموقع', 'السعر', 'التاريخ', 'الوقت المتبقي'];
+  const csvContent = [
+    headers.join(','),
+    ...data.map(row => [row.title, row.location, row.price, row.date, row.time_remaining].join(','))
+  ].join('\n');
+  
+  const blob = new Blob(['\ufeff' + csvContent], { type: 'text/csv;charset=utf-8;' });
+  const link = document.createElement('a');
+  link.href = URL.createObjectURL(blob);
+  link.download = 'منشوراتي.csv';
+  link.click();
+}
+
+function exportExcel(data) {
+  // For Excel export, we'll use CSV format for simplicity
+  // In production, you might want to use a library like SheetJS
+  exportCSV(data);
+}
+
+function exportPDF(data) {
+  alert('جاري إعداد ملف PDF... (يتطلب مكتبة PDF)');
+  // In production, you might want to use a library like jsPDF
+}
+</script>
+{% endblock %}

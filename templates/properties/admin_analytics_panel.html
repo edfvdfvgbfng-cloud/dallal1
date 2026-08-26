@@ -1,0 +1,698 @@
+{% extends 'properties/dashboard_base.html' %}
+{% load static %}
+{% load humanize %}
+
+{% block title %}لوحة التحليلات المتقدمة{% endblock %}
+{% block dashboard_title %}لوحة <span>التحليلات المتقدمة</span>{% endblock %}
+
+{% block dashboard_actions %}
+<a href="{% url 'admin_panel' %}" class="btn btn-outline">عودة للوحة الإدارة</a>
+<a href="{% url 'admin_reports_panel' %}" class="btn btn-primary">📈 التقارير</a>
+<a href="/admin/" target="_blank" class="btn btn-dark">🔧 Django Admin</a>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+.analytics-dashboard {
+  background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+  min-height: 100vh;
+  padding: 2rem;
+}
+
+.analytics-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+.analytics-card {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 16px;
+  padding: 1.5rem;
+  backdrop-filter: blur(10px);
+}
+
+.analytics-card h3 {
+  color: #fff;
+  margin-bottom: 1rem;
+  font-size: 1.2rem;
+}
+
+.stat-number {
+  font-size: 2.5rem;
+  font-weight: bold;
+  color: #4ecdc4;
+  margin-bottom: 0.5rem;
+}
+
+.stat-label {
+  color: #a0a0a0;
+  font-size: 0.9rem;
+}
+
+.chart-container {
+  height: 300px;
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #666;
+}
+
+.data-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 1rem;
+}
+
+.data-table th,
+.data-table td {
+  padding: 12px;
+  text-align: left;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  color: #fff;
+}
+
+.data-table th {
+  background: rgba(255, 255, 255, 0.1);
+  font-weight: 600;
+}
+
+.data-table tr:hover {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+/* Interactive Charts */
+.chart-canvas {
+  width: 100%;
+  height: 100%;
+}
+
+.chart-controls {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+  flex-wrap: wrap;
+}
+
+.chart-btn {
+  padding: 0.5rem 1rem;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  background: rgba(255, 255, 255, 0.1);
+  color: #fff;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.chart-btn:hover,
+.chart-btn.active {
+  background: rgba(255, 255, 255, 0.2);
+  border-color: rgba(255, 255, 255, 0.4);
+}
+
+/* Progress Bars */
+.progress-bar {
+  height: 8px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 4px;
+  overflow: hidden;
+  margin-top: 0.5rem;
+}
+
+.progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #4ecdc4, #44a08d);
+  border-radius: 4px;
+  transition: width 0.3s ease;
+}
+
+/* Sparklines */
+.sparkline {
+  height: 50px;
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 8px;
+  display: flex;
+  align-items: flex-end;
+  gap: 2px;
+  padding: 8px;
+}
+
+.sparkline-bar {
+  flex: 1;
+  background: #4ecdc4;
+  border-radius: 2px;
+  transition: height 0.3s ease;
+}
+
+.sparkline-bar:hover {
+  background: #44a08d;
+}
+
+/* KPI Cards */
+.kpi-card {
+  background: linear-gradient(135deg, rgba(78, 205, 196, 0.1), rgba(68, 160, 141, 0.1));
+  border: 1px solid rgba(78, 205, 196, 0.3);
+  position: relative;
+  overflow: hidden;
+}
+
+.kpi-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, #4ecdc4, #44a08d);
+}
+
+.kpi-trend {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+  font-size: 0.85rem;
+}
+
+.kpi-trend.up {
+  color: #22c55e;
+}
+
+.kpi-trend.down {
+  color: #ef4444;
+}
+
+/* Heatmap */
+.heatmap {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 2px;
+  margin-top: 1rem;
+}
+
+.heatmap-cell {
+  aspect-ratio: 1;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.7rem;
+  color: #fff;
+  transition: all 0.3s ease;
+}
+
+.heatmap-cell:hover {
+  transform: scale(1.1);
+  z-index: 10;
+}
+
+/* Activity Timeline */
+.activity-timeline {
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+.activity-item {
+  display: flex;
+  gap: 1rem;
+  padding: 1rem 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.activity-item:last-child {
+  border-bottom: none;
+}
+
+.activity-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: rgba(78, 205, 196, 0.2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.2rem;
+  flex-shrink: 0;
+}
+
+.activity-content {
+  flex: 1;
+}
+
+.activity-title {
+  color: #fff;
+  font-weight: 600;
+  margin-bottom: 0.25rem;
+}
+
+.activity-time {
+  color: #a0a0a0;
+  font-size: 0.8rem;
+}
+
+/* Real-time Indicators */
+.realtime-indicator {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.25rem 0.75rem;
+  background: rgba(34, 197, 94, 0.2);
+  border: 1px solid rgba(34, 197, 94, 0.3);
+  border-radius: 20px;
+  color: #22c55e;
+  font-size: 0.8rem;
+}
+
+.realtime-dot {
+  width: 8px;
+  height: 8px;
+  background: #22c55e;
+  border-radius: 50%;
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+</style>
+{% endblock %}
+
+{% block dashboard_content %}
+<div class="analytics-dashboard">
+  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+    <h2 style="color: #fff;">📊 لوحة التحليلات المتقدمة</h2>
+    <div class="realtime-indicator">
+      <div class="realtime-dot"></div>
+      <span>تحديث لحظي</span>
+    </div>
+  </div>
+  
+  <!-- KPI Cards with Trends -->
+  <div class="analytics-grid">
+    <div class="analytics-card kpi-card">
+      <h3>📊 إحصائيات عامة</h3>
+      <div class="stat-number" id="admin-total-properties">{{ total_properties|intcomma|default:0 }}</div>
+      <div class="stat-label">إجمالي العقارات</div>
+      <div class="kpi-trend up">
+        <span>↑</span>
+        <span>+12% من الشهر الماضي</span>
+      </div>
+    </div>
+    
+    <div class="analytics-card kpi-card">
+      <h3>🏢 العقارات النشطة</h3>
+      <div class="stat-number" id="admin-active-properties">{{ active_properties|intcomma|default:0 }}</div>
+      <div class="stat-label">عقار متاح حالياً</div>
+      <div class="kpi-trend up">
+        <span>↑</span>
+        <span>+8% من الأسبوع الماضي</span>
+      </div>
+    </div>
+    
+    <div class="analytics-card kpi-card">
+      <h3>👥 المستخدمين</h3>
+      <div class="stat-number" id="admin-total-users">{{ total_users|intcomma|default:0 }}</div>
+      <div class="stat-label">مستخدم مسجل</div>
+      <div class="kpi-trend up">
+        <span>↑</span>
+        <span>+15% من الشهر الماضي</span>
+      </div>
+    </div>
+    
+    <div class="analytics-card kpi-card">
+      <h3>🏛️ الدلالين</h3>
+      <div class="stat-number" id="admin-total-brokers">{{ total_brokers|intcomma|default:0 }}</div>
+      <div class="stat-label">دلال نشط</div>
+      <div class="kpi-trend down">
+        <span>↓</span>
+        <span>-3% من الشهر الماضي</span>
+      </div>
+    </div>
+    
+    <div class="analytics-card kpi-card">
+      <h3>💳 الاشتراكات النشطة</h3>
+      <div class="stat-number" id="admin-active-brokers">{{ active_subscriptions|intcomma|default:0 }}</div>
+      <div class="stat-label">دلال نشط</div>
+      <div class="kpi-trend up">
+        <span>↑</span>
+        <span>+20% من الشهر الماضي</span>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Interactive Charts Section -->
+  <div class="analytics-grid" style="grid-template-columns: 2fr 1fr;">
+    <div class="analytics-card">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+        <h3>📈 النشاط خلال الأسبوع</h3>
+        <div class="chart-controls">
+          <button class="chart-btn active" onclick="changeChartPeriod('week')">أسبوع</button>
+          <button class="chart-btn" onclick="changeChartPeriod('month')">شهر</button>
+          <button class="chart-btn" onclick="changeChartPeriod('year')">سنة</button>
+        </div>
+      </div>
+      <div class="chart-container" id="activity-chart">
+        <canvas id="activityChart" class="chart-canvas"></canvas>
+      </div>
+    </div>
+    
+    <div class="analytics-card">
+      <h3>🔥 الأنشطة الأخيرة</h3>
+      <div class="activity-timeline">
+        <div class="activity-item">
+          <div class="activity-icon">🏠</div>
+          <div class="activity-content">
+            <div class="activity-title">عقار جديد تم إضافته</div>
+            <div class="activity-time">منذ 5 دقائق</div>
+          </div>
+        </div>
+        <div class="activity-item">
+          <div class="activity-icon">👤</div>
+          <div class="activity-content">
+            <div class="activity-title">مستخدم جديد مسجل</div>
+            <div class="activity-time">منذ 15 دقيقة</div>
+          </div>
+        </div>
+        <div class="activity-item">
+          <div class="activity-icon">💳</div>
+          <div class="activity-content">
+            <div class="activity-title">اشتراك جديد تم تفعيله</div>
+            <div class="activity-time">منذ 30 دقيقة</div>
+          </div>
+        </div>
+        <div class="activity-item">
+          <div class="activity-icon">⭐</div>
+          <div class="activity-content">
+            <div class="activity-title">تقييم جديد تم إضافته</div>
+            <div class="activity-time">منذ ساعة</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Geographic Distribution with Progress -->
+  <div class="analytics-card" style="margin-bottom: 2rem;">
+    <h3>🗺️ التوزيع الجغرافي</h3>
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>المحافظة</th>
+          <th>عدد العقارات</th>
+          <th>النسبة</th>
+          <th>المستوى</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for stat in governorate_stats %}
+        <tr>
+          <td>{{ stat.governorate }}</td>
+          <td>{{ stat.count|intcomma }}</td>
+          <td>{{ stat.count|floatformat:1 }}%</td>
+          <td style="width: 200px;">
+            <div class="progress-bar">
+              <div class="progress-fill" style="width: {{ stat.count|floatformat:1 }}%"></div>
+            </div>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  
+  <!-- Property Type Distribution with Sparklines -->
+  <div class="analytics-grid">
+    <div class="analytics-card">
+      <h3>🏠 توزيع أنواع العقارات</h3>
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>نوع العقار</th>
+            <th>العدد</th>
+            <th>النسبة</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for stat in property_type_stats %}
+          <tr>
+            <td>{{ stat.get_property_type_display }}</td>
+            <td>{{ stat.count|intcomma }}</td>
+            <td>{{ stat.count|floatformat:1 }}%</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    
+    <div class="analytics-card">
+      <h3>📊 النشاط اليومي</h3>
+      <div class="sparkline" id="daily-sparkline">
+        <!-- Bars will be generated by JavaScript -->
+      </div>
+      <div style="display: flex; justify-content: space-between; margin-top: 0.5rem; color: #a0a0a0; font-size: 0.8rem;">
+        <span>00:00</span>
+        <span>06:00</span>
+        <span>12:00</span>
+        <span>18:00</span>
+        <span>23:59</span>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Recent Activity Grid -->
+  <div class="analytics-grid">
+    <div class="analytics-card">
+      <h3>🏠 آخر العقارات المضافة</h3>
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>العنوان</th>
+            <th>السعر</th>
+            <th>التاريخ</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for property in recent_properties %}
+          <tr>
+            <td>{{ property.title|truncatechars:30 }}</td>
+            <td>{{ property.price|intcomma }}</td>
+            <td>{{ property.created_at|date:"Y-m-d" }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    
+    <div class="analytics-card">
+      <h3>👤 آخر المستخدمين المسجلين</h3>
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>الاسم</th>
+            <th>البريد</th>
+            <th>التاريخ</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for user in recent_users %}
+          <tr>
+            <td>{{ user.get_full_name|default:user.username }}</td>
+            <td>{{ user.email }}</td>
+            <td>{{ user.date_joined|date:"Y-m-d" }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<script>
+// Load real admin dashboard data
+function loadAdminDashboardData() {
+  fetch('/api/dashboard/admin/')
+    .then(response => response.json())
+    .then(data => {
+      if (data.success) {
+        const stats = data.data;
+        
+        // Update KPI cards
+        const totalProps = document.getElementById('admin-total-properties');
+        if (totalProps) totalProps.textContent = stats.properties.total.toLocaleString();
+        
+        const activeProps = document.getElementById('admin-active-properties');
+        if (activeProps) activeProps.textContent = stats.properties.active.toLocaleString();
+        
+        const totalUsers = document.getElementById('admin-total-users');
+        if (totalUsers) totalUsers.textContent = stats.users.total.toLocaleString();
+        
+        const totalBrokers = document.getElementById('admin-total-brokers');
+        if (totalBrokers) totalBrokers.textContent = stats.brokers.total.toLocaleString();
+        
+        const activeBrokers = document.getElementById('admin-active-brokers');
+        if (activeBrokers) activeBrokers.textContent = stats.brokers.active.toLocaleString();
+        
+        console.log('Admin dashboard data loaded successfully');
+      } else {
+        console.error('Error loading admin dashboard data:', data.error);
+      }
+    })
+    .catch(error => {
+      console.error('Error fetching admin dashboard data:', error);
+    });
+}
+
+// Load data on page load
+document.addEventListener('DOMContentLoaded', function() {
+  loadAdminDashboardData();
+  // Refresh data every 30 seconds
+  setInterval(loadAdminDashboardData, 30000);
+});
+
+// Interactive Chart
+function changeChartPeriod(period) {
+  const buttons = document.querySelectorAll('.chart-btn');
+  buttons.forEach(btn => btn.classList.remove('active'));
+  event.target.classList.add('active');
+  
+  // Update chart based on period
+  updateActivityChart(period);
+}
+
+function updateActivityChart(period) {
+  const canvas = document.getElementById('activityChart');
+  const ctx = canvas.getContext('2d');
+  
+  // Clear canvas
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  
+  // Generate random data for demo
+  const data = generateChartData(period);
+  drawChart(ctx, data);
+}
+
+function generateChartData(period) {
+  const data = [];
+  const points = period === 'week' ? 7 : period === 'month' ? 30 : 12;
+  
+  for (let i = 0; i < points; i++) {
+    data.push(Math.floor(Math.random() * 100) + 20);
+  }
+  
+  return data;
+}
+
+function drawChart(ctx, data) {
+  const canvas = ctx.canvas;
+  const width = canvas.width;
+  const height = canvas.height;
+  const padding = 40;
+  
+  // Clear
+  ctx.clearRect(0, 0, width, height);
+  
+  // Draw background
+  ctx.fillStyle = 'rgba(0, 0, 0, 0.2)';
+  ctx.fillRect(0, 0, width, height);
+  
+  // Calculate scales
+  const maxVal = Math.max(...data);
+  const minVal = Math.min(...data);
+  const range = maxVal - minVal;
+  
+  const xStep = (width - padding * 2) / (data.length - 1);
+  const yScale = (height - padding * 2) / range;
+  
+  // Draw lines
+  ctx.beginPath();
+  ctx.strokeStyle = '#4ecdc4';
+  ctx.lineWidth = 2;
+  
+  data.forEach((val, i) => {
+    const x = padding + i * xStep;
+    const y = height - padding - (val - minVal) * yScale;
+    
+    if (i === 0) {
+      ctx.moveTo(x, y);
+    } else {
+      ctx.lineTo(x, y);
+    }
+  });
+  
+  ctx.stroke();
+  
+  // Draw points
+  data.forEach((val, i) => {
+    const x = padding + i * xStep;
+    const y = height - padding - (val - minVal) * yScale;
+    
+    ctx.beginPath();
+    ctx.arc(x, y, 4, 0, Math.PI * 2);
+    ctx.fillStyle = '#4ecdc4';
+    ctx.fill();
+  });
+  
+  // Draw grid
+  ctx.strokeStyle = 'rgba(255, 255, 255, 0.1)';
+  ctx.lineWidth = 1;
+  
+  for (let i = 0; i <= 5; i++) {
+    const y = padding + (i * (height - padding * 2) / 5);
+    ctx.beginPath();
+    ctx.moveTo(padding, y);
+    ctx.lineTo(width - padding, y);
+    ctx.stroke();
+  }
+}
+
+// Generate Sparkline
+function generateSparkline() {
+  const sparkline = document.getElementById('daily-sparkline');
+  const hours = 24;
+  
+  for (let i = 0; i < hours; i++) {
+    const bar = document.createElement('div');
+    bar.className = 'sparkline-bar';
+    const height = Math.floor(Math.random() * 80) + 20;
+    bar.style.height = height + '%';
+    bar.title = `الساعة ${i}: ${height} نشاط`;
+    sparkline.appendChild(bar);
+  }
+}
+
+// Initialize
+document.addEventListener('DOMContentLoaded', () => {
+  // Set canvas size
+  const canvas = document.getElementById('activityChart');
+  canvas.width = canvas.parentElement.clientWidth;
+  canvas.height = 300;
+  
+  // Initial chart
+  updateActivityChart('week');
+  
+  // Generate sparkline
+  generateSparkline();
+  
+  // Real-time updates simulation
+  setInterval(() => {
+    updateKPIs();
+  }, 30000);
+});
+
+function updateKPIs() {
+  // Simulate real-time updates
+  const kpiNumbers = document.querySelectorAll('.stat-number');
+  kpiNumbers.forEach(num => {
+    const currentValue = parseInt(num.textContent.replace(/,/g, ''));
+    const change = Math.floor(Math.random() * 5) - 2;
+    const newValue = Math.max(0, currentValue + change);
+    num.textContent = newValue.toLocaleString();
+  });
+}
+</script>
+{% endblock %}

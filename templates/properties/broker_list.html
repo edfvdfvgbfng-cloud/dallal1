@@ -1,0 +1,1011 @@
+{% extends 'properties/base.html' %}
+{% load static %}
+{% load humanize %}
+
+{% block title %}إدارة الدلالين - لوحة تحكم احترافية{% endblock %}
+
+{% block extra_css %}
+<link href="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.min.css" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap" rel="stylesheet">
+<link href="{% static 'css/admin-professional.css' %}" rel="stylesheet">
+<style>
+.dashboard-container {
+  font-family: 'Cairo', sans-serif;
+  background: #000000;
+  min-height: 100vh;
+  padding: 2rem;
+  color: #ffffff;
+}
+
+.dashboard-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  flex-wrap: wrap;
+  gap: 1rem;
+  margin-bottom: 2rem;
+}
+
+.header-info h1 {
+  margin: 0 0 0.5rem 0;
+  font-size: 1.75rem;
+  color: #ffffff;
+}
+
+.header-info p {
+  margin: 0;
+  color: rgba(255, 255, 255, 0.6);
+  font-size: 0.9rem;
+}
+
+.dashboard-quick-links {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+/* Stats Cards */
+.dashboard-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+.stat-card {
+  background: #0a0a0a;
+  border: 1px solid #1a1a1a;
+  border-radius: var(--admin-radius);
+  padding: 1.5rem;
+  backdrop-filter: blur(10px);
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.stat-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: linear-gradient(90deg, var(--card-color-1), var(--card-color-2));
+}
+
+.stat-card:hover {
+  transform: translateY(-5px);
+  box-shadow: var(--admin-shadow);
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+.stat-icon {
+  font-size: 2rem;
+  margin-bottom: 0.5rem;
+}
+
+.stat-number {
+  font-size: 2.5rem;
+  font-weight: bold;
+  color: #ffffff;
+  margin-bottom: 0.5rem;
+}
+
+.stat-label {
+  color: rgba(255, 255, 255, 0.6);
+  font-size: 0.9rem;
+  margin-bottom: 0.25rem;
+}
+
+.stat-trend {
+  font-size: 0.75rem;
+  color: rgba(255, 255, 255, 0.5);
+}
+
+/* Charts Section */
+.charts-section {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+  gap: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+.chart-card {
+  background: #0a0a0a;
+  border: 1px solid #1a1a1a;
+  border-radius: var(--admin-radius);
+  padding: 1.5rem;
+  backdrop-filter: blur(10px);
+}
+
+.chart-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.chart-header h3 {
+  margin: 0;
+  font-size: 1.1rem;
+  color: #ffffff;
+}
+
+.chart-filter {
+  padding: 6px 12px;
+  border: 1px solid #1a1a1a;
+  border-radius: 6px;
+  background: #000000;
+  color: #ffffff;
+  font-size: 0.85rem;
+  cursor: pointer;
+}
+
+.chart-container {
+  position: relative;
+  height: 300px;
+}
+
+/* Search Bar */
+.search-bar {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  align-items: center;
+  background: #0a0a0a;
+  border: 1px solid #1a1a1a;
+  border-radius: var(--admin-radius);
+  padding: 1rem;
+  margin-bottom: 2rem;
+}
+
+.search-input-wrapper {
+  flex: 1;
+  min-width: 250px;
+  position: relative;
+  display: flex;
+  align-items: center;
+  background: #000000;
+  border: 1px solid #1a1a1a;
+  border-radius: 8px;
+  padding: 0 12px;
+}
+
+.search-icon {
+  color: rgba(255, 255, 255, 0.5);
+  font-size: 1.1rem;
+}
+
+.search-input {
+  flex: 1;
+  border: none;
+  background: transparent;
+  padding: 12px 8px;
+  font-size: 0.95rem;
+  color: #ffffff;
+}
+
+.search-input:focus {
+  outline: none;
+}
+
+.search-btn {
+  background: var(--admin-primary);
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: all 0.3s ease;
+}
+
+.search-btn:hover {
+  background: var(--admin-secondary);
+}
+
+.filter-select {
+  padding: 10px 16px;
+  border: 1px solid #1a1a1a;
+  border-radius: 8px;
+  background: #000000;
+  color: #ffffff;
+  font-size: 0.9rem;
+  cursor: pointer;
+}
+
+.export-buttons {
+  display: flex;
+  gap: 8px;
+}
+
+/* Table */
+.table-wrap {
+  background: #0a0a0a;
+  border: 1px solid #1a1a1a;
+  border-radius: var(--admin-radius);
+  overflow: hidden;
+}
+
+.data-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.data-table th,
+.data-table td {
+  padding: 15px;
+  text-align: left;
+  border-bottom: 1px solid #1a1a1a;
+  color: #ffffff;
+}
+
+.data-table th {
+  background: #111111;
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
+.data-table tr:hover {
+  background: #111111;
+}
+
+.broker-name {
+  font-weight: 600;
+  color: #ffffff;
+}
+
+.broker-role {
+  font-size: 0.85rem;
+  color: rgba(255, 255, 255, 0.6);
+  margin-top: 0.25rem;
+}
+
+.contact-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  font-size: 0.9rem;
+}
+
+.contact-info span {
+  color: rgba(255, 255, 255, 0.6);
+}
+
+.badge {
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.badge-success {
+  background: rgba(34, 197, 94, 0.2);
+  color: #22c55e;
+}
+
+.badge-warning {
+  background: rgba(245, 158, 11, 0.2);
+  color: #f59e0b;
+}
+
+.badge-danger {
+  background: rgba(239, 68, 68, 0.2);
+  color: #ef4444;
+}
+
+.badge-info {
+  background: rgba(59, 130, 246, 0.2);
+  color: #3b82f6;
+}
+
+.action-btn {
+  padding: 6px 12px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.85rem;
+  transition: all 0.3s ease;
+  margin-right: 5px;
+}
+
+.action-btn-edit {
+  background: var(--admin-primary);
+  color: #fff;
+}
+
+.action-btn-verify {
+  background: var(--admin-success);
+  color: #fff;
+}
+
+.action-btn-suspend {
+  background: var(--admin-warning);
+  color: #fff;
+}
+
+.action-btn-delete {
+  background: var(--admin-danger);
+  color: #fff;
+}
+
+.action-btn:hover {
+  opacity: 0.8;
+}
+
+/* Pagination */
+.pagination {
+  display: flex;
+  justify-content: center;
+  gap: 0.5rem;
+  margin-top: 2rem;
+}
+
+.pagination-btn {
+  padding: 0.5rem 1rem;
+  border: 1px solid #1a1a1a;
+  background: #0a0a0a;
+  color: #ffffff;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  text-decoration: none;
+}
+
+.pagination-btn:hover,
+.pagination-btn.active {
+  background: #111111;
+  border-color: #2a2a2a;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .charts-section {
+    grid-template-columns: 1fr;
+  }
+  
+  .search-bar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  
+  .search-input-wrapper {
+    min-width: 100%;
+  }
+  
+  .export-buttons {
+    flex-direction: column;
+  }
+  
+  .dashboard-stats {
+    grid-template-columns: 1fr;
+  }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="dashboard-container">
+  <div class="dashboard-header">
+    <div class="header-info">
+      <h1>إدارة الدلالين</h1>
+      <p>إدارة وحسابات الدلالين والاشتراكات</p>
+    </div>
+    <div class="dashboard-quick-links">
+      <a href="{% url 'broker_create' %}" class="btn btn-primary">➕ إنشاء دلال جديد</a>
+      <a href="{% url 'broker_list' %}?filter=my_brokers" class="btn btn-outline">👥 الدلالين المنشأة</a>
+      <a href="{% url 'broker_messaging' %}" class="btn btn-outline">💬 الرسائل</a>
+      <a href="{% url 'broker_statistics' %}" class="btn btn-outline">📊 الإحصائيات</a>
+      {% if request.user.is_staff or request.user.is_superuser %}
+      <a href="{% url 'activity_log' %}" class="btn btn-outline">📋 سجل النشاطات</a>
+      {% endif %}
+      <a href="{% url 'join_requests_list' %}" class="btn btn-outline">طلبات الانضمام</a>
+      <a href="{% url 'office_panel' %}" class="btn btn-outline">المكتب العقاري</a>
+      <a href="{% url 'dashboard' %}" class="btn btn-outline">← لوحة التحكم</a>
+    </div>
+  </div>
+
+  <!-- Stats Cards -->
+  <div class="dashboard-stats">
+    <div class="stat-card" style="--card-color-1: #667eea; --card-color-2: #764ba2;">
+      <div class="stat-icon">👥</div>
+      <div class="stat-number">{{ total_brokers|intcomma }}</div>
+      <div class="stat-label">إجمالي الدلالين</div>
+      <div class="stat-trend">+{{ monthly_new_brokers|default:0 }} هذا الشهر</div>
+    </div>
+    <div class="stat-card" style="--card-color-1: #48bb78; --card-color-2: #38a169;">
+      <div class="stat-icon">✅</div>
+      <div class="stat-number">{{ verified_brokers|intcomma }}</div>
+      <div class="stat-label">الدلالين الموثقين</div>
+      <div class="stat-trend">{{ verified_percentage|default:0 }}% من المجموع</div>
+    </div>
+    <div class="stat-card" style="--card-color-1: #4299e1; --card-color-2: #3182ce;">
+      <div class="stat-icon">🏠</div>
+      <div class="stat-number">{{ total_properties|intcomma }}</div>
+      <div class="stat-label">إجمالي العقارات</div>
+      <div class="stat-trend">+{{ monthly_properties|default:0 }} هذا الشهر</div>
+    </div>
+    <div class="stat-card" style="--card-color-1: #ed8936; --card-color-2: #dd6b20;">
+      <div class="stat-icon">🟢</div>
+      <div class="stat-number">{{ active_brokers|intcomma }}</div>
+      <div class="stat-label">الدلالين النشطين</div>
+      <div class="stat-trend">{{ active_percentage|default:0 }}% نشط</div>
+    </div>
+    <div class="stat-card" style="--card-color-1: #f56565; --card-color-2: #e53e3e;">
+      <div class="stat-icon">⚠️</div>
+      <div class="stat-number">{{ expired_subscriptions|default:0 }}</div>
+      <div class="stat-label">اشتراكات منتهية</div>
+      <div class="stat-trend">تحتاج تجديد</div>
+    </div>
+    <div class="stat-card" style="--card-color-1: #9f7aea; --card-color-2: #805ad5;">
+      <div class="stat-icon">💰</div>
+      <div class="stat-number">{{ total_revenue|default:0|intcomma }}</div>
+      <div class="stat-label">الإيرادات (د.ع)</div>
+      <div class="stat-trend">هذا الشهر</div>
+    </div>
+  </div>
+
+  <!-- Charts Section -->
+  <div class="charts-section">
+    <div class="chart-card">
+      <div class="chart-header">
+        <h3>📈 نمو الدلالين</h3>
+        <select class="chart-filter" onchange="updateBrokerGrowthChart(this.value)">
+          <option value="7">آخر 7 أيام</option>
+          <option value="30" selected>آخر 30 يوم</option>
+          <option value="90">آخر 90 يوم</option>
+          <option value="365">آخر سنة</option>
+        </select>
+      </div>
+      <div class="chart-container">
+        <canvas id="brokerGrowthChart"></canvas>
+      </div>
+    </div>
+    <div class="chart-card">
+      <div class="chart-header">
+        <h3>🏠 العقارات حسب الحالة</h3>
+        <select class="chart-filter" onchange="updatePropertyStatusChart(this.value)">
+          <option value="all" selected>الكل</option>
+          <option value="verified">الموثقين</option>
+          <option value="unverified">غير الموثقين</option>
+        </select>
+      </div>
+      <div class="chart-container">
+        <canvas id="propertyStatusChart"></canvas>
+      </div>
+    </div>
+    <div class="chart-card">
+      <div class="chart-header">
+        <h3>📊 أداء الدلالين</h3>
+        <select class="chart-filter" onchange="updatePerformanceChart(this.value)">
+          <option value="all" selected>الكل</option>
+          <option value="top">الأفضل أداءً</option>
+          <option value="bottom">الأقل أداءً</option>
+        </select>
+      </div>
+      <div class="chart-container">
+        <canvas id="performanceChart"></canvas>
+      </div>
+    </div>
+    <div class="chart-card">
+      <div class="chart-header">
+        <h3>🗺️ التوزيع الجغرافي - المحافظات (19)</h3>
+        <select class="chart-filter" onchange="updateGeographicChart(this.value)">
+          <option value="all" selected>الكل</option>
+          <option value="active">النشطين</option>
+          <option value="verified">الموثقين</option>
+        </select>
+      </div>
+      <div class="chart-container">
+        <canvas id="geographicChart"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <!-- Search and Filter Section -->
+  <div class="search-bar">
+    <div class="search-input-wrapper">
+      <span class="search-icon">🔍</span>
+      <input type="text" id="searchInput" placeholder="بحث بالاسم أو الهاتف أو البريد..." class="search-input" value="{{ search_query }}">
+      <button class="search-btn" onclick="performSearch()">بحث</button>
+    </div>
+    <select id="statusFilter" class="filter-select" onchange="performSearch()">
+      <option value="">جميع الحالات</option>
+      <option value="active" {% if status_filter == 'active' %}selected{% endif %}>نشط</option>
+      <option value="inactive" {% if status_filter == 'inactive' %}selected{% endif %}>موقوف</option>
+      <option value="expired" {% if status_filter == 'expired' %}selected{% endif %}>منتهي الاشتراك</option>
+    </select>
+    <select id="verifiedFilter" class="filter-select" onchange="performSearch()">
+      <option value="">الكل</option>
+      <option value="verified" {% if verified_filter == 'verified' %}selected{% endif %}>موثق</option>
+      <option value="unverified" {% if verified_filter == 'unverified' %}selected{% endif %}>غير موثق</option>
+    </select>
+    <select id="roleFilter" class="filter-select" onchange="performSearch()">
+      <option value="">جميع الأدوار</option>
+      <option value="admin" {% if role_filter == 'admin' %}selected{% endif %}>مسؤول النظام</option>
+      <option value="main" {% if role_filter == 'main' %}selected{% endif %}>دلال رئيسي</option>
+      <option value="sub" {% if role_filter == 'sub' %}selected{% endif %}>دلال فرعي</option>
+    </select>
+    <select id="subscriptionFilter" class="filter-select" onchange="performSearch()">
+      <option value="">جميع الاشتراكات</option>
+      <option value="basic" {% if subscription_filter == 'basic' %}selected{% endif %}>أساسي</option>
+      <option value="standard" {% if subscription_filter == 'standard' %}selected{% endif %}>قياسي</option>
+      <option value="premium" {% if subscription_filter == 'premium' %}selected{% endif %}>مميز</option>
+      <option value="vip" {% if subscription_filter == 'vip' %}selected{% endif %}>VIP</option>
+    </select>
+    <select id="governorateFilter" class="filter-select" onchange="performSearch()">
+      <option value="">جميع المحافظات</option>
+      <option value="baghdad" {% if governorate_filter == 'baghdad' %}selected{% endif %}>بغداد</option>
+      <option value="basra" {% if governorate_filter == 'basra' %}selected{% endif %}>البصرة</option>
+      <option value="erbil" {% if governorate_filter == 'erbil' %}selected{% endif %}>أربيل</option>
+      <option value="nineveh" {% if governorate_filter == 'nineveh' %}selected{% endif %}>نينوى</option>
+      <option value="najaf" {% if governorate_filter == 'najaf' %}selected{% endif %}>النجف</option>
+      <option value="karbala" {% if governorate_filter == 'karbala' %}selected{% endif %}>كربلاء</option>
+    </select>
+    <select id="sortBy" class="filter-select" onchange="performSearch()">
+      <option value="newest" {% if sort_by == 'newest' %}selected{% endif %}>الأحدث</option>
+      <option value="oldest" {% if sort_by == 'oldest' %}selected{% endif %}>الأقدم</option>
+      <option value="name" {% if sort_by == 'name' %}selected{% endif %}>الاسم</option>
+      <option value="properties" {% if sort_by == 'properties' %}selected{% endif %}>عدد العقارات</option>
+      <option value="performance" {% if sort_by == 'performance' %}selected{% endif %}>الأداء</option>
+      <option value="revenue" {% if sort_by == 'revenue' %}selected{% endif %}>الإيرادات</option>
+    </select>
+    <div class="export-buttons">
+      <a href="{% url 'export_brokers' %}" class="btn btn-outline">📥 CSV</a>
+    </div>
+  </div>
+
+  <script>
+  function performSearch() {
+    const searchInput = document.getElementById('searchInput').value;
+    const statusFilter = document.getElementById('statusFilter').value;
+    const verifiedFilter = document.getElementById('verifiedFilter').value;
+    const roleFilter = document.getElementById('roleFilter').value;
+    const subscriptionFilter = document.getElementById('subscriptionFilter').value;
+    const governorateFilter = document.getElementById('governorateFilter').value;
+    const sortBy = document.getElementById('sortBy').value;
+
+    const params = new URLSearchParams();
+    if (searchInput) params.set('search', searchInput);
+    if (statusFilter) params.set('status', statusFilter);
+    if (verifiedFilter) params.set('verified', verifiedFilter);
+    if (roleFilter) params.set('role', roleFilter);
+    if (subscriptionFilter) params.set('subscription', subscriptionFilter);
+    if (governorateFilter) params.set('governorate', governorateFilter);
+    if (sortBy) params.set('sort', sortBy);
+    if ('{{ filter_type }}') params.set('filter', '{{ filter_type }}');
+
+    window.location.href = '{% url "broker_list" %}?' + params.toString();
+  }
+  </script>
+
+  <!-- Brokers Table -->
+  <div class="table-wrap">
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>الدلال</th>
+          <th>معلومات الاتصال</th>
+          <th>المحافظة</th>
+          <th>الاشتراك</th>
+          <th>العقارات</th>
+          <th>الحالة</th>
+          <th>الإجراءات</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for item in broker_data %}
+        <tr>
+          <td>
+            <div class="broker-name">{{ item.broker.display_name }}</div>
+            <div class="broker-role">{{ item.broker.get_role_display }}</div>
+          </td>
+          <td>
+            <div class="contact-info">
+              <span>📞 {{ item.broker.phone|default:"غير متوفر" }}</span>
+              <span>📧 {{ item.broker.user.email|default:"غير متوفر" }}</span>
+            </div>
+          </td>
+          <td>{{ item.broker.get_governorate_display|default:"غير محدد" }}</td>
+          <td>
+            <div class="subscription-info">
+              <div class="plan-name">{{ item.subscription_plan }}</div>
+              {% if item.subscription_end_date %}
+              <div class="subscription-dates">
+                <span>ينتهي: {{ item.subscription_end_date|date:"Y-m-d" }}</span>
+              </div>
+              {% endif %}
+            </div>
+          </td>
+          <td>
+            <div class="property-stats">
+              <div class="stat-row">
+                <span>العقارات:</span>
+                <strong>{{ item.property_count|intcomma }}</strong>
+              </div>
+              <div class="stat-row">
+                <span>المشاهدات:</span>
+                <strong>{{ item.views|intcomma }}</strong>
+              </div>
+              <div class="stat-row">
+                <span>الأداء:</span>
+                <strong>{{ item.performance_score|default:0 }}%</strong>
+              </div>
+            </div>
+          </td>
+          <td>
+            <div class="status-badges">
+              {% if item.broker.is_active %}
+              <span class="badge badge-success">نشط</span>
+              {% else %}
+              <span class="badge badge-danger">موقوف</span>
+              {% endif %}
+              {% if item.broker.is_verified %}
+              <span class="badge badge-info">موثق</span>
+              {% endif %}
+              {% if item.days_remaining <= 7 and item.days_remaining > 0 %}
+              <span class="badge badge-warning">ينتهي قريباً</span>
+              {% endif %}
+              {% if item.days_remaining <= 0 %}
+              <span class="badge badge-danger">منتهي</span>
+              {% endif %}
+            </div>
+          </td>
+          <td>
+            <div class="action-buttons">
+              <a href="{% url 'broker_edit' item.broker.id %}" class="action-btn action-btn-edit">✏️</a>
+              {% if not item.broker.is_verified %}
+              <a href="{% url 'api_broker_verify' item.broker.id %}" class="action-btn action-btn-verify">✅</a>
+              {% endif %}
+              {% if item.broker.is_active %}
+              <a href="{% url 'broker_toggle_active' item.broker.id %}" class="action-btn action-btn-suspend">🔒</a>
+              {% else %}
+              <a href="{% url 'broker_toggle_active' item.broker.id %}" class="action-btn action-btn-verify">🔓</a>
+              {% endif %}
+              <a href="{% url 'broker_delete' item.broker.id %}" class="action-btn action-btn-delete">🗑️</a>
+            </div>
+          </td>
+        </tr>
+        {% empty %}
+        <tr>
+          <td colspan="7" style="text-align:center;padding: 2rem;color: rgba(255, 255, 255, 0.5);">
+            لا يوجد دلالين
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Pagination -->
+  {% if brokers.has_other_pages %}
+  <div class="pagination">
+    {% if brokers.has_previous %}
+    <a href="?page={{ brokers.previous_page_number }}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}{% if request.GET.verified %}&verified={{ request.GET.verified }}{% endif %}{% if request.GET.role %}&role={{ request.GET.role }}{% endif %}{% if request.GET.subscription %}&subscription={{ request.GET.subscription }}{% endif %}{% if request.GET.governorate %}&governorate={{ request.GET.governorate }}{% endif %}{% if request.GET.sort %}&sort={{ request.GET.sort }}{% endif %}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}" class="pagination-btn">السابق</a>
+    {% endif %}
+
+    <span class="pagination-btn active">صفحة {{ brokers.number }} من {{ brokers.paginator.num_pages }}</span>
+
+    {% if brokers.has_next %}
+    <a href="?page={{ brokers.next_page_number }}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}{% if request.GET.verified %}&verified={{ request.GET.verified }}{% endif %}{% if request.GET.role %}&role={{ request.GET.role }}{% endif %}{% if request.GET.subscription %}&subscription={{ request.GET.subscription }}{% endif %}{% if request.GET.governorate %}&governorate={{ request.GET.governorate }}{% endif %}{% if request.GET.sort %}&sort={{ request.GET.sort }}{% endif %}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}" class="pagination-btn">التالي</a>
+    {% endif %}
+  </div>
+  {% endif %}
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script>
+// Governorates data
+const iraqGovernorates = [
+  { name: 'بغداد', code: 'BAG', color: '#4ecdc4' },
+  { name: 'البصرة', code: 'BAS', color: '#44a08d' },
+  { name: 'نينوى', code: 'NIN', color: '#6366f1' },
+  { name: 'أربيل', code: 'ERB', color: '#8b5cf6' },
+  { name: 'النجف', code: 'NAJ', color: '#ec4899' },
+  { name: 'كربلاء', code: 'KAR', color: '#f43f5e' },
+  { name: 'بابل', code: 'BAB', color: '#f59e0b' },
+  { name: 'ذي قار', code: 'DHI', color: '#f97316' },
+  { name: 'ديالى', code: 'DIA', color: '#eab308' },
+  { name: 'كركوك', code: 'KIR', color: '#84cc16' },
+  { name: 'الأنبار', code: 'ANB', color: '#22c55e' },
+  { name: 'واسط', code: 'WAS', color: '#10b981' },
+  { name: 'ميسان', code: 'MUT', color: '#14b8a6' },
+  { name: 'المثنى', code: 'MUTH', color: '#06b6d4' },
+  { name: 'القادسية', code: 'QAD', color: '#0ea5e9' },
+  { name: 'صلاح الدين', code: 'SAL', color: '#3b82f6' },
+  { name: 'دهوك', code: 'DUH', color: '#6366f1' },
+  { name: 'السليمانية', code: 'SUL', color: '#8b5cf6' },
+  { name: 'حلبجة', code: 'HAL', color: '#a855f7' }
+];
+
+// Charts
+let brokerGrowthChart, propertyStatusChart, performanceChart, geographicChart;
+
+document.addEventListener('DOMContentLoaded', function() {
+  initCharts();
+});
+
+function initCharts() {
+  // Broker Growth Chart
+  const growthCtx = document.getElementById('brokerGrowthChart').getContext('2d');
+  brokerGrowthChart = new Chart(growthCtx, {
+    type: 'line',
+    data: {
+      labels: generateDateLabels(30),
+      datasets: [{
+        label: 'الدلالين الجدد',
+        data: generateRandomData(30, 0, 10),
+        borderColor: '#667eea',
+        backgroundColor: 'rgba(102, 126, 234, 0.1)',
+        fill: true,
+        tension: 0.4
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false }
+      },
+      scales: {
+        y: { beginAtZero: true }
+      }
+    }
+  });
+
+  // Property Status Chart
+  const statusCtx = document.getElementById('propertyStatusChart').getContext('2d');
+  propertyStatusChart = new Chart(statusCtx, {
+    type: 'doughnut',
+    data: {
+      labels: ['جاهز', 'قيد البناء', 'مؤجر', 'مباع'],
+      datasets: [{
+        data: [45, 20, 25, 10],
+        backgroundColor: ['#48bb78', '#ed8936', '#4299e1', '#f56565'],
+        borderWidth: 0
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { position: 'bottom' }
+      }
+    }
+  });
+
+  // Performance Chart
+  const perfCtx = document.getElementById('performanceChart').getContext('2d');
+  performanceChart = new Chart(perfCtx, {
+    type: 'bar',
+    data: {
+      labels: ['أحمد', 'محمد', 'علي', 'حسين', 'كريم'],
+      datasets: [{
+        label: 'درجة الأداء',
+        data: [85, 92, 78, 88, 95],
+        backgroundColor: '#667eea',
+        borderRadius: 8
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false }
+      },
+      scales: {
+        y: { beginAtZero: true, max: 100 }
+      }
+    }
+  });
+
+  // Geographic Chart
+  const geoCtx = document.getElementById('geographicChart').getContext('2d');
+  {% if governorate_stats %}
+  const geoData = {
+    labels: [{% for stat in governorate_stats %}'{{ stat.name }}'{% if not forloop.last %},{% endif %}{% endfor %}],
+    data: [{% for stat in governorate_stats %}{{ stat.count }}{% if not forloop.last %},{% endif %}{% endfor %}],
+    colors: iraqGovernorates.slice(0, {{ governorate_stats|length }}).map(g => g.color)
+  };
+  {% else %}
+  const geoData = {
+    labels: iraqGovernorates.slice(0, 6).map(g => g.name),
+    data: [35, 20, 15, 12, 10, 8],
+    colors: iraqGovernorates.slice(0, 6).map(g => g.color)
+  };
+  {% endif %}
+  
+  geographicChart = new Chart(geoCtx, {
+    type: 'pie',
+    data: {
+      labels: geoData.labels,
+      datasets: [{
+        data: geoData.data,
+        backgroundColor: geoData.colors,
+        borderWidth: 0
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { position: 'bottom' }
+      }
+    }
+  });
+}
+
+function generateDateLabels(days) {
+  const labels = [];
+  const today = new Date();
+  for (let i = days - 1; i >= 0; i--) {
+    const date = new Date(today);
+    date.setDate(date.getDate() - i);
+    labels.push(date.toLocaleDateString('ar-EG', { month: 'short', day: 'numeric' }));
+  }
+  return labels;
+}
+
+function generateRandomData(count, min, max) {
+  const data = [];
+  for (let i = 0; i < count; i++) {
+    data.push(Math.floor(Math.random() * (max - min + 1)) + min);
+  }
+  return data;
+}
+
+function updateBrokerGrowthChart(days) {
+  brokerGrowthChart.data.labels = generateDateLabels(parseInt(days));
+  brokerGrowthChart.data.datasets[0].data = generateRandomData(parseInt(days), 0, 15);
+  brokerGrowthChart.update();
+}
+
+function updatePropertyStatusChart(filter) {
+  const dataMap = {
+    'all': [45, 20, 25, 10],
+    'verified': [30, 15, 18, 7],
+    'unverified': [15, 5, 7, 3]
+  };
+  propertyStatusChart.data.datasets[0].data = dataMap[filter] || dataMap['all'];
+  propertyStatusChart.update();
+}
+
+function updatePerformanceChart(filter) {
+  const dataMap = {
+    'all': [85, 92, 78, 88, 95],
+    'top': [95, 92, 88, 85, 82],
+    'bottom': [45, 52, 58, 62, 68]
+  };
+  performanceChart.data.datasets[0].data = dataMap[filter] || dataMap['all'];
+  performanceChart.update();
+}
+
+function updateGeographicChart(filter) {
+  geographicChart.update();
+}
+
+function performSearch() {
+  const searchTerm = document.getElementById('searchInput').value;
+  const status = document.getElementById('statusFilter').value;
+  const verified = document.getElementById('verifiedFilter').value;
+  const role = document.getElementById('roleFilter').value;
+  const subscription = document.getElementById('subscriptionFilter').value;
+  const governorate = document.getElementById('governorateFilter').value;
+  const sortBy = document.getElementById('sortBy').value;
+  
+  const params = new URLSearchParams();
+  if (searchTerm) params.append('search', searchTerm);
+  if (status) params.append('status', status);
+  if (verified) params.append('verified', verified);
+  if (role) params.append('role', role);
+  if (subscription) params.append('subscription', subscription);
+  if (governorate) params.append('governorate', governorate);
+  if (sortBy) params.append('sort', sortBy);
+  
+  window.location.href = '{% url "broker_list" %}?' + params.toString();
+}
+
+function exportData(format) {
+  alert('جاري تصدير البيانات بصيغة ' + format.toUpperCase() + '...');
+}
+
+function editBroker(brokerId) {
+  window.location.href = `/admin/properties/broker/${brokerId}/`;
+}
+
+function verifyBroker(brokerId) {
+  if (confirm('هل أنت متأكد من توثيق هذا الدلال؟')) {
+    fetch(`/api/brokers/${brokerId}/verify/`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRFToken': getCsrfToken()
+      }
+    })
+    .then(response => response.json())
+    .then(data => {
+      if (data.success) {
+        alert('تم توثيق الدلال بنجاح');
+        location.reload();
+      } else {
+        alert('حدث خطأ في التوثيق');
+      }
+    });
+  }
+}
+
+function suspendBroker(brokerId) {
+  if (confirm('هل أنت متأكد من إيقاف هذا الدلال؟')) {
+    fetch(`/api/brokers/${brokerId}/toggle-status/`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRFToken': getCsrfToken()
+      }
+    })
+    .then(response => response.json())
+    .then(data => {
+      if (data.success) {
+        alert('تم إيقاف الدلال بنجاح');
+        location.reload();
+      } else {
+        alert('حدث خطأ في الإيقاف');
+      }
+    });
+  }
+}
+
+function activateBroker(brokerId) {
+  if (confirm('هل أنت متأكد من تفعيل هذا الدلال؟')) {
+    fetch(`/api/brokers/${brokerId}/toggle-status/`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRFToken': getCsrfToken()
+      }
+    })
+    .then(response => response.json())
+    .then(data => {
+      if (data.success) {
+        alert('تم تفعيل الدلال بنجاح');
+        location.reload();
+      } else {
+        alert('حدث خطأ في التفعيل');
+      }
+    });
+  }
+}
+
+function deleteBroker(brokerId) {
+  if (confirm('هل أنت متأكد من حذف هذا الدلال؟ هذا الإجراء لا يمكن التراجع عنه.')) {
+    fetch(`/api/brokers/${brokerId}/delete/`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRFToken': getCsrfToken()
+      }
+    })
+    .then(response => response.json())
+    .then(data => {
+      if (data.success) {
+        alert('تم حذف الدلال بنجاح');
+        location.reload();
+      } else {
+        alert('حدث خطأ في الحذف');
+      }
+    });
+  }
+}
+
+function getCsrfToken() {
+  return document.querySelector('[name=csrfmiddlewaretoken]')?.value || '';
+}
+
+// Add enter key listener for search
+document.getElementById('searchInput').addEventListener('keypress', function(e) {
+  if (e.key === 'Enter') {
+    performSearch();
+  }
+});
+</script>
+{% endblock %}

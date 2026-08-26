@@ -1,0 +1,530 @@
+{% extends 'properties/base.html' %}
+{% load custom_filters %}
+
+{% block title %}القنوات المتقدمة - دلال{% endblock %}
+
+{% block content %}
+<div class="container" style="background: var(--bg-primary, #0B0B0B); min-height: calc(100vh - var(--header-height, 72px)); padding: 2rem;">
+    <div class="row">
+        <div class="col-lg-12">
+            <div class="page-header">
+                <h1 class="page-title">القنوات المتقدمة</h1>
+                <p class="page-subtitle">استكشف أفضل قنوات الدلال في العراق</p>
+            </div>
+            
+            <!-- Search and Filter Form -->
+            <div class="search-panel">
+                <form method="get" class="search-form">
+                    <div class="row">
+                        <div class="col-md-3">
+                            <div class="form-group">
+                                <label>بحث</label>
+                                <input type="text" name="q" class="form-control" placeholder="ابحث في القنوات..." value="{{ search_form.q.value|default:'' }}">
+                            </div>
+                        </div>
+                        <div class="col-md-2">
+                            <div class="form-group">
+                                <label>المحافظة</label>
+                                <select name="governorate" class="form-control">
+                                    <option value="">كل المحافظات</option>
+                                    {% for value, label in search_form.governorate.field.choices %}
+                                        {% if value != '' %}
+                                            <option value="{{ value }}" {% if search_form.governorate.value == value %}selected{% endif %}>{{ label }}</option>
+                                        {% endif %}
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-2">
+                            <div class="form-group">
+                                <label>نوع القناة</label>
+                                <select name="channel_type" class="form-control">
+                                    <option value="">كل الأنواع</option>
+                                    <option value="basic" {% if search_form.channel_type.value == 'basic' %}selected{% endif %}>أساسي</option>
+                                    <option value="premium" {% if search_form.channel_type.value == 'premium' %}selected{% endif %}>مميز</option>
+                                    <option value="elite" {% if search_form.channel_type.value == 'elite' %}selected{% endif %}>نخبوي</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-2">
+                            <div class="form-group">
+                                <label>التصنيف</label>
+                                <select name="category" class="form-control">
+                                    <option value="">كل التصنيفات</option>
+                                    <option value="properties_iraq" {% if search_form.category.value == 'properties_iraq' %}selected{% endif %}>🏠 عقارات داخل العراق</option>
+                                    <option value="properties_foreign" {% if search_form.category.value == 'properties_foreign' %}selected{% endif %}>🌍 عقارات خارج العراق</option>
+                                    <option value="hotels_iraq" {% if search_form.category.value == 'hotels_iraq' %}selected{% endif %}>🏨🇮🇶 فنادق داخل العراق</option>
+                                    <option value="hotels_foreign" {% if search_form.category.value == 'hotels_foreign' %}selected{% endif %}>🏨🌍 فنادق خارج العراق</option>
+                                    <option value="resorts_iraq" {% if search_form.category.value == 'resorts_iraq' %}selected{% endif %}>🏝️🇮🇶 منتجعات داخل العراق</option>
+                                    <option value="resorts_foreign" {% if search_form.category.value == 'resorts_foreign' %}selected{% endif %}>🏝️🌍 منتجعات خارج العراق</option>
+                                    <option value="travel_agency" {% if search_form.category.value == 'travel_agency' %}selected{% endif %}>✈️ شركة سفر</option>
+                                    <option value="jobs" {% if search_form.category.value == 'jobs' %}selected{% endif %}>➕ وظائف</option>
+                                    <option value="services" {% if search_form.category.value == 'services' %}selected{% endif %}>🔧 خدمات</option>
+                                    <option value="auctions" {% if search_form.category.value == 'auctions' %}selected{% endif %}>🔨 مزادات</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-2">
+                            <div class="form-group">
+                                <label>الترتيب</label>
+                                <select name="sort" class="form-control">
+                                    <option value="followers" {% if search_form.sort.value == 'followers' %}selected{% endif %}>الأكثر متابعة</option>
+                                    <option value="rating" {% if search_form.sort.value == 'rating' %}selected{% endif %}>الأعلى تقييماً</option>
+                                    <option value="properties" {% if search_form.sort.value == 'properties' %}selected{% endif %}>الأكثر عقارات</option>
+                                    <option value="newest" {% if search_form.sort.value == 'newest' %}selected{% endif %}>الأحدث</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-2">
+                            <div class="form-group">
+                                <label>&nbsp;</label>
+                                <div class="checkbox-wrapper">
+                                    <input type="checkbox" name="is_verified" {% if search_form.is_verified.value %}checked{% endif %}>
+                                    <span>الموثق فقط</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-1">
+                            <div class="form-group">
+                                <label>&nbsp;</label>
+                                <button type="submit" class="btn btn-primary w-100">بحث</button>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            
+            <!-- Channels Grid -->
+            <div class="channels-grid">
+                {% if channels %}
+                    <div class="row" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(350px, 1fr)); gap: 1.5rem;">
+                        {% for channel in channels %}
+                        <div style="min-width: 0;">
+                            <div class="channel-card {% if channel.is_featured %}featured{% endif %}">
+                                <div class="channel-header">
+                                    {% if channel.logo %}
+                                    <img src="{{ channel.logo.url }}" alt="{{ channel.name }}" class="channel-logo">
+                                    {% else %}
+                                    <div class="channel-logo-placeholder">
+                                        <i class="fas fa-building"></i>
+                                    </div>
+                                    {% endif %}
+                                    <div class="channel-info">
+                                        <h3 class="channel-name">{{ channel.name }}</h3>
+                                        <p class="channel-broker">{{ channel.broker.display_name }}</p>
+                                    </div>
+                                    {% if channel.is_verified %}
+                                    <span class="verified-badge">
+                                        <i class="fas fa-check-circle"></i> موثق
+                                    </span>
+                                    {% endif %}
+                                    {% if channel.is_featured %}
+                                    <span class="featured-badge">
+                                        <i class="fas fa-star"></i> مميز
+                                    </span>
+                                    {% endif %}
+                                    
+                                    <span class="category-badge">
+                                        {{ channel.get_category_display }}
+                                    </span>
+                                </div>
+                                
+                                {% if channel.cover_image %}
+                                <div class="channel-cover">
+                                    <img src="{{ channel.cover_image.url }}" alt="{{ channel.name }}">
+                                </div>
+                                {% endif %}
+                                
+                                <div class="channel-body">
+                                    <p class="channel-description">{{ channel.description|truncatewords:20 }}</p>
+                                    
+                                    <div class="channel-stats">
+                                        <div class="stat-item">
+                                            <i class="fas fa-users"></i>
+                                            <span>{{ channel.real_followers_count|default:channel.followers_count|number_format }} متابع</span>
+                                        </div>
+                                        <div class="stat-item">
+                                            <i class="fas fa-eye"></i>
+                                            <span>{{ channel.views_count|number_format }} مشاهدة</span>
+                                        </div>
+                                        <div class="stat-item">
+                                            <i class="fas fa-home"></i>
+                                            <span>{{ channel.properties_count|number_format }} عقار</span>
+                                        </div>
+                                        <div class="stat-item">
+                                            <i class="fas fa-star"></i>
+                                            <span>{{ channel.rating }}/5</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="channel-footer">
+                                    <a href="{% url 'channel_detail' channel.id %}" class="btn btn-primary btn-sm">
+                                        عرض القناة
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    
+                    <!-- Pagination -->
+                    {% if channels.has_other_pages %}
+                    <div class="pagination-container text-center">
+                        <nav>
+                            <ul class="pagination">
+                                {% if channels.has_previous %}
+                                    <li class="page-item">
+                                        <a class="page-link" href="?page={{ channels.previous_page_number }}">السابق</a>
+                                    </li>
+                                {% endif %}
+                                
+                                {% for num in channels.paginator.page_range %}
+                                    {% if channels.number == num %}
+                                        <li class="page-item active">
+                                            <span class="page-link">{{ num }}</span>
+                                        </li>
+                                    {% else %}
+                                        <li class="page-item">
+                                            <a class="page-link" href="?page={{ num }}">{{ num }}</a>
+                                        </li>
+                                    {% endif %}
+                                {% endfor %}
+                                
+                                {% if channels.has_next %}
+                                    <li class="page-item">
+                                        <a class="page-link" href="?page={{ channels.next_page_number }}">التالي</a>
+                                    </li>
+                                {% endif %}
+                            </ul>
+                        </nav>
+                    </div>
+                    {% endif %}
+                {% else %}
+                    <div class="empty-state text-center py-5">
+                        <i class="fas fa-users fa-3x text-muted mb-3"></i>
+                        <h3>لا توجد قنوات</h3>
+                        <p class="text-muted">لم يتم العثور على قنوات تطابق بحثك</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+.page-header {
+    background: var(--card-bg, #161616);
+    border: 1px solid var(--border-primary, rgba(255, 122, 0, 0.15));
+    border-radius: var(--radius-lg, 16px);
+    padding: 1.5rem;
+    margin-bottom: 2rem;
+    box-shadow: var(--shadow-lg, 0 10px 15px rgba(0, 0, 0, 0.5));
+}
+
+.page-title {
+    color: var(--text-primary, #FFFFFF);
+    font-size: 1.5rem;
+    font-weight: 700;
+    margin: 0;
+}
+
+.page-subtitle {
+    color: var(--text-muted, rgba(255, 255, 255, 0.7));
+    margin: 0.5rem 0 0 0;
+    font-size: 0.9rem;
+}
+
+.search-panel {
+    background: var(--card-bg, #161616);
+    border: 1px solid var(--border-primary, rgba(255, 122, 0, 0.15));
+    border-radius: var(--radius-lg, 16px);
+    padding: 1.5rem;
+    margin-bottom: 2rem;
+    box-shadow: var(--shadow-lg, 0 10px 15px rgba(0, 0, 0, 0.5));
+}
+
+.search-form .form-group label {
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+    color: var(--text-primary, #FFFFFF);
+}
+
+.search-form .form-control {
+    background: var(--bg-secondary, #1a1a1a);
+    border: 1px solid var(--border-primary, rgba(255, 122, 0, 0.15));
+    border-radius: var(--radius-sm, 8px);
+    color: var(--text-primary, #FFFFFF);
+    padding: 0.75rem 1rem;
+}
+
+.search-form .form-control:focus {
+    outline: none;
+    border-color: var(--primary, #FF7A00);
+    box-shadow: 0 0 0 3px rgba(255, 122, 0, 0.2);
+}
+
+.search-form .form-control option {
+    background: var(--bg-secondary, #1a1a1a);
+    color: var(--text-primary, #FFFFFF);
+}
+
+.checkbox-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-top: 1.5rem;
+    color: var(--text-primary, #FFFFFF);
+}
+
+.checkbox-wrapper input[type="checkbox"] {
+    width: 1.25rem;
+    height: 1.25rem;
+    accent-color: var(--primary, #FF7A00);
+}
+
+.search-form .btn-primary {
+    background: var(--primary, #FF7A00);
+    border-color: var(--primary, #FF7A00);
+    color: #FFFFFF;
+    padding: 0.75rem 1.5rem;
+    border-radius: var(--radius-sm, 8px);
+    font-weight: 600;
+    transition: all 0.3s ease;
+}
+
+.search-form .btn-primary:hover {
+    background: #ff9500;
+    border-color: #ff9500;
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(255, 122, 0, 0.3);
+}
+
+.channels-grid {
+    margin-top: 1.5rem;
+}
+
+.channel-card {
+    background: var(--card-bg, #161616);
+    border: 1px solid var(--border-primary, rgba(255, 122, 0, 0.15));
+    border-radius: var(--radius-lg, 16px);
+    overflow: hidden;
+    transition: all 0.3s ease;
+    box-shadow: var(--shadow-lg, 0 10px 15px rgba(0, 0, 0, 0.5));
+}
+
+.channel-card:hover {
+    transform: translateY(-4px);
+    border-color: var(--primary, #FF7A00);
+    box-shadow: 0 15px 25px rgba(255, 122, 0, 0.2);
+}
+
+.channel-card.featured {
+    border: 2px solid #ffd93d;
+}
+
+.channel-header {
+    background: linear-gradient(135deg, var(--primary, #FF7A00) 0%, #ff9500 100%);
+    color: white;
+    padding: 1.25rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    position: relative;
+}
+
+.channel-logo {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 3px solid white;
+}
+
+.channel-logo-placeholder {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.2);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5em;
+}
+
+.channel-info {
+    flex: 1;
+}
+
+.channel-name {
+    margin: 0;
+    font-size: 1.2rem;
+    font-weight: 600;
+    color: white;
+}
+
+.channel-broker {
+    margin: 0.25rem 0 0 0;
+    font-size: 0.9rem;
+    opacity: 0.9;
+    color: white;
+}
+
+.verified-badge {
+    background: rgba(34, 197, 94, 0.9);
+    color: white;
+    padding: 0.25rem 0.75rem;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    font-weight: 600;
+}
+
+.featured-badge {
+    background: rgba(255, 217, 61, 0.9);
+    color: #333;
+    padding: 0.25rem 0.75rem;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    font-weight: 600;
+}
+
+.category-badge {
+    background: rgba(255, 122, 0, 0.9);
+    color: white;
+    padding: 0.25rem 0.75rem;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    font-weight: 600;
+}
+
+.channel-cover {
+    width: 100%;
+    height: 150px;
+    overflow: hidden;
+}
+
+.channel-cover img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.channel-body {
+    padding: 1.25rem;
+}
+
+.channel-description {
+    color: var(--text-muted, rgba(255, 255, 255, 0.7));
+    margin-bottom: 1rem;
+    line-height: 1.5;
+}
+
+.channel-stats {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.75rem;
+    margin-bottom: 1rem;
+}
+
+.stat-item {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.9rem;
+    color: var(--text-primary, #FFFFFF);
+}
+
+.stat-item i {
+    color: var(--primary, #FF7A00);
+}
+
+.channel-footer {
+    background: var(--bg-secondary, #1a1a1a);
+    border-top: 1px solid var(--border-primary, rgba(255, 122, 0, 0.15));
+    padding: 1rem;
+    text-align: center;
+}
+
+.channel-footer .btn-primary {
+    background: var(--primary, #FF7A00);
+    border-color: var(--primary, #FF7A00);
+    color: #FFFFFF;
+    padding: 0.5rem 1.25rem;
+    border-radius: var(--radius-sm, 8px);
+    font-weight: 600;
+    transition: all 0.3s ease;
+}
+
+.channel-footer .btn-primary:hover {
+    background: #ff9500;
+    border-color: #ff9500;
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(255, 122, 0, 0.3);
+}
+
+.empty-state {
+    background: var(--card-bg, #161616);
+    border: 1px solid var(--border-primary, rgba(255, 122, 0, 0.15));
+    border-radius: var(--radius-lg, 16px);
+    padding: 3rem;
+    box-shadow: var(--shadow-lg, 0 10px 15px rgba(0, 0, 0, 0.5));
+}
+
+.empty-state i {
+    color: var(--text-muted, rgba(255, 255, 255, 0.5));
+}
+
+.empty-state h3 {
+    color: var(--text-primary, #FFFFFF);
+    margin: 1rem 0 0.5rem 0;
+}
+
+.empty-state p {
+    color: var(--text-muted, rgba(255, 255, 255, 0.7));
+}
+
+.pagination-container {
+    margin-top: 2rem;
+}
+
+.pagination {
+    display: flex;
+    justify-content: center;
+    gap: 0.5rem;
+}
+
+.page-item .page-link {
+    background: var(--card-bg, #161616);
+    border: 1px solid var(--border-primary, rgba(255, 122, 0, 0.15));
+    color: var(--text-primary, #FFFFFF);
+    padding: 0.5rem 1rem;
+    border-radius: var(--radius-sm, 8px);
+    transition: all 0.3s ease;
+}
+
+.page-item .page-link:hover {
+    background: var(--primary, #FF7A00);
+    border-color: var(--primary, #FF7A00);
+    color: white;
+}
+
+.page-item.active .page-link {
+    background: var(--primary, #FF7A00);
+    border-color: var(--primary, #FF7A00);
+    color: white;
+}
+
+@media (max-width: 768px) {
+    .page-header,
+    .search-panel {
+        padding: 1rem;
+    }
+
+    .channel-stats {
+        grid-template-columns: 1fr;
+    }
+}
+</style>
+{% endblock %}

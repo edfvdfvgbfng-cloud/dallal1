@@ -1,0 +1,2239 @@
+{% extends 'properties/base.html' %}
+{% load static %}
+
+{% block title %}العقود العقارية المتقدمة{% endblock %}
+
+{% block content %}
+{% csrf_token %}
+<div class="contracts-app">
+  <!-- Main Content Area -->
+  <div class="contracts-main">
+    {% if active_contract %}
+    <input type="hidden" id="current-contract-id" value="{{ active_contract.id }}">
+    <div class="contract-header">
+      <button class="mobile-back-btn" onclick="showMobileSidebar()" title="رجوع">←</button>
+      <div class="contract-info">
+        <div class="contract-number">{{ active_contract.contract_number }}</div>
+        <div class="contract-title">{{ active_contract.get_contract_type_display }}</div>
+      </div>
+      <div class="contract-actions">
+        <button class="contract-action-btn" onclick="printContract()" title="طباعة">
+          <span>🖨️</span>
+        </button>
+        <button class="contract-action-btn" onclick="exportContract()" title="تصدير">
+          <span>📥</span>
+        </button>
+        <button class="contract-action-btn" onclick="shareContract()" title="مشاركة">
+          <span>📤</span>
+        </button>
+        <button class="contract-action-btn" onclick="editContract()" title="تعديل">
+          <span>✏️</span>
+        </button>
+        <button class="contract-action-btn menu-btn" onclick="toggleContractMenu()" title="المزيد">
+          <span>⋯</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Advanced Features Tabs -->
+    <div class="contract-tabs">
+      <button class="contract-tab-btn active" data-tab="overview">📋 نظرة عامة</button>
+      <button class="contract-tab-btn" data-tab="payments">💰 الدفعات</button>
+      <button class="contract-tab-btn" data-tab="documents">📄 الوثائق</button>
+      <button class="contract-tab-btn" data-tab="reminders">🔔 التذكيرات</button>
+      <button class="contract-tab-btn" data-tab="analytics">📊 التحليلات</button>
+    </div>
+
+    <div class="contract-content">
+      <!-- Overview Tab -->
+      <div class="contract-tab-content active" id="tab-overview">
+      <div class="contract-section">
+        <h3>معلومات العقد</h3>
+        <div class="contract-details">
+          <div class="detail-row">
+            <span class="detail-label">رقم العقد:</span>
+            <span class="detail-value">{{ active_contract.contract_number }}</span>
+          </div>
+          <div class="detail-row">
+            <span class="detail-label">نوع العقد:</span>
+            <span class="detail-value">{{ active_contract.get_contract_type_display }}</span>
+          </div>
+          <div class="detail-row">
+            <span class="detail-label">الحالة:</span>
+            <span class="detail-value contract-status {{ active_contract.status }}">{{ active_contract.get_status_display }}</span>
+          </div>
+          <div class="detail-row">
+            <span class="detail-label">قيمة العقد:</span>
+            <span class="detail-value">{{ active_contract.amount|intcomma }} د.ع</span>
+          </div>
+          <div class="detail-row">
+            <span class="detail-label">العربون:</span>
+            <span class="detail-value">{{ active_contract.deposit|intcomma }} د.ع</span>
+          </div>
+          <div class="detail-row">
+            <span class="detail-label">قيمة العمولة:</span>
+            <span class="detail-value">{{ active_contract.commission_amount|intcomma }} د.ع ({{ active_contract.commission_rate }}%)</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="contract-section">
+        <h3>الأطراف المعنية</h3>
+        <div class="contract-parties">
+          <div class="party-card">
+            <div class="party-avatar">
+              {% if active_contract.client.user_profile.avatar %}
+                <img src="{{ active_contract.client.user_profile.avatar.url }}" alt="{{ active_contract.client.username }}">
+              {% else %}
+                <div class="avatar-placeholder">{{ active_contract.client.username|slice:":1"|upper }}</div>
+              {% endif %}
+            </div>
+            <div class="party-info">
+              <div class="party-name">{{ active_contract.client.get_full_name|default:active_contract.client.username }}</div>
+              <div class="party-role">العميل</div>
+              <div class="party-contact">{{ active_contract.client.email|default:'غير متوفر' }}</div>
+            </div>
+          </div>
+
+          {% if active_contract.broker %}
+          <div class="party-card">
+            <div class="party-avatar">
+              {% if active_contract.broker.user.user_profile.avatar %}
+                <img src="{{ active_contract.broker.user.user_profile.avatar.url }}" alt="{{ active_contract.broker.user.username }}">
+              {% else %}
+                <div class="avatar-placeholder">{{ active_contract.broker.user.username|slice:":1"|upper }}</div>
+              {% endif %}
+            </div>
+            <div class="party-info">
+              <div class="party-name">{{ active_contract.broker.user.get_full_name|default:active_contract.broker.user.username }}</div>
+              <div class="party-role">الدلال</div>
+              <div class="party-contact">{{ active_contract.broker.phone|default:'غير متوفر' }}</div>
+            </div>
+          </div>
+          {% endif %}
+
+          {% if active_contract.second_party_name %}
+          <div class="party-card">
+            <div class="party-avatar">
+              <div class="avatar-placeholder">{{ active_contract.second_party_name|slice:":1"|upper }}</div>
+            </div>
+            <div class="party-info">
+              <div class="party-name">{{ active_contract.second_party_name }}</div>
+              <div class="party-role">الطرف الثاني</div>
+              <div class="party-contact">{{ active_contract.second_party_phone|default:'غير متوفر' }}</div>
+            </div>
+          </div>
+          {% endif %}
+        </div>
+      </div>
+
+      <div class="contract-section">
+        <h3>المعلومات الزمنية</h3>
+        <div class="contract-timeline">
+          <div class="timeline-item">
+            <div class="timeline-date">{{ active_contract.start_date|date:"Y-m-d" }}</div>
+            <div class="timeline-label">تاريخ البدء</div>
+          </div>
+          {% if active_contract.signing_date %}
+          <div class="timeline-item">
+            <div class="timeline-date">{{ active_contract.signing_date|date:"Y-m-d" }}</div>
+            <div class="timeline-label">تاريخ التوقيع</div>
+          </div>
+          {% endif %}
+          {% if active_contract.end_date %}
+          <div class="timeline-item">
+            <div class="timeline-date">{{ active_contract.end_date|date:"Y-m-d" }}</div>
+            <div class="timeline-label">تاريخ الانتهاء</div>
+          </div>
+          {% endif %}
+        </div>
+      </div>
+
+      <div class="contract-section">
+        <h3>الشروط والأحكام</h3>
+        <div class="contract-terms">
+          {% if active_contract.terms_and_conditions %}
+          <div class="terms-content">{{ active_contract.terms_and_conditions|linebreaks }}</div>
+          {% else %}
+          <div class="terms-empty">لا توجد شروط وأحكام محددة</div>
+          {% endif %}
+        </div>
+      </div>
+
+      {% if active_contract.special_clauses %}
+      <div class="contract-section">
+        <h3>البنود الخاصة</h3>
+        <div class="contract-clauses">
+          <div class="clauses-content">{{ active_contract.special_clauses|linebreaks }}</div>
+        </div>
+      </div>
+      {% endif %}
+
+      <div class="contract-section">
+        <h3>الدفعات</h3>
+        <div class="contract-payments">
+          <div class="payment-info">
+            <div class="payment-label">تكرار الدفع:</div>
+            <div class="payment-value">{{ active_contract.get_payment_frequency_display }}</div>
+          </div>
+          {% if active_contract.payment_terms %}
+          <div class="payment-terms">
+            <div class="payment-label">شروط الدفع:</div>
+            <div class="payment-value">{{ active_contract.payment_terms|linebreaks }}</div>
+          </div>
+          {% endif %}
+        </div>
+      </div>
+
+      <div class="contract-section">
+        <h3>التوقيعات</h3>
+        <div class="contract-signatures">
+          <div class="signature-area">
+            <div class="signature-label">توقيع العميل</div>
+            <div class="signature-box">
+              {% if active_contract.client_signature %}
+                <img src="{{ active_contract.client_signature.url }}" alt="توقيع العميل">
+              {% else %}
+                <div class="signature-placeholder">بانتظار التوقيع</div>
+              {% endif %}
+            </div>
+            <button class="signature-btn" onclick="signContract('client')">توقيع إلكتروني</button>
+          </div>
+
+          {% if active_contract.broker %}
+          <div class="signature-area">
+            <div class="signature-label">توقيع الدلال</div>
+            <div class="signature-box">
+              {% if active_contract.broker_signature %}
+                <img src="{{ active_contract.broker_signature.url }}" alt="توقيع الدلال">
+              {% else %}
+                <div class="signature-placeholder">بانتظار التوقيع</div>
+              {% endif %}
+            </div>
+            <button class="signature-btn" onclick="signContract('broker')">توقيع إلكتروني</button>
+          </div>
+          {% endif %}
+        </div>
+      </div>
+
+      {% if active_contract.notes %}
+      <div class="contract-section">
+        <h3>ملاحظات</h3>
+        <div class="contract-notes">
+          <div class="notes-content">{{ active_contract.notes|linebreaks }}</div>
+        </div>
+      </div>
+      {% endif %}
+      </div>
+
+      <!-- Payments Tab -->
+      <div class="contract-tab-content" id="tab-payments">
+        <div class="contract-section">
+          <div class="section-header">
+            <h3>💰 المدفوعات</h3>
+            <button class="btn btn-primary" onclick="openPaymentModal()">إضافة دفعة</button>
+          </div>
+          <div class="payments-summary">
+            <div class="summary-card">
+              <div class="summary-label">إجمالي المدفوعات</div>
+              <div class="summary-value">{{ active_contract.amount|intcomma }} د.ع</div>
+            </div>
+            <div class="summary-card">
+              <div class="summary-label">المدفوع</div>
+              <div class="summary-value">{{ active_contract.deposit|intcomma }} د.ع</div>
+            </div>
+            <div class="summary-card">
+              <div class="summary-label">المتبقي</div>
+              <div class="summary-value">{{ active_contract.amount|add:active_contract.deposit|intcomma }} د.ع</div>
+            </div>
+          </div>
+          <div class="payments-list">
+            {% for payment in active_contract.payments.all %}
+            <div class="payment-item">
+              <div class="payment-info">
+                <div class="payment-number">{{ payment.payment_number }}</div>
+                <div class="payment-date">{{ payment.due_date|date:"Y-m-d" }}</div>
+              </div>
+              <div class="payment-amount">
+                <div class="amount">{{ payment.amount|intcomma }} د.ع</div>
+                <div class="paid">{{ payment.paid_amount|intcomma }} د.ع</div>
+              </div>
+              <div class="payment-status {{ payment.status }}">
+                {% if payment.status == 'pending' %}قيد الانتظار
+                {% elif payment.status == 'partial' %}مدفوع جزئياً
+                {% elif payment.status == 'completed' %}مكتمل
+                {% elif payment.status == 'failed' %}فشل
+                {% elif payment.status == 'cancelled' %}ملغي{% endif %}
+              </div>
+              <div class="payment-actions">
+                <button class="action-btn" onclick="editPayment({{ payment.id }})">✏️</button>
+                <button class="action-btn" onclick="deletePayment({{ payment.id }})">🗑️</button>
+              </div>
+            </div>
+            {% empty %}
+            <div class="empty-payments">
+              <p>لا توجد مدفوعات مسجلة</p>
+            </div>
+            {% endfor %}
+          </div>
+        </div>
+      </div>
+
+      <!-- Documents Tab -->
+      <div class="contract-tab-content" id="tab-documents">
+        <div class="contract-section">
+          <div class="section-header">
+            <h3>📄 الوثائق</h3>
+            <button class="btn btn-primary" onclick="openDocumentModal()">رفع وثيقة</button>
+          </div>
+          <div class="documents-grid">
+            {% for document in active_contract.documents.all %}
+            <div class="document-card">
+              <div class="document-icon">
+                {% if document.document_type == 'contract' %}📄
+                {% elif document.document_type == 'addendum' %}📝
+                {% elif document.document_type == 'amendment' %}✏️
+                {% elif document.document_type == 'receipt' %}🧾
+                {% elif document.document_type == 'invoice' %}📋
+                {% elif document.document_type == 'id_copy' %}🪪
+                {% elif document.document_type == 'property_docs' %}🏠
+                {% else %}📎{% endif %}
+              </div>
+              <div class="document-info">
+                <div class="document-title">{{ document.title }}</div>
+                <div class="document-type">{{ document.get_document_type_display }}</div>
+                <div class="document-size">{{ document.file_size|filesizeformat }}</div>
+                <div class="document-date">{{ document.uploaded_at|date:"Y-m-d" }}</div>
+              </div>
+              <div class="document-actions">
+                <button class="action-btn" onclick="downloadDocument({{ document.id }})">⬇️</button>
+                <button class="action-btn" onclick="deleteDocument({{ document.id }})">🗑️</button>
+              </div>
+            </div>
+            {% empty %}
+            <div class="empty-documents">
+              <p>لا توجد وثائق مرفوعة</p>
+            </div>
+            {% endfor %}
+          </div>
+        </div>
+      </div>
+
+      <!-- Reminders Tab -->
+      <div class="contract-tab-content" id="tab-reminders">
+        <div class="contract-section">
+          <div class="section-header">
+            <h3>🔔 التذكيرات</h3>
+            <button class="btn btn-primary" onclick="openReminderModal()">إضافة تذكير</button>
+          </div>
+          <div class="reminders-list">
+            {% for reminder in active_contract.reminders.all %}
+            <div class="reminder-item {% if reminder.is_sent %}sent{% endif %}">
+              <div class="reminder-icon">
+                {% if reminder.reminder_type == 'renewal' %}🔄
+                {% elif reminder.reminder_type == 'expiration' %}⏰
+                {% elif reminder.reminder_type == 'payment' %}💰
+                {% elif reminder.reminder_type == 'inspection' %}🔍
+                {% else %}📌{% endif %}
+              </div>
+              <div class="reminder-info">
+                <div class="reminder-title">{{ reminder.title }}</div>
+                <div class="reminder-date">{{ reminder.reminder_date|date:"Y-m-d" }}</div>
+                <div class="reminder-days">{{ reminder.reminder_days_before }} أيام قبل</div>
+              </div>
+              <div class="reminder-status">
+                {% if reminder.is_sent %}
+                <span class="status-sent">✅ تم الإرسال</span>
+                {% else %}
+                <span class="status-pending">⏳ قيد الانتظار</span>
+                {% endif %}
+              </div>
+              <div class="reminder-actions">
+                <button class="action-btn" onclick="editReminder({{ reminder.id }})">✏️</button>
+                <button class="action-btn" onclick="deleteReminder({{ reminder.id }})">🗑️</button>
+              </div>
+            </div>
+            {% empty %}
+            <div class="empty-reminders">
+              <p>لا توجد تذكيرات</p>
+            </div>
+            {% endfor %}
+          </div>
+        </div>
+      </div>
+
+      <!-- Analytics Tab -->
+      <div class="contract-tab-content" id="tab-analytics">
+        <div class="contract-section">
+          <h3>📊 التحليلات</h3>
+          <div class="analytics-cards">
+            <div class="analytics-card">
+              <div class="analytics-icon">📈</div>
+              <div class="analytics-value">{{ active_contract.days_remaining|default:0 }}</div>
+              <div class="analytics-label">أيام متبقية</div>
+            </div>
+            <div class="analytics-card">
+              <div class="analytics-icon">💰</div>
+              <div class="analytics-value">{{ active_contract.commission_amount|intcomma }}</div>
+              <div class="analytics-label">قيمة العمولة</div>
+            </div>
+            <div class="analytics-card">
+              <div class="analytics-icon">📄</div>
+              <div class="analytics-value">{{ active_contract.documents.count }}</div>
+              <div class="analytics-label">الوثائق</div>
+            </div>
+            <div class="analytics-card">
+              <div class="analytics-icon">🔔</div>
+              <div class="analytics-value">{{ active_contract.reminders.count }}</div>
+              <div class="analytics-label">التذكيرات</div>
+            </div>
+          </div>
+          <div class="analytics-chart">
+            <h4>تقدم الدفعات</h4>
+            <div class="progress-bar">
+              <div class="progress-fill" style="width: 60%"></div>
+            </div>
+            <div class="progress-text">60% مكتمل</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="contract-footer">
+      <button class="btn btn-secondary" onclick="closeContract()">إغلاق</button>
+      {% if active_contract.status == 'draft' %}
+      <button class="btn btn-primary" onclick="submitForApproval()">إرسال للموافقة</button>
+      {% elif active_contract.status == 'pending' %}
+      <button class="btn btn-success" onclick="approveContract()">موافقة</button>
+      <button class="btn btn-danger" onclick="rejectContract()">رفض</button>
+      {% elif active_contract.status == 'active' %}
+      <button class="btn btn-warning" onclick="terminateContract()">إنهاء العقد</button>
+      {% endif %}
+    </div>
+    {% else %}
+    <div class="no-contract-selected">
+      <div class="no-contract-icon">📄</div>
+      <h3>العقود العقارية</h3>
+      <p>اختر عقد للعرض أو ابدأ عقد جديد</p>
+      <button class="btn btn-primary" onclick="openNewContractModal()">
+        <span>➕</span>
+        <span>عقد جديد</span>
+      </button>
+    </div>
+    {% endif %}
+  </div>
+
+  <!-- Right Sidebar - Contracts List -->
+  <div class="contracts-sidebar">
+    <div class="sidebar-header">
+      <div class="sidebar-title">
+        <span class="title-icon">📄</span>
+        <span class="title-text">العقود العقارية</span>
+      </div>
+      <div class="sidebar-actions">
+        <button class="action-btn" onclick="openNewContractModal()" title="عقد جديد">
+          <span>➕</span>
+        </button>
+        <button class="action-btn" onclick="toggleContractFilters()" title="تصفية">
+          <span>🔍</span>
+        </button>
+      </div>
+    </div>
+
+    <div class="sidebar-search">
+      <div class="search-input-wrapper">
+        <span class="search-icon">🔍</span>
+        <input type="text" id="contracts-search" placeholder="بحث في العقود..." autocomplete="off">
+      </div>
+    </div>
+
+    <div class="contracts-tabs">
+      <button class="tab-btn active" data-tab="all">الكل</button>
+      <button class="tab-btn" data-tab="active">نشط</button>
+      <button class="tab-btn" data-tab="pending">قيد الانتظار</button>
+      <button class="tab-btn" data-tab="completed">مكتمل</button>
+    </div>
+
+    <div class="contracts-list" id="contracts-list">
+      {% if contracts %}
+        {% for contract in contracts %}
+        <div class="contract-item {% if contract.id == active_contract_id %}active{% endif %}"
+             data-contract-id="{{ contract.id }}"
+             onclick="openContract('{{ contract.id }}')">
+          <div class="contract-icon">
+            <span class="contract-type-icon">
+              {% if contract.contract_type == 'sale' %}🏠
+              {% elif contract.contract_type == 'rent' %>🔑
+              {% elif contract.contract_type == 'lease' %>📋
+              {% elif contract.contract_type == 'agency' %>🤝
+              {% elif contract.contract_type == 'management' %>👔
+              {% elif contract.contract_type == 'partnership' %>🤝
+              {% elif contract.contract_type == 'maintenance' %>🔧
+              {% else %}📄{% endif %}
+            </span>
+            <div class="contract-status-badge {{ contract.status }}">
+              {% if contract.status == 'draft' %}مسودة
+              {% elif contract.status == 'pending' %}قيد الانتظار
+              {% elif contract.status == 'active' %}نشط
+              {% elif contract.status == 'completed' %}مكتمل
+              {% elif contract.status == 'terminated' %}منهي
+              {% elif contract.status == 'expired' %}منتهي
+              {% elif contract.status == 'cancelled' %}ملغي{% endif %}
+            </div>
+          </div>
+          <div class="contract-content">
+            <div class="contract-header">
+              <span class="contract-number">{{ contract.contract_number }}</span>
+              <span class="contract-date">{{ contract.created_at|date:"Y-m-d" }}</span>
+            </div>
+            <div class="contract-preview">
+              <span class="contract-type">{{ contract.get_contract_type_display }}</span>
+              <span class="contract-amount">{{ contract.amount|intcomma }} د.ع</span>
+            </div>
+            <div class="contract-parties">
+              <span class="party-name">{{ contract.client.username|default:'غير محدد' }}</span>
+              {% if contract.broker %}
+              <span class="party-name">{{ contract.broker.user.username|default:'غير محدد' }}</span>
+              {% endif %}
+            </div>
+          </div>
+        </div>
+        {% endfor %}
+      {% else %}
+        <div class="empty-contracts">
+          <div class="empty-icon">📄</div>
+          <p>لا توجد عقود</p>
+          <button class="btn btn-primary" onclick="openNewContractModal()">عقد جديد</button>
+        </div>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- Bottom Navigation Bar -->
+  <div class="contracts-bottom-nav">
+    <a href="{% url 'dashboard' %}" class="bottom-nav-item">
+      <span class="nav-icon">📊</span>
+      <span class="nav-label">لوحة التحكم</span>
+    </a>
+    <a href="{% url 'broker_messages' %}" class="bottom-nav-item">
+      <span class="nav-icon">💬</span>
+      <span class="nav-label">الرسائل</span>
+    </a>
+    <a href="{% url 'user_settings' %}" class="bottom-nav-item">
+      <span class="nav-icon">⚙️</span>
+      <span class="nav-label">الإعدادات</span>
+    </a>
+  </div>
+</div>
+
+<!-- New Contract Modal -->
+<div class="modal" id="new-contract-modal" style="display: none;">
+  <div class="modal-content contract-modal">
+    <div class="modal-header">
+      <h3>➕ عقد جديد</h3>
+      <button class="modal-close" onclick="closeNewContractModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <form id="new-contract-form">
+        <div class="form-group">
+          <label>نوع العقد</label>
+          <select name="contract_type" required>
+            <option value="">اختر نوع العقد</option>
+            <option value="sale">عقد بيع</option>
+            <option value="rent">عقد إيجار</option>
+            <option value="lease">عقد تأجير</option>
+            <option value="agency">عقد وساطة</option>
+            <option value="management">عقد إدارة</option>
+            <option value="partnership">عقد شراكة</option>
+            <option value="maintenance">عقد صيانة</option>
+            <option value="other">عقد آخر</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label>العقار</label>
+          <select name="property" required>
+            <option value="">اختر العقار</option>
+            {% for property in properties %}
+            <option value="{{ property.id }}">{{ property.title }}</option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label>العميل</label>
+          <select name="client" required>
+            <option value="">اختر العميل</option>
+            {% for user in users %}
+            <option value="{{ user.id }}">{{ user.get_full_name|default:user.username }}</option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label>الدلال</label>
+          <select name="broker">
+            <option value="">اختر الدلال (اختياري)</option>
+            {% for broker in brokers %}
+            <option value="{{ broker.id }}">{{ broker.user.get_full_name|default:broker.user.username }}</option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label>قيمة العقد</label>
+            <input type="number" name="amount" required placeholder="القيمة بالدينار">
+          </div>
+          <div class="form-group">
+            <label>العربون</label>
+            <input type="number" name="deposit" placeholder="القيمة بالدينار">
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label>نسبة العمولة (%)</label>
+            <input type="number" name="commission_rate" step="0.01" placeholder="النسبة">
+          </div>
+          <div class="form-group">
+            <label>تكرار الدفع</label>
+            <select name="payment_frequency">
+              <option value="one_time">دفعة واحدة</option>
+              <option value="monthly">شهري</option>
+              <option value="quarterly">ربع سنوي</option>
+              <option value="annually">سنوي</option>
+              <option value="custom">مخصص</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label>تاريخ البدء</label>
+            <input type="date" name="start_date" required>
+          </div>
+          <div class="form-group">
+            <label>تاريخ الانتهاء</label>
+            <input type="date" name="end_date">
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>الشروط والأحكام</label>
+          <textarea name="terms_and_conditions" rows="4" placeholder="اكتب الشروط والأحكام..."></textarea>
+        </div>
+
+        <div class="form-group">
+          <label>البنود الخاصة</label>
+          <textarea name="special_clauses" rows="3" placeholder="اكتب البونود الخاصة..."></textarea>
+        </div>
+
+        <div class="form-group">
+          <label>ملاحظات</label>
+          <textarea name="notes" rows="2" placeholder="أي ملاحظات إضافية..."></textarea>
+        </div>
+      </form>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeNewContractModal()">إلغاء</button>
+      <button class="btn btn-primary" onclick="createContract()">إنشاء العقد</button>
+    </div>
+  </div>
+</div>
+
+<style>
+/* Contracts App Styles - Professional Dark Theme */
+.contracts-app {
+  display: flex;
+  height: calc(100vh - 60px);
+  background: #1a1a1a;
+  color: #ffffff;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+  margin-bottom: 60px;
+  position: relative;
+}
+
+/* Main Contract Area */
+.contracts-main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  background: #1a1a1a;
+  overflow: hidden;
+}
+
+/* Sidebar Styles */
+.contracts-sidebar {
+  width: 400px;
+  background: #2d2d2d;
+  border-left: 1px solid #404040;
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+  overflow: hidden;
+  order: 2;
+}
+
+.sidebar-header {
+  padding: 20px;
+  border-bottom: 1px solid #404040;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.sidebar-title {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.title-icon {
+  font-size: 1.5rem;
+}
+
+.title-text {
+  font-weight: 600;
+  font-size: 1.1rem;
+}
+
+.sidebar-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.action-btn {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: none;
+  background: #3d3d3d;
+  color: #a0a0a0;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s ease;
+}
+
+.action-btn:hover {
+  background: #505050;
+  color: #ffffff;
+}
+
+.sidebar-search {
+  padding: 15px 20px;
+}
+
+.search-input-wrapper {
+  position: relative;
+  background: #1a1a1a;
+  border-radius: 20px;
+  padding: 10px 15px 10px 40px;
+  border: 1px solid #404040;
+}
+
+.search-input-wrapper:focus-within {
+  border-color: #667eea;
+}
+
+.search-icon {
+  position: absolute;
+  left: 15px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #a0a0a0;
+}
+
+.search-input-wrapper input {
+  width: 100%;
+  background: transparent;
+  border: none;
+  color: #ffffff;
+  font-size: 0.9rem;
+  outline: none;
+}
+
+.contracts-tabs {
+  display: flex;
+  padding: 10px 20px;
+  gap: 8px;
+  border-bottom: 1px solid #404040;
+}
+
+.tab-btn {
+  flex: 1;
+  padding: 8px 12px;
+  border: none;
+  background: transparent;
+  color: #a0a0a0;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-size: 0.85rem;
+}
+
+.tab-btn:hover {
+  background: #3d3d3d;
+  color: #ffffff;
+}
+
+.tab-btn.active {
+  background: #667eea;
+  color: #ffffff;
+}
+
+.contracts-list {
+  flex: 1;
+  overflow-y: auto;
+  padding: 10px;
+}
+
+.contract-item {
+  display: flex;
+  gap: 12px;
+  padding: 15px;
+  border-radius: 12px;
+  background: #1a1a1a;
+  margin-bottom: 8px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  border: 1px solid transparent;
+}
+
+.contract-item:hover {
+  background: #252525;
+  border-color: #404040;
+}
+
+.contract-item.active {
+  background: #3d3d3d;
+  border-color: #667eea;
+}
+
+.contract-icon {
+  position: relative;
+  width: 50px;
+  height: 50px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #3d3d3d;
+  border-radius: 12px;
+  flex-shrink: 0;
+}
+
+.contract-type-icon {
+  font-size: 1.5rem;
+}
+
+.contract-status-badge {
+  position: absolute;
+  top: -5px;
+  right: -5px;
+  padding: 2px 6px;
+  border-radius: 10px;
+  font-size: 0.65rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.contract-status-badge.draft {
+  background: #6b7280;
+  color: #ffffff;
+}
+
+.contract-status-badge.pending {
+  background: #f59e0b;
+  color: #ffffff;
+}
+
+.contract-status-badge.active {
+  background: #22c55e;
+  color: #ffffff;
+}
+
+.contract-status-badge.completed {
+  background: #3b82f6;
+  color: #ffffff;
+}
+
+.contract-status-badge.terminated {
+  background: #ef4444;
+  color: #ffffff;
+}
+
+.contract-status-badge.expired {
+  background: #8b5cf6;
+  color: #ffffff;
+}
+
+.contract-status-badge.cancelled {
+  background: #6b7280;
+  color: #ffffff;
+}
+
+.contract-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.contract-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.contract-number {
+  font-weight: 600;
+  color: #ffffff;
+}
+
+.contract-date {
+  font-size: 0.75rem;
+  color: #a0a0a0;
+}
+
+.contract-preview {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 6px;
+}
+
+.contract-type {
+  font-size: 0.85rem;
+  color: #a0a0a0;
+}
+
+.contract-amount {
+  font-weight: 600;
+  color: #667eea;
+}
+
+.contract-parties {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.party-name {
+  font-size: 0.75rem;
+  color: #808080;
+  background: #2d2d2d;
+  padding: 2px 8px;
+  border-radius: 10px;
+}
+
+.empty-contracts {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 20px;
+  text-align: center;
+}
+
+.empty-icon {
+  font-size: 3rem;
+  margin-bottom: 16px;
+  opacity: 0.5;
+}
+
+.empty-contracts p {
+  color: #a0a0a0;
+  margin-bottom: 16px;
+}
+
+/* Contract Content Area */
+.contract-header {
+  padding: 20px;
+  border-bottom: 1px solid #404040;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+/* Contract Tabs */
+.contract-tabs {
+  display: flex;
+  padding: 10px 20px;
+  gap: 8px;
+  border-bottom: 1px solid #404040;
+  background: #2d2d2d;
+}
+
+.contract-tab-btn {
+  flex: 1;
+  padding: 12px 16px;
+  border: none;
+  background: transparent;
+  color: #a0a0a0;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-size: 0.9rem;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.contract-tab-btn:hover {
+  background: #3d3d3d;
+  color: #ffffff;
+}
+
+.contract-tab-btn.active {
+  background: #667eea;
+  color: #ffffff;
+}
+
+.contract-tab-content {
+  display: none;
+}
+
+.contract-tab-content.active {
+  display: block;
+}
+
+.section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.section-header h3 {
+  margin: 0;
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #ffffff;
+}
+
+/* Payments Styles */
+.payments-summary {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.summary-card {
+  background: #1a1a1a;
+  padding: 16px;
+  border-radius: 8px;
+  text-align: center;
+}
+
+.summary-label {
+  color: #a0a0a0;
+  font-size: 0.85rem;
+  margin-bottom: 8px;
+}
+
+.summary-value {
+  color: #667eea;
+  font-size: 1.2rem;
+  font-weight: 700;
+}
+
+.payments-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.payment-item {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 16px;
+  background: #1a1a1a;
+  border-radius: 8px;
+  border: 1px solid #404040;
+}
+
+.payment-info {
+  flex: 1;
+}
+
+.payment-number {
+  font-weight: 600;
+  color: #ffffff;
+  margin-bottom: 4px;
+}
+
+.payment-date {
+  font-size: 0.85rem;
+  color: #a0a0a0;
+}
+
+.payment-amount {
+  text-align: right;
+}
+
+.payment-amount .amount {
+  font-weight: 600;
+  color: #ffffff;
+  margin-bottom: 4px;
+}
+
+.payment-amount .paid {
+  font-size: 0.85rem;
+  color: #22c55e;
+}
+
+.payment-status {
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.payment-status.pending {
+  background: #f59e0b;
+  color: #ffffff;
+}
+
+.payment-status.partial {
+  background: #3b82f6;
+  color: #ffffff;
+}
+
+.payment-status.completed {
+  background: #22c55e;
+  color: #ffffff;
+}
+
+.payment-status.failed {
+  background: #ef4444;
+  color: #ffffff;
+}
+
+.payment-status.cancelled {
+  background: #6b7280;
+  color: #ffffff;
+}
+
+.payment-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.empty-payments {
+  text-align: center;
+  padding: 40px;
+  color: #a0a0a0;
+}
+
+/* Documents Styles */
+.documents-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 16px;
+}
+
+.document-card {
+  background: #1a1a1a;
+  border-radius: 8px;
+  padding: 16px;
+  border: 1px solid #404040;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.document-icon {
+  font-size: 2rem;
+  text-align: center;
+}
+
+.document-info {
+  flex: 1;
+}
+
+.document-title {
+  font-weight: 600;
+  color: #ffffff;
+  margin-bottom: 4px;
+  word-break: break-word;
+}
+
+.document-type {
+  font-size: 0.85rem;
+  color: #a0a0a0;
+  margin-bottom: 4px;
+}
+
+.document-size {
+  font-size: 0.8rem;
+  color: #808080;
+  margin-bottom: 4px;
+}
+
+.document-date {
+  font-size: 0.8rem;
+  color: #808080;
+}
+
+.document-actions {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
+.empty-documents {
+  text-align: center;
+  padding: 40px;
+  color: #a0a0a0;
+}
+
+/* Reminders Styles */
+.reminders-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.reminder-item {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 16px;
+  background: #1a1a1a;
+  border-radius: 8px;
+  border: 1px solid #404040;
+}
+
+.reminder-item.sent {
+  opacity: 0.6;
+}
+
+.reminder-icon {
+  font-size: 1.5rem;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #3d3d3d;
+  border-radius: 8px;
+}
+
+.reminder-info {
+  flex: 1;
+}
+
+.reminder-title {
+  font-weight: 600;
+  color: #ffffff;
+  margin-bottom: 4px;
+}
+
+.reminder-date {
+  font-size: 0.85rem;
+  color: #a0a0a0;
+  margin-bottom: 2px;
+}
+
+.reminder-days {
+  font-size: 0.8rem;
+  color: #808080;
+}
+
+.reminder-status {
+  font-size: 0.85rem;
+}
+
+.status-sent {
+  color: #22c55e;
+}
+
+.status-pending {
+  color: #f59e0b;
+}
+
+.reminder-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.empty-reminders {
+  text-align: center;
+  padding: 40px;
+  color: #a0a0a0;
+}
+
+/* Analytics Styles */
+.analytics-cards {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.analytics-card {
+  background: #1a1a1a;
+  padding: 20px;
+  border-radius: 8px;
+  text-align: center;
+  border: 1px solid #404040;
+}
+
+.analytics-icon {
+  font-size: 2rem;
+  margin-bottom: 12px;
+}
+
+.analytics-value {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #667eea;
+  margin-bottom: 8px;
+}
+
+.analytics-label {
+  color: #a0a0a0;
+  font-size: 0.85rem;
+}
+
+.analytics-chart {
+  background: #1a1a1a;
+  padding: 20px;
+  border-radius: 8px;
+  border: 1px solid #404040;
+}
+
+.analytics-chart h4 {
+  margin: 0 0 16px 0;
+  font-size: 1rem;
+  color: #ffffff;
+}
+
+.progress-bar {
+  height: 20px;
+  background: #3d3d3d;
+  border-radius: 10px;
+  overflow: hidden;
+  margin-bottom: 8px;
+}
+
+.progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+  border-radius: 10px;
+  transition: width 0.3s ease;
+}
+
+.progress-text {
+  text-align: center;
+  color: #a0a0a0;
+  font-size: 0.85rem;
+}
+
+.contract-info {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.contract-number {
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: #667eea;
+}
+
+.contract-title {
+  font-size: 0.9rem;
+  color: #a0a0a0;
+}
+
+.contract-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.contract-action-btn {
+  width: 40px;
+  height: 40px;
+  border-radius: 8px;
+  border: none;
+  background: #3d3d3d;
+  color: #a0a0a0;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s ease;
+}
+
+.contract-action-btn:hover {
+  background: #505050;
+  color: #ffffff;
+}
+
+.contract-content {
+  flex: 1;
+  overflow-y: auto;
+  padding: 20px;
+}
+
+.contract-section {
+  margin-bottom: 24px;
+  padding: 20px;
+  background: #2d2d2d;
+  border-radius: 12px;
+}
+
+.contract-section h3 {
+  margin: 0 0 16px 0;
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.contract-details {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.detail-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 0;
+  border-bottom: 1px solid #404040;
+}
+
+.detail-row:last-child {
+  border-bottom: none;
+}
+
+.detail-label {
+  color: #a0a0a0;
+  font-size: 0.9rem;
+}
+
+.detail-value {
+  color: #ffffff;
+  font-weight: 500;
+}
+
+.contract-status {
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.contract-status.draft {
+  background: #6b7280;
+  color: #ffffff;
+}
+
+.contract-status.pending {
+  background: #f59e0b;
+  color: #ffffff;
+}
+
+.contract-status.active {
+  background: #22c55e;
+  color: #ffffff;
+}
+
+.contract-status.completed {
+  background: #3b82f6;
+  color: #ffffff;
+}
+
+.contract-status.terminated {
+  background: #ef4444;
+  color: #ffffff;
+}
+
+.contract-status.expired {
+  background: #8b5cf6;
+  color: #ffffff;
+}
+
+.contract-status.cancelled {
+  background: #6b7280;
+  color: #ffffff;
+}
+
+.contract-parties {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.party-card {
+  display: flex;
+  gap: 12px;
+  padding: 12px;
+  background: #1a1a1a;
+  border-radius: 8px;
+}
+
+.party-avatar {
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+.party-avatar img, .party-avatar .avatar-placeholder {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.party-avatar .avatar-placeholder {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.2rem;
+  font-weight: 600;
+}
+
+.party-info {
+  flex: 1;
+}
+
+.party-name {
+  font-weight: 600;
+  color: #ffffff;
+  margin-bottom: 4px;
+}
+
+.party-role {
+  font-size: 0.85rem;
+  color: #667eea;
+  margin-bottom: 4px;
+}
+
+.party-contact {
+  font-size: 0.8rem;
+  color: #a0a0a0;
+}
+
+.contract-timeline {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.timeline-item {
+  flex: 1;
+  min-width: 120px;
+  padding: 12px;
+  background: #1a1a1a;
+  border-radius: 8px;
+  text-align: center;
+}
+
+.timeline-date {
+  font-weight: 600;
+  color: #667eea;
+  font-size: 1.1rem;
+  margin-bottom: 4px;
+}
+
+.timeline-label {
+  font-size: 0.8rem;
+  color: #a0a0a0;
+}
+
+.contract-terms, .contract-clauses, .contract-notes {
+  background: #1a1a1a;
+  padding: 16px;
+  border-radius: 8px;
+}
+
+.terms-content, .clauses-content, .notes-content {
+  color: #a0a0a0;
+  line-height: 1.6;
+  white-space: pre-wrap;
+}
+
+.terms-empty {
+  color: #808080;
+  font-style: italic;
+}
+
+.contract-payments {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.payment-info, .payment-terms {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px;
+  background: #1a1a1a;
+  border-radius: 8px;
+}
+
+.payment-label {
+  color: #a0a0a0;
+  font-size: 0.9rem;
+}
+
+.payment-value {
+  color: #ffffff;
+  font-weight: 500;
+}
+
+.contract-signatures {
+  display: flex;
+  gap: 20px;
+  flex-wrap: wrap;
+}
+
+.signature-area {
+  flex: 1;
+  min-width: 200px;
+}
+
+.signature-label {
+  font-weight: 600;
+  color: #ffffff;
+  margin-bottom: 12px;
+}
+
+.signature-box {
+  height: 100px;
+  background: #1a1a1a;
+  border: 2px dashed #404040;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 12px;
+  overflow: hidden;
+}
+
+.signature-box img {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+}
+
+.signature-placeholder {
+  color: #808080;
+  font-style: italic;
+}
+
+.signature-btn {
+  width: 100%;
+  padding: 10px;
+  border: none;
+  border-radius: 8px;
+  background: #667eea;
+  color: #ffffff;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.3s ease;
+}
+
+.signature-btn:hover {
+  background: #5568d3;
+}
+
+.contract-footer {
+  padding: 20px;
+  border-top: 1px solid #404040;
+  display: flex;
+  gap: 12px;
+  justify-content: flex-end;
+}
+
+.no-contract-selected {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  text-align: center;
+  padding: 40px;
+}
+
+.no-contract-icon {
+  font-size: 4rem;
+  margin-bottom: 24px;
+  opacity: 0.5;
+}
+
+.no-contract-selected h3 {
+  margin: 0 0 12px 0;
+  font-size: 1.5rem;
+  color: #ffffff;
+}
+
+.no-contract-selected p {
+  color: #a0a0a0;
+  margin-bottom: 24px;
+}
+
+/* Bottom Navigation */
+.contracts-bottom-nav {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: #2d2d2d;
+  border-top: 1px solid #404040;
+  display: flex;
+  justify-content: space-around;
+  padding: 10px 0;
+  z-index: 100;
+}
+
+.bottom-nav-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-decoration: none;
+  color: #a0a0a0;
+  transition: color 0.3s ease;
+  padding: 8px 16px;
+}
+
+.bottom-nav-item:hover {
+  color: #667eea;
+}
+
+.bottom-nav-item.active {
+  color: #667eea;
+}
+
+.nav-icon {
+  font-size: 1.5rem;
+  margin-bottom: 4px;
+}
+
+.nav-label {
+  font-size: 0.75rem;
+  font-weight: 500;
+}
+
+/* Modal Styles */
+.modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.8);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.modal-content {
+  background: #2d2d2d;
+  border-radius: 15px;
+  width: 90%;
+  max-width: 600px;
+  max-height: 90vh;
+  overflow-y: auto;
+}
+
+.modal-header {
+  padding: 20px;
+  border-bottom: 1px solid #404040;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.modal-header h3 {
+  margin: 0;
+  font-size: 1.2rem;
+  color: #ffffff;
+}
+
+.modal-close {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: none;
+  background: #3d3d3d;
+  color: #a0a0a0;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s ease;
+}
+
+.modal-close:hover {
+  background: #505050;
+  color: #ffffff;
+}
+
+.modal-body {
+  padding: 20px;
+}
+
+.modal-footer {
+  padding: 20px;
+  border-top: 1px solid #404040;
+  display: flex;
+  gap: 12px;
+  justify-content: flex-end;
+}
+
+.form-group {
+  margin-bottom: 16px;
+}
+
+.form-row {
+  display: flex;
+  gap: 16px;
+}
+
+.form-row .form-group {
+  flex: 1;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 8px;
+  color: #a0a0a0;
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+
+.form-group input,
+.form-group select,
+.form-group textarea {
+  width: 100%;
+  padding: 12px;
+  border: 1px solid #404040;
+  border-radius: 8px;
+  background: #1a1a1a;
+  color: #ffffff;
+  font-size: 0.9rem;
+  transition: border-color 0.3s ease;
+}
+
+.form-group input:focus,
+.form-group select:focus,
+.form-group textarea:focus {
+  outline: none;
+  border-color: #667eea;
+}
+
+.form-group textarea {
+  resize: vertical;
+  min-height: 80px;
+}
+
+.btn {
+  padding: 12px 24px;
+  border: none;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-size: 0.9rem;
+}
+
+.btn-primary {
+  background: #667eea;
+  color: #ffffff;
+}
+
+.btn-primary:hover {
+  background: #5568d3;
+}
+
+.btn-secondary {
+  background: #3d3d3d;
+  color: #ffffff;
+}
+
+.btn-secondary:hover {
+  background: #505050;
+}
+
+.btn-success {
+  background: #22c55e;
+  color: #ffffff;
+}
+
+.btn-success:hover {
+  background: #16a34a;
+}
+
+.btn-danger {
+  background: #ef4444;
+  color: #ffffff;
+}
+
+.btn-danger:hover {
+  background: #dc2626;
+}
+
+.btn-warning {
+  background: #f59e0b;
+  color: #ffffff;
+}
+
+.btn-warning:hover {
+  background: #d97706;
+}
+
+/* Mobile Responsive */
+@media (max-width: 768px) {
+  .contracts-sidebar {
+    width: 100%;
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 0;
+    bottom: 0;
+    z-index: 50;
+    transform: translateX(100%);
+    transition: transform 0.3s ease;
+  }
+
+  .contracts-sidebar.show {
+    transform: translateX(0);
+  }
+
+  .mobile-back-btn {
+    display: block !important;
+  }
+
+  .contract-signatures {
+    flex-direction: column;
+  }
+}
+
+@media (min-width: 769px) {
+  .mobile-back-btn {
+    display: none;
+  }
+}
+</style>
+
+<script>
+// Contract Management JavaScript
+function openContract(contractId) {
+  window.location.href = `/dashboard/contracts/?contract_id=${contractId}`;
+}
+
+function openNewContractModal() {
+  document.getElementById('new-contract-modal').style.display = 'flex';
+}
+
+function closeNewContractModal() {
+  document.getElementById('new-contract-modal').style.display = 'none';
+}
+
+// Tab switching
+document.querySelectorAll('.contract-tab-btn').forEach(btn => {
+  btn.addEventListener('click', function() {
+    const tabName = this.getAttribute('data-tab');
+
+    // Remove active class from all tabs
+    document.querySelectorAll('.contract-tab-btn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.contract-tab-content').forEach(c => c.classList.remove('active'));
+
+    // Add active class to clicked tab
+    this.classList.add('active');
+    document.getElementById(`tab-${tabName}`).classList.add('active');
+  });
+});
+
+// Payment functions
+function openPaymentModal() {
+  alert('سيتم فتح نافذة إضافة دفعة جديدة');
+}
+
+function editPayment(paymentId) {
+  alert(`تعديل الدفعة رقم ${paymentId}`);
+}
+
+function deletePayment(paymentId) {
+  if (confirm('هل تريد حذف هذه الدفعة؟')) {
+    alert(`تم حذف الدفعة رقم ${paymentId}`);
+  }
+}
+
+// Document functions
+function openDocumentModal() {
+  alert('سيتم فتح نافذة رفع وثيقة جديدة');
+}
+
+function downloadDocument(documentId) {
+  alert(`تحميل الوثيقة رقم ${documentId}`);
+}
+
+function deleteDocument(documentId) {
+  if (confirm('هل تريد حذف هذه الوثيقة؟')) {
+    alert(`تم حذف الوثيقة رقم ${documentId}`);
+  }
+}
+
+// Reminder functions
+function openReminderModal() {
+  alert('سيتم فتح نافذة إضافة تذكير جديد');
+}
+
+function editReminder(reminderId) {
+  alert(`تعديل التذكير رقم ${reminderId}`);
+}
+
+function deleteReminder(reminderId) {
+  if (confirm('هل تريد حذف هذا التذكير؟')) {
+    alert(`تم حذف التذكير رقم ${reminderId}`);
+  }
+}
+
+function createContract() {
+  const form = document.getElementById('new-contract-form');
+  const formData = new FormData(form);
+
+  fetch('/api/real-estate/contracts/', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+    },
+    body: JSON.stringify(Object.fromEntries(formData))
+  })
+  .then(response => response.json())
+  .then(data => {
+    if (data.success) {
+      alert('تم إنشاء العقد بنجاح');
+      closeNewContractModal();
+      window.location.reload();
+    } else {
+      alert('حدث خطأ: ' + (data.error || 'غير معروف'));
+    }
+  })
+  .catch(error => {
+    alert('حدث خطأ في الاتصال');
+    console.error(error);
+  });
+}
+
+function printContract() {
+  window.print();
+}
+
+function exportContract() {
+  alert('جاري تصدير العقد...');
+}
+
+function shareContract() {
+  alert('جاري مشاركة العقد...');
+}
+
+function editContract() {
+  alert('جاري تحرير العقد...');
+}
+
+function toggleContractMenu() {
+  alert('القائمة الإضافية');
+}
+
+function signContract(party) {
+  alert(`جاري توقيع العقد من طرف ${party}...`);
+}
+
+function submitForApproval() {
+  if (confirm('هل تريد إرسال العقد للموافقة؟')) {
+    alert('تم إرسال العقد للموافقة');
+  }
+}
+
+function approveContract() {
+  if (confirm('هل تريد الموافقة على هذا العقد؟')) {
+    alert('تمت الموافقة على العقد');
+  }
+}
+
+function rejectContract() {
+  if (confirm('هل تريد رفض هذا العقد؟')) {
+    alert('تم رفض العقد');
+  }
+}
+
+function terminateContract() {
+  if (confirm('هل تريد إنهاء هذا العقد؟')) {
+    alert('تم إنهاء العقد');
+  }
+}
+
+function closeContract() {
+  window.location.href = '/dashboard/contracts/';
+}
+
+function showMobileSidebar() {
+  document.querySelector('.contracts-sidebar').classList.add('show');
+}
+
+function toggleContractFilters() {
+  alert('فلاتر العقود');
+}
+
+// Sidebar tabs
+document.querySelectorAll('.tab-btn').forEach(btn => {
+  btn.addEventListener('click', function() {
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    this.classList.add('active');
+  });
+});
+
+// Search functionality
+document.getElementById('contracts-search').addEventListener('input', function(e) {
+  const searchTerm = e.target.value.toLowerCase();
+  document.querySelectorAll('.contract-item').forEach(item => {
+    const text = item.textContent.toLowerCase();
+    item.style.display = text.includes(searchTerm) ? 'flex' : 'none';
+  });
+});
+
+// Sidebar tabs
+document.querySelectorAll('.tab-btn').forEach(btn => {
+  btn.addEventListener('click', function() {
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    this.classList.add('active');
+  });
+});
+
+// Search functionality
+document.getElementById('contracts-search').addEventListener('input', function(e) {
+  const searchTerm = e.target.value.toLowerCase();
+  document.querySelectorAll('.contract-item').forEach(item => {
+    const text = item.textContent.toLowerCase();
+    item.style.display = text.includes(searchTerm) ? 'flex' : 'none';
+  });
+});
+}
+
+function createContract() {
+  const form = document.getElementById('new-contract-form');
+  const formData = new FormData(form);
+
+  fetch('/api/real-estate/contracts/', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+    },
+    body: JSON.stringify(Object.fromEntries(formData))
+  })
+  .then(response => response.json())
+  .then(data => {
+    if (data.success) {
+      alert('تم إنشاء العقد بنجاح');
+      closeNewContractModal();
+      window.location.reload();
+    } else {
+      alert('حدث خطأ: ' + (data.error || 'غير معروف'));
+    }
+  })
+  .catch(error => {
+    alert('حدث خطأ في الاتصال');
+    console.error(error);
+  });
+}
+
+function printContract() {
+  window.print();
+}
+
+function exportContract() {
+  alert('جاري تصدير العقد...');
+}
+
+function shareContract() {
+  alert('جاري مشاركة العقد...');
+}
+
+function editContract() {
+  alert('جاري تحرير العقد...');
+}
+
+function toggleContractMenu() {
+  alert('القائمة الإضافية');
+}
+
+function signContract(party) {
+  alert(`جاري توقيع العقد من طرف ${party}...`);
+}
+
+function submitForApproval() {
+  if (confirm('هل تريد إرسال العقد للموافقة؟')) {
+    alert('تم إرسال العقد للموافقة');
+  }
+}
+
+function approveContract() {
+  if (confirm('هل تريد الموافقة على هذا العقد؟')) {
+    alert('تمت الموافقة على العقد');
+  }
+}
+
+function rejectContract() {
+  if (confirm('هل تريد رفض هذا العقد؟')) {
+    alert('تم رفض العقد');
+  }
+}
+
+function terminateContract() {
+  if (confirm('هل تريد إنهاء هذا العقد؟')) {
+    alert('تم إنهاء العقد');
+  }
+}
+
+function closeContract() {
+  window.location.href = '/dashboard/contracts/';
+}
+
+function showMobileSidebar() {
+  document.querySelector('.contracts-sidebar').classList.add('show');
+}
+
+function toggleContractFilters() {
+  alert('فلاتر العقود');
+}
+
+// Tab switching
+document.querySelectorAll('.tab-btn').forEach(btn => {
+  btn.addEventListener('click', function() {
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    this.classList.add('active');
+  });
+});
+
+// Search functionality
+document.getElementById('contracts-search').addEventListener('input', function(e) {
+  const searchTerm = e.target.value.toLowerCase();
+  document.querySelectorAll('.contract-item').forEach(item => {
+    const text = item.textContent.toLowerCase();
+    item.style.display = text.includes(searchTerm) ? 'flex' : 'none';
+  });
+});
+</script>

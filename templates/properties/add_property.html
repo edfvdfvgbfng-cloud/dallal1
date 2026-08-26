@@ -1,0 +1,598 @@
+{% extends 'properties/base.html' %}
+
+{% block title %}إضافة محتوى جديد{% endblock %}
+
+{% block content %}
+  <div class="container dashboard-container">
+    <h1>➕ إضافة محتوى جديد</h1>
+    <p class="text-muted">اختر فئة المحتوى واملأ النموذج المناسب</p>
+    
+    <div class="card">
+      <form method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+        
+        <!-- Content Type Selection -->
+        <div class="mb-4">
+          <label class="form-label fw-bold">🏠 اختر فئة المحتوى *</label>
+          <div class="row">
+            <div class="col-md-4 mb-2">
+              <div class="form-check form-check-card">
+                <input class="form-check-input" type="radio" name="content_type" value="properties_iraq" id="content_properties_iraq" required>
+                <label class="form-check-label" for="content_properties_iraq">
+                  🏠 عقارات داخل العراق
+                </label>
+              </div>
+            </div>
+            <div class="col-md-4 mb-2">
+              <div class="form-check form-check-card">
+                <input class="form-check-input" type="radio" name="content_type" value="properties_outside" id="content_properties_outside">
+                <label class="form-check-label" for="content_properties_outside">
+                  🌍 عقارات خارج العراق
+                </label>
+              </div>
+            </div>
+            <div class="col-md-4 mb-2">
+              <div class="form-check form-check-card">
+                <input class="form-check-input" type="radio" name="content_type" value="hotels_iraq" id="content_hotels_iraq">
+                <label class="form-check-label" for="content_hotels_iraq">
+                  🏨🇮🇶 فنادق داخل العراق
+                </label>
+              </div>
+            </div>
+            <div class="col-md-4 mb-2">
+              <div class="form-check form-check-card">
+                <input class="form-check-input" type="radio" name="content_type" value="hotels_outside" id="content_hotels_outside">
+                <label class="form-check-label" for="content_hotels_outside">
+                  🏨🌍 فنادق خارج العراق
+                </label>
+              </div>
+            </div>
+            <div class="col-md-4 mb-2">
+              <div class="form-check form-check-card">
+                <input class="form-check-input" type="radio" name="content_type" value="resorts_iraq" id="content_resorts_iraq">
+                <label class="form-check-label" for="content_resorts_iraq">
+                  🏝️🇮🇶 منتجعات داخل العراق
+                </label>
+              </div>
+            </div>
+            <div class="col-md-4 mb-2">
+              <div class="form-check form-check-card">
+                <input class="form-check-input" type="radio" name="content_type" value="resorts_outside" id="content_resorts_outside">
+                <label class="form-check-label" for="content_resorts_outside">
+                  🏝️🌍 منتجعات خارج العراق
+                </label>
+              </div>
+            </div>
+            <div class="col-md-4 mb-2">
+              <div class="form-check form-check-card">
+                <input class="form-check-input" type="radio" name="content_type" value="travel_company" id="content_travel_company">
+                <label class="form-check-label" for="content_travel_company">
+                  ✈️ نشر شركة سفر
+                </label>
+              </div>
+            </div>
+            <div class="col-md-4 mb-2">
+              <div class="form-check form-check-card">
+                <input class="form-check-input" type="radio" name="content_type" value="job_posting" id="content_job_posting">
+                <label class="form-check-label" for="content_job_posting">
+                  ➕ نشر وظيفة
+                </label>
+              </div>
+            </div>
+            <div class="col-md-4 mb-2">
+              <div class="form-check form-check-card">
+                <input class="form-check-input" type="radio" name="content_type" value="service" id="content_service">
+                <label class="form-check-label" for="content_service">
+                  🔧 نشر خدمة
+                </label>
+              </div>
+            </div>
+            <div class="col-md-4 mb-2">
+              <div class="form-check form-check-card">
+                <input class="form-check-input" type="radio" name="content_type" value="auction" id="content_auction">
+                <label class="form-check-label" for="content_auction">
+                  🔨 نشر مزاد
+                </label>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Property Forms -->
+        <div id="property_form" style="display: none;">
+          <div class="form-row">
+            <div class="form-group">
+              <label>نوع العقار</label>
+              <select name="type" required>
+                <option value="land">قطعة أرض</option>
+                <option value="house">بيت</option>
+                <option value="building">بناية</option>
+                <option value="apartment">شقة</option>
+                <option value="villa">فيلا</option>
+                <option value="commercial">تجاري</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>الحالة</label>
+              <select name="status" required>
+                <option value="ready">جاهز</option>
+                <option value="under-construction">قيد الإنشاء</option>
+                <option value="sold">مباع</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>الموقع</label>
+              <input type="text" name="location" required>
+            </div>
+            <div class="form-group">
+              <label>المساحة (متر مربع)</label>
+              <input type="number" name="area" required>
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>السعر (د.ع)</label>
+              <input type="number" name="price" required>
+            </div>
+            <div class="form-group">
+              <label>رقم التواصل</label>
+              <input type="text" name="phone" required>
+            </div>
+          </div>
+          <div class="form-group">
+            <label>وصف العقار</label>
+            <textarea name="description" rows="3" required></textarea>
+          </div>
+        </div>
+        
+        <!-- Hotel/Resort Form -->
+        <div id="hotel_form" style="display: none;">
+          <div class="form-group">
+            <label>اسم الفندق/المنتجع</label>
+            <input type="text" name="name" required>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>الموقع</label>
+              <input type="text" name="location" required>
+            </div>
+            <div class="form-group">
+              <label>عدد النجوم</label>
+              <select name="stars" required>
+                <option value="3">3 نجوم</option>
+                <option value="4">4 نجوم</option>
+                <option value="5">5 نجوم</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>سعر الغرفة لليلة (د.ع)</label>
+              <input type="number" name="room_price" required>
+            </div>
+            <div class="form-group">
+              <label>رقم التواصل</label>
+              <input type="text" name="phone" required>
+            </div>
+          </div>
+          <div class="form-group">
+            <label>المرافق والخدمات</label>
+            <textarea name="amenities" rows="3" placeholder="مثال: مسبح، مطعم، واي فاي، غرف سياحية..."></textarea>
+          </div>
+          <div class="form-group">
+            <label>وصف الفندق/المنتجع</label>
+            <textarea name="description" rows="3" required></textarea>
+          </div>
+        </div>
+        
+        <!-- Travel Company Form -->
+        <div id="travel_form" style="display: none;">
+          <div class="form-group">
+            <label>اسم شركة السفر</label>
+            <input type="text" name="company_name" required>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>الموقع</label>
+              <input type="text" name="location" required>
+            </div>
+            <div class="form-group">
+              <label>رقم التواصل</label>
+              <input type="text" name="phone" required>
+            </div>
+          </div>
+          <div class="form-group">
+            <label>الوجهات السياحية</label>
+            <textarea name="destinations" rows="3" placeholder="مثال: دبي، تركيا، ماليزيا..."></textarea>
+          </div>
+          <div class="form-group">
+            <label>الخدمات المقدمة</label>
+            <textarea name="services" rows="3" placeholder="مثال: حجز طيران، فنادق، جولات سياحية، تأشيرات..."></textarea>
+          </div>
+          <div class="form-group">
+            <label>وصف الشركة</label>
+            <textarea name="description" rows="3" required></textarea>
+          </div>
+        </div>
+        
+        <!-- Job Posting Form -->
+        <div id="job_form" style="display: none;">
+          <div class="form-group">
+            <label>المسمى الوظيفي</label>
+            <input type="text" name="job_title" required>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>الموقع</label>
+              <input type="text" name="location" required>
+            </div>
+            <div class="form-group">
+              <label>الراتب (د.ع)</label>
+              <input type="number" name="salary">
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>نوع الوظيفة</label>
+              <select name="job_type" required>
+                <option value="full-time">دوام كامل</option>
+                <option value="part-time">دوام جزئي</option>
+                <option value="contract">عقد</option>
+                <option value="remote">عن بعد</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>رقم التواصل</label>
+              <input type="text" name="phone" required>
+            </div>
+          </div>
+          <div class="form-group">
+            <label>المتطلبات</label>
+            <textarea name="requirements" rows="3" placeholder="مثال: خبرة سنتين، شهادة جامعية، لغة عربية..."></textarea>
+          </div>
+          <div class="form-group">
+            <label>وصف الوظيفة</label>
+            <textarea name="description" rows="3" required></textarea>
+          </div>
+        </div>
+        
+        <!-- Building Request Form -->
+        <div id="building_form" style="display: none;">
+          <div class="form-group">
+            <label>نوع البناء المطلوب</label>
+            <select name="building_type" required>
+              <option value="house">بناء منزل</option>
+              <option value="apartment">بناء شقق</option>
+              <option value="commercial">بناء تجاري</option>
+              <option value="renovation">ترميم</option>
+            </select>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>الموقع</label>
+              <input type="text" name="location" required>
+            </div>
+            <div class="form-group">
+              <label>المساحة (متر مربع)</label>
+              <input type="number" name="area" required>
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>الميزانية المتوقعة (د.ع)</label>
+              <input type="number" name="budget">
+            </div>
+            <div class="form-group">
+              <label>رقم التواصل</label>
+              <input type="text" name="phone" required>
+            </div>
+          </div>
+          <div class="form-group">
+            <label>المواصفات المطلوبة</label>
+            <textarea name="specifications" rows="3" placeholder="مثال: 3 غرف نوم، 2 حمام، مواقف سيارات..."></textarea>
+          </div>
+          <div class="form-group">
+            <label>تفاصيل إضافية</label>
+            <textarea name="description" rows="3"></textarea>
+          </div>
+        </div>
+        
+        <!-- Service Form -->
+        <div id="service_form" style="display: none;">
+          <div class="form-group">
+            <label>نوع الخدمة</label>
+            <input type="text" name="service_type" required>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>الموقع</label>
+              <input type="text" name="location" required>
+            </div>
+            <div class="form-group">
+              <label>السعر (د.ع)</label>
+              <input type="number" name="price">
+            </div>
+          </div>
+          <div class="form-group">
+            <label>رقم التواصل</label>
+            <input type="text" name="phone" required>
+          </div>
+          <div class="form-group">
+            <label>وصف الخدمة</label>
+            <textarea name="description" rows="3" required></textarea>
+          </div>
+        </div>
+        
+        <!-- Auction Form -->
+        <div id="auction_form" style="display: none;">
+          <div class="form-group">
+            <label>اسم المزاد</label>
+            <input type="text" name="auction_name" required>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>الموقع</label>
+              <input type="text" name="location" required>
+            </div>
+            <div class="form-group">
+              <label>السعر الابتدائي (د.ع)</label>
+              <input type="number" name="starting_price" required>
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>تاريخ بدء المزاد</label>
+              <input type="date" name="start_date" required>
+            </div>
+            <div class="form-group">
+              <label>تاريخ انتهاء المزاد</label>
+              <input type="date" name="end_date" required>
+            </div>
+          </div>
+          <div class="form-group">
+            <label>رقم التواصل</label>
+            <input type="text" name="phone" required>
+          </div>
+          <div class="form-group">
+            <label>وصف المزاد</label>
+            <textarea name="description" rows="3" required></textarea>
+          </div>
+        </div>
+        
+        <!-- Common Fields for All Types -->
+        <div class="section-divider">
+          <h2>📷 صور المحتوى</h2>
+        </div>
+        
+        <div class="form-group">
+          <label>رفع صور المحتوى (يمكن رفع عدة صور)</label>
+          <input type="file" name="gallery_images" multiple accept="image/*" id="gallery_images">
+          <small class="form-text text-muted">يمكنك رفع عدة صور في نفس الوقت</small>
+        </div>
+        
+        <div id="image_360_checkboxes" style="display: none; margin-top: 15px;">
+          <label class="font-weight-bold">تحديد الصور 360°:</label>
+          <div id="checkboxes_container"></div>
+        </div>
+        
+        <div class="section-divider">
+          <h2>🎥 الجولة الافتراضية 360°</h2>
+        </div>
+        
+        <div class="form-group">
+          <label>نوع الجولة</label>
+          <select name="tour_type" id="tour_type">
+            <option value="">بدون جولة افتراضية</option>
+            <option value="image">صورة بانورامية 360°</option>
+            <option value="file">ملف جولة 360° جاهز</option>
+            <option value="external">رابط خارجي</option>
+            <option value="multi">جولة من عدة صور مترابطة</option>
+          </select>
+        </div>
+        
+        <div id="tour_fields" style="display: none;">
+          <div class="form-group">
+            <label>عنوان الجولة</label>
+            <input type="text" name="tour_title" placeholder="مثال: جولة داخلية كاملة">
+          </div>
+          
+          <div class="form-group" id="image_field" style="display: none;">
+            <label>صورة 360°</label>
+            <input type="file" name="tour_image" accept="image/*">
+          </div>
+          
+          <div class="form-group" id="file_field" style="display: none;">
+            <label>ملف الجولة</label>
+            <input type="file" name="tour_file">
+          </div>
+          
+          <div class="form-group" id="external_fields" style="display: none;">
+            <label>رابط خارجي</label>
+            <input type="url" name="external_url" placeholder="https://matterport.com/...">
+            
+            <label style="margin-top: 10px;">الخدمة الخارجية</label>
+            <select name="external_service">
+              <option value="">اختر الخدمة</option>
+              <option value="matterport">Matterport</option>
+              <option value="kuula">Kuula</option>
+              <option value="google">Google Street View</option>
+              <option value="other">خدمة أخرى</option>
+            </select>
+          </div>
+          
+          <div class="form-group">
+            <label>وصف الجولة</label>
+            <textarea name="tour_description" rows="3" placeholder="وصف الجولة الافتراضية..."></textarea>
+          </div>
+        </div>
+        
+        <!-- Subscription Check Message -->
+        <div id="subscription_message" class="alert alert-warning" style="display: none;">
+          <strong>⚠️ تنبيه:</strong> يجب أن يكون لديك اشتراك مناسب لنشر هذا النوع من المحتوى.
+          <a href="{% url 'subscription_renewal_request' %}" class="btn btn-sm btn-primary mt-2">تجديد الاشتراك</a>
+        </div>
+        
+        <button type="submit" class="btn btn-primary">نشر المحتوى</button>
+        <a href="{% url 'dashboard' %}" class="btn btn-secondary">إلغاء</a>
+      </form>
+    </div>
+  </div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+.form-check-card {
+  border: 1px solid #dee2e6;
+  border-radius: 8px;
+  padding: 15px;
+  transition: all 0.3s ease;
+  cursor: pointer;
+}
+
+.form-check-card:hover {
+  border-color: #0d6efd;
+  box-shadow: 0 2px 8px rgba(13, 110, 253, 0.2);
+}
+
+.form-check-card input:checked + label {
+  color: #0d6efd;
+  font-weight: bold;
+}
+
+.section-divider {
+  margin: 30px 0;
+  padding: 15px 0;
+  border-top: 2px solid #dee2e6;
+}
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  const contentTypes = document.querySelectorAll('input[name="content_type"]');
+  const propertyForm = document.getElementById('property_form');
+  const hotelForm = document.getElementById('hotel_form');
+  const travelForm = document.getElementById('travel_form');
+  const jobForm = document.getElementById('job_form');
+  const buildingForm = document.getElementById('building_form');
+  const serviceForm = document.getElementById('service_form');
+  const auctionForm = document.getElementById('auction_form');
+  const subscriptionMessage = document.getElementById('subscription_message');
+  
+  // Hide all forms initially
+  const allForms = [propertyForm, hotelForm, travelForm, jobForm, buildingForm, serviceForm, auctionForm];
+  allForms.forEach(form => form.style.display = 'none');
+  
+  // Content type selection handler
+  contentTypes.forEach(input => {
+    input.addEventListener('change', function() {
+      const selectedType = this.value;
+      
+      // Hide all forms
+      allForms.forEach(form => form.style.display = 'none');
+      subscriptionMessage.style.display = 'none';
+      
+      // Show relevant form based on selection
+      if (selectedType === 'properties_iraq' || selectedType === 'properties_outside') {
+        propertyForm.style.display = 'block';
+        checkSubscription('property');
+      } else if (selectedType === 'hotels_iraq' || selectedType === 'hotels_outside' || 
+                 selectedType === 'resorts_iraq' || selectedType === 'resorts_outside') {
+        hotelForm.style.display = 'block';
+        checkSubscription('hotel');
+      } else if (selectedType === 'travel_company') {
+        travelForm.style.display = 'block';
+        checkSubscription('travel');
+      } else if (selectedType === 'job_posting') {
+        jobForm.style.display = 'block';
+        checkSubscription('job');
+      } else if (selectedType === 'service') {
+        serviceForm.style.display = 'block';
+        checkSubscription('service');
+      } else if (selectedType === 'auction') {
+        auctionForm.style.display = 'block';
+        checkSubscription('auction');
+      }
+    });
+  });
+  
+  // Subscription check function (placeholder - would need actual subscription data)
+  function checkSubscription(type) {
+    // This would check if user has the appropriate subscription
+    // For now, we'll show the message by default
+    subscriptionMessage.style.display = 'block';
+  }
+  
+  const tourTypeSelect = document.getElementById('tour_type');
+  const tourFields = document.getElementById('tour_fields');
+  const imageField = document.getElementById('image_field');
+  const fileField = document.getElementById('file_field');
+  const externalFields = document.getElementById('external_fields');
+  
+  // Handle 360° image checkboxes
+  const galleryImagesInput = document.getElementById('gallery_images');
+  const image360Checkboxes = document.getElementById('image_360_checkboxes');
+  const checkboxesContainer = document.getElementById('checkboxes_container');
+  
+  galleryImagesInput.addEventListener('change', function() {
+    const files = this.files;
+    
+    if (files.length > 0) {
+      image360Checkboxes.style.display = 'block';
+      checkboxesContainer.innerHTML = '';
+      
+      for (let i = 0; i < files.length; i++) {
+        const div = document.createElement('div');
+        div.className = 'form-check';
+        div.style.marginBottom = '5px';
+        
+        const input = document.createElement('input');
+        input.type = 'checkbox';
+        input.className = 'form-check-input';
+        input.name = 'is_360';
+        input.id = `is_360_${i}`;
+        
+        const label = document.createElement('label');
+        label.className = 'form-check-label';
+        label.htmlFor = `is_360_${i}`;
+        label.textContent = `📷 ${files[i].name} - صورة 360°`;
+        
+        div.appendChild(input);
+        div.appendChild(label);
+        checkboxesContainer.appendChild(div);
+      }
+    } else {
+      image360Checkboxes.style.display = 'none';
+      checkboxesContainer.innerHTML = '';
+    }
+  });
+  
+  tourTypeSelect.addEventListener('change', function() {
+    const selectedType = this.value;
+    
+    if (selectedType === '') {
+      tourFields.style.display = 'none';
+    } else {
+      tourFields.style.display = 'block';
+      
+      // Hide all specific fields first
+      imageField.style.display = 'none';
+      fileField.style.display = 'none';
+      externalFields.style.display = 'none';
+      
+      // Show relevant field based on selection
+      if (selectedType === 'image' || selectedType === 'multi') {
+        imageField.style.display = 'block';
+      } else if (selectedType === 'file') {
+        fileField.style.display = 'block';
+      } else if (selectedType === 'external') {
+        externalFields.style.display = 'block';
+      }
+    }
+  });
+});
+</script>
+{% endblock %}

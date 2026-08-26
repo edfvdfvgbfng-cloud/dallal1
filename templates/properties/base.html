@@ -1,0 +1,1487 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="theme-color" content="#0d9488">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="description" content="{% block meta_description %}{% if site_settings %}{{ site_settings.meta_description }}{% else %}دلال - منصة عقارات عراقية{% endif %}{% endblock %}">
+  <meta name="robots" content="index, follow">
+  <meta property="og:site_name" content="{% if site_settings %}{{ site_settings.site_name }}{% else %}دلال{% endif %}">
+  <meta property="og:title" content="{% block og_title %}دلال - عقارات{% endblock %}">
+  <link rel="canonical" href="{% block canonical %}{{ request.build_absolute_uri }}{% endblock %}">
+  <link rel="manifest" href="{% static 'manifest.json' %}">
+  <link rel="apple-touch-icon" href="{% static 'images/logo.jpg' %}">
+  <title>{% block title %}دلال - عقارات{% endblock %} — {% if site_settings %}{{ site_settings.site_name }}{% else %}دلال{% endif %}</title>
+  <link rel="icon" type="image/svg+xml" href="{% static 'images/favicon.svg' %}">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{% static 'css/style.css' %}">
+  <link rel="stylesheet" href="{% static 'css/dalal-theme.css' %}">
+  <link rel="stylesheet" href="{% static 'css/premium-ui.css' %}">
+  <link rel="stylesheet" href="{% static 'css/animations.css' %}">
+  <link rel="stylesheet" href="{% static 'css/responsive.css' %}">
+  <link rel="stylesheet" href="{% static 'css/modern-components.css' %}">
+  <link rel="stylesheet" href="{% static 'css/enhanced-ui.css' %}">
+  <link rel="stylesheet" href="{% static 'css/ai_chatbot_styles.css' %}">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css" crossorigin="">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css" crossorigin="">
+  {% block extra_css %}
+  <style>
+    /* AI Chatbot Styles - Match Site Theme */
+    .ai-chatbot {
+      position: fixed;
+      bottom: 140px;
+      right: 25px;
+      width: 380px;
+      max-height: 600px;
+      background: #0B0B0B;
+      display: none !important;
+      flex-direction: column;
+      z-index: 10000;
+      border-radius: 20px;
+      box-shadow: 0 25px 80px rgba(0, 0, 0, 0.6);
+      opacity: 0;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .ai-chatbot.active {
+      display: flex !important;
+      opacity: 1;
+    }
+
+    .chatbot-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 18px 20px;
+      background: linear-gradient(135deg, #FF7A00 0%, #FF9F1C 50%, #FF7A00 100%);
+      background-size: 200% 200%;
+      animation: gradientShift 3s ease infinite;
+      border-bottom: 1px solid rgba(255, 122, 0, 0.18);
+      box-shadow: 0 4px 20px rgba(255, 122, 0, 0.3);
+      border-radius: 20px 20px 0 0;
+    }
+
+    @keyframes gradientShift {
+      0% {
+        background-position: 0% 50%;
+      }
+      50% {
+        background-position: 100% 50%;
+      }
+      100% {
+        background-position: 0% 50%;
+      }
+    }
+
+    .chatbot-title {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .chatbot-icon {
+      font-size: 26px;
+      animation: bounce 2s ease-in-out infinite;
+    }
+
+    @keyframes bounce {
+      0%, 100% {
+        transform: translateY(0);
+      }
+      50% {
+        transform: translateY(-3px);
+      }
+    }
+
+    .chatbot-name {
+      font-size: 18px;
+      font-weight: 700;
+      color: white;
+      text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    }
+
+    .chatbot-close {
+      background: rgba(255, 255, 255, 0.2);
+      border: 2px solid rgba(255, 255, 255, 0.3);
+      color: white;
+      width: 38px;
+      height: 38px;
+      border-radius: 50%;
+      cursor: pointer;
+      font-size: 20px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.3s ease;
+    }
+
+    .chatbot-close:hover {
+      background: rgba(255, 255, 255, 0.3);
+      transform: rotate(90deg) scale(1.1);
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+    }
+
+    .chatbot-messages {
+      flex: 1;
+      overflow-y: auto;
+      padding: 20px;
+      background: #0B0B0B;
+    }
+
+    .chatbot-messages::-webkit-scrollbar {
+      width: 6px;
+    }
+
+    .chatbot-messages::-webkit-scrollbar-track {
+      background: #0B0B0B;
+    }
+
+    .chatbot-messages::-webkit-scrollbar-thumb {
+      background: #FF7A00;
+      border-radius: 3px;
+    }
+
+    .message {
+      margin-bottom: 16px;
+      display: flex;
+      align-items: flex-start;
+      animation: messageSlide 0.3s ease-out;
+    }
+
+    @keyframes messageSlide {
+      from {
+        opacity: 0;
+        transform: translateY(10px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .bot-message {
+      justify-content: flex-start;
+    }
+
+    .user-message {
+      justify-content: flex-end;
+    }
+
+    .message-content {
+      max-width: 80%;
+      padding: 14px 18px;
+      border-radius: 18px;
+      line-height: 1.5;
+      font-size: 14px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    }
+
+    .bot-message .message-content {
+      background: linear-gradient(135deg, #1E1E1E 0%, #161616 100%);
+      color: #FFFFFF;
+      border: 1px solid rgba(255, 122, 0, 0.3);
+      border-top-left-radius: 4px;
+    }
+
+    .user-message .message-content {
+      background: linear-gradient(135deg, #FF7A00 0%, #FF9F1C 100%);
+      color: white;
+      border: none;
+      border-top-right-radius: 4px;
+      box-shadow: 0 4px 15px rgba(255, 122, 0, 0.3);
+    }
+
+    .quick-options {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 10px;
+      margin-top: 16px;
+      max-height: 280px;
+      overflow-y: auto;
+      padding-right: 4px;
+    }
+
+    .quick-options::-webkit-scrollbar {
+      width: 4px;
+    }
+
+    .quick-options::-webkit-scrollbar-track {
+      background: #0B0B0B;
+      border-radius: 2px;
+    }
+
+    .quick-options::-webkit-scrollbar-thumb {
+      background: #FF7A00;
+      border-radius: 2px;
+    }
+
+    .quick-option {
+      padding: 12px 14px;
+      background: linear-gradient(135deg, #161616 0%, #1E1E1E 100%);
+      border: 1px solid rgba(255, 122, 0, 0.25);
+      border-radius: 12px;
+      color: #FFFFFF;
+      cursor: pointer;
+      font-size: 13px;
+      font-weight: 600;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      text-align: right;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .quick-option::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(255, 122, 0, 0.1), transparent);
+      transition: left 0.5s;
+    }
+
+    .quick-option:hover::before {
+      left: 100%;
+    }
+
+    .quick-option:hover {
+      background: linear-gradient(135deg, #1E1E1E 0%, #252525 100%);
+      border-color: #FF7A00;
+      transform: translateY(-2px) scale(1.02);
+      box-shadow: 0 6px 20px rgba(255, 122, 0, 0.3);
+    }
+
+    .quick-option:active {
+      transform: translateY(-1px) scale(0.98);
+    }
+
+    .chatbot-input-area {
+      padding: 16px 20px;
+      background: linear-gradient(180deg, #161616 0%, #0B0B0B 100%);
+      border-top: 1px solid rgba(255, 122, 0, 0.25);
+      box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.3);
+      border-radius: 0 0 20px 20px;
+    }
+
+    .chatbot-input-wrapper {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 12px;
+      align-items: center;
+    }
+
+    .chatbot-input {
+      flex: 1;
+      padding: 14px 18px;
+      background: #0B0B0B;
+      border: 2px solid rgba(255, 122, 0, 0.2);
+      border-radius: 14px;
+      color: #FFFFFF;
+      font-size: 14px;
+      transition: all 0.3s ease;
+    }
+
+    .chatbot-input:focus {
+      outline: none;
+      border-color: #FF7A00;
+      box-shadow: 0 0 0 3px rgba(255, 122, 0, 0.15), 0 4px 15px rgba(255, 122, 0, 0.2);
+    }
+
+    .chatbot-input::placeholder {
+      color: #9A9A9A;
+    }
+
+    .chatbot-send {
+      padding: 14px 24px;
+      background: linear-gradient(135deg, #FF7A00 0%, #FF9F1C 100%);
+      border: none;
+      border-radius: 14px;
+      color: white;
+      cursor: pointer;
+      font-weight: 700;
+      font-size: 14px;
+      transition: all 0.3s ease;
+      box-shadow: 0 4px 15px rgba(255, 122, 0, 0.3);
+    }
+
+    .chatbot-send:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 25px rgba(255, 122, 0, 0.4);
+    }
+
+    .chatbot-send:active {
+      transform: translateY(0);
+    }
+
+    .chatbot-attach,
+    .chatbot-voice {
+      width: 44px;
+      height: 44px;
+      background: linear-gradient(135deg, #161616 0%, #1E1E1E 100%);
+      border: 2px solid rgba(255, 122, 0, 0.25);
+      border-radius: 12px;
+      color: #FF7A00;
+      cursor: pointer;
+      font-size: 20px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.3s ease;
+    }
+
+    .chatbot-attach:hover,
+    .chatbot-voice:hover {
+      background: linear-gradient(135deg, #1E1E1E 0%, #252525 100%);
+      border-color: #FF7A00;
+      transform: scale(1.1) rotate(5deg);
+      box-shadow: 0 4px 15px rgba(255, 122, 0, 0.25);
+    }
+
+    .chatbot-actions {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .chatbot-new-chat,
+    .chatbot-history,
+    .chatbot-settings,
+    .voice-mode-btn {
+      padding: 10px 16px;
+      background: linear-gradient(135deg, #0B0B0B 0%, #161616 100%);
+      border: 2px solid rgba(255, 122, 0, 0.2);
+      border-radius: 10px;
+      color: #FFFFFF;
+      cursor: pointer;
+      font-size: 12px;
+      font-weight: 600;
+      transition: all 0.3s ease;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+
+    .chatbot-new-chat:hover,
+    .chatbot-history:hover,
+    .chatbot-settings:hover,
+    .voice-mode-btn:hover {
+      background: linear-gradient(135deg, #161616 0%, #1E1E1E 100%);
+      border-color: #FF7A00;
+      transform: translateY(-2px);
+      box-shadow: 0 4px 15px rgba(255, 122, 0, 0.2);
+    }
+
+    .chatbot-new-chat:active,
+    .chatbot-history:active,
+    .chatbot-settings:active,
+    .voice-mode-btn:active {
+      transform: translateY(0);
+    }
+
+    .typing-indicator {
+      display: flex;
+      gap: 6px;
+      padding: 14px 18px;
+      background: linear-gradient(135deg, #1E1E1E 0%, #161616 100%);
+      border: 1px solid rgba(255, 122, 0, 0.3);
+      border-radius: 16px;
+      width: fit-content;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    }
+
+    .typing-indicator span {
+      width: 10px;
+      height: 10px;
+      background: linear-gradient(135deg, #FF7A00 0%, #FF9F1C 100%);
+      border-radius: 50%;
+      animation: typing 1.4s infinite ease-in-out;
+      box-shadow: 0 2px 8px rgba(255, 122, 0, 0.4);
+    }
+
+    .typing-indicator span:nth-child(2) {
+      animation-delay: 0.2s;
+    }
+
+    .typing-indicator span:nth-child(3) {
+      animation-delay: 0.4s;
+    }
+
+    @keyframes typing {
+      0%, 100% {
+        opacity: 0.3;
+        transform: scale(0.8);
+      }
+      50% {
+        opacity: 1;
+        transform: scale(1);
+      }
+    }
+
+    /* Chatbot Button in Footer */
+    #ai-chatbot-btn {
+      background: linear-gradient(135deg, #FF7A00 0%, #FF9F1C 100%);
+      border: 2px solid rgba(255, 255, 255, 0.3);
+      color: white;
+      font-size: 14px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      padding: 8px 16px;
+      border-radius: 8px;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+    }
+
+    #ai-chatbot-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 15px rgba(255, 122, 0, 0.4);
+    }
+
+    #ai-chatbot-btn:active {
+      transform: translateY(0);
+    }
+
+    .message {
+      margin-bottom: 16px;
+      display: flex;
+      align-items: flex-start;
+    }
+
+    .bot-message {
+      justify-content: flex-start;
+    }
+
+    .user-message {
+      justify-content: flex-end;
+    }
+
+    .message-content {
+      max-width: 80%;
+      padding: 12px 16px;
+      border-radius: 12px;
+      line-height: 1.5;
+    }
+
+    .bot-message .message-content {
+      background: #2a2a2a;
+      color: #fff;
+      border: 1px solid #444;
+    }
+
+    .user-message .message-content {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+    }
+
+    .quick-options {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 8px;
+      margin-top: 16px;
+    }
+
+    .quick-option {
+      padding: 10px 12px;
+      background: #2a2a2a;
+      border: 1px solid #444;
+      border-radius: 8px;
+      color: #fff;
+      cursor: pointer;
+      font-size: 13px;
+      transition: all 0.2s;
+      text-align: right;
+    }
+
+    .quick-option:hover {
+      background: #333;
+      border-color: #667eea;
+      transform: translateY(-2px);
+    }
+
+    .chatbot-input-area {
+      padding: 16px;
+      background: #2a2a2a;
+      border-top: 1px solid #444;
+      border-radius: 0 0 16px 16px;
+    }
+
+    .chatbot-input-wrapper {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 10px;
+    }
+
+    .chatbot-input {
+      flex: 1;
+      padding: 12px 16px;
+      background: #333;
+      border: 1px solid #444;
+      border-radius: 8px;
+      color: #fff;
+      font-size: 14px;
+    }
+
+    .chatbot-input:focus {
+      outline: none;
+      border-color: #667eea;
+    }
+
+    .chatbot-send {
+      padding: 12px 20px;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      border: none;
+      border-radius: 8px;
+      color: white;
+      cursor: pointer;
+      font-weight: 600;
+      transition: all 0.2s;
+    }
+
+    .chatbot-send:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+    }
+
+    .chatbot-new-chat {
+      width: 100%;
+      padding: 10px;
+      background: #333;
+      border: 1px solid #444;
+      border-radius: 8px;
+      color: #fff;
+      cursor: pointer;
+      font-size: 13px;
+      transition: all 0.2s;
+    }
+
+    .chatbot-new-chat:hover {
+      background: #444;
+      border-color: #667eea;
+    }
+
+    .chatbot-actions {
+      display: flex;
+      gap: 8px;
+      margin-top: 10px;
+    }
+
+    .chatbot-actions button {
+      flex: 1;
+      padding: 8px;
+      background: #333;
+      border: 1px solid #444;
+      border-radius: 8px;
+      color: #fff;
+      cursor: pointer;
+      font-size: 12px;
+      transition: all 0.2s;
+    }
+
+    .chatbot-actions button:hover {
+      background: #444;
+      border-color: #667eea;
+    }
+
+    .chatbot-attach,
+    .chatbot-voice {
+      padding: 12px;
+      background: #333;
+      border: 1px solid #444;
+      border-radius: 8px;
+      color: #fff;
+      cursor: pointer;
+      font-size: 16px;
+      transition: all 0.2s;
+    }
+
+    .chatbot-attach:hover,
+    .chatbot-voice:hover {
+      background: #444;
+      border-color: #667eea;
+    }
+
+    .chatbot-voice.recording {
+      background: #dc3545;
+      border-color: #dc3545;
+      animation: pulse 1s infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% {
+        opacity: 1;
+      }
+      50% {
+        opacity: 0.5;
+      }
+    }
+
+    .message-image {
+      max-width: 200px;
+      max-height: 200px;
+      border-radius: 8px;
+      margin-top: 8px;
+    }
+
+    .message-file {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 12px;
+      background: #333;
+      border-radius: 8px;
+      margin-top: 8px;
+      border: 1px solid #444;
+    }
+
+    .message-file-icon {
+      font-size: 24px;
+    }
+
+    .message-file-name {
+      font-size: 12px;
+      color: #fff;
+    }
+
+    .suggestions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 12px;
+    }
+
+    .suggestion-chip {
+      padding: 6px 12px;
+      background: #667eea;
+      border: none;
+      border-radius: 16px;
+      color: white;
+      cursor: pointer;
+      font-size: 12px;
+      transition: all 0.2s;
+    }
+
+    .suggestion-chip:hover {
+      background: #764ba2;
+      transform: translateY(-2px);
+    }
+
+    .feedback-actions {
+      display: flex;
+      gap: 8px;
+      margin-top: 8px;
+    }
+
+    .feedback-btn {
+      padding: 4px 8px;
+      background: #333;
+      border: 1px solid #444;
+      border-radius: 4px;
+      color: #fff;
+      cursor: pointer;
+      font-size: 11px;
+    }
+
+    .feedback-btn:hover {
+      background: #444;
+    }
+
+    .feedback-btn.positive:hover {
+      background: #28a745;
+    }
+
+    .feedback-btn.negative:hover {
+      background: #dc3545;
+    }
+
+    .typing-text {
+      font-size: 12px;
+      color: #aaa;
+      font-style: italic;
+    }
+
+    .chatbot-modal {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.8);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+    }
+
+    .modal-content {
+      background: #2a2a2a;
+      border-radius: 12px;
+      width: 90%;
+      max-width: 400px;
+      max-height: 80vh;
+      overflow: hidden;
+      border: 1px solid #444;
+    }
+
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 16px;
+      background: #333;
+      border-bottom: 1px solid #444;
+    }
+
+    .modal-header h3 {
+      margin: 0;
+      font-size: 16px;
+      color: #fff;
+    }
+
+    .modal-close {
+      background: none;
+      border: none;
+      color: #fff;
+      font-size: 20px;
+      cursor: pointer;
+      padding: 4px 8px;
+    }
+
+    .modal-body {
+      padding: 16px;
+      overflow-y: auto;
+      max-height: 400px;
+    }
+
+    .modal-footer {
+      padding: 16px;
+      border-top: 1px solid #444;
+      text-align: center;
+    }
+
+    .history-item {
+      padding: 12px;
+      background: #333;
+      border-radius: 8px;
+      margin-bottom: 8px;
+      border: 1px solid #444;
+    }
+
+    .history-date {
+      font-size: 11px;
+      color: #aaa;
+      margin-bottom: 4px;
+    }
+
+    .history-preview {
+      font-size: 13px;
+      color: #fff;
+      margin-bottom: 8px;
+    }
+
+    .history-load {
+      padding: 6px 12px;
+      background: #667eea;
+      border: none;
+      border-radius: 4px;
+      color: white;
+      cursor: pointer;
+      font-size: 12px;
+    }
+
+    .setting-item {
+      padding: 12px 0;
+      border-bottom: 1px solid #444;
+    }
+
+    .setting-item:last-child {
+      border-bottom: none;
+    }
+
+    .setting-item label {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      color: #fff;
+      font-size: 14px;
+    }
+
+    .setting-item select {
+      width: 100%;
+      padding: 8px;
+      background: #333;
+      border: 1px solid #444;
+      border-radius: 4px;
+      color: #fff;
+      margin-top: 8px;
+    }
+
+    .typing-indicator {
+      display: flex;
+      gap: 4px;
+      padding: 12px 16px;
+      background: #2a2a2a;
+      border-radius: 12px;
+      margin-bottom: 16px;
+      width: fit-content;
+    }
+
+    .typing-indicator span {
+      width: 8px;
+      height: 8px;
+      background: #667eea;
+      border-radius: 50%;
+      animation: typing 1.4s infinite;
+    }
+
+    .typing-indicator span:nth-child(2) {
+      animation-delay: 0.2s;
+    }
+
+    .typing-indicator span:nth-child(3) {
+      animation-delay: 0.4s;
+    }
+
+    @keyframes typing {
+      0%, 60%, 100% {
+        transform: translateY(0);
+      }
+      30% {
+        transform: translateY(-8px);
+      }
+    }
+
+    .search-results {
+      margin-top: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .result-card {
+      background: #2a2a2a;
+      border: 1px solid #444;
+      border-radius: 12px;
+      padding: 16px;
+      display: flex;
+      gap: 12px;
+      transition: all 0.2s;
+    }
+
+    .result-card:hover {
+      border-color: #667eea;
+      transform: translateY(-2px);
+    }
+
+    .result-image {
+      width: 80px;
+      height: 80px;
+      border-radius: 8px;
+      overflow: hidden;
+      flex-shrink: 0;
+      background: #333;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .result-image img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .result-image .no-image {
+      font-size: 32px;
+    }
+
+    .result-info {
+      flex: 1;
+    }
+
+    .result-info h4 {
+      margin: 0 0 8px 0;
+      font-size: 14px;
+      color: #fff;
+    }
+
+    .result-info p {
+      margin: 4px 0;
+      font-size: 12px;
+      color: #aaa;
+    }
+
+    .result-price {
+      color: #667eea !important;
+      font-weight: 600;
+    }
+
+    .result-rating {
+      color: #ffc107 !important;
+    }
+
+    .result-actions {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      gap: 8px;
+    }
+
+    .result-actions .btn {
+      padding: 8px 12px;
+      font-size: 12px;
+    }
+
+    @media (max-width: 768px) {
+      .ai-chatbot {
+        width: calc(100% - 40px);
+        right: 20px;
+        left: 20px;
+        bottom: 150px;
+        max-height: 70vh;
+      }
+
+      .quick-options {
+        grid-template-columns: 1fr;
+      }
+
+      .result-card {
+        flex-direction: column;
+      }
+
+      .result-image {
+        width: 100%;
+        height: 120px;
+      }
+    }
+  </style>
+  {% endblock %}
+</head>
+<body class="{% block body_class %}{% endblock %}">
+  <nav class="navbar" aria-label="التنقل الرئيسي">
+    <div class="nav-container">
+      <a href="{% url 'home' %}" class="logo">
+        <img src="{% static 'images/logo.jpg' %}" alt="{% if site_settings %}{{ site_settings.site_name }}{% else %}دلال{% endif %}" class="logo-mark" style="height: 40px; width: auto;">
+        <span>{% if site_settings %}{{ site_settings.site_name }}{% else %}دلال{% endif %}</span>
+      </a>
+      <button class="hamburger" type="button" aria-label="فتح القائمة" aria-expanded="false">
+        <span></span><span></span><span></span>
+      </button>
+      <ul class="nav-links">
+        <li><a href="{% url 'home' %}" data-nav="home">الرئيسية</a></li>
+        {% if request.user.is_authenticated %}
+        <li><a href="{% url 'dynamic_add_property' %}" data-nav="add-property" class="btn btn-primary">➕ إضافة عقار</a></li>
+        {% endif %}
+        <li><a href="{% url 'contact' %}" data-nav="contact">تواصل</a></li>
+        {% if request.user.is_authenticated %}
+        <li><a href="{% url 'logout' %}">خروج</a></li>
+        {% else %}
+        <li><a href="{% url 'broker_join' %}" class="btn btn-outline btn-sm">انضم كدلال</a></li>
+        <li><a href="{% url 'login' %}" class="btn btn-primary btn-sm">تسجيل الدخول</a></li>
+        {% endif %}
+      </ul>
+    </div>
+  </nav>
+
+  {% if messages %}
+  <div class="messages-container">
+    {% for message in messages %}
+    <div class="alert alert-{{ message.tags }}">{{ message }}</div>
+    {% endfor %}
+  </div>
+  {% endif %}
+
+  <main class="main-content">{% block content %}{% endblock %}</main>
+
+  <footer class="footer">
+    <div class="container">
+      <div class="footer-content">
+        <div class="footer-brand">
+          <div class="footer-logo">
+            <img src="{% static 'images/logo.jpg' %}" alt="{% if site_settings %}{{ site_settings.site_name }}{% else %}دلال{% endif %}" class="footer-logo-icon" style="height: 40px; width: auto;">
+            <span class="footer-logo-text">{% if site_settings %}{{ site_settings.site_name }}{% else %}دلال{% endif %}</span>
+          </div>
+          <p class="footer-tagline">{% if site_settings %}{{ site_settings.tagline }}{% else %}منصة العقارات العراقية — بيع، شراء، وإيجار بثقة واحترافية{% endif %}</p>
+          <div class="footer-social">
+            {% if site_settings and site_settings.whatsapp %}
+            <a href="https://wa.me/{{ site_settings.whatsapp }}" target="_blank" rel="noopener" class="social-link" aria-label="واتساب">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.435 9.884-9.881 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/>
+              </svg>
+            </a>
+            {% endif %}
+          </div>
+        </div>
+        <div class="footer-links-section">
+          <h4 class="footer-title">روابط سريعة</h4>
+          <ul class="footer-links">
+            <li><a href="{% url 'home' %}">🏠 العقارات</a></li>
+            <li><a href="{% url 'service_categories' %}">🛠️ الخدمات المنصه</a></li>
+            <li><a href="{% url 'unified_search' %}">🔍 بحث متقدم</a></li>
+            <li><a href="{% url 'contact' %}">📞 تواصل معنا</a></li>
+            <li><a href="{% url 'channels_list' %}">📺 قنوات الدلالين</a></li>
+          </ul>
+        </div>
+        <div class="footer-links-section">
+          <h4 class="footer-title">الدلالين</h4>
+          <ul class="footer-links">
+            <li><a href="{% url 'public_broker_search' %}">🔍 البحث عن دلال</a></li>
+            <li><a href="{% url 'channels_list' %}">📺 قنوات الدلالين</a></li>
+            {% if request.user.is_authenticated %}
+            <li><a href="{% url 'broker_conversation_list' %}">💬 مراسلة الدلالين</a></li>
+            <li><a href="{% url 'public_broker_search' %}">📅 حجز موعد مع دلال</a></li>
+            {% else %}
+            <li><a href="/login/?next={% url 'broker_conversation_list' %}">💬 مراسلة الدلالين</a></li>
+            <li><a href="/login/?next={% url 'public_broker_search' %}">📅 حجز موعد مع دلال</a></li>
+            {% endif %}
+          </ul>
+        </div>
+        <div class="footer-contact-section">
+          <h4 class="footer-title">تواصل معنا</h4>
+          <ul class="footer-contact">
+            {% if site_settings and site_settings.broker_phone %}
+            <li>
+              <a href="tel:{{ site_settings.broker_phone }}" class="contact-link">
+                <span class="contact-icon">📞</span>
+                <span>{{ site_settings.broker_phone }}</span>
+              </a>
+            </li>
+            {% endif %}
+          </ul>
+          <div style="margin-top: 15px;">
+            <button type="button" id="pwa-install-btn" class="btn btn-primary btn-sm" hidden>
+              📱 تثبيت التطبيق
+            </button>
+            <button type="button" id="ai-chatbot-btn" class="btn btn-primary btn-sm" style="margin-top: 10px; display: inline-block;">
+              🤖 مساعد ذكي
+            </button>
+            {% if site_settings %}
+              {% if site_settings.whatsapp or site_settings.broker_phone %}
+            <a href="https://wa.me/{{ site_settings.whatsapp|default:site_settings.broker_phone }}" class="btn btn-primary btn-sm" style="margin-top: 10px; display: inline-block; background: #25D366; border-color: #25D366;" target="_blank" rel="noopener">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" style="vertical-align: middle; margin-left: 5px;"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.435 9.884-9.881 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+              واتساب
+            </a>
+              {% endif %}
+            {% endif %}
+          </div>
+        </div>
+      </div>
+      <div class="footer-bottom">
+        <p>© {% now "Y" %} {% if site_settings %}{{ site_settings.site_name }}{% else %}دلال{% endif %} — جميع الحقوق محفوظة</p>
+      </div>
+    </div>
+  </footer>
+
+  <!-- شريط تنقل سفلي للهاتف -->
+  <nav class="mobile-bottom-nav" aria-label="تنقل سريع">
+    <a href="{% url 'home' %}" class="bottom-nav-item" data-nav="home">
+      <span class="bottom-nav-icon">🏠</span>
+      <span class="bottom-nav-label">الرئيسية</span>
+    </a>
+    {% if request.user.is_authenticated %}
+    <a href="{% url 'dashboard' %}" class="bottom-nav-item" data-nav="dashboard">
+      <span class="bottom-nav-icon">📊</span>
+      <span class="bottom-nav-label">لوحة التحكم</span>
+    </a>
+    <a href="{% url 'user_settings' %}" class="bottom-nav-item" data-nav="settings">
+      <span class="bottom-nav-icon">⚙️</span>
+      <span class="bottom-nav-label">الإعدادات</span>
+    </a>
+    {% else %}
+    <a href="{% url 'login' %}" class="bottom-nav-item" data-nav="login">
+      <span class="bottom-nav-icon">🔑</span>
+      <span class="bottom-nav-label">دخول</span>
+    </a>
+    {% endif %}
+    <a href="{% url 'contact' %}" class="bottom-nav-item" data-nav="contact">
+      <span class="bottom-nav-icon">📞</span>
+      <span class="bottom-nav-label">اتصل بنا</span>
+    </a>
+  </nav>
+
+  <!-- Floating WhatsApp button removed - now in footer -->
+
+
+  <button type="button" class="back-to-top" id="back-to-top" aria-label="أعلى">↑</button>
+
+  <div id="toast-container" class="toast-container" aria-live="polite"></div>
+
+  <!-- AI Chatbot -->
+  <div id="ai-chatbot" class="ai-chatbot">
+    <div class="chatbot-header">
+      <div class="chatbot-title">
+        <span class="chatbot-icon">🤖</span>
+        <span class="chatbot-name">مساعد موقعنا الذكي</span>
+      </div>
+      <button type="button" class="chatbot-close" id="chatbot-close">✕</button>
+    </div>
+    
+    <div class="chatbot-messages" id="chatbot-messages">
+      <div class="message bot-message">
+        <div class="message-content">
+          <p>السلام عليكم 👋</p>
+          <p>أهلاً بك، شلون أگدر أساعدك اليوم؟</p>
+        </div>
+      </div>
+      
+      <div class="quick-options">
+        <button type="button" class="quick-option" data-intent="buy_property">🏠 أريد شراء عقار</button>
+        <button type="button" class="quick-option" data-intent="sell_property">💰 أريد بيع عقار</button>
+        <button type="button" class="quick-option" data-intent="broker">👔 أنا دلال</button>
+        <button type="button" class="quick-option" data-intent="job">💼 أبحث عن وظيفة</button>
+        <button type="button" class="quick-option" data-intent="visit">📅 حجز زيارة</button>
+        <button type="button" class="quick-option" data-intent="compare">⚖️ مقارنة عقارات</button>
+        <button type="button" class="quick-option" data-intent="iraq_property">🏠 عقارات داخل العراق</button>
+        <button type="button" class="quick-option" data-intent="foreign_property">🌍 عقارات خارج العراق</button>
+        <button type="button" class="quick-option" data-intent="iraq_hotel">🏨🇮🇶 فنادق داخل العراق</button>
+        <button type="button" class="quick-option" data-intent="foreign_hotel">🏨🌍 فنادق خارج العراق</button>
+        <button type="button" class="quick-option" data-intent="iraq_resort">🏝️🇮🇶 منتجعات داخل العراق</button>
+        <button type="button" class="quick-option" data-intent="foreign_resort">🏝️🌍 منتجعات خارج العراق</button>
+        <button type="button" class="quick-option" data-intent="travel_company">✈️ نشر شركة سفر</button>
+        <button type="button" class="quick-option" data-intent="post_job">➕ نشر وظيفة</button>
+        <button type="button" class="quick-option" data-intent="post_building">🏗️ نشر طلب بناء</button>
+        <button type="button" class="quick-option" data-intent="post_service">🔧 نشر خدمة</button>
+        <button type="button" class="quick-option" data-intent="post_auction">🔨 نشر مزاد</button>
+      </div>
+    </div>
+    
+    <div class="chatbot-input-area">
+      <div class="chatbot-input-wrapper">
+        <button type="button" class="chatbot-attach" id="chatbot-attach" title="إرفاق ملف">📎</button>
+        <input type="text" id="chatbot-input" class="chatbot-input" placeholder="اكتب رسالتك هنا...">
+        <button type="button" class="chatbot-voice" id="chatbot-voice" title="تسجيل صوتي">🎤</button>
+        <button type="button" class="chatbot-send" id="chatbot-send">إرسال</button>
+      </div>
+      <div class="chatbot-actions">
+        <button type="button" class="chatbot-new-chat" id="chatbot-new-chat">محادثة جديدة</button>
+        <button type="button" class="chatbot-history" id="chatbot-history">📜 السجل</button>
+        <button type="button" class="chatbot-settings" id="chatbot-settings">⚙️ الإعدادات</button>
+        <button type="button" class="voice-mode-btn" id="voice-mode-btn">🔇 صوت معطل</button>
+      </div>
+      <input type="file" id="chatbot-file-input" accept="image/*,.pdf,.doc,.docx" style="display: none;">
+    </div>
+  </div>
+
+  <script>
+    // Force Dark Mode - Prevent FOUC
+    (function() {
+      document.documentElement.setAttribute('data-theme', 'dark');
+      localStorage.setItem('theme', 'dark');
+    })();
+  </script>
+  <script type="application/json" id="site-data">
+    {
+      "governorate_cities": {{ governorate_cities_json|safe|default:"{}" }},
+      "site_phone": "{% if site_settings %}{{ site_settings.broker_phone }}{% endif %}"
+    }
+  </script>
+  <script>
+    (function() {
+      const siteData = JSON.parse(document.getElementById('site-data').textContent);
+      window.GOVERNORATE_CITIES = siteData.governorate_cities;
+      window.SITE_PHONE = siteData.site_phone;
+    })();
+  </script>
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
+  <script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js" crossorigin=""></script>
+  <script src="{% static 'js/app.js' %}" defer></script>
+  <script src="{% static 'js/countdown.js' %}" defer></script>
+  <script src="{% static 'js/enhanced-features.js' %}" defer></script>
+  <script src="{% static 'js/navigation.js' %}" defer></script>
+  <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', function () {
+        navigator.serviceWorker.register('/sw.js', { scope: '/' }).catch(function () {});
+      });
+    }
+    let deferredInstallPrompt = null;
+    window.addEventListener('beforeinstallprompt', function (e) {
+      e.preventDefault();
+      deferredInstallPrompt = e;
+      var btn = document.getElementById('pwa-install-btn');
+      if (btn) {
+        btn.hidden = false;
+        btn.addEventListener('click', function() {
+          if (deferredInstallPrompt) {
+            deferredInstallPrompt.prompt();
+            deferredInstallPrompt.userChoice.finally(function () {
+              deferredInstallPrompt = null;
+              btn.hidden = true;
+            });
+          }
+        });
+      }
+    });
+  </script>
+  {% block extra_js %}
+  <script>
+    // AI Chatbot - Full Functionality
+    document.addEventListener('DOMContentLoaded', function() {
+      console.log('[AI Chatbot] Initializing...');
+      
+      const chatbotBtn = document.getElementById('ai-chatbot-btn');
+      const chatbot = document.getElementById('ai-chatbot');
+      const chatbotClose = document.getElementById('chatbot-close');
+      const chatbotInput = document.getElementById('chatbot-input');
+      const chatbotSend = document.getElementById('chatbot-send');
+      const chatbotMessages = document.getElementById('chatbot-messages');
+      const quickOptions = document.querySelectorAll('.quick-option');
+      
+      console.log('[AI Chatbot] chatbotBtn:', chatbotBtn);
+      console.log('[AI Chatbot] chatbot:', chatbot);
+      console.log('[AI Chatbot] chatbotClose:', chatbotClose);
+      console.log('[AI Chatbot] chatbotInput:', chatbotInput);
+      console.log('[AI Chatbot] chatbotSend:', chatbotSend);
+      console.log('[AI Chatbot] chatbotMessages:', chatbotMessages);
+      
+      // Generate conversation ID
+      const conversationId = 'conv_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+      let conversationState = { intent: null, data: {}, step: 0 };
+      
+      // Toggle chatbot
+      if (chatbotBtn && chatbot) {
+        chatbotBtn.addEventListener('click', function() {
+          console.log('[AI Chatbot] Button clicked!');
+          chatbot.classList.toggle('active');
+          console.log('[AI Chatbot] Active class toggled');
+        });
+        console.log('[AI Chatbot] Event listener added to button');
+      } else {
+        console.error('[AI Chatbot] Elements not found!');
+      }
+      
+      // Close chatbot
+      if (chatbotClose && chatbot) {
+        chatbotClose.addEventListener('click', function() {
+          console.log('[AI Chatbot] Close clicked!');
+          chatbot.classList.remove('active');
+        });
+      }
+      
+      // Quick options
+      quickOptions.forEach(option => {
+        option.addEventListener('click', function() {
+          const intent = this.getAttribute('data-intent');
+          addUserMessage(this.textContent);
+          
+          // Direct response without API call
+          const responses = {
+            'buy_property': `حسناً، تريد شراء عقار. في أي محافظة تبحث؟
+
+📍 جميع المحافظات العراقية:
+
+• بغداد (العاصمة)
+• البصرة
+• نينوى
+• أربيل
+• السليمانية
+• دهوك
+• كركوك
+• الأنبار
+• صلاح الدين
+• ديالى
+• واسط
+• بابل
+• كربلاء
+• النجف
+• القادسية
+• المثنى
+• ذي قار
+• ميسان
+• حلبجة
+
+اكتب اسم المحافظة 👆`,
+            'sell_property': 'حسناً، تريد بيع عقار. يرجى تزويدني بتفاصيل العقار (الموقع، المساحة، السعر، النوع).',
+            'broker': 'أهلاً بك يا دلال! كيف أگدر أساعدك في إدارة عقاراتك؟',
+            'job': 'حسناً، تبحث عن وظيفة. في أي مجال تبحث؟',
+            'visit': 'حسناً، تريد حجز زيارة. أي عقار تريد زيارته؟',
+            'compare': 'حسناً، تريد مقارنة عقارات. حدد العقارات التي تريد مقارنتها.',
+            'iraq_property': 'حسناً، تبحث عن عقارات داخل العراق. في أي محافظة؟',
+            'foreign_property': 'حسناً، تبحث عن عقارات خارج العراق. في أي دولة؟',
+            'iraq_hotel': 'حسناً، تبحث عن فنادق داخل العراق. في أي مدينة؟',
+            'foreign_hotel': 'حسناً، تبحث عن فنادق خارج العراق. في أي دولة؟',
+            'iraq_resort': 'حسناً، تبحث عن منتجعات داخل العراق. في أي منطقة؟',
+            'foreign_resort': 'حسناً، تبحث عن منتجعات خارج العراق. في أي دولة؟',
+            'travel_company': 'حسناً، تريد نشر شركة سفر. يرجى تزويدني بتفاصيل الشركة.',
+            'post_job': 'حسناً، تريد نشر وظيفة. يرجى تزويدني بتفاصيل الوظيفة.',
+            'post_building': 'حسناً، تريد نشر طلب بناء. يرجى تزويدني بتفاصيل المشروع.',
+            'post_service': 'حسناً، تريد نشر خدمة. يرجى تزويدني بتفاصيل الخدمة.',
+            'post_auction': 'حسناً، تريد نشر مزاد. يرجى تزويدني بتفاصيل المزاد.',
+            'default': 'فهمت طلبك. شلون أگدر أساعدك بعد؟\n\nيمكنني مساعدتك في:\n- البحث عن عقارات\n- تحليل السوق\n- استشارات'
+          };
+          
+          addBotMessage(responses[intent] || responses['default']);
+        });
+      });
+      
+      // Send message
+      if (chatbotSend && chatbotInput) {
+        chatbotSend.addEventListener('click', sendMessage);
+        chatbotInput.addEventListener('keypress', function(e) {
+          if (e.key === 'Enter') {
+            sendMessage();
+          }
+        });
+      }
+      
+      // Functions
+      async function sendMessage() {
+        const message = chatbotInput.value.trim();
+        if (!message) return;
+        
+        addUserMessage(message);
+        chatbotInput.value = '';
+        
+        // Send to API
+        await sendToChatbotAPI(message);
+      }
+      
+      async function sendToChatbotAPI(message) {
+        showTypingIndicator();
+        
+        try {
+          const response = await fetch('/api/statistics/');
+          const data = await response.json();
+          
+          hideTypingIndicator();
+          
+          // Generate response based on real statistics
+          let botResponse = '';
+          
+          if (message.includes('عقار') || message.includes('شقة') || message.includes('فيلا')) {
+            botResponse = `🏠 الإحصائيات الحقيقية للعقارات:
+            
+🇮🇶 عقارات داخل العراق: ${data.properties.iraq}
+🌍 عقارات خارج العراق: ${data.properties.foreign}
+📊 المجموع الكلي: ${data.properties.total}
+
+أكثر أنواع العقارات:
+${data.properties.by_type.slice(0, 3).map(item => `• ${item.type}: ${item.count}`).join('\n')}
+
+أكثر المحافظات:
+${data.properties.by_governorate.slice(0, 3).map(item => `• ${item.governorate}: ${item.count}`).join('\n')}
+
+هل تريد البحث في محافظة معينة؟`;
+          } else if (message.includes('فندق') || message.includes('hotel')) {
+            botResponse = `🏨 إحصائيات الفنادق الحقيقية:
+
+📊 المجموع الكلي: ${data.hotels.total}
+
+هل تبحث عن فندق في مدينة معينة؟`;
+          } else if (message.includes('منتجع') || message.includes('resort')) {
+            botResponse = `🏝️ إحصائيات المنتجعات الحقيقية:
+
+📊 المجموع الكلي: ${data.resorts.total}
+
+هل تبحث عن منتجع في منطقة معينة؟`;
+          } else if (message.includes('وظيفة') || message.includes('job')) {
+            botResponse = `💼 إحصائيات الوظائف الحقيقية:
+            
+📊 الوظائف المتاحة: ${data.jobs.total}
+
+هل تبحث عن وظيفة في مجال معين؟`;
+          } else if (message.includes('دلال') || message.includes('broker')) {
+            botResponse = `👔 إحصائيات الدلالين الحقيقية:
+            
+📊 الدلالين النشطين: ${data.brokers.total}
+📺 القنوات المتاحة: ${data.channels.total}
+
+كيف أگدر مساعدك كدلال؟`;
+
+          } else if (message.includes('خدمة') || message.includes('service')) {
+            botResponse = `🔧 إحصائيات الخدمات الحقيقية:
+            
+👷 مقدمي الخدمات: ${data.services.providers}
+📋 إعلانات الخدمات: ${data.services.advertisements}
+
+هل تريد البحث عن خدمة معينة؟`;
+          } else if (message.includes('مزاد') || message.includes('auction')) {
+            botResponse = `🔨 إحصائيات المزادات الحقيقية:
+            
+📊 المزادات المتاحة: ${data.auctions.total}
+
+هل تريد البحث عن مزاد معين؟`;
+          } else {
+            botResponse = `📊 إحصائيات النظام الحقيقية:
+
+🏠 العقارات: ${data.properties.total} (${data.properties.iraq} داخل العراق، ${data.properties.foreign} خارج العراق)
+🏨 الفنادق: ${data.hotels.total}
+🏝️ المنتجعات: ${data.resorts.total}
+💼 الوظائف: ${data.jobs.total}
+🔧 مقدمي الخدمات: ${data.services.providers}
+👔 الدلالين: ${data.brokers.total}
+👥 المستخدمين: ${data.users.total} (نشط: ${data.users.active})
+📺 القنوات: ${data.channels.total}
+🔨 المزادات: ${data.auctions.total}
+
+كيف أگدر مساعدك بعد؟`;
+          }
+          
+          addBotMessage(botResponse);
+        } catch (error) {
+          hideTypingIndicator();
+          addBotMessage('حدث خطأ في الاتصال بالخادم. يرجى المحاولة لاحقاً.');
+          console.error('Chatbot API Error:', error);
+        }
+      }
+      
+      function addUserMessage(text) {
+        const messageDiv = document.createElement('div');
+        messageDiv.className = 'message user-message';
+        const contentDiv = document.createElement('div');
+        contentDiv.className = 'message-content';
+        contentDiv.textContent = text;
+        messageDiv.appendChild(contentDiv);
+        chatbotMessages.appendChild(messageDiv);
+        scrollToBottom();
+      }
+
+      function addBotMessage(text) {
+        const messageDiv = document.createElement('div');
+        messageDiv.className = 'message bot-message';
+        const contentDiv = document.createElement('div');
+        contentDiv.className = 'message-content';
+        contentDiv.textContent = text;
+        messageDiv.appendChild(contentDiv);
+        chatbotMessages.appendChild(messageDiv);
+        scrollToBottom();
+      }
+      
+      function showTypingIndicator() {
+        const typingDiv = document.createElement('div');
+        typingDiv.className = 'typing-indicator';
+        typingDiv.id = 'typing-indicator';
+        typingDiv.innerHTML = '<span></span><span></span><span></span>';
+        chatbotMessages.appendChild(typingDiv);
+        scrollToBottom();
+      }
+      
+      function hideTypingIndicator() {
+        const typingIndicator = document.getElementById('typing-indicator');
+        if (typingIndicator) {
+          typingIndicator.remove();
+        }
+      }
+      
+      function scrollToBottom() {
+        chatbotMessages.scrollTop = chatbotMessages.scrollHeight;
+      }
+      
+      function getCSRFToken() {
+        const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]');
+        return csrfToken ? csrfToken.value : '';
+      }
+      
+      console.log('[AI Chatbot] Initialization complete');
+    });
+  </script>
+  {% endblock %}
+</body>
+</html>

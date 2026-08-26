@@ -1,0 +1,768 @@
+{% extends 'properties/dashboard_base.html' %}
+{% load price_filters %}
+
+{% block title %}إحصائيات شاملة للمنصة{% endblock %}
+
+{% block dashboard_title %}إحصائيات شاملة للمنصة{% endblock %}
+
+{% block dashboard_subtitle %}
+<p style="margin:4px 0 0;color:var(--text-muted);font-size:0.9rem;">
+  نظرة عامة على جميع جوانب المنصة
+</p>
+{% endblock %}
+
+{% block dashboard_actions %}
+<a href="{% url 'dashboard' %}" class="btn btn-outline btn-sm">← العودة للوحة التحكم</a>
+{% endblock %}
+
+{% block extra_css %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+  .stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 20px;
+    margin-bottom: 30px;
+  }
+
+  .stat-card {
+    background: var(--card-bg);
+    border: 2px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 24px;
+    transition: all 0.3s ease;
+  }
+
+  .stat-card:hover {
+    border-color: var(--primary);
+    transform: translateY(-4px);
+    box-shadow: 0 8px 24px rgba(255, 107, 53, 0.2);
+  }
+
+  .stat-card-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 16px;
+  }
+
+  .stat-icon {
+    font-size: 2rem;
+    min-width: 50px;
+  }
+
+  .stat-title {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--text);
+  }
+
+  .stat-value {
+    font-size: 2.5rem;
+    font-weight: 800;
+    color: var(--primary);
+    margin-bottom: 8px;
+  }
+
+  .stat-subtitle {
+    font-size: 0.9rem;
+    color: var(--text-light);
+  }
+
+  .stats-section {
+    background: var(--card-bg);
+    border: 2px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 32px;
+    margin-bottom: 30px;
+  }
+
+  .section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 24px;
+    padding-bottom: 16px;
+    border-bottom: 2px solid var(--border);
+  }
+
+  .section-title {
+    font-size: 1.5rem;
+    font-weight: 800;
+    color: var(--text);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .section-icon {
+    font-size: 1.8rem;
+  }
+
+  .chart-container {
+    background: var(--bg-alt);
+    border-radius: var(--radius-md);
+    padding: 20px;
+    margin-bottom: 20px;
+  }
+
+  .chart-wrapper {
+    position: relative;
+    height: 300px;
+  }
+
+  .data-table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+
+  .data-table th,
+  .data-table td {
+    padding: 12px 16px;
+    text-align: right;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .data-table th {
+    background: var(--bg-alt);
+    font-weight: 700;
+    color: var(--text);
+  }
+
+  .data-table td {
+    color: var(--text-light);
+  }
+
+  .data-table tr:hover {
+    background: var(--bg-alt);
+  }
+
+  .activity-indicators {
+    display: flex;
+    gap: 20px;
+    flex-wrap: wrap;
+  }
+
+  .activity-badge {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 16px;
+    border-radius: var(--radius-sm);
+    font-size: 0.9rem;
+    font-weight: 600;
+  }
+
+  .activity-badge.today {
+    background: rgba(16, 185, 129, 0.2);
+    color: #10b981;
+  }
+
+  .activity-badge.week {
+    background: rgba(59, 130, 246, 0.2);
+    color: #3b82f6;
+  }
+
+  .activity-badge.month {
+    background: rgba(139, 92, 246, 0.2);
+    color: #8b5cf6;
+  }
+
+  @media (max-width: 768px) {
+    .stats-grid {
+      grid-template-columns: 1fr;
+    }
+
+    .stat-value {
+      font-size: 2rem;
+    }
+
+    .section-header {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 12px;
+    }
+  }
+</style>
+{% endblock %}
+
+{% block dashboard_content %}
+<!-- إحصائيات المستخدمين -->
+<div class="stats-section">
+  <div class="section-header">
+    <h2 class="section-title">
+      <span class="section-icon">👥</span>
+      إحصائيات المستخدمين
+    </h2>
+    <div class="activity-indicators">
+      <span class="activity-badge today">📅 اليوم: {{ users.today }}</span>
+      <span class="activity-badge week">📊 هذا الأسبوع: {{ users.week }}</span>
+      <span class="activity-badge month">📈 هذا الشهر: {{ users.month }}</span>
+    </div>
+  </div>
+
+  <div class="stats-grid">
+    <div class="stat-card">
+      <div class="stat-card-header">
+        <span class="stat-icon">👤</span>
+        <span class="stat-title">إجمالي المستخدمين</span>
+      </div>
+      <div class="stat-value">{{ users.total }}</div>
+      <div class="stat-subtitle">نشط: {{ users.active }}</div>
+    </div>
+
+    <div class="stat-card">
+      <div class="stat-card-header">
+        <span class="stat-icon">👔</span>
+        <span class="stat-title">الدلالين</span>
+      </div>
+      <div class="stat-value">{{ users.brokers }}</div>
+      <div class="stat-subtitle">نشطون في المنصة</div>
+    </div>
+
+    <div class="stat-card">
+      <div class="stat-card-header">
+        <span class="stat-icon">👑</span>
+        <span class="stat-title">المديرين</span>
+      </div>
+      <div class="stat-value">{{ users.admins }}</div>
+      <div class="stat-subtitle">مستوى أعلى صلاحيات</div>
+    </div>
+
+    <div class="stat-card">
+      <div class="stat-card-header">
+        <span class="stat-icon">🛡️</span>
+        <span class="stat-title">الموظفين</span>
+      </div>
+      <div class="stat-value">{{ users.staff }}</div>
+      <div class="stat-subtitle">صلاحيات محدودة</div>
+    </div>
+
+    <div class="stat-card">
+      <div class="stat-card-header">
+        <span class="stat-icon">👨‍👩‍👧‍👦</span>
+        <span class="stat-title">المستخدمين العاديين</span>
+      </div>
+      <div class="stat-value">{{ users.regular }}</div>
+      <div class="stat-subtitle">تصفح وشراء</div>
+    </div>
+  </div>
+
+  <div class="chart-container">
+    <h3 style="margin-bottom: 16px; font-size: 1.2rem; font-weight: 700; color: var(--text);">نمو المستخدمين خلال 6 أشهر</h3>
+    <div class="chart-wrapper">
+      <canvas id="usersGrowthChart"></canvas>
+    </div>
+  </div>
+</div>
+
+<!-- إحصائيات العقارات -->
+<div class="stats-section">
+  <div class="section-header">
+    <h2 class="section-title">
+      <span class="section-icon">🏠</span>
+      إحصائيات العقارات
+    </h2>
+    <div class="activity-indicators">
+      <span class="activity-badge today">📅 اليوم: {{ properties.today }}</span>
+      <span class="activity-badge week">📊 هذا الأسبوع: {{ properties.week }}</span>
+      <span class="activity-badge month">📈 هذا الشهر: {{ properties.month }}</span>
+    </div>
+  </div>
+
+  <div class="stats-grid">
+    <div class="stat-card">
+      <div class="stat-card-header">
+        <span class="stat-icon">🏠</span>
+        <span class="stat-title">إجمالي العقارات</span>
+      </div>
+      <div class="stat-value">{{ properties.total }}</div>
+      <div class="stat-subtitle">منشورة: {{ properties.published }}</div>
+    </div>
+
+    <div class="stat-card">
+      <div class="stat-card-header">
+        <span class="stat-icon">⏳</span>
+        <span class="stat-title">قيد الانتظار</span>
+      </div>
+      <div class="stat-value">{{ properties.pending }}</div>
+      <div class="stat-subtitle">تحت مراجعة</div>
+    </div>
+
+    <div class="stat-card">
+      <div class="stat-card-header">
+        <span class="stat-icon">✅</span>
+        <span class="stat-title">مباعة</span>
+      </div>
+      <div class="stat-value">{{ properties.sold }}</div>
+      <div class="stat-subtitle">تم البيع</div>
+    </div>
+
+    <div class="stat-card">
+      <div class="stat-card-header">
+        <span class="stat-icon">🔑</span>
+        <span class="stat-title">مؤجرة</span>
+      </div>
+      <div class="stat-value">{{ properties.rented }}</div>
+      <div class="stat-subtitle">تم التأجير</div>
+    </div>
+
+    <div class="stat-card">
+      <div class="stat-card-header">
+        <span class="stat-icon">⭐</span>
+        <span class="stat-title">مميزة</span>
+      </div>
+      <div class="stat-value">{{ properties.featured }}</div>
+      <div class="stat-subtitle">عقارات مميزة</div>
+    </div>
+
+    <div class="stat-card">
+      <div class="stat-card-header">
+        <span class="stat-icon">✓</span>
+        <span class="stat-title">موثقة</span>
+      </div>
+      <div class="stat-value">{{ properties.verified }}</div>
+      <div class="stat-subtitle">موثقة من المنصة</div>
+    </div>
+  </div>
+
+  <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(400px, 1fr)); gap: 20px;">
+    <div class="chart-container">
+      <h3 style="margin-bottom: 16px; font-size: 1.2rem; font-weight: 700; color: var(--text);">العقارات حسب النوع</h3>
+      <div class="chart-wrapper">
+        <canvas id="propertiesByTypeChart"></canvas>
+      </div>
+    </div>
+
+    <div class="chart-container">
+      <h3 style="margin-bottom: 16px; font-size: 1.2rem; font-weight: 700; color: var(--text);">العقارات حسب المحافظة</h3>
+      <div class="chart-wrapper">
+        <canvas id="propertiesByGovernorateChart"></canvas>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- إحصائيات الفنادق والمنتجعات -->
+<div class="stats-section">
+  <div class="section-header">
+    <h2 class="section-title">
+      <span class="section-icon">🏨</span>
+      الفنادق والمنتجعات
+    </h2>
+  </div>
+
+  <div class="stats-grid">
+    <div class="stat-card">
+      <div class="stat-card-header">
+        <span class="stat-icon">🏨</span>
+        <span class="stat-title">الفنادق</span>
+      </div>
+      <div class="stat-value">{{ hotels.total }}</div>
+      <div class="stat-subtitle">فنادق مسجلة</div>
+    </div>
+
+    <div class="stat-card">
+      <div class="stat-card-header">
+        <span class="stat-icon">🏖️</span>
+        <span class="stat-title">المنتجعات</span>
+      </div>
+      <div class="stat-value">{{ resorts.total }}</div>
+      <div class="stat-subtitle">منتجعات سياحية</div>
+    </div>
+  </div>
+</div>
+
+<!-- إحصائيات الوظائف -->
+<div class="stats-section">
+  <div class="section-header">
+    <h2 class="section-title">
+      <span class="section-icon">💼</span>
+      إحصائيات الوظائف
+    </h2>
+  </div>
+
+  <div class="stats-grid">
+    <div class="stat-card">
+      <div class="stat-card-header">
+        <span class="stat-icon">💼</span>
+        <span class="stat-title">إجمالي الوظائف</span>
+      </div>
+      <div class="stat-value">{{ jobs.total }}</div>
+      <div class="stat-subtitle">نشطة: {{ jobs.active }}</div>
+    </div>
+  </div>
+</div>
+
+<!-- إحصائيات الخدمات -->
+<div class="stats-section">
+  <div class="section-header">
+    <h2 class="section-title">
+      <span class="section-icon">🔧</span>
+      إحصائيات الخدمات
+    </h2>
+  </div>
+
+  <div class="stats-grid">
+    <div class="stat-card">
+      <div class="stat-card-header">
+        <span class="stat-icon">👨‍🔧</span>
+        <span class="stat-title">مقدمو الخدمات</span>
+      </div>
+      <div class="stat-value">{{ services.providers }}</div>
+      <div class="stat-subtitle">مزودون مسجلون</div>
+    </div>
+
+    <div class="stat-card">
+      <div class="stat-card-header">
+        <span class="stat-icon">📢</span>
+        <span class="stat-title">إعلانات الخدمات</span>
+      </div>
+      <div class="stat-value">{{ services.advertisements }}</div>
+      <div class="stat-subtitle">إعلانات منشورة</div>
+    </div>
+  </div>
+</div>
+
+<!-- إحصائيات المزادات -->
+<div class="stats-section">
+  <div class="section-header">
+    <h2 class="section-title">
+      <span class="section-icon">🔨</span>
+      إحصائيات المزادات
+    </h2>
+  </div>
+
+  <div class="stats-grid">
+    <div class="stat-card">
+      <div class="stat-card-header">
+        <span class="stat-icon">🔨</span>
+        <span class="stat-title">إجمالي المزادات</span>
+      </div>
+      <div class="stat-value">{{ auctions.total }}</div>
+      <div class="stat-subtitle">نشطة: {{ auctions.active }}</div>
+    </div>
+
+    <div class="stat-card">
+      <div class="stat-card-header">
+        <span class="stat-icon">✅</span>
+        <span class="stat-title">مكتملة</span>
+      </div>
+      <div class="stat-value">{{ auctions.completed }}</div>
+      <div class="stat-subtitle">مزادات منتهية</div>
+    </div>
+  </div>
+</div>
+
+<!-- إحصائيات القنوات -->
+<div class="stats-section">
+  <div class="section-header">
+    <h2 class="section-title">
+      <span class="section-icon">📺</span>
+      إحصائيات القنوات
+    </h2>
+  </div>
+
+  <div class="stats-grid">
+    <div class="stat-card">
+      <div class="stat-card-header">
+        <span class="stat-icon">📺</span>
+        <span class="stat-title">قنوات الدلالين</span>
+      </div>
+      <div class="stat-value">{{ channels.total }}</div>
+      <div class="stat-subtitle">قنوات نشطة</div>
+    </div>
+  </div>
+</div>
+
+<!-- إحصائيات السفر -->
+<div class="stats-section">
+  <div class="section-header">
+    <h2 class="section-title">
+      <span class="section-icon">✈️</span>
+      إحصائيات السفر والسياحة
+    </h2>
+  </div>
+
+  <div class="stats-grid">
+    <div class="stat-card">
+      <div class="stat-card-header">
+        <span class="stat-icon">📦</span>
+        <span class="stat-title">الباقات السياحية</span>
+      </div>
+      <div class="stat-value">{{ travel.packages }}</div>
+      <div class="stat-subtitle">باقات متاحة</div>
+    </div>
+
+    <div class="stat-card">
+      <div class="stat-card-header">
+        <span class="stat-icon">🏢</span>
+        <span class="stat-title">شركات السفر</span>
+      </div>
+      <div class="stat-value">{{ travel.companies }}</div>
+      <div class="stat-subtitle">شركات مسجلة</div>
+    </div>
+
+    <div class="stat-card">
+      <div class="stat-card-header">
+        <span class="stat-icon">🎫</span>
+        <span class="stat-title">الحجوزات</span>
+      </div>
+      <div class="stat-value">{{ travel.bookings }}</div>
+      <div class="stat-subtitle">حجوزات مكتملة</div>
+    </div>
+  </div>
+</div>
+
+<!-- إحصائيات المحادثات والرسائل -->
+<div class="stats-section">
+  <div class="section-header">
+    <h2 class="section-title">
+      <span class="section-icon">💬</span>
+      إحصائيات المحادثات
+    </h2>
+  </div>
+
+  <div class="stats-grid">
+    <div class="stat-card">
+      <div class="stat-card-header">
+        <span class="stat-icon">💬</span>
+        <span class="stat-title">المحادثات</span>
+      </div>
+      <div class="stat-value">{{ conversations.total }}</div>
+      <div class="stat-subtitle">محادثات نشطة</div>
+    </div>
+
+    <div class="stat-card">
+      <div class="stat-card-header">
+        <span class="stat-icon">📨</span>
+        <span class="stat-title">الرسائل</span>
+      </div>
+      <div class="stat-value">{{ messages.total }}</div>
+      <div class="stat-subtitle">اليوم: {{ messages.today }}</div>
+    </div>
+
+    <div class="stat-card">
+      <div class="stat-card-header">
+        <span class="stat-icon">📋</span>
+        <span class="stat-title">التقارير</span>
+      </div>
+      <div class="stat-value">{{ reports.total }}</div>
+      <div class="stat-subtitle">تقارير مستلمة</div>
+    </div>
+  </div>
+</div>
+
+<!-- إحصائيات الاشتراكات -->
+<div class="stats-section">
+  <div class="section-header">
+    <h2 class="section-title">
+      <span class="section-icon">💳</span>
+      إحصائيات الاشتراكات
+    </h2>
+  </div>
+
+  <div class="stats-grid">
+    <div class="stat-card">
+      <div class="stat-card-header">
+        <span class="stat-icon">💳</span>
+        <span class="stat-title">إجمالي الاشتراكات</span>
+      </div>
+      <div class="stat-value">{{ subscriptions.total }}</div>
+      <div class="stat-subtitle">نشطة: {{ subscriptions.active }}</div>
+    </div>
+  </div>
+</div>
+
+<!-- إحصائيات مالية -->
+<div class="stats-section">
+  <div class="section-header">
+    <h2 class="section-title">
+      <span class="section-icon">💰</span>
+      الإحصائيات المالية
+    </h2>
+  </div>
+
+  <div class="stats-grid">
+    <div class="stat-card">
+      <div class="stat-card-header">
+        <span class="stat-icon">💵</span>
+        <span class="stat-title">إجمالي الإيرادات</span>
+      </div>
+      <div class="stat-value">{{ financial.total_revenue|format_price }}</div>
+      <div class="stat-subtitle">معلقة: {{ financial.pending_revenue|format_price }}</div>
+    </div>
+
+    <div class="stat-card">
+      <div class="stat-card-header">
+        <span class="stat-icon">📊</span>
+        <span class="stat-title">المعاملات</span>
+      </div>
+      <div class="stat-value">{{ financial.total_transactions }}</div>
+      <div class="stat-subtitle">معاملة مالية</div>
+    </div>
+
+    <div class="stat-card">
+      <div class="stat-card-header">
+        <span class="stat-icon">📉</span>
+        <span class="stat-title">المصاريف</span>
+      </div>
+      <div class="stat-value">{{ financial.total_expenses|format_price }}</div>
+      <div class="stat-subtitle">إجمالي المصاريف</div>
+    </div>
+
+    <div class="stat-card">
+      <div class="stat-card-header">
+        <span class="stat-icon">📈</span>
+        <span class="stat-title">الأرباح</span>
+      </div>
+      <div class="stat-value">{{ financial.total_profits|format_price }}</div>
+      <div class="stat-subtitle">إجمالي الأرباح</div>
+    </div>
+
+    <div class="stat-card">
+      <div class="stat-card-header">
+        <span class="stat-icon">💎</span>
+        <span class="stat-title">صافي الربح</span>
+      </div>
+      <div class="stat-value {% if financial.net_profit >= 0 %}text-success{% else %}text-danger{% endif %}">{{ financial.net_profit|format_price }}</div>
+      <div class="stat-subtitle">الربح الصافي</div>
+    </div>
+  </div>
+</div>
+
+<!-- إحصائيات الوسائط -->
+<div class="stats-section">
+  <div class="section-header">
+    <h2 class="section-title">
+      <span class="section-icon">🖼️</span>
+      إحصائيات الوسائط
+    </h2>
+  </div>
+
+  <div class="stats-grid">
+    <div class="stat-card">
+      <div class="stat-card-header">
+        <span class="stat-icon">🖼️</span>
+        <span class="stat-title">الصور</span>
+      </div>
+      <div class="stat-value">{{ media.images }}</div>
+      <div class="stat-subtitle">صور مرفقة</div>
+    </div>
+
+    <div class="stat-card">
+      <div class="stat-card-header">
+        <span class="stat-icon">🎥</span>
+        <span class="stat-title">الفيديوهات</span>
+      </div>
+      <div class="stat-value">{{ media.videos }}</div>
+      <div class="stat-subtitle">فيديوهات مرفقة</div>
+    </div>
+
+    <div class="stat-card">
+      <div class="stat-card-header">
+        <span class="stat-icon">👁️</span>
+        <span class="stat-title">المشاهدات</span>
+      </div>
+      <div class="stat-value">{{ views.total }}</div>
+      <div class="stat-subtitle">إجمالي المشاهدات</div>
+    </div>
+  </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  // نمو المستخدمين
+  const usersGrowthCtx = document.getElementById('usersGrowthChart');
+  if (usersGrowthCtx) {
+    new Chart(usersGrowthCtx, {
+      type: 'line',
+      data: {
+        labels: [{% for month in users.monthly_growth %}'{{ month.month }} {{ month.year }}'{% if not forloop.last %},{% endif %}{% endfor %}],
+        datasets: [{
+          label: 'المستخدمين الجدد',
+          data: [{% for month in users.monthly_growth %}{{ month.count }}{% if not forloop.last %},{% endif %}{% endfor %}],
+          borderColor: '#FF6B35',
+          backgroundColor: 'rgba(255, 107, 53, 0.1)',
+          fill: true,
+          tension: 0.4
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: {
+            display: false
+          }
+        },
+        scales: {
+          y: {
+            beginAtZero: true
+          }
+        }
+      }
+    });
+  }
+
+  // العقارات حسب النوع
+  const propertiesByTypeCtx = document.getElementById('propertiesByTypeChart');
+  if (propertiesByTypeCtx) {
+    new Chart(propertiesByTypeCtx, {
+      type: 'doughnut',
+      data: {
+        labels: [{% for item in properties.by_type %}'{{ item.type|default:"غير محدد" }}'{% if not forloop.last %},{% endif %}{% endfor %}],
+        datasets: [{
+          data: [{% for item in properties.by_type %}{{ item.count }}{% if not forloop.last %},{% endif %}{% endfor %}],
+          backgroundColor: [
+            '#FF6B35', '#3B82F6', '#10B981', '#F59E0B', '#8B5CF6',
+            '#EC4899', '#06B6D4', '#84CC16', '#F97316', '#6366F1'
+          ]
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: {
+            position: 'right'
+          }
+        }
+      }
+    });
+  }
+
+  // العقارات حسب المحافظة
+  const propertiesByGovernorateCtx = document.getElementById('propertiesByGovernorateChart');
+  if (propertiesByGovernorateCtx) {
+    new Chart(propertiesByGovernorateCtx, {
+      type: 'bar',
+      data: {
+        labels: [{% for item in properties.by_governorate %}'{{ item.governorate|default:"غير محدد" }}'{% if not forloop.last %},{% endif %}{% endfor %}],
+        datasets: [{
+          label: 'عدد العقارات',
+          data: [{% for item in properties.by_governorate %}{{ item.count }}{% if not forloop.last %},{% endif %}{% endfor %}],
+          backgroundColor: '#FF6B35'
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        indexAxis: 'y',
+        plugins: {
+          legend: {
+            display: false
+          }
+        },
+        scales: {
+          x: {
+            beginAtZero: true
+          }
+        }
+      }
+    });
+  }
+</script>
+{% endblock %}

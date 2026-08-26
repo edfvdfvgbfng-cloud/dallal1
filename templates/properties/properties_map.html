@@ -1,0 +1,2931 @@
+{% extends 'properties/base.html' %}
+
+{% block title %}خريطة العقارات المتقدمة{% endblock %}
+
+{% block body_class %}map-page{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css" />
+<link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css" />
+<link rel="stylesheet" href="https://unpkg.com/leaflet-draw@1.0.4/dist/leaflet.draw.css" />
+<link rel="stylesheet" href="https://unpkg.com/leaflet-measure@3.1.4/dist/leaflet-measure.css" />
+<style>
+/* Map page specific styles to hide footer and other elements */
+body.map-page footer,
+body.map-page .footer,
+body.map-page .site-footer,
+body.map-page .dallal-section,
+body.map-page .bottom-section,
+body.map-page .marketing-section {
+  display: none !important;
+}
+
+body.map-page {
+  overflow: hidden;
+  height: 100vh;
+}
+
+body.map-page .main-content,
+body.map-page .content-wrapper {
+  height: 100vh;
+  overflow: hidden;
+}
+</style>
+<style>
+:root {
+  --bg-primary: #0a0a0a;
+  --bg-secondary: #1a1a1a;
+  --bg-tertiary: #2a2a2a;
+  --border-color: rgba(255, 122, 0, 0.2);
+  --text-primary: #ffffff;
+  --text-secondary: #a0a0a0;
+  --text-muted: #6a6a6a;
+  --accent-orange: #ff7a00;
+  --accent-orange-light: #ff9a40;
+  --accent-orange-dark: #ea580c;
+  --success: #22c55e;
+  --card-bg: rgba(26, 26, 26, 0.8);
+  --sidebar-width: 320px;
+}
+
+html, body {
+  overflow-x: hidden;
+  width: 100%;
+  max-width: 100%;
+  margin: 0;
+  padding: 0;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  overflow: hidden;
+}
+
+.dashboard-container {
+  display: none;
+}
+
+.map-wrapper {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  height: 100vh;
+  width: 100vw;
+  max-width: 100vw;
+  overflow: hidden;
+  overflow-x: hidden;
+}
+
+#properties-map {
+  flex: 1;
+  height: 100vh;
+  background: var(--bg-primary);
+  overflow: hidden;
+  overflow-x: hidden;
+}
+
+/* Map page specific styles to hide footer and other elements */
+body.map-page footer,
+body.map-page .footer,
+body.map-page .site-footer,
+body.map-page .dallal-section,
+body.map-page .bottom-section,
+body.map-page .marketing-section,
+body.map-page .extra-section,
+body.map-page .navbar {
+  display: none !important;
+}
+
+body.map-page {
+  overflow: hidden;
+  height: 100vh;
+  width: 100vw;
+  max-width: 100vw;
+  overflow-x: hidden;
+}
+
+body.map-page .main-content {
+  height: 100vh;
+  overflow: hidden;
+  padding: 0;
+  margin: 0;
+  width: 100vw;
+  max-width: 100vw;
+  overflow-x: hidden;
+}
+
+html, body {
+  overflow-x: hidden;
+  width: 100%;
+  max-width: 100%;
+}
+
+/* Fullscreen mode */
+body.map-page:fullscreen {
+  overflow: hidden;
+}
+
+body.map-page:fullscreen .map-wrapper {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 100vh;
+  width: 100vw;
+}
+
+body.map-page:fullscreen .map-sidebar {
+  height: 100vh;
+}
+
+/* Sidebar */
+.map-sidebar {
+  width: var(--sidebar-width);
+  height: 100vh;
+  background: var(--bg-secondary);
+  border-left: 1px solid var(--border-color);
+  display: flex;
+  flex-direction: column;
+  transition: transform 0.3s ease;
+  z-index: 1001;
+  overflow: hidden;
+  overflow-x: hidden;
+  box-shadow: 0 0 20px rgba(0, 0, 0, 0.3);
+}
+
+.map-sidebar.collapsed {
+  transform: translateX(var(--sidebar-width));
+}
+
+.sidebar-header {
+  padding: 16px 20px;
+  background: linear-gradient(135deg, var(--accent-orange) 0%, var(--accent-orange-dark) 100%);
+  border-bottom: 1px solid rgba(255, 122, 0, 0.2);
+}
+
+.sidebar-header h2 {
+  font-size: 1.1rem;
+  color: white;
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 600;
+}
+
+.sidebar-stats {
+  display: flex;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.sidebar-stat {
+  background: rgba(255, 122, 0, 0.2);
+  padding: 4px 10px;
+  border-radius: 6px;
+  font-size: 0.75rem;
+  color: white;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.sidebar-login-btn {
+  display: block;
+  text-align: center;
+  padding: 8px 12px;
+  background: rgba(255, 122, 0, 0.2);
+  color: white;
+  text-decoration: none;
+  border-radius: 6px;
+  font-size: 0.8rem;
+  font-weight: 500;
+  transition: all 0.2s ease;
+}
+
+.sidebar-login-btn:hover {
+  background: rgba(255, 122, 0, 0.3);
+}
+
+.sidebar-toggle {
+  position: absolute;
+  left: 16px;
+  top: 16px;
+  z-index: 1002;
+  background: var(--accent-orange);
+  border: none;
+  color: white;
+  padding: 10px 14px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 1rem;
+  box-shadow: 0 2px 8px rgba(255, 122, 0, 0.3);
+  transition: all 0.2s ease;
+}
+
+/* Ensure toggle button is visible when navbar is hidden */
+body.map-page .sidebar-toggle {
+  display: flex !important;
+  position: fixed;
+  left: 16px;
+  top: 16px;
+  z-index: 1003;
+}
+
+.sidebar-toggle:hover {
+  transform: scale(1.05);
+  background: var(--accent-orange-light);
+  box-shadow: 0 4px 15px rgba(255, 122, 0, 0.4);
+}
+
+/* Search Bar */
+.search-container {
+  padding: 16px;
+  border-bottom: 1px solid var(--border-color);
+  background: var(--bg-secondary);
+}
+
+.search-input {
+  width: 100%;
+  padding: 12px 16px;
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  background: var(--bg-tertiary);
+  color: var(--text-primary);
+  font-size: 0.9rem;
+  transition: all 0.2s ease;
+}
+
+.search-input:focus {
+  outline: none;
+  border-color: var(--accent-orange);
+  background: var(--bg-primary);
+  box-shadow: 0 0 0 3px rgba(255, 122, 0, 0.1);
+}
+
+.search-input::placeholder {
+  color: var(--text-muted);
+}
+
+.search-suggestions {
+  position: absolute;
+  top: 100%;
+  left: 15px;
+  right: 15px;
+  background: rgba(26, 26, 26, 0.98);
+  border: 2px solid rgba(255, 122, 0, 0.2);
+  border-radius: 10px;
+  max-height: 300px;
+  overflow-y: auto;
+  z-index: 1003;
+  display: none;
+}
+
+.search-suggestions.show {
+  display: block;
+}
+
+.suggestion-item {
+  padding: 12px 15px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  border-bottom: 1px solid rgba(255, 122, 0, 0.1);
+}
+
+.suggestion-item:hover {
+  background: rgba(255, 122, 0, 0.1);
+}
+
+.suggestion-item:last-child {
+  border-bottom: none;
+}
+
+/* Categories */
+.categories-container {
+  padding: 16px;
+  background: var(--bg-secondary);
+  border-bottom: 1px solid var(--border-color);
+}
+
+.categories-container h4 {
+  margin: 0 0 12px 0;
+  color: var(--text-primary);
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.categories-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+}
+
+.category-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 12px 8px;
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-color);
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-align: center;
+}
+
+.category-card:hover {
+  border-color: var(--accent-orange);
+  background: rgba(255, 122, 0, 0.1);
+  transform: translateY(-2px);
+}
+
+.category-card.active {
+  background: var(--accent-orange);
+  border-color: var(--accent-orange);
+  color: white;
+}
+
+.category-icon {
+  font-size: 1.5rem;
+  margin-bottom: 6px;
+}
+
+.category-name {
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--text-secondary);
+}
+
+.category-card.active .category-name {
+  color: white;
+}
+
+/* Filter Section Header */
+.filter-section-header {
+  margin-bottom: 16px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.filter-section-header h4 {
+  margin: 0;
+  color: var(--text-primary);
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+/* Country Toggle */
+.country-toggle {
+  display: flex;
+  padding: 8px;
+  background: var(--bg-tertiary);
+  border-radius: 10px;
+  margin-bottom: 16px;
+  gap: 4px;
+}
+
+.country-toggle-btn {
+  flex: 1;
+  padding: 10px 12px;
+  border: none;
+  background: transparent;
+  color: var(--text-secondary);
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 0.85rem;
+  font-weight: 500;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+
+.country-toggle-btn.active {
+  background: var(--accent-orange);
+  color: white;
+  font-weight: 600;
+}
+
+.country-toggle-btn:hover:not(.active) {
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+}
+
+/* Filters */
+.filters-container {
+  padding: 16px;
+  border-bottom: 1px solid var(--border-color);
+  max-height: calc(100vh - 200px);
+  overflow-y: auto;
+  overflow-x: hidden;
+  background: var(--bg-secondary);
+}
+
+.filter-section {
+  margin-bottom: 16px;
+}
+
+.filter-section h4 {
+  font-size: 0.85rem;
+  color: var(--accent-orange);
+  margin-bottom: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.filter-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.filter-group {
+  margin-bottom: 12px;
+}
+
+.filter-group label {
+  display: block;
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  margin-bottom: 6px;
+  font-weight: 500;
+}
+
+.filter-group select,
+.filter-group input {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  background: var(--bg-tertiary);
+  color: var(--text-primary);
+  font-size: 0.85rem;
+  transition: all 0.2s ease;
+}
+
+.filter-group select:focus,
+.filter-group input:focus {
+  outline: none;
+  border-color: var(--accent-orange);
+  background: var(--bg-primary);
+  box-shadow: 0 0 0 3px rgba(255, 122, 0, 0.1);
+}
+
+.filter-group select option {
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+}
+
+.filter-checkbox {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+  cursor: pointer;
+}
+
+.filter-checkbox input {
+  width: auto;
+  margin: 0;
+  accent-color: var(--accent-orange);
+}
+
+.filter-checkbox label {
+  margin: 0;
+  cursor: pointer;
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+}
+
+/* Sort Bar */
+.sort-bar {
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--border-color);
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  background: var(--bg-secondary);
+}
+
+.sort-btn {
+  padding: 6px 12px;
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  background: var(--bg-tertiary);
+  color: var(--text-secondary);
+  font-size: 0.8rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+  font-weight: 500;
+}
+
+.sort-btn:hover,
+.sort-btn.active {
+  background: var(--accent-orange);
+  border-color: var(--accent-orange);
+  color: white;
+}
+
+/* Properties List */
+.properties-list {
+  flex: 1;
+  overflow-y: auto;
+  padding: 16px;
+  background: var(--bg-secondary);
+  height: calc(100vh - 450px);
+  min-height: 200px;
+}
+
+.property-card {
+  background: var(--card-bg);
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  overflow: hidden;
+  margin-bottom: 12px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  backdrop-filter: blur(10px);
+}
+
+.property-card:hover {
+  border-color: var(--accent-orange);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(255, 122, 0, 0.15);
+}
+
+.property-card.active {
+  border-color: var(--accent-orange);
+  background: rgba(255, 122, 0, 0.1);
+  box-shadow: 0 0 0 2px rgba(255, 122, 0, 0.2);
+}
+
+.property-image {
+  width: 100%;
+  height: 160px;
+  object-fit: cover;
+  position: relative;
+}
+
+.property-badges {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  display: flex;
+  gap: 4px;
+  flex-wrap: wrap;
+}
+
+.property-badge {
+  padding: 3px 8px;
+  border-radius: 4px;
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: white;
+}
+
+.property-badge.sale {
+  background: var(--success);
+}
+
+.property-badge.rent {
+  background: #3b82f6;
+}
+
+.property-badge.auction {
+  background: #ef4444;
+}
+
+.property-badge.featured {
+  background: var(--accent-orange);
+}
+
+.property-badge.new {
+  background: #8b5cf6;
+}
+
+.property-info {
+  padding: 12px;
+}
+
+.property-price {
+  font-size: 1.3rem;
+  font-weight: 700;
+  color: var(--accent-orange);
+  margin-bottom: 6px;
+}
+
+.property-title {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 8px;
+  line-height: 1.3;
+}
+
+.property-location {
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  margin-bottom: 8px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.property-details {
+  display: flex;
+  gap: 12px;
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  margin-bottom: 8px;
+}
+
+.property-detail {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.property-meta {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+/* Map Controls */
+.map-controls {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  z-index: 1000;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.control-btn {
+  width: 40px;
+  height: 40px;
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+  font-size: 1rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+.control-btn:hover {
+  background: var(--accent-orange);
+  border-color: var(--accent-orange);
+  transform: scale(1.05);
+}
+
+/* Map Layers */
+.map-layers {
+  position: absolute;
+  top: 16px;
+  left: 70px;
+  z-index: 1000;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  padding: 6px;
+  display: flex;
+  gap: 6px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  max-width: calc(100vw - 400px);
+}
+
+.layer-btn {
+  padding: 8px 12px;
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  background: var(--bg-tertiary);
+  color: var(--text-secondary);
+  font-size: 0.75rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+  font-weight: 500;
+  flex-shrink: 0;
+  min-width: fit-content;
+}
+
+.layer-btn:hover,
+.layer-btn.active {
+  background: var(--accent-orange);
+  border-color: var(--accent-orange);
+  color: white;
+  box-shadow: 0 2px 6px rgba(255, 122, 0, 0.3);
+}
+
+.layer-btn:focus {
+  outline: 2px solid var(--accent-orange);
+  outline-offset: 2px;
+}
+
+/* Stats Panel */
+.stats-panel {
+  position: absolute;
+  bottom: 16px;
+  left: 16px;
+  z-index: 1000;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: 10px;
+  padding: 12px;
+  display: flex;
+  gap: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+.stat-item {
+  text-align: center;
+}
+
+.stat-number {
+  font-size: 1.3rem;
+  font-weight: 700;
+  color: var(--accent-orange);
+  margin-bottom: 2px;
+}
+
+.stat-label {
+  font-size: 0.7rem;
+  color: var(--text-secondary);
+}
+
+/* Property Popup */
+.property-popup {
+  min-width: 280px;
+  max-width: 350px;
+}
+
+.popup-image {
+  width: 100%;
+  height: 160px;
+  object-fit: cover;
+  border-radius: 8px;
+  margin-bottom: 10px;
+}
+
+.popup-content {
+  padding: 12px;
+}
+
+.popup-house-number {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--accent-orange);
+  margin-bottom: 8px;
+  padding: 8px;
+  background: rgba(255, 122, 0, 0.1);
+  border-radius: 6px;
+  border: 1px solid var(--accent-orange);
+}
+
+.popup-price {
+  font-size: 1.3rem;
+  font-weight: 700;
+  color: var(--accent-orange);
+  margin-bottom: 6px;
+}
+
+.popup-title {
+  font-size: 1rem;
+  font-weight: 600;
+  color: white;
+  margin-bottom: 10px;
+  line-height: 1.4;
+}
+
+.popup-details {
+  display: flex;
+  gap: 12px;
+  font-size: 0.85rem;
+  color: rgba(255, 255, 255, 0.7);
+  margin-bottom: 12px;
+  flex-wrap: wrap;
+}
+
+.popup-detail {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.popup-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.popup-action-btn {
+  flex: 1;
+  min-width: 80px;
+  padding: 10px;
+  border: none;
+  border-radius: 8px;
+  background: linear-gradient(135deg, #ff6b35 0%, #f7931e 100%);
+  color: white;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.popup-action-btn:hover {
+  opacity: 0.9;
+  transform: translateY(-2px);
+}
+
+/* Property Polygons */
+.property-polygon {
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.property-polygon:hover {
+  filter: brightness(1.2);
+}
+
+.property-polygon.sale {
+  stroke: #22c55e;
+  fill: #22c55e;
+}
+
+.property-polygon.rent {
+  stroke: #3b82f6;
+  fill: #3b82f6;
+}
+
+.property-polygon.auction {
+  stroke: #ef4444;
+  fill: #ef4444;
+}
+
+.property-polygon.published {
+  stroke: #22c55e;
+  fill: #22c55e;
+}
+
+.property-polygon.draft {
+  stroke: #6b7280;
+  fill: #6b7280;
+}
+
+/* Polygon Labels */
+.polygon-label {
+  background: transparent;
+  border: none;
+}
+
+.polygon-label-content {
+  background: rgba(0, 0, 0, 0.85);
+  color: #ff7a00;
+  border: 2px solid #ff7a00;
+  border-radius: 8px;
+  padding: 4px 8px;
+  font-size: 14px;
+  font-weight: 800;
+  text-align: center;
+  white-space: nowrap;
+  box-shadow: 0 2px 10px rgba(255, 122, 0, 0.4);
+  text-shadow: 0 0 5px rgba(255, 122, 0, 0.6);
+  backdrop-filter: blur(2px);
+  min-width: 40px;
+}
+
+/* Custom Markers */
+.custom-marker {
+  background: linear-gradient(135deg, #ff6b35 0%, #f7931e 100%);
+  color: white;
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-weight: 600;
+  font-size: 12px;
+  white-space: nowrap;
+  box-shadow: 0 4px 15px rgba(255, 107, 53, 0.3);
+  border: 2px solid white;
+}
+
+/* House Number Marker */
+.house-number-marker {
+  background: rgba(0, 0, 0, 0.85);
+  color: #ff7a00;
+  border: 3px solid #ff7a00;
+  border-radius: 50%;
+  width: 50px;
+  height: 50px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  font-weight: 800;
+  text-align: center;
+  box-shadow: 0 4px 20px rgba(255, 122, 0, 0.5);
+  text-shadow: 0 0 10px rgba(255, 122, 0, 0.8);
+  backdrop-filter: blur(4px);
+}
+
+.house-number-marker:hover {
+  background: rgba(255, 122, 0, 0.9);
+  color: white;
+  border-color: white;
+  transform: scale(1.1);
+  transition: all 0.3s ease;
+}
+
+/* Price Marker (original style) */
+.price-marker {
+  background: linear-gradient(135deg, #ff6b35 0%, #f7931e 100%);
+  color: white;
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-weight: 600;
+  font-size: 12px;
+  white-space: nowrap;
+  box-shadow: 0 4px 15px rgba(255, 107, 53, 0.3);
+  border: 2px solid white;
+}
+
+.custom-marker.sale {
+  background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
+}
+
+.custom-marker.rent {
+  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+}
+
+.custom-marker.auction {
+  background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+}
+
+.custom-marker.featured {
+  background: linear-gradient(135deg, #ff6b35 0%, #f7931e 100%);
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    box-shadow: 0 0 0 0 rgba(255, 107, 53, 0.7);
+  }
+  50% {
+    box-shadow: 0 0 20px 5px rgba(255, 107, 53, 0.3);
+  }
+}
+
+/* Category Icons */
+.category-icon {
+  font-size: 1.5rem;
+  margin-right: 5px;
+}
+
+/* Loading State */
+.loading-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(26, 26, 46, 0.9);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2000;
+}
+
+.loading-spinner {
+  width: 50px;
+  height: 50px;
+  border: 4px solid rgba(255, 107, 53, 0.3);
+  border-top-color: #ff6b35;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Responsive */
+@media (max-width: 1024px) {
+  .map-sidebar {
+    width: 300px;
+  }
+  
+  .map-sidebar.collapsed {
+    transform: translateX(300px);
+  }
+}
+
+@media (max-width: 768px) {
+  .map-sidebar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    width: 100%;
+    transform: translateX(100%);
+    border-radius: 0;
+  }
+  
+  .map-sidebar.collapsed {
+    transform: translateX(100%);
+  }
+  
+  .map-sidebar.show {
+    transform: translateX(0);
+  }
+  
+  .sidebar-toggle {
+    left: 16px;
+    top: 16px;
+  }
+  
+  .map-controls {
+    top: 70px;
+    right: 12px;
+  }
+  
+  .map-layers {
+    top: 70px;
+    left: 70px;
+    flex-wrap: nowrap;
+    max-width: calc(100vw - 90px);
+  }
+  
+  .categories-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px;
+  }
+  
+  .category-card {
+    padding: 10px 6px;
+  }
+  
+  .category-icon {
+    font-size: 1.25rem;
+  }
+  
+  .category-name {
+    font-size: 0.7rem;
+  }
+  
+  .stats-panel {
+    bottom: 12px;
+    left: 12px;
+    right: 12px;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+  
+  .control-btn {
+    width: 40px;
+    height: 40px;
+    font-size: 1rem;
+  }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="map-wrapper">
+  <button class="sidebar-toggle" onclick="toggleSidebar()">☰</button>
+  
+  <div class="map-sidebar" id="sidebar">
+    <div class="sidebar-header">
+      <h2>🗺️ خريطة المنصة</h2>
+      <div class="sidebar-stats">
+        <div class="sidebar-stat">📨 {{ total|default:0 }} عنصر</div>
+        <div class="sidebar-stat">🔔 {{ unread_count|default:0 }} جديد</div>
+      </div>
+      {% if not request.user.is_authenticated %}
+      <div style="margin-top: 12px;">
+        <a href="{% url 'login' %}" class="sidebar-login-btn">تسجيل الدخول</a>
+      </div>
+      {% endif %}
+    </div>
+    
+    <div class="search-container">
+      <input type="text" class="search-input" id="search-input" placeholder="🔎 ابحث: دار 125، عقار، فندق، وظيفة..." autocomplete="off">
+      <div class="search-suggestions" id="search-suggestions"></div>
+    </div>
+    
+    <!-- Platform Categories -->
+    <div class="categories-container">
+      <h4 style="margin-bottom: 12px; color: var(--text-primary);">📁 أقسام المنصة</h4>
+      <div class="categories-grid">
+        <button class="category-card active" data-category="property">
+          <span class="category-icon">🏠</span>
+          <span class="category-name">العقارات</span>
+        </button>
+        <button class="category-card" data-category="hotel">
+          <span class="category-icon">🏨</span>
+          <span class="category-name">الفنادق</span>
+        </button>
+        <button class="category-card" data-category="resort">
+          <span class="category-icon">🏝️</span>
+          <span class="category-name">المنتجعات</span>
+        </button>
+        <button class="category-card" data-category="travel">
+          <span class="category-icon">✈️</span>
+          <span class="category-name">السفر</span>
+        </button>
+        <button class="category-card" data-category="job">
+          <span class="category-icon">💼</span>
+          <span class="category-name">الوظائف</span>
+        </button>
+        <button class="category-card" data-category="construction">
+          <span class="category-icon">🏗️</span>
+          <span class="category-name">البناء</span>
+        </button>
+        <button class="category-card" data-category="service">
+          <span class="category-icon">🔧</span>
+          <span class="category-name">الخدمات</span>
+        </button>
+        <button class="category-card" data-category="auction">
+          <span class="category-icon">🔨</span>
+          <span class="category-name">المزادات</span>
+        </button>
+      </div>
+    </div>
+    
+    <div class="filters-container">
+      <!-- Filter Section Header -->
+      <div class="filter-section-header">
+        <h4 id="filter-section-title">🔍 فلاتر العقارات</h4>
+        <p style="font-size: 0.75rem; color: var(--text-muted); margin-top: 4px;">
+          الفلاتر متاحة حاليًا للعقارات فقط
+        </p>
+      </div>
+      
+      <!-- Hidden country filter for API -->
+      <input type="hidden" id="filter-country" value="العراق">
+      
+      <!-- Country Toggle -->
+      <div class="country-toggle">
+        <button class="country-toggle-btn active" data-country="العراق">
+          🇮🇶 داخل العراق
+        </button>
+        <button class="country-toggle-btn" data-country="خارج العراق">
+          🌍 خارج العراق
+        </button>
+      </div>
+      
+      <div class="filter-section">
+        <h4>📍 الموقع</h4>
+        <div class="filter-group" id="governorate-group">
+          <label>المحافظة</label>
+          <select id="filter-governorate" onchange="zoomToGovernorate()">
+            <option value="">الكل</option>
+            <option value="بغداد">بغداد</option>
+            <option value="البصرة">البصرة</option>
+            <option value="نينوى">نينوى</option>
+            <option value="أربيل">أربيل</option>
+            <option value="السليمانية">السليمانية</option>
+            <option value="دهوك">دهوك</option>
+            <option value="كركوك">كركوك</option>
+            <option value="الأنبار">الأنبار</option>
+            <option value="صلاح الدين">صلاح الدين</option>
+            <option value="ديالى">ديالى</option>
+            <option value="واسط">واسط</option>
+            <option value="بابل">بابل</option>
+            <option value="كربلاء">كربلاء</option>
+            <option value="النجف">النجف</option>
+            <option value="القادسية">القادسية</option>
+            <option value="المثنى">المثنى</option>
+            <option value="ذي قار">ذي قار</option>
+            <option value="ميسان">ميسان</option>
+            <option value="حلبجة">حلبجة</option>
+          </select>
+        </div>
+        <div class="filter-group" id="foreign-country-group" style="display: none;">
+          <label>الدولة الخارجية</label>
+          <select id="filter-foreign-country">
+            <option value="">اختر الدولة</option>
+            <option value="السعودية">السعودية 🇸🇦</option>
+            <option value="الإمارات">الإمارات 🇦🇪</option>
+            <option value="الكويت">الكويت 🇰🇼</option>
+            <option value="قطر">قطر 🇶🇦</option>
+            <option value="البحرين">البحرين 🇧🇭</option>
+            <option value="عمان">عمان 🇴🇲</option>
+            <option value="الأردن">الأردن 🇯🇴</option>
+            <option value="لبنان">لبنان 🇱🇧</option>
+            <option value="سوريا">سوريا 🇸🇾</option>
+            <option value="تركيا">تركيا 🇹🇷</option>
+            <option value="مصر">مصر 🇪🇬</option>
+            <option value="أخرى">أخرى</option>
+          </select>
+        </div>
+        <div class="filter-row">
+          <div class="filter-group">
+            <label>المدينة</label>
+            <select id="filter-city">
+              <option value="">الكل</option>
+            </select>
+          </div>
+          <div class="filter-group">
+            <label>الحي</label>
+            <select id="filter-district">
+              <option value="">الكل</option>
+            </select>
+          </div>
+        </div>
+      </div>
+      
+      <div class="filter-section">
+        <h4>🏠 نوع العقار</h4>
+        <div class="filter-group">
+          <label>الفئة</label>
+          <select id="filter-category">
+            <option value="">الكل</option>
+            <option value="house">🏠 منزل</option>
+            <option value="apartment">🏢 شقة</option>
+            <option value="villa">🏡 فيلا</option>
+            <option value="land">🌾 أرض</option>
+            <option value="commercial">🏬 تجاري</option>
+            <option value="office">💼 مكتب</option>
+            <option value="hotel">🏨 فندق</option>
+            <option value="resort">🏖️ منتجع</option>
+            <option value="factory">🏭 مصنع</option>
+          </select>
+        </div>
+      </div>
+      
+      <div class="filter-section">
+        <h4>💰 السعر</h4>
+        <div class="filter-row">
+          <div class="filter-group">
+            <label>من</label>
+            <input type="number" id="filter-price-min" placeholder="الحد الأدنى">
+          </div>
+          <div class="filter-group">
+            <label>إلى</label>
+            <input type="number" id="filter-price-max" placeholder="الحد الأقصى">
+          </div>
+        </div>
+      </div>
+      
+      <div class="filter-section">
+        <h4>📐 المساحة</h4>
+        <div class="filter-row">
+          <div class="filter-group">
+            <label>من (م²)</label>
+            <input type="number" id="filter-area-min" placeholder="الحد الأدنى">
+          </div>
+          <div class="filter-group">
+            <label>إلى (م²)</label>
+            <input type="number" id="filter-area-max" placeholder="الحد الأقصى">
+          </div>
+        </div>
+      </div>
+      
+      <div class="filter-section">
+        <h4>🛏️ الغرف</h4>
+        <div class="filter-row">
+          <div class="filter-group">
+            <label>غرف نوم</label>
+            <select id="filter-bedrooms">
+              <option value="">الكل</option>
+              <option value="1">1+</option>
+              <option value="2">2+</option>
+              <option value="3">3+</option>
+              <option value="4">4+</option>
+              <option value="5">5+</option>
+            </select>
+          </div>
+          <div class="filter-group">
+            <label>حمامات</label>
+            <select id="filter-bathrooms">
+              <option value="">الكل</option>
+              <option value="1">1+</option>
+              <option value="2">2+</option>
+              <option value="3">3+</option>
+            </select>
+          </div>
+        </div>
+      </div>
+      
+      <div class="filter-section">
+        <h4>✨ المميزات</h4>
+        <div class="filter-checkbox">
+          <input type="checkbox" id="filter-furnished">
+          <label>مفروش</label>
+        </div>
+        <div class="filter-checkbox">
+          <input type="checkbox" id="filter-pool">
+          <label>مسبح</label>
+        </div>
+        <div class="filter-checkbox">
+          <input type="checkbox" id="filter-garden">
+          <label>حديقة</label>
+        </div>
+        <div class="filter-checkbox">
+          <input type="checkbox" id="filter-elevator">
+          <label>مصعد</label>
+        </div>
+        <div class="filter-checkbox">
+          <input type="checkbox" id="filter-garage">
+          <label>كراج</label>
+        </div>
+        <div class="filter-checkbox">
+          <input type="checkbox" id="filter-360">
+          <label>جولة 360°</label>
+        </div>
+        <div class="filter-checkbox">
+          <input type="checkbox" id="filter-video">
+          <label>فيديو</label>
+        </div>
+        <div class="filter-checkbox">
+          <input type="checkbox" id="filter-featured">
+          <label>مميز فقط</label>
+        </div>
+      </div>
+      
+      <div class="filter-section">
+        <h4>📊 الحالة</h4>
+        <div class="filter-group">
+          <select id="filter-status">
+            <option value="">الكل</option>
+            <option value="sale">للبيع 🟢</option>
+            <option value="rent">للإيجار 🔵</option>
+            <option value="auction">مزاد 🔴</option>
+          </select>
+        </div>
+      </div>
+      
+      <button class="sort-btn" style="width: 100%; margin-top: 15px;" id="apply-filters-btn">🔍 تطبيق الفلاتر</button>
+      <button class="sort-btn" style="width: 100%; margin-top: 10px;" id="reset-filters-btn">🔄 إعادة تعيين</button>
+    </div>
+    
+    <div class="sort-bar">
+      <button class="sort-btn active" data-sort="newest">🆕 الأحدث</button>
+      <button class="sort-btn" data-sort="price-high">💰 الأعلى سعراً</button>
+      <button class="sort-btn" data-sort="price-low">💰 الأقل سعراً</button>
+      <button class="sort-btn" data-sort="popular">👁️ الأكثر مشاهدة</button>
+      <button class="sort-btn" data-sort="rated">⭐ الأعلى تقييماً</button>
+      <button class="sort-btn" data-sort="nearest">📍 الأقرب لموقعي</button>
+    </div>
+    
+    <div class="properties-list" id="properties-list">
+      <!-- Properties will be loaded here -->
+    </div>
+  </div>
+  
+  <div id="properties-map"></div>
+  
+  <div class="map-controls">
+    <button class="control-btn" onclick="locateUser()" title="موقعي">📍</button>
+    <button class="control-btn" onclick="toggleDraw()" title="رسم منطقة">✏️</button>
+    <button class="control-btn" onclick="measureDistance()" title="قياس المسافة">📏</button>
+    <button class="control-btn" onclick="calculateArea()" title="حساب المساحة">📐</button>
+    <button class="control-btn" onclick="toggleHeatmap()" title="Heat Map">🔥</button>
+    <button class="control-btn" onclick="toggleComparison()" title="مقارنة">�</button>
+    <button class="control-btn" onclick="shareLocation()" title="مشاركة الموقع">📤</button>
+    <button class="control-btn" onclick="printMap()" title="طباعة">�️</button>
+    <button class="control-btn" onclick="exportResults()" title="تصدير">�</button>
+    <button class="control-btn" onclick="toggleTheme()" title="الوضع الليلي/النهاري">🌙</button>
+    <button class="control-btn" onclick="toggleFullscreen()" title="ملء الشاشة">⛶</button>
+    <button class="control-btn" onclick="togglePolygonMode()" title="وضع مخطط الأراضي">🗺️</button>
+  </div>
+  
+  <div class="map-layers">
+    <button type="button" class="layer-btn active" data-layer="osm">OpenStreetMap</button>
+    <button type="button" class="layer-btn" data-layer="satellite">Satellite</button>
+    <button type="button" class="layer-btn" data-layer="terrain">Terrain</button>
+    <button type="button" class="layer-btn" data-layer="dark">Dark</button>
+    <button type="button" class="layer-btn" data-layer="hybrid">Hybrid</button>
+  </div>
+  
+  <div class="stats-panel">
+    <div class="stat-item">
+      <div class="stat-number">{{ total|default:0 }}</div>
+      <div class="stat-label">عقار</div>
+    </div>
+    <div class="stat-item">
+      <div class="stat-number">{{ hotels_count|default:0 }}</div>
+      <div class="stat-label">فندق</div>
+    </div>
+    <div class="stat-item">
+      <div class="stat-number">{{ resorts_count|default:0 }}</div>
+      <div class="stat-label">منتجع</div>
+    </div>
+    <div class="stat-item">
+      <div class="stat-number">{{ auctions_count|default:0 }}</div>
+      <div class="stat-label">مزاد</div>
+    </div>
+  </div>
+</div>
+
+<div class="loading-overlay" id="loading-overlay" style="display: none;">
+  <div class="loading-spinner"></div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
+<script src="https://unpkg.com/leaflet-draw@1.0.4/dist/leaflet.draw.js"></script>
+<script src="https://unpkg.com/leaflet-measure@3.1.4/dist/leaflet-measure.js"></script>
+<script src="https://unpkg.com/leaflet.heat@0.2.0/dist/leaflet-heat.js"></script>
+<script>
+(function() {
+  var map, markers, drawControl, heatLayer, measureControl;
+  var currentLayer = 'osm';
+  var heatmapEnabled = false;
+  var selectedProperty = null;
+  var propertiesData = [];
+  var comparisonList = [];
+  var isDarkMode = true;
+  var sidebarCollapsed = false;
+  
+  // Governorate coordinates for Iraq
+  var governorateCoords = {
+    'بغداد': [33.3152, 44.3661],
+    'البصرة': [30.5081, 47.7835],
+    'أربيل': [36.1906, 43.9930],
+    'نينوى': [36.3489, 43.1577],
+    'النجف': [32.0000, 44.3333],
+    'كربلاء': [32.6167, 44.0333],
+    'الديوانية': [31.9833, 45.0000],
+    'واسط': [33.3333, 45.0000],
+    'بابل': [32.4667, 44.4167],
+    'ذي قار': [31.0500, 46.0833],
+    'ميسان': [31.8333, 47.1500],
+    'المثنى': [31.3167, 45.3000],
+    'القادسية': [32.0000, 44.6667],
+    'صلاح الدين': [34.5000, 43.5000],
+    'ديالى': [33.7500, 44.5000],
+    'كركوك': [35.4667, 44.3833],
+    'السليمانية': [35.5500, 45.4333],
+    'دهوك': [36.8667, 42.9833],
+    'اربيل': [36.1906, 43.9930]
+  };
+  
+  // Category icons
+  var categoryIcons = {
+    'house': '🏠',
+    'apartment': '🏢',
+    'villa': '🏡',
+    'land': '🌾',
+    'commercial': '🏬',
+    'office': '💼',
+    'hotel': '🏨',
+    'resort': '🏖️',
+    'factory': '🏭'
+  };
+  
+  // Initialize map
+  function initMap() {
+    try {
+      console.log('Starting map initialization...');
+      
+      // Check if Leaflet is loaded
+      if (typeof L === 'undefined') {
+        console.error('Leaflet library not loaded');
+        showMapError('مكتبة الخريطة غير محملة', 'يرجى التحقق من اتصال الإنترنت');
+        return;
+      }
+      
+      // Check if map container exists
+      var mapContainer = document.getElementById('properties-map');
+      if (!mapContainer) {
+        console.error('Map container not found');
+        showMapError('حاوية الخريطة غير موجودة', 'يرجى التحقق من هيكل الصفحة');
+        return;
+      }
+      
+      console.log('Map container found, size:', mapContainer.offsetWidth, 'x', mapContainer.offsetHeight);
+      
+      // Try to parse initial data
+      var initialData = [];
+      try {
+        var mapDataJson = '{{ map_data_json|safe }}';
+        console.log('Raw map data JSON:', mapDataJson.substring(0, 100) + '...');
+        
+        if (mapDataJson && mapDataJson !== '[]' && mapDataJson !== '' && mapDataJson !== 'None') {
+          initialData = JSON.parse(mapDataJson);
+          console.log('Parsed initial data, properties count:', initialData.length);
+        } else {
+          console.log('No initial map data available');
+        }
+      } catch (e) {
+        console.error('Error parsing map data JSON:', e);
+        console.log('Continuing without initial data');
+      }
+      
+      propertiesData = initialData;
+      
+      // Initialize map with Iraq center
+      var centerLat = 33.3152;
+      var centerLng = 44.3661;
+      var zoomLevel = 6;
+      
+      // If we have data, center on first property
+      if (initialData.length > 0 && initialData[0].lat && initialData[0].lng) {
+        centerLat = initialData[0].lat;
+        centerLng = initialData[0].lng;
+        zoomLevel = 12;
+        console.log('Centering on first property:', centerLat, centerLng);
+      }
+      
+      console.log('Creating map with center:', centerLat, centerLng, 'zoom:', zoomLevel);
+      
+      map = L.map('properties-map', {
+        center: [centerLat, centerLng],
+        zoom: zoomLevel,
+        zoomControl: true,
+        scrollWheelZoom: true
+      });
+      
+      console.log('Map created successfully');
+      
+      // Add default layer
+      addLayer('osm');
+      console.log('Default layer added');
+      
+      // Add polygons if we have data
+      if (initialData.length > 0) {
+        addMarkers(initialData);
+        loadPropertyList(initialData);
+        console.log('Polygons added, count:', initialData.length);
+      } else {
+        // Load empty state
+        loadPropertyList([]);
+        console.log('No properties to display');
+      }
+      
+      // Add draw control
+      addDrawControl();
+      
+      // Add measure control (wrapped in try-catch to prevent map failure)
+      try {
+        addMeasureControl();
+      } catch (measureError) {
+        console.warn('Measure control initialization failed, continuing without it:', measureError);
+      }
+      
+      // Load properties on map move
+      map.on('moveend', debounce(loadPropertiesInView, 500));
+      
+      // Handle zoom-based house number visibility
+      map.on('zoomend', function() {
+        var currentZoom = map.getZoom();
+        updateMarkersBasedOnZoom(currentZoom);
+      });
+      
+      // Initialize search
+      initSearch();
+      
+      // Initialize sort buttons
+      initSortButtons();
+      
+      // Initialize layer buttons
+      initLayerButtons();
+      
+      // Auto-refresh every 30 seconds
+      setInterval(autoRefresh, 30000);
+      
+      console.log('Map initialized successfully');
+      
+    } catch (error) {
+      console.error('Error initializing map:', error);
+      console.error('Error stack:', error.stack);
+      showMapError('خطأ في تهيئة الخريطة', error.message);
+    }
+  }
+  
+  function showMapError(title, message) {
+    var mapContainer = document.getElementById('properties-map');
+    if (mapContainer) {
+      mapContainer.innerHTML = 
+        '<div style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; color: #f97316; padding: 20px; text-align: center;">' +
+        '<div style="font-size: 48px; margin-bottom: 20px;">🗺️</div>' +
+        '<div style="font-size: 18px; margin-bottom: 10px;">' + title + '</div>' +
+        '<div style="font-size: 14px; color: #94a3b8; margin-bottom: 10px;">' + message + '</div>' +
+        '<button onclick="location.reload()" style="margin-top: 20px; padding: 10px 20px; background: #f97316; color: white; border: none; border-radius: 8px; cursor: pointer;">إعادة المحاولة</button>' +
+        '</div>';
+    }
+  }
+  
+  function addLayer(layerType) {
+    // Remove existing layers
+    map.eachLayer(function(layer) {
+      if (layer instanceof L.TileLayer) {
+        map.removeLayer(layer);
+      }
+    });
+    
+    var layer;
+    switch(layerType) {
+      case 'osm':
+        layer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+          attribution: '&copy; OpenStreetMap contributors'
+        });
+        break;
+      case 'satellite':
+        layer = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+          attribution: 'Tiles &copy; Esri'
+        });
+        break;
+      case 'terrain':
+        layer = L.tileLayer('https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png', {
+          attribution: '&copy; OpenTopoMap'
+        });
+        break;
+      case 'dark':
+        if (isDarkMode) {
+          layer = L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+            attribution: '&copy; CARTO'
+          });
+        } else {
+          layer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '&copy; OpenStreetMap contributors'
+          });
+        }
+        break;
+      case 'hybrid':
+        layer = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+          attribution: 'Tiles &copy; Esri'
+        });
+        break;
+    }
+    
+    if (layer) {
+      // Preserve current map state before adding new layer
+      var currentCenter = map.getCenter();
+      var currentZoom = map.getZoom();
+      
+      layer.addTo(map);
+      
+      // Restore map position after layer change
+      map.setView(currentCenter, currentZoom);
+    }
+    
+    currentLayer = layerType;
+  }
+  
+  function addMarkers(properties) {
+    // Clear existing polygons from map
+    map.eachLayer(function(layer) {
+      if (layer instanceof L.Polygon) {
+        map.removeLayer(layer);
+      }
+      if (layer instanceof L.Marker && layer.getIcon().options.className === 'polygon-label') {
+        map.removeLayer(layer);
+      }
+    });
+    
+    if (!properties || properties.length === 0) {
+      console.log('No properties to add polygons for');
+      return;
+    }
+    
+    var validProperties = properties.filter(function(p) {
+      return p && p.lat && p.lng && !isNaN(p.lat) && !isNaN(p.lng);
+    });
+    
+    console.log('Adding polygons for ' + validProperties.length + ' valid properties out of ' + properties.length);
+    
+    validProperties.forEach(function(p) {
+      try {
+        var polygon = createCustomMarker(p);
+        polygon.on('click', function() {
+          selectProperty(p);
+        });
+        polygon.addTo(map);
+      } catch (error) {
+        console.error('Error adding polygon for property ' + p.id, error);
+      }
+    });
+  }
+  
+  function filterMapMarkers(category) {
+    console.log('Filtering map polygons for category:', category);
+    
+    // Remove all polygons first
+    map.eachLayer(function(layer) {
+      if (layer instanceof L.Polygon) {
+        map.removeLayer(layer);
+      }
+      if (layer instanceof L.Marker && layer.getIcon().options.className === 'polygon-label') {
+        map.removeLayer(layer);
+      }
+    });
+    
+    // Filter properties based on category
+    var filteredProperties = propertiesData.filter(function(p) {
+      return p.category === category;
+    });
+    
+    console.log('Adding filtered polygons:', filteredProperties.length);
+    
+    // Add filtered polygons
+    filteredProperties.forEach(function(p) {
+      try {
+        var polygon = createCustomMarker(p);
+        polygon.on('click', function() {
+          selectProperty(p);
+        });
+        polygon.addTo(map);
+      } catch (error) {
+        console.error('Error adding filtered polygon for property ' + p.id, error);
+      }
+    });
+    
+    // Update filter title
+    var filterTitle = document.getElementById('filter-title');
+    if (filterTitle) {
+      var categoryNames = {
+        'property': 'العقارات',
+        'hotel': 'الفنادق',
+        'resort': 'المنتجعات',
+        'travel': 'شركات السفر',
+        'job': 'الوظائف',
+        'construction': 'البناء',
+        'service': 'الخدمات',
+        'auction': 'المزادات'
+      };
+      filterTitle.textContent = categoryNames[category] || 'الكل';
+    }
+  }
+  
+  function togglePolygonMode() {
+    // Toggle between polygon (land plot) mode and marker mode
+    var isPolygonMode = !window.polygonMode;
+    window.polygonMode = isPolygonMode;
+    
+    // Clear current layers
+    map.eachLayer(function(layer) {
+      if (layer instanceof L.Polygon || (layer instanceof L.Marker && layer.getIcon().options.className === 'polygon-label')) {
+        map.removeLayer(layer);
+      }
+    });
+    
+    // Re-add markers with the current mode
+    if (isPolygonMode) {
+      addMarkers(propertiesData);
+      alert('تم تفعيل وضع مخطط الأراضي');
+    } else {
+      // Switch back to marker mode if needed
+      alert('تم تفعيل وضع Marker العادي');
+    }
+  }
+
+  function updateMarkersBasedOnZoom(zoomLevel) {
+    // Adjust polygon visibility based on zoom level
+    var polygons = [];
+    map.eachLayer(function(layer) {
+      if (layer instanceof L.Polygon) {
+        polygons.push(layer);
+      }
+    });
+    
+    polygons.forEach(function(polygon, index) {
+      // Show all polygons at high zoom levels
+      if (zoomLevel >= 16) {
+        polygon.setStyle({ opacity: 1, fillOpacity: 0.4 });
+      }
+      // Show fewer at medium zoom levels
+      else if (zoomLevel >= 14) {
+        if (index % 2 !== 0) {
+          polygon.setStyle({ opacity: 0.3, fillOpacity: 0.1 });
+        } else {
+          polygon.setStyle({ opacity: 1, fillOpacity: 0.4 });
+        }
+      }
+      // Show very few at low zoom levels
+      else if (zoomLevel >= 12) {
+        if (index % 4 !== 0) {
+          polygon.setStyle({ opacity: 0.3, fillOpacity: 0.1 });
+        } else {
+          polygon.setStyle({ opacity: 1, fillOpacity: 0.4 });
+        }
+      }
+      // Hide most at very low zoom levels
+      else {
+        if (index % 8 !== 0) {
+          polygon.setStyle({ opacity: 0.1, fillOpacity: 0.05 });
+        } else {
+          polygon.setStyle({ opacity: 1, fillOpacity: 0.4 });
+        }
+      }
+    });
+    
+    // Update label visibility similarly
+    var labels = [];
+    map.eachLayer(function(layer) {
+      if (layer instanceof L.Marker && layer.getIcon().options.className === 'polygon-label') {
+        labels.push(layer);
+      }
+    });
+    
+    labels.forEach(function(label, index) {
+      if (zoomLevel >= 16) {
+        label.setOpacity(1);
+      } else if (zoomLevel >= 14) {
+        label.setOpacity(index % 2 === 0 ? 1 : 0.3);
+      } else if (zoomLevel >= 12) {
+        label.setOpacity(index % 4 === 0 ? 1 : 0.3);
+      } else {
+        label.setOpacity(index % 8 === 0 ? 1 : 0.1);
+      }
+    });
+  }
+
+  function createCustomMarker(property) {
+    try {
+      var categoryIcon = categoryIcons[property.category] || '🏠';
+      var statusClass = property.status || 'sale';
+      
+      // Check if property has polygon coordinates
+      if (property.polygon_coordinates && property.polygon_coordinates.coordinates) {
+        // Create polygon from actual boundaries
+        var coordinates = property.polygon_coordinates.coordinates[0].map(function(coord) {
+          return [coord[1], coord[0]]; // GeoJSON uses [lng, lat], Leaflet uses [lat, lng]
+        });
+        
+        var polygon = L.polygon(coordinates, {
+          color: '#ff7a00',
+          weight: 2,
+          fillColor: getPropertyColor(property.status),
+          fillOpacity: 0.4,
+          className: 'property-polygon ' + statusClass
+        });
+        
+        // Calculate center for label
+        var bounds = polygon.getBounds();
+        var center = bounds.getCenter();
+        
+        // Create label with house number or property number
+        var labelText = property.house_number || property.property_plot_number || property.property_number || '';
+        
+        if (labelText) {
+          var labelIcon = L.divIcon({
+            className: 'polygon-label',
+            html: '<div class="polygon-label-content">' + labelText + '</div>',
+            iconSize: [60, 30],
+            iconAnchor: [30, 15]
+          });
+          
+          var labelMarker = L.marker(center, { icon: labelIcon, interactive: false });
+          labelMarker.addTo(map);
+        }
+        
+        // Store property data on polygon
+        polygon.propertyData = property;
+        
+        // Add click event
+        polygon.on('click', function() {
+          selectProperty(property);
+        });
+        
+        // Add hover effect
+        polygon.on('mouseover', function() {
+          this.setStyle({ weight: 4, fillOpacity: 0.6 });
+        });
+        
+        polygon.on('mouseout', function() {
+          this.setStyle({ weight: 2, fillOpacity: 0.4 });
+        });
+        
+        return polygon;
+      } else {
+        // Create default rectangular polygon from coordinates
+        var lat = property.lat;
+        var lng = property.lng;
+        var plotArea = property.plot_area || property.area || 100; // Default 100m² if not specified
+        
+        // Calculate approximate polygon from center point and area
+        var sideLength = Math.sqrt(plotArea); // Roughly square plot
+        var halfSide = (sideLength / 2) / 111000; // Convert meters to degrees (roughly)
+        
+        var polygonCoords = [
+          [lat + halfSide, lng - halfSide],
+          [lat + halfSide, lng + halfSide],
+          [lat - halfSide, lng + halfSide],
+          [lat - halfSide, lng - halfSide]
+        ];
+        
+        var polygon = L.polygon(polygonCoords, {
+          color: '#ff7a00',
+          weight: 2,
+          fillColor: getPropertyColor(property.status),
+          fillOpacity: 0.4,
+          className: 'property-polygon ' + statusClass
+        });
+        
+        // Create label with house number or property number
+        var labelText = property.house_number || property.property_plot_number || property.property_number || '';
+        
+        if (labelText) {
+          var labelIcon = L.divIcon({
+            className: 'polygon-label',
+            html: '<div class="polygon-label-content">' + labelText + '</div>',
+            iconSize: [60, 30],
+            iconAnchor: [30, 15]
+          });
+          
+          var labelMarker = L.marker([lat, lng], { icon: labelIcon, interactive: false });
+          labelMarker.addTo(map);
+        }
+        
+        // Store property data on polygon
+        polygon.propertyData = property;
+        
+        // Add click event
+        polygon.on('click', function() {
+          selectProperty(property);
+        });
+        
+        // Add hover effect
+        polygon.on('mouseover', function() {
+          this.setStyle({ weight: 4, fillOpacity: 0.6 });
+        });
+        
+        polygon.on('mouseout', function() {
+          this.setStyle({ weight: 2, fillOpacity: 0.4 });
+        });
+        
+        return polygon;
+      }
+    } catch (error) {
+      console.error('Error creating polygon for property ' + property.id, error);
+      // Return a simple marker as fallback
+      return L.marker([property.lat, property.lng]);
+    }
+  }
+  
+  function getPropertyColor(status) {
+    switch(status) {
+      case 'sale':
+      case 'published':
+        return '#22c55e';
+      case 'rent':
+        return '#3b82f6';
+      case 'auction':
+        return '#ef4444';
+      case 'draft':
+        return '#6b7280';
+      default:
+        return '#ff7a00';
+    }
+  }
+  
+  function createPopupContent(property) {
+    var image = property.image || '/static/img/placeholder-property.svg';
+    var statusBadge = getStatusBadge(property.status);
+    var categoryIcon = categoryIcons[property.category] || '🏠';
+    
+    var html = `
+      <div class="property-popup">
+        <img src="${image}" class="popup-image" alt="${property.title}">
+        <div class="popup-content">
+          ${property.house_number ? '<div class="popup-house-number">🏠 رقم الدار: ' + property.house_number + '</div>' : ''}
+          <div class="popup-price">${formatPrice(property.price)} ${property.currency || 'IQD'}</div>
+          <div class="popup-title">${categoryIcon} ${property.title}</div>
+          <div class="popup-details">
+            <span class="popup-detail">📍 ${property.governorate || ''} - ${property.city || ''}</span>
+            <span class="popup-detail">📐 ${property.area || 0} م²</span>
+            <span class="popup-detail">🛏️ ${property.bedrooms || 0} غرفة</span>
+            <span class="popup-detail">🚿 ${property.bathrooms || 0} حمام</span>
+          </div>
+          <div class="popup-actions">
+            <button class="popup-action-btn" onclick="viewProperty(${property.id})">🔍 التفاصيل</button>
+            <button class="popup-action-btn" onclick="contactBroker(${property.id})">📞 اتصل</button>
+            <button class="popup-action-btn" onclick="shareProperty(${property.id})">📤 مشاركة</button>
+            <button class="popup-action-btn" onclick="saveProperty(${property.id})">⭐ حفظ</button>
+          </div>
+        </div>
+      </div>
+    `;
+    return html;
+  }
+  
+  function getStatusBadge(status) {
+    var badges = {
+      'sale': '<span class="property-badge sale">للبيع</span>',
+      'rent': '<span class="property-badge rent">للإيجار</span>',
+      'auction': '<span class="property-badge auction">مزاد</span>'
+    };
+    return badges[status] || '';
+  }
+  
+  function formatPrice(price) {
+    if (!price) return 'غير محدد';
+    return new Intl.NumberFormat('ar-IQ').format(price);
+  }
+  
+  function loadPropertyList(properties) {
+    var container = document.getElementById('properties-list');
+    if (!container) {
+      console.error('Properties list container not found');
+      return;
+    }
+    
+    container.innerHTML = '';
+    
+    if (!properties || properties.length === 0) {
+      container.innerHTML = '<div style="text-align: center; padding: 20px; color: rgba(255, 122, 0, 0.5);">لا توجد عقارات للعرض</div>';
+      return;
+    }
+    
+    try {
+      properties.forEach(function(p) {
+        if (p && p.id) {
+          var card = createPropertyCard(p);
+          container.appendChild(card);
+        }
+      });
+    } catch (error) {
+      console.error('Error loading property list:', error);
+      container.innerHTML = '<div style="text-align: center; padding: 20px; color: #ff6b35;">حدث خطأ أثناء تحميل قائمة العقارات</div>';
+    }
+  }
+  
+  function createPropertyCard(property) {
+    var image = property.image || '/static/img/placeholder-property.svg';
+    var statusBadge = getStatusBadge(property.status);
+    var categoryIcon = categoryIcons[property.category] || '🏠';
+    var card = document.createElement('div');
+    card.className = 'property-card';
+    card.dataset.id = property.id;
+    card.dataset.lat = property.lat;
+    card.dataset.lng = property.lng;
+    card.innerHTML = `
+      <img src="${image}" class="property-image" alt="${property.title}">
+      <div class="property-badges">
+        ${statusBadge}
+        ${property.featured ? '<span class="property-badge featured">مميز</span>' : ''}
+        ${property.is_new ? '<span class="property-badge new">جديد</span>' : ''}
+      </div>
+      <div class="property-info">
+        <div class="property-price">${formatPrice(property.price)} ${property.currency || 'IQD'}</div>
+        <div class="property-title">${categoryIcon} ${property.title}</div>
+        <div class="property-location">📍 ${property.governorate || ''} - ${property.city || ''}</div>
+        <div class="property-details">
+          <span class="property-detail">📐 ${property.area || 0} م²</span>
+          <span class="property-detail">🛏️ ${property.bedrooms || 0} غرفة</span>
+        </div>
+        <div class="property-meta">
+          <span>👁️ ${property.views || 0}</span>
+        </div>
+      </div>
+    `;
+    
+    card.onclick = function() {
+      selectProperty(property);
+    };
+    
+    return card;
+  }
+  
+  function selectProperty(property) {
+    // Update selected card
+    document.querySelectorAll('.property-card').forEach(function(card) {
+      card.classList.remove('active');
+    });
+    var selectedCard = document.querySelector('.property-card[data-id="' + property.id + '"]');
+    if (selectedCard) {
+      selectedCard.classList.add('active');
+      selectedCard.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+    
+    // Pan to marker
+    map.setView([property.lat, property.lng], 16);
+    
+    selectedProperty = property;
+  }
+  
+  function toggleSidebar() {
+    var sidebar = document.getElementById('sidebar');
+    sidebarCollapsed = !sidebarCollapsed;
+    
+    if (sidebarCollapsed) {
+      sidebar.classList.add('collapsed');
+    } else {
+      sidebar.classList.remove('collapsed');
+    }
+  }
+  
+  function applyFilters() {
+    console.log('applyFilters called');
+    showLoading();
+    
+    var filters = {
+      governorate: document.getElementById('filter-governorate').value,
+      city: document.getElementById('filter-city').value,
+      district: document.getElementById('filter-district').value,
+      country: document.getElementById('filter-country').value,
+      foreign_country: document.getElementById('filter-foreign-country').value,
+      category: document.getElementById('filter-category').value,
+      status: document.getElementById('filter-status').value,
+      price_min: document.getElementById('filter-price-min').value,
+      price_max: document.getElementById('filter-price-max').value,
+      area_min: document.getElementById('filter-area-min').value,
+      area_max: document.getElementById('filter-area-max').value,
+      bedrooms: document.getElementById('filter-bedrooms').value,
+      bathrooms: document.getElementById('filter-bathrooms').value,
+      furnished: document.getElementById('filter-furnished').checked,
+      pool: document.getElementById('filter-pool').checked,
+      garden: document.getElementById('filter-garden').checked,
+      elevator: document.getElementById('filter-elevator').checked,
+      garage: document.getElementById('filter-garage').checked,
+      has_360: document.getElementById('filter-360').checked,
+      has_video: document.getElementById('filter-video').checked,
+      featured: document.getElementById('filter-featured').checked
+    };
+    
+    console.log('Filters:', filters);
+    loadFilteredProperties(filters);
+  }
+  
+  function resetFilters() {
+    console.log('resetFilters called');
+    document.getElementById('filter-country').value = 'العراق';
+    document.getElementById('filter-governorate').value = '';
+    document.getElementById('filter-city').value = '';
+    document.getElementById('filter-district').value = '';
+    document.getElementById('filter-foreign-country').value = '';
+    document.getElementById('filter-category').value = '';
+    document.getElementById('filter-status').value = '';
+    document.getElementById('filter-price-min').value = '';
+    document.getElementById('filter-price-max').value = '';
+    document.getElementById('filter-area-min').value = '';
+    document.getElementById('filter-area-max').value = '';
+    document.getElementById('filter-bedrooms').value = '';
+    document.getElementById('filter-bathrooms').value = '';
+    document.getElementById('filter-furnished').checked = false;
+    document.getElementById('filter-pool').checked = false;
+    document.getElementById('filter-garden').checked = false;
+    document.getElementById('filter-elevator').checked = false;
+    document.getElementById('filter-garage').checked = false;
+    document.getElementById('filter-360').checked = false;
+    document.getElementById('filter-video').checked = false;
+    document.getElementById('filter-featured').checked = false;
+    document.getElementById('search-input').value = '';
+    
+    // Reset country filter display
+    document.getElementById('governorate-group').style.display = 'block';
+    document.getElementById('foreign-country-group').style.display = 'none';
+    
+    loadInitialProperties();
+  }
+  
+  function loadFilteredProperties(filters) {
+    var params = new URLSearchParams(filters);
+    params.set('bounds', JSON.stringify(map.getBounds().toBBoxString()));
+    
+    fetch('{% url "properties_map" %}?' + params.toString(), {
+      headers: {
+        'X-Requested-With': 'XMLHttpRequest'
+      }
+    })
+    .then(response => response.json())
+    .then(data => {
+      hideLoading();
+      addMarkers(data.properties);
+      loadPropertyList(data.properties);
+      
+      if (data.properties.length === 0) {
+        document.getElementById('properties-list').innerHTML = 
+          '<div style="text-align: center; padding: 20px; color: rgba(255, 122, 0, 0.5);">لا توجد عقارات مطابقة للفلاتر</div>';
+      }
+    })
+    .catch(error => {
+      hideLoading();
+      console.error('Error loading properties:', error);
+      document.getElementById('properties-list').innerHTML = 
+        '<div style="text-align: center; padding: 20px; color: #ff6b35;">حدث خطأ في تحميل العقارات</div>';
+    });
+  }
+  
+  function loadPropertiesInView() {
+    var bounds = map.getBounds();
+    var filters = {
+      bounds: JSON.stringify({
+        south: bounds.getSouth(),
+        north: bounds.getNorth(),
+        west: bounds.getWest(),
+        east: bounds.getEast()
+      })
+    };
+    
+    loadFilteredProperties(filters);
+  }
+  
+  function loadInitialProperties() {
+    try {
+      var initialData = JSON.parse('{{ map_data_json|safe }}');
+      propertiesData = initialData;
+      addMarkers(initialData);
+      loadPropertyList(initialData);
+    } catch (error) {
+      console.error('Error loading initial properties:', error);
+    }
+  }
+  
+  function locateUser() {
+    if (navigator.geolocation) {
+      showLoading();
+      navigator.geolocation.getCurrentPosition(function(position) {
+        hideLoading();
+        var lat = position.coords.latitude;
+        var lng = position.coords.longitude;
+        map.setView([lat, lng], 15);
+        
+        L.marker([lat, lng], {
+          icon: L.divIcon({
+            className: 'user-location-marker',
+            html: '<div style="background: #f97316; width: 20px; height: 20px; border-radius: 50%; border: 3px solid white; box-shadow: 0 2px 8px rgba(0,0,0,0.3);"></div>',
+            iconSize: [20, 20],
+            iconAnchor: [10, 10]
+          })
+        }).addTo(map);
+      }, function(error) {
+        hideLoading();
+        alert('تعذر الحصول على موقعك');
+      });
+    } else {
+      alert('المتصفح لا يدعم تحديد الموقع');
+    }
+  }
+  
+  function zoomToGovernorate() {
+    var governorate = document.getElementById('filter-governorate').value;
+    if (governorateCoords[governorate]) {
+      var coords = governorateCoords[governorate];
+      map.setView(coords, 10);
+    }
+  }
+  
+  function selectCountry(country) {
+    console.log('selectCountry called with:', country);
+    
+    // Update button states
+    document.querySelectorAll('.country-toggle-btn').forEach(btn => {
+      btn.classList.remove('active');
+      if (btn.dataset.country === country) {
+        btn.classList.add('active');
+      }
+    });
+    
+    // Handle filter visibility
+    var governorateGroup = document.getElementById('governorate-group');
+    var foreignCountryGroup = document.getElementById('foreign-country-group');
+    
+    if (country === 'خارج العراق') {
+      governorateGroup.style.display = 'none';
+      foreignCountryGroup.style.display = 'block';
+    } else {
+      governorateGroup.style.display = 'block';
+      foreignCountryGroup.style.display = 'none';
+    }
+    
+    // Update hidden country filter
+    var countryFilter = document.getElementById('filter-country');
+    if (countryFilter) {
+      countryFilter.value = country;
+    }
+    
+    // Reload properties with new country filter
+    applyFilters();
+  }
+  
+  function selectCategory(category) {
+    console.log('selectCategory called with:', category);
+    
+    // Update category card states
+    document.querySelectorAll('.category-card').forEach(card => {
+      card.classList.remove('active');
+      if (card.dataset.category === category) {
+        card.classList.add('active');
+      }
+    });
+    
+    // Store selected category
+    window.selectedCategory = category;
+    
+    // Filter map markers based on category
+    filterMapMarkers(category);
+    
+    // Update filter section title
+    var filterTitle = document.getElementById('filter-section-title');
+    if (filterTitle) {
+      var categoryNames = {
+        'property': '🔍 فلاتر العقارات',
+        'hotel': '🔍 فلاتر الفنادق',
+        'resort': '🔍 فلاتر المنتجعات',
+        'travel': '🔍 فلاتر السفر',
+        'job': '🔍 فلاتر الوظائف',
+        'construction': '🔍 فلاتر البناء',
+        'service': '🔍 فلاتر الخدمات',
+        'auction': '🔍 فلاتر المزادات'
+      };
+      filterTitle.textContent = categoryNames[category] || '🔍 فلاتر';
+    }
+    
+    // Platform Navigation Registry - Based on actual Django routes
+    var platformRoutes = {
+      'property': {
+        inside: '{% url "category_inside_iraq" %}',
+        outside: '{% url "properties_outside_iraq" %}',
+        create: '{% url "dynamic_add_property" %}'
+      },
+      'hotel': {
+        list: '{% url "hotels_list" %}',
+        inside: '{% url "category_hotels" %}',
+        outside: '{% url "category_hotels_outside" %}',
+        createInside: '{% url "hotel_create_inside_iraq" %}',
+        createOutside: '{% url "hotel_create_outside_iraq" %}'
+      },
+      'resort': {
+        list: '{% url "resorts_list" %}',
+        category: '{% url "category_resorts" %}',
+        inside: '{% url "resorts_inside_iraq" %}',
+        outside: '{% url "resorts_outside_iraq" %}',
+        createInside: '{% url "resort_create_inside_iraq" %}',
+        createOutside: '{% url "resort_create_outside_iraq" %}'
+      },
+      'travel': {
+        list: '{% url "travel_companies" %}',
+        create: '{% url "dallal_travel_company_create" %}'
+      },
+      'job': {
+        list: '{% url "jobs_list" %}',
+        create: '{% url "job_post" %}'
+      },
+      'service': {
+        list: '{% url "public_service_advertisements" %}',
+        create: '{% url "create_service_advertisement" %}'
+      },
+      'auction': {
+        list: '{% url "auctions_list" %}',
+        create: '{% url "broker_create_auction" %}'
+      }
+    };
+    
+    // Navigation logic
+    if (category === 'property') {
+      // Stay on map for properties - show filters
+      console.log('Showing properties on map');
+      return;
+    }
+    
+    // Navigate to appropriate page for other categories
+    var route = platformRoutes[category];
+    if (route) {
+      console.log('Route found for category:', category, route);
+      // For list pages, navigate to list
+      if (route.list) {
+        console.log('Navigating to list page:', route.list);
+        window.location.href = route.list;
+      } 
+      // For categories with inside/outside, default to list
+      else if (route.inside || route.outside) {
+        if (route.list) {
+          console.log('Navigating to list page:', route.list);
+          window.location.href = route.list;
+        } else if (route.inside) {
+          console.log('Navigating to inside page:', route.inside);
+          window.location.href = route.inside;
+        }
+      }
+      // For single create pages
+      else if (route.create) {
+        console.log('Navigating to create page:', route.create);
+        window.location.href = route.create;
+      }
+    } else {
+      console.error('No route found for category:', category);
+    }
+  }
+  
+  function addDrawControl() {
+    var drawnItems = new L.FeatureGroup();
+    map.addLayer(drawnItems);
+    
+    drawControl = new L.Control.Draw({
+      draw: {
+        polygon: {
+          allowIntersection: false,
+          showArea: true
+        },
+        polyline: false,
+        rectangle: true,
+        circle: false,
+        marker: false,
+        circlemarker: false
+      },
+      edit: {
+        featureGroup: drawnItems,
+        remove: true
+      }
+    });
+    
+    map.addControl(drawControl);
+    
+    map.on(L.Draw.Event.CREATED, function(event) {
+      var layer = event.layer;
+      drawnItems.addLayer(layer);
+      
+      // Filter properties within drawn area
+      var bounds = layer.getBounds();
+      var filters = {
+        bounds: JSON.stringify({
+          south: bounds.getSouth(),
+          north: bounds.getNorth(),
+          west: bounds.getWest(),
+          east: bounds.getEast()
+        })
+      };
+      
+      loadFilteredProperties(filters);
+    });
+  }
+  
+  function toggleDraw() {
+    if (map.hasLayer(drawnItems)) {
+      map.removeControl(drawControl);
+    } else {
+      map.addControl(drawControl);
+    }
+  }
+  
+  function addMeasureControl() {
+    try {
+      // Check if leaflet-measure is loaded
+      if (typeof L.control === 'undefined' || typeof L.control.measure === 'undefined') {
+        console.warn('Leaflet Measure plugin not loaded. Measure control will be unavailable.');
+        return;
+      }
+      
+      // Use the correct API for leaflet-measure
+      measureControl = L.control.measure({
+        position: 'topleft',
+        primaryLengthUnit: 'meters',
+        secondaryLengthUnit: 'kilometers',
+        primaryAreaUnit: 'sqmeters',
+        secondaryAreaUnit: 'hectares',
+        localization: 'ar'
+      });
+      
+      map.addControl(measureControl);
+      console.log('Measure control added successfully');
+      
+    } catch (error) {
+      console.error('Error adding measure control:', error);
+      // Continue without measure control - map should still work
+    }
+  }
+  
+  function measureDistance() {
+    alert('انقر على الخريطة لبدء قياس المسافة');
+  }
+  
+  function calculateArea() {
+    alert('ارسم منطقة على الخريطة لحساب مساحتها');
+  }
+  
+  function toggleHeatmap() {
+    heatmapEnabled = !heatmapEnabled;
+    
+    if (heatmapEnabled) {
+      // Create heatmap from current properties
+      var heatData = [];
+      propertiesData.forEach(function(p) {
+        if (p.lat && p.lng) {
+          heatData.push([p.lat, p.lng, 0.5]);
+        }
+      });
+      
+      if (heatData.length > 0) {
+        heatLayer = L.heatLayer(heatData, {
+          radius: 25,
+          blur: 15,
+          maxZoom: 12,
+          gradient: {
+            0.0: 'blue',
+            0.3: 'cyan',
+            0.5: 'lime',
+            0.7: 'yellow',
+            1.0: 'red'
+          }
+        }).addTo(map);
+      }
+    } else {
+      if (heatLayer) {
+        map.removeLayer(heatLayer);
+        heatLayer = null;
+      }
+    }
+  }
+  
+  function toggleComparison() {
+    if (comparisonList.length === 0) {
+      alert('لم تقم بإضافة أي عقار للمقارنة');
+      return;
+    }
+    
+    var comparisonHtml = '<div style="max-height: 400px; overflow-y: auto; padding: 20px;">';
+    comparisonHtml += '<h3 style="color: white; margin-bottom: 15px;">مقارنة العقارات (' + comparisonList.length + ')</h3>';
+    comparisonHtml += '<table style="width: 100%; border-collapse: collapse; color: white;">';
+    comparisonHtml += '<tr style="background: rgba(255, 122, 0, 0.2);"><th>العقار</th><th>السعر</th><th>المساحة</th><th>غرف</th><th>الإجراء</th></tr>';
+    
+    comparisonList.forEach(function(comp) {
+      comparisonHtml += '<tr style="border-bottom: 1px solid rgba(255, 122, 0, 0.2);">';
+      comparisonHtml += '<td>' + comp.title + '</td>';
+      comparisonHtml += '<td>' + formatPrice(comp.price) + '</td>';
+      comparisonHtml += '<td>' + comp.area + ' م²</td>';
+      comparisonHtml += '<td>' + (comp.bedrooms || '-') + '</td>';
+      comparisonHtml += '<td><button onclick="removeFromComparison(' + comp.id + ')" style="background: #ef4444; color: white; border: none; padding: 4px 8px; cursor: pointer; border-radius: 4px;">إزالة</button></td>';
+      comparisonHtml += '</tr>';
+    });
+    
+    comparisonHtml += '</table></div>';
+    
+    // Create a modal
+    var modal = document.createElement('div');
+    modal.style.cssText = 'position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: rgba(26, 26, 46, 0.98); padding: 20px; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.5); z-index: 2000; max-width: 600px; width: 90%; border: 2px solid #ff6b35;';
+    modal.innerHTML = comparisonHtml + '<button onclick="this.parentElement.remove()" style="margin-top: 15px; padding: 10px 20px; background: linear-gradient(135deg, #ff6b35 0%, #f7931e 100%); color: white; border: none; border-radius: 8px; cursor: pointer; width: 100%;">إغلاق</button>';
+    document.body.appendChild(modal);
+  }
+  
+  function addToComparison(propertyId) {
+    var property = propertiesData.find(function(p) { return p.id === propertyId; });
+    if (property && !comparisonList.find(function(c) { return c.id === propertyId; })) {
+      comparisonList.push(property);
+      alert('تم إضافة العقار للمقارنة');
+    }
+  }
+  
+  function removeFromComparison(propertyId) {
+    comparisonList = comparisonList.filter(function(c) { return c.id !== propertyId; });
+    toggleComparison(); // Refresh the comparison list
+  }
+  
+  function shareLocation() {
+    if (!selectedProperty) {
+      alert('يرجى اختيار عقار أولاً');
+      return;
+    }
+    
+    var url = window.location.href.split('?')[0] + '?property=' + selectedProperty.id;
+    
+    if (navigator.share) {
+      navigator.share({
+        title: selectedProperty.title,
+        text: selectedProperty.title + ' - ' + formatPrice(selectedProperty.price),
+        url: url
+      });
+    } else {
+      navigator.clipboard.writeText(url).then(function() {
+        alert('تم نسخ رابط العقار');
+      });
+    }
+  }
+  
+  function printMap() {
+    window.print();
+  }
+  
+  function exportResults() {
+    var format = prompt('اختر صيغة التصدير:\n1 - PDF\n2 - Excel', '1');
+    
+    if (format === '1') {
+      alert('جاري تصدير PDF...');
+      // Implement PDF export
+    } else if (format === '2') {
+      alert('جاري تصدير Excel...');
+      // Implement Excel export
+    }
+  }
+  
+  function toggleTheme() {
+    isDarkMode = !isDarkMode;
+    addLayer(currentLayer);
+  }
+  
+  function toggleFullscreen() {
+    if (!document.fullscreenElement) {
+      document.documentElement.requestFullscreen().catch(err => {
+        console.log(`Error attempting to enable fullscreen: ${err.message}`);
+      });
+    } else {
+      if (document.exitFullscreen) {
+        document.exitFullscreen();
+      }
+    }
+  }
+  
+  function initSearch() {
+    var searchInput = document.getElementById('search-input');
+    var suggestions = document.getElementById('search-suggestions');
+    
+    searchInput.addEventListener('input', function() {
+      var query = this.value.toLowerCase();
+      
+      if (query.length < 2) {
+        suggestions.classList.remove('show');
+        return;
+      }
+      
+      var matches = propertiesData.filter(function(p) {
+        return p.title.toLowerCase().includes(query) ||
+               (p.governorate && p.governorate.toLowerCase().includes(query)) ||
+               (p.city && p.city.toLowerCase().includes(query)) ||
+               (p.district && p.district.toLowerCase().includes(query)) ||
+               (p.house_number && p.house_number.toLowerCase().includes(query));
+      });
+      
+      if (matches.length > 0) {
+        suggestions.innerHTML = '';
+        matches.slice(0, 5).forEach(function(match) {
+          var item = document.createElement('div');
+          item.className = 'suggestion-item';
+          var displayText = match.house_number ? 
+            match.house_number + ' - ' + match.title + ' - ' + (match.governorate || '') + ' - ' + (match.city || '') :
+            match.title + ' - ' + (match.governorate || '') + ' - ' + (match.city || '');
+          item.textContent = displayText;
+          item.onclick = function() {
+            selectProperty(match);
+            searchInput.value = displayText;
+            suggestions.classList.remove('show');
+          };
+          suggestions.appendChild(item);
+        });
+        suggestions.classList.add('show');
+      } else {
+        suggestions.classList.remove('show');
+      }
+    });
+    
+    // Add support for searching by house number with "دار" prefix
+    searchInput.addEventListener('keydown', function(e) {
+      if (e.key === 'Enter') {
+        var query = this.value.toLowerCase();
+        
+        // Check if searching for house number
+        var houseNumberMatch = query.match(/(?:دار|house)?\s*(\d+)/);
+        if (houseNumberMatch) {
+          var houseNumber = houseNumberMatch[1];
+          var property = propertiesData.find(function(p) {
+            return p.house_number === houseNumber;
+          });
+          
+          if (property) {
+            selectProperty(property);
+            searchInput.value = property.house_number + ' - ' + property.title;
+            suggestions.classList.remove('show');
+            return;
+          }
+        }
+      }
+    });
+    
+    searchInput.addEventListener('blur', function() {
+      setTimeout(function() {
+        suggestions.classList.remove('show');
+      }, 200);
+    });
+  }
+  
+  function initSortButtons() {
+    console.log('initSortButtons called');
+    var sortButtons = document.querySelectorAll('.sort-btn[data-sort]');
+    console.log('Found sort buttons:', sortButtons.length);
+    sortButtons.forEach(function(btn) {
+      btn.addEventListener('click', function() {
+        console.log('Sort button clicked:', this.dataset.sort);
+        sortButtons.forEach(function(b) { b.classList.remove('active'); });
+        this.classList.add('active');
+        
+        var sortBy = this.dataset.sort;
+        sortProperties(sortBy);
+      });
+    });
+    
+    // Initialize filter buttons by ID
+    var applyFiltersBtn = document.getElementById('apply-filters-btn');
+    var resetFiltersBtn = document.getElementById('reset-filters-btn');
+    
+    if (applyFiltersBtn) {
+      applyFiltersBtn.addEventListener('click', function(e) {
+        console.log('Apply filters button clicked');
+        e.preventDefault();
+        applyFilters();
+      });
+    }
+    
+    if (resetFiltersBtn) {
+      resetFiltersBtn.addEventListener('click', function(e) {
+        console.log('Reset filters button clicked');
+        e.preventDefault();
+        resetFilters();
+      });
+    }
+    
+    // Initialize category buttons
+    var categoryButtons = document.querySelectorAll('.category-card');
+    console.log('Found category buttons:', categoryButtons.length);
+    categoryButtons.forEach(function(btn) {
+      btn.addEventListener('click', function() {
+        var category = this.dataset.category;
+        console.log('Category button clicked:', category);
+        selectCategory(category);
+      });
+    });
+    
+    // Initialize country toggle buttons
+    var countryButtons = document.querySelectorAll('.country-toggle-btn');
+    console.log('Found country buttons:', countryButtons.length);
+    countryButtons.forEach(function(btn) {
+      btn.addEventListener('click', function() {
+        var country = this.dataset.country;
+        console.log('Country button clicked:', country);
+        selectCountry(country);
+      });
+    });
+  }
+  
+  function sortProperties(sortBy) {
+    var sorted = [...propertiesData];
+    
+    switch(sortBy) {
+      case 'newest':
+        sorted.sort(function(a, b) { return new Date(b.created_at) - new Date(a.created_at); });
+        break;
+      case 'price-high':
+        sorted.sort(function(a, b) { return (b.price || 0) - (a.price || 0); });
+        break;
+      case 'price-low':
+        sorted.sort(function(a, b) { return (a.price || 0) - (b.price || 0); });
+        break;
+      case 'popular':
+        sorted.sort(function(a, b) { return (b.views || 0) - (a.views || 0); });
+        break;
+      case 'rated':
+        sorted.sort(function(a, b) { return (b.rating || 0) - (a.rating || 0); });
+        break;
+      case 'nearest':
+        if (navigator.geolocation) {
+          navigator.geolocation.getCurrentPosition(function(position) {
+            var userLat = position.coords.latitude;
+            var userLng = position.coords.longitude;
+            
+            sorted.sort(function(a, b) {
+              var distA = Math.sqrt(Math.pow(a.lat - userLat, 2) + Math.pow(a.lng - userLng, 2));
+              var distB = Math.sqrt(Math.pow(b.lat - userLat, 2) + Math.pow(b.lng - userLng, 2));
+              return distA - distB;
+            });
+            
+            loadPropertyList(sorted);
+          });
+        }
+        break;
+    }
+    
+    if (sortBy !== 'nearest') {
+      loadPropertyList(sorted);
+    }
+  }
+  
+  function initLayerButtons() {
+    var layerButtons = document.querySelectorAll('.layer-btn[data-layer]');
+    layerButtons.forEach(function(btn) {
+      btn.addEventListener('click', function() {
+        layerButtons.forEach(function(b) { b.classList.remove('active'); });
+        this.classList.add('active');
+        
+        var layerType = this.dataset.layer;
+        addLayer(layerType);
+      });
+    });
+  }
+  
+  function autoRefresh() {
+    // Auto-refresh properties from server
+    loadInitialProperties();
+  }
+  
+  function showLoading() {
+    document.getElementById('loading-overlay').style.display = 'flex';
+  }
+  
+  function hideLoading() {
+    document.getElementById('loading-overlay').style.display = 'none';
+  }
+  
+  function viewProperty(propertyId) {
+    window.location.href = '/property/' + propertyId + '/';
+  }
+  
+  function contactBroker(propertyId) {
+    alert('سيتم توجيهك إلى صفحة الاتصال بالدلال');
+  }
+  
+  function shareProperty(propertyId) {
+    var url = window.location.origin + '/property/' + propertyId + '/';
+    navigator.clipboard.writeText(url).then(function() {
+      alert('تم نسخ رابط العقار');
+    });
+  }
+  
+  function saveProperty(propertyId) {
+    alert('تم حفظ العقار في المفضلة');
+  }
+  
+  function debounce(func, wait) {
+    var timeout;
+    return function() {
+      var context = this, args = arguments;
+      clearTimeout(timeout);
+      timeout = setTimeout(function() {
+        func.apply(context, args);
+      }, wait);
+    };
+  }
+  
+  // Initialize on load
+  document.addEventListener('DOMContentLoaded', function() {
+    console.log('DOM loaded, initializing map...');
+    
+    // Check if Leaflet is loaded
+    if (typeof L === 'undefined') {
+      console.error('Leaflet not loaded');
+      var mapContainer = document.getElementById('properties-map');
+      if (mapContainer) {
+        mapContainer.innerHTML = 
+          '<div style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; color: #ff6b35; padding: 20px; text-align: center;">' +
+          '<div style="font-size: 48px; margin-bottom: 20px;">🗺️</div>' +
+          '<div style="font-size: 18px; margin-bottom: 10px;">تعذر تحميل مكتبة الخريطة</div>' +
+          '<div style="font-size: 14px; color: #888;">يرجى التحقق من اتصال الإنترنت والمحاولة مرة أخرى</div>' +
+          '<button onclick="location.reload()" style="margin-top: 20px; padding: 10px 20px; background: #ff6b35; color: white; border: none; border-radius: 8px; cursor: pointer;">إعادة المحاولة</button>' +
+          '</div>';
+      }
+      return;
+    }
+    
+    // Check if map container exists
+    var mapContainer = document.getElementById('properties-map');
+    if (!mapContainer) {
+      console.error('Map container not found');
+      return;
+    }
+    
+    // Initialize map
+    try {
+      initMap();
+    } catch (error) {
+      console.error('Error during map initialization:', error);
+      mapContainer.innerHTML = 
+        '<div style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; color: #ff6b35; padding: 20px; text-align: center;">' +
+        '<div style="font-size: 48px; margin-bottom: 20px;">⚠️</div>' +
+        '<div style="font-size: 18px; margin-bottom: 10px;">حدث خطأ أثناء تحميل الخريطة</div>' +
+        '<div style="font-size: 14px; color: #888;">' + error.message + '</div>' +
+        '<button onclick="location.reload()" style="margin-top: 20px; padding: 10px 20px; background: #ff6b35; color: white; border: none; border-radius: 8px; cursor: pointer;">إعادة المحاولة</button>' +
+        '</div>';
+    }
+  });
+  
+  // Fallback if DOMContentLoaded already fired
+  if (document.readyState === 'complete' || document.readyState === 'interactive') {
+    console.log('Document already loaded, initializing map immediately');
+    if (typeof L !== 'undefined') {
+      initMap();
+    }
+  }
+})();
+</script>
+{% endblock %}

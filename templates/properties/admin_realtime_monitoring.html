@@ -1,0 +1,315 @@
+{% extends 'properties/dashboard_base.html' %}
+{% load static %}
+{% load humanize %}
+
+{% block title %}المراقبة اللحظية{% endblock %}
+{% block dashboard_title %}المراقبة <span>اللحظية</span>{% endblock %}
+
+{% block dashboard_actions %}
+<a href="{% url 'admin_panel' %}" class="btn btn-outline">عودة للوحة الإدارة</a>
+<a href="{% url 'admin_analytics_panel' %}" class="btn btn-primary">📊 التحليلات</a>
+<a href="/admin/" target="_blank" class="btn btn-dark">🔧 Django Admin</a>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+.monitoring-dashboard {
+  background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+  min-height: 100vh;
+  padding: 2rem;
+}
+
+.monitoring-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 2rem;
+}
+
+.realtime-badge {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  background: rgba(34, 197, 94, 0.2);
+  border: 1px solid rgba(34, 197, 94, 0.3);
+  border-radius: 20px;
+  color: #22c55e;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.realtime-dot {
+  width: 8px;
+  height: 8px;
+  background: #22c55e;
+  border-radius: 50%;
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.5; transform: scale(1.2); }
+}
+
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+.stat-card {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 16px;
+  padding: 1.5rem;
+  backdrop-filter: blur(10px);
+}
+
+.stat-icon {
+  font-size: 2rem;
+  margin-bottom: 0.5rem;
+}
+
+.stat-value {
+  font-size: 2.5rem;
+  font-weight: bold;
+  color: #4ecdc4;
+  margin-bottom: 0.5rem;
+}
+
+.stat-label {
+  color: rgba(255, 255, 255, 0.6);
+  font-size: 0.9rem;
+}
+
+.system-health {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+.health-card {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 16px;
+  padding: 1.5rem;
+}
+
+.health-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.health-title {
+  color: #fff;
+  font-weight: 600;
+}
+
+.health-indicator {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+}
+
+.health-indicator.online {
+  background: #22c55e;
+  box-shadow: 0 0 10px rgba(34, 197, 94, 0.5);
+}
+
+.health-indicator.warning {
+  background: #f59e0b;
+  box-shadow: 0 0 10px rgba(245, 158, 11, 0.5);
+}
+
+.health-indicator.offline {
+  background: #ef4444;
+  box-shadow: 0 0 10px rgba(239, 68, 68, 0.5);
+}
+
+.progress-bar {
+  height: 8px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 4px;
+  overflow: hidden;
+  margin-top: 0.5rem;
+}
+
+.progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #4ecdc4, #44a08d);
+  border-radius: 4px;
+  transition: width 0.3s ease;
+}
+
+.activity-feed {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 16px;
+  padding: 1.5rem;
+  max-height: 400px;
+  overflow-y: auto;
+}
+
+.activity-item {
+  display: flex;
+  gap: 1rem;
+  padding: 1rem;
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: 10px;
+  margin-bottom: 0.75rem;
+}
+
+.activity-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.2rem;
+  flex-shrink: 0;
+}
+
+.activity-content {
+  flex: 1;
+}
+
+.activity-title {
+  color: #fff;
+  font-weight: 600;
+  margin-bottom: 0.25rem;
+}
+
+.activity-time {
+  color: rgba(255, 255, 255, 0.5);
+  font-size: 0.8rem;
+}
+</style>
+{% endblock %}
+
+{% block dashboard_content %}
+<div class="monitoring-dashboard">
+  <div class="monitoring-header">
+    <h2 style="color: #fff;">📡 المراقبة اللحظية</h2>
+    <div class="realtime-badge">
+      <div class="realtime-dot"></div>
+      <span>تحديث لحظي</span>
+    </div>
+  </div>
+  
+  <!-- Real-time Stats -->
+  <div class="stats-grid">
+    <div class="stat-card">
+      <div class="stat-icon">👥</div>
+      <div class="stat-value">{{ online_users|intcomma }}</div>
+      <div class="stat-label">المستخدمين المتصلين</div>
+    </div>
+    
+    <div class="stat-card">
+      <div class="stat-icon">💻</div>
+      <div class="stat-value">{{ active_sessions|intcomma }}</div>
+      <div class="stat-label">الجلسات النشطة</div>
+    </div>
+    
+    <div class="stat-card">
+      <div class="stat-icon">⚡</div>
+      <div class="stat-value">{{ cpu_usage }}%</div>
+      <div class="stat-label">استخدام المعالج</div>
+    </div>
+    
+    <div class="stat-card">
+      <div class="stat-icon">💾</div>
+      <div class="stat-value">{{ memory_usage }}%</div>
+      <div class="stat-label">استخدام الذاكرة</div>
+    </div>
+  </div>
+  
+  <!-- System Health -->
+  <div class="system-health">
+    <div class="health-card">
+      <div class="health-header">
+        <div class="health-title">حالة الخادم</div>
+        <div class="health-indicator online"></div>
+      </div>
+      <div style="color: rgba(255, 255, 255, 0.6); font-size: 0.9rem;">مشتغل ومستقر</div>
+    </div>
+    
+    <div class="health-card">
+      <div class="health-header">
+        <div class="health-title">قاعدة البيانات</div>
+        <div class="health-indicator online"></div>
+      </div>
+      <div style="color: rgba(255, 255, 255, 0.6); font-size: 0.9rem;">مشتغلة ومتصلة</div>
+    </div>
+    
+    <div class="health-card">
+      <div class="health-header">
+        <div class="health-title">استخدام القرص</div>
+        <div class="health-indicator {% if disk_usage < 70 %}online{% elif disk_usage < 90 %}warning{% else %}offline{% endif %}"></div>
+      </div>
+      <div style="color: rgba(255, 255, 255, 0.6); font-size: 0.9rem;">{{ disk_usage }}% مستخدم</div>
+      <div class="progress-bar">
+        <div class="progress-fill" style="width: {{ disk_usage }}%"></div>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Recent Activity -->
+  <div class="activity-feed">
+    <h3 style="color: #fff; margin-bottom: 1rem;">🔥 النشاط الأخير</h3>
+    {% for action in recent_actions %}
+    <div class="activity-item">
+      <div class="activity-icon" style="background: rgba(78, 205, 196, 0.2);">📝</div>
+      <div class="activity-content">
+        <div class="activity-title">{{ action }}</div>
+        <div class="activity-time">منذ قليل</div>
+      </div>
+    </div>
+    {% empty %}
+    <div style="text-align: center; padding: 2rem; color: rgba(255, 255, 255, 0.5);">
+      لا يوجد نشاط حديث
+    </div>
+    {% endfor %}
+  </div>
+</div>
+
+<script>
+// Real-time updates
+setInterval(() => {
+  updateMonitoringData();
+}, 5000);
+
+function updateMonitoringData() {
+  fetch('/api/monitoring/realtime/', {
+    method: 'GET',
+    headers: {
+      'Content-Type': 'application/json',
+    }
+  })
+  .then(response => response.json())
+  .then(data => {
+    if (data.success) {
+      // Update stats
+      document.querySelectorAll('.stat-value').forEach((el, index) => {
+        const keys = ['online_users', 'active_sessions', 'cpu_usage', 'memory_usage'];
+        if (keys[index] && data[keys[index]] !== undefined) {
+          if (keys[index].includes('usage')) {
+            el.textContent = data[keys[index]] + '%';
+          } else {
+            el.textContent = data[keys[index]].toLocaleString();
+          }
+        }
+      });
+    }
+  })
+  .catch(error => {
+    console.error('Monitoring update error:', error);
+  });
+}
+</script>
+{% endblock %}

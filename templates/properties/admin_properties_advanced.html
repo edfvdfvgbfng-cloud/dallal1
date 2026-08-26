@@ -1,0 +1,415 @@
+{% extends 'properties/dashboard_base.html' %}
+{% load static %}
+{% load humanize %}
+
+{% block title %}إدارة العقارات المتقدمة{% endblock %}
+{% block dashboard_title %}إدارة <span>العقارات المتقدمة</span>{% endblock %}
+
+{% block dashboard_actions %}
+<a href="{% url 'admin_panel' %}" class="btn btn-outline">عودة للوحة الإدارة</a>
+<a href="{% url 'admin_users_list' %}" class="btn btn-primary">👥 المستخدمين</a>
+<a href="/admin/" target="_blank" class="btn btn-dark">🔧 Django Admin</a>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+.properties-management {
+  background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+  min-height: 100vh;
+  padding: 2rem;
+}
+
+.stats-summary {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1rem;
+  margin-bottom: 2rem;
+}
+
+.stat-card {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  padding: 1.5rem;
+  text-align: center;
+}
+
+.stat-value {
+  font-size: 2rem;
+  font-weight: bold;
+  color: #4ecdc4;
+  margin-bottom: 0.5rem;
+}
+
+.stat-label {
+  color: #a0a0a0;
+  font-size: 0.9rem;
+}
+
+.filters-panel {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  padding: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+.filters-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1rem;
+}
+
+.filter-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.filter-group label {
+  color: #a0a0a0;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.filter-group input,
+.filter-group select {
+  padding: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 8px;
+  background: rgba(0, 0, 0, 0.3);
+  color: #fff;
+  outline: none;
+}
+
+.property-table {
+  width: 100%;
+  border-collapse: collapse;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.property-table th,
+.property-table td {
+  padding: 15px;
+  text-align: left;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  color: #fff;
+}
+
+.property-table th {
+  background: rgba(255, 255, 255, 0.1);
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
+.property-table tr:hover {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.property-thumbnail {
+  width: 60px;
+  height: 60px;
+  border-radius: 8px;
+  object-fit: cover;
+  background: #2d2d2d;
+}
+
+.status-badge {
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.status-active {
+  background: rgba(34, 197, 94, 0.2);
+  color: #22c55e;
+}
+
+.status-sold {
+  background: rgba(245, 158, 11, 0.2);
+  color: #f59e0b;
+}
+
+.status-pending {
+  background: rgba(59, 130, 246, 0.2);
+  color: #3b82f6;
+}
+
+.action-btn {
+  padding: 6px 12px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.85rem;
+  transition: all 0.3s ease;
+  margin-right: 5px;
+}
+
+.action-btn-approve {
+  background: #22c55e;
+  color: #fff;
+}
+
+.action-btn-reject {
+  background: #ef4444;
+  color: #fff;
+}
+
+.action-btn-featured {
+  background: #f59e0b;
+  color: #fff;
+}
+
+.action-btn:hover {
+  opacity: 0.8;
+}
+</style>
+{% endblock %}
+
+{% block dashboard_content %}
+<div class="properties-management">
+  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+    <h2 style="color: #fff;">🏢 إدارة العقارات المتقدمة</h2>
+    <div>
+      <button class="btn btn-success" onclick="exportProperties()">📥 تصدير</button>
+    </div>
+  </div>
+  
+  <!-- Stats Summary -->
+  <div class="stats-summary">
+    <div class="stat-card">
+      <div class="stat-value">{{ total_properties|intcomma }}</div>
+      <div class="stat-label">إجمالي العقارات</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-value">{{ active_properties|intcomma }}</div>
+      <div class="stat-label">عقارات نشطة</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-value">{{ sold_properties|intcomma }}</div>
+      <div class="stat-label">عقارات تم بيعها</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-value">{{ featured_properties|intcomma }}</div>
+      <div class="stat-label">عقارات مميزة</div>
+    </div>
+  </div>
+  
+  <!-- Filters Panel -->
+  <div class="filters-panel">
+    <form method="get" class="filters-grid">
+      <div class="filter-group">
+        <label>البحث</label>
+        <input type="text" name="q" placeholder="العنوان، الوصف..." value="{{ search_query }}">
+      </div>
+      
+      <div class="filter-group">
+        <label>نوع العقار</label>
+        <select name="type">
+          <option value="">الكل</option>
+          <option value="apartment" {% if property_type == 'apartment' %}selected{% endif %}>شقة</option>
+          <option value="house" {% if property_type == 'house' %}selected{% endif %}>منزل</option>
+          <option value="villa" {% if property_type == 'villa' %}selected{% endif %}>فيلا</option>
+          <option value="land" {% if property_type == 'land' %}selected{% endif %}>أرض</option>
+        </select>
+      </div>
+      
+      <div class="filter-group">
+        <label>الحالة</label>
+        <select name="status">
+          <option value="">الكل</option>
+          <option value="active" {% if status == 'active' %}selected{% endif %}>نشط</option>
+          <option value="sold" {% if status == 'sold' %}selected{% endif %}>تم بيعه</option>
+          <option value="pending" {% if status == 'pending' %}selected{% endif %}>قيد المراجعة</option>
+        </select>
+      </div>
+      
+      <div class="filter-group">
+        <label>المحافظة</label>
+        <select name="governorate">
+          <option value="">الكل</option>
+          {% for code, name in governorates %}
+          <option value="{{ code }}" {% if governorate == code %}selected{% endif %}>{{ name }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      
+      <div class="filter-actions" style="grid-column: 1 / -1;">
+        <button type="submit" class="btn btn-primary">🔍 بحث</button>
+        <button type="button" class="btn btn-outline" onclick="clearFilters()">🗑️ مسح الفلاتر</button>
+      </div>
+    </form>
+  </div>
+  
+  <!-- Properties Table -->
+  <table class="property-table">
+    <thead>
+      <tr>
+        <th><input type="checkbox" id="select-all"></th>
+        <th>العقار</th>
+        <th>السعر</th>
+        <th>الموقع</th>
+        <th>النوع</th>
+        <th>الحالة</th>
+        <th>المالك</th>
+        <th>الإجراءات</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for property in properties %}
+      <tr>
+        <td><input type="checkbox" class="property-checkbox" data-property-id="{{ property.id }}"></td>
+        <td>
+          <div style="display: flex; align-items: center; gap: 10px;">
+            {% if property.thumbnail %}
+            <img src="{{ property.thumbnail.url }}" alt="{{ property.title }}" class="property-thumbnail">
+            {% else %}
+            <div class="property-thumbnail">🏠</div>
+            {% endif %}
+            <div>
+              <div style="font-weight: 600;">{{ property.title|truncatechars:30 }}</div>
+              <div style="font-size: 0.8rem; color: #a0a0a0;">{{ property.created_at|date:"Y-m-d" }}</div>
+            </div>
+          </div>
+        </td>
+        <td>{{ property.price|intcomma }}</td>
+        <td>{{ property.location }}</td>
+        <td>{{ property.get_property_type_display }}</td>
+        <td>
+          <span class="status-badge status-{{ property.status }}">
+            {{ property.get_status_display }}
+          </span>
+        </td>
+        <td>{{ property.user.username }}</td>
+        <td>
+          <button class="action-btn action-btn-approve" onclick="approveProperty({{ property.id }})">✅</button>
+          <button class="action-btn action-btn-featured" onclick="toggleFeatured({{ property.id }})">⭐</button>
+          <button class="action-btn action-btn-reject" onclick="deleteProperty({{ property.id }})">🗑️</button>
+        </td>
+      </tr>
+      {% empty %}
+      <tr>
+        <td colspan="8" style="text-align: center; padding: 2rem; color: #a0a0a0;">
+          لا توجد عقارات مطابقة للبحث
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  
+  <!-- Pagination -->
+  {% if properties.has_other_pages %}
+  <div class="pagination">
+    {% if properties.has_previous %}
+    <a href="?page={{ properties.previous_page_number }}{% if search_query %}&q={{ search_query }}{% endif %}{% if property_type %}&type={{ property_type }}{% endif %}{% if status %}&status={{ status }}{% endif %}" class="pagination-btn">السابق</a>
+    {% endif %}
+    
+    <span class="pagination-btn active">صفحة {{ properties.number }} من {{ properties.paginator.num_pages }}</span>
+    
+    {% if properties.has_next %}
+    <a href="?page={{ properties.next_page_number }}{% if search_query %}&q={{ search_query }}{% endif %}{% if property_type %}&type={{ property_type }}{% endif %}{% if status %}&status={{ status }}{% endif %}" class="pagination-btn">التالي</a>
+    {% endif %}
+  </div>
+  {% endif %}
+</div>
+
+<script>
+function clearFilters() {
+  window.location.href = '{% url "admin_properties_list" %}';
+}
+
+function approveProperty(propertyId) {
+  if (confirm('هل أنت متأكد من الموافقة على هذا العقار؟')) {
+    fetch(`/api/properties/${propertyId}/approve/`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRFToken': getCsrfToken()
+      }
+    })
+    .then(response => response.json())
+    .then(data => {
+      if (data.success) {
+        alert('تمت الموافقة على العقار بنجاح');
+        location.reload();
+      } else {
+        alert('حدث خطأ في الموافقة');
+      }
+    });
+  }
+}
+
+function toggleFeatured(propertyId) {
+  fetch(`/api/properties/${propertyId}/toggle-featured/`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'X-CSRFToken': getCsrfToken()
+    }
+  })
+  .then(response => response.json())
+  .then(data => {
+    if (data.success) {
+      alert('تم تغيير حالة المميز بنجاح');
+      location.reload();
+    } else {
+      alert('حدث خطأ في تغيير الحالة');
+    }
+  });
+}
+
+function deleteProperty(propertyId) {
+  if (confirm('هل أنت متأكد من حذف هذا العقار؟')) {
+    fetch(`/api/properties/${propertyId}/delete/`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRFToken': getCsrfToken()
+      }
+    })
+    .then(response => response.json())
+    .then(data => {
+      if (data.success) {
+        alert('تم حذف العقار بنجاح');
+        location.reload();
+      } else {
+        alert('حدث خطأ في الحذف');
+      }
+    });
+  }
+}
+
+function exportProperties() {
+  // Export properties data
+  let csv = 'ID,Title,Price,Location,Type,Status,Owner\n';
+  document.querySelectorAll('.property-table tbody tr').forEach(row => {
+    const cells = row.querySelectorAll('td');
+    if (cells.length > 1) {
+      csv += `${cells[0].textContent},${cells[1].textContent},${cells[2].textContent},${cells[3].textContent},${cells[4].textContent},${cells[5].textContent},${cells[6].textContent}\n`;
+    }
+  });
+  
+  const blob = new Blob([csv], { type: 'text/csv' });
+  const url = window.URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'properties_export.csv';
+  a.click();
+}
+
+function getCsrfToken() {
+  return document.querySelector('[name=csrfmiddlewaretoken]')?.value || '';
+}
+
+// Select all functionality
+document.getElementById('select-all').addEventListener('change', function() {
+  const checkboxes = document.querySelectorAll('.property-checkbox');
+  checkboxes.forEach(checkbox => {
+    checkbox.checked = this.checked;
+  });
+});
+</script>
+{% endblock %}

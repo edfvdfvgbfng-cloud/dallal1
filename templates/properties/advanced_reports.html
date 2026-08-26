@@ -1,0 +1,543 @@
+{% extends 'properties/dashboard_base.html' %}
+{% load static %}
+
+{% block title %}التقارير المتقدمة{% endblock %}
+{% block dashboard_title %}التقارير المتقدمة{% endblock %}
+
+{% block dashboard_subtitle %}
+<p style="margin:4px 0 0;color:var(--text-muted);font-size:0.9rem;">
+  تقارير مفصلة وإحصائيات شاملة عن أداء المنصة
+</p>
+{% endblock %}
+
+{% block dashboard_actions %}
+<a href="{% url 'dashboard' %}" class="btn btn-outline btn-sm">← لوحة التحكم</a>
+<button onclick="generateReport('daily')" class="btn btn-primary btn-sm">📊 تقرير يومي</button>
+<button onclick="generateReport('weekly')" class="btn btn-primary btn-sm">📈 تقرير أسبوعي</button>
+<button onclick="generateReport('monthly')" class="btn btn-primary btn-sm">📉 تقرير شهري</button>
+{% endblock %}
+
+{% block extra_css %}
+<link href="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.min.css" rel="stylesheet">
+<style>
+  .reports-container {
+    background: var(--bg-primary, #0B0B0B);
+    min-height: calc(100vh - var(--header-height, 72px));
+    padding: 2rem;
+  }
+
+  .report-overview {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+  }
+
+  .overview-card {
+    background: var(--card-bg, #161616);
+    border: 1px solid var(--border-primary, rgba(255, 122, 0, 0.15));
+    border-radius: var(--radius-lg, 16px);
+    padding: 1.5rem;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .overview-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, var(--card-color-1), var(--card-color-2));
+  }
+
+  .overview-icon {
+    font-size: 2rem;
+    margin-bottom: 0.5rem;
+  }
+
+  .overview-value {
+    font-size: 2rem;
+    font-weight: 700;
+    color: var(--text-primary, #FFFFFF);
+    margin-bottom: 0.25rem;
+  }
+
+  .overview-label {
+    color: var(--text-muted, rgba(255, 255, 255, 0.7));
+    font-size: 0.9rem;
+  }
+
+  .overview-trend {
+    font-size: 0.8rem;
+    color: var(--text-tertiary, #888888);
+    margin-top: 0.5rem;
+  }
+
+  .trend-up {
+    color: #22c55e;
+  }
+
+  .trend-down {
+    color: #ef4444;
+  }
+
+  .reports-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+  }
+
+  .report-card {
+    background: var(--card-bg, #161616);
+    border: 1px solid var(--border-primary, rgba(255, 122, 0, 0.15));
+    border-radius: var(--radius-lg, 16px);
+    padding: 1.5rem;
+  }
+
+  .report-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+  }
+
+  .report-header h3 {
+    margin: 0;
+    font-size: 1.2rem;
+    color: var(--text-primary, #FFFFFF);
+  }
+
+  .report-chart {
+    position: relative;
+    height: 300px;
+  }
+
+  .data-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 1rem;
+  }
+
+  .data-table th,
+  .data-table td {
+    padding: 12px;
+    text-align: left;
+    border-bottom: 1px solid var(--border-primary, rgba(255, 122, 0, 0.15));
+    color: var(--text-primary, #FFFFFF);
+  }
+
+  .data-table th {
+    background: rgba(255, 255, 255, 0.05);
+    font-weight: 600;
+    font-size: 0.9rem;
+  }
+
+  .data-table tr:hover {
+    background: rgba(255, 255, 255, 0.02);
+  }
+
+  .export-section {
+    background: var(--card-bg, #161616);
+    border: 1px solid var(--border-primary, rgba(255, 122, 0, 0.15));
+    border-radius: var(--radius-lg, 16px);
+    padding: 1.5rem;
+    margin-bottom: 2rem;
+  }
+
+  .export-section h3 {
+    margin: 0 0 1rem 0;
+    font-size: 1.2rem;
+    color: var(--text-primary, #FFFFFF);
+  }
+
+  .export-buttons {
+    display: flex;
+    gap: 1rem;
+    flex-wrap: wrap;
+  }
+
+  .export-btn {
+    padding: 0.75rem 1.5rem;
+    border: 1px solid var(--border-primary, rgba(255, 122, 0, 0.15));
+    border-radius: 8px;
+    background: var(--bg-secondary, #1a1a1a);
+    color: var(--text-primary, #FFFFFF);
+    cursor: pointer;
+    font-size: 0.95rem;
+    transition: all 0.3s ease;
+  }
+
+  .export-btn:hover {
+    background: var(--primary, #FF7A00);
+    border-color: var(--primary, #FF7A00);
+  }
+
+  .date-range-picker {
+    display: flex;
+    gap: 1rem;
+    align-items: center;
+    margin-bottom: 1rem;
+  }
+
+  .date-input {
+    padding: 0.6rem 1rem;
+    border: 1px solid var(--border-primary, rgba(255, 122, 0, 0.15));
+    border-radius: 8px;
+    background: var(--bg-secondary, #1a1a1a);
+    color: var(--text-primary, #FFFFFF);
+  }
+
+  @media (max-width: 768px) {
+    .reports-grid {
+      grid-template-columns: 1fr;
+    }
+    
+    .export-buttons {
+      flex-direction: column;
+    }
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="reports-container">
+  <!-- Report Overview -->
+  <div class="report-overview">
+    <div class="overview-card" style="--card-color-1: #FF7A00; --card-color-2: #FF5500;">
+      <div class="overview-icon">📊</div>
+      <div class="overview-value">{{ total_properties|intcomma }}</div>
+      <div class="overview-label">إجمالي العقارات</div>
+      <div class="overview-trend trend-up">↑ {{ monthly_growth|default:0 }}% هذا الشهر</div>
+    </div>
+    <div class="overview-card" style="--card-color-1: #4ECDC4; --card-color-2: #44a08d;">
+      <div class="overview-icon">👥</div>
+      <div class="overview-value">{{ total_users|intcomma }}</div>
+      <div class="overview-label">المستخدمين النشطين</div>
+      <div class="overview-trend trend-up">↑ {{ user_growth|default:0 }}% هذا الشهر</div>
+    </div>
+    <div class="overview-card" style="--card-color-1: #667eea; --card-color-2: #764ba2;">
+      <div class="overview-icon">💰</div>
+      <div class="overview-value">{{ total_revenue|intcomma }}</div>
+      <div class="overview-label">الإيرادات (د.ع)</div>
+      <div class="overview-trend trend-up">↑ {{ revenue_growth|default:0 }}% هذا الشهر</div>
+    </div>
+    <div class="overview-card" style="--card-color-1: #FF6B6B; --card-color-2: #FF4444;">
+      <div class="overview-icon">📈</div>
+      <div class="overview-value">{{ conversion_rate|default:0 }}%</div>
+      <div class="overview-label">معدل التحويل</div>
+      <div class="overview-trend trend-up">↑ {{ conversion_growth|default:0 }}% هذا الشهر</div>
+    </div>
+  </div>
+
+  <!-- Date Range Picker -->
+  <div class="export-section">
+    <h3>📅 نطاق التاريخ</h3>
+    <div class="date-range-picker">
+      <input type="date" id="startDate" class="date-input" value="{{ start_date|default:'' }}">
+      <input type="date" id="endDate" class="date-input" value="{{ end_date|default:'' }}">
+      <button onclick="applyDateRange()" class="export-btn">تطبيق</button>
+      <button onclick="resetDateRange()" class="export-btn">إعادة تعيين</button>
+    </div>
+  </div>
+
+  <!-- Reports Grid -->
+  <div class="reports-grid">
+    <div class="report-card">
+      <div class="report-header">
+        <h3>📊 نمو العقارات</h3>
+        <select class="date-input" onchange="updatePropertyGrowthChart(this.value)">
+          <option value="7">آخر 7 أيام</option>
+          <option value="30" selected>آخر 30 يوم</option>
+          <option value="90">آخر 90 يوم</option>
+          <option value="365">آخر سنة</option>
+        </select>
+      </div>
+      <div class="report-chart">
+        <canvas id="propertyGrowthChart"></canvas>
+      </div>
+    </div>
+    <div class="report-card">
+      <div class="report-header">
+        <h3>💰 الإيرادات</h3>
+        <select class="date-input" onchange="updateRevenueChart(this.value)">
+          <option value="monthly" selected>شهري</option>
+          <option value="quarterly">ربع سنوي</option>
+          <option value="yearly">سنوي</option>
+        </select>
+      </div>
+      <div class="report-chart">
+        <canvas id="revenueChart"></canvas>
+      </div>
+    </div>
+    <div class="report-card">
+      <div class="report-header">
+        <h3>👥 نشاط المستخدمين</h3>
+        <select class="date-input" onchange="updateUserActivityChart(this.value)">
+          <option value="daily" selected>يومي</option>
+          <option value="weekly">أسبوعي</option>
+          <option value="monthly">شهري</option>
+        </select>
+      </div>
+      <div class="report-chart">
+        <canvas id="userActivityChart"></canvas>
+      </div>
+    </div>
+    <div class="report-card">
+      <div class="report-header">
+        <h3>🏠 توزيع العقارات</h3>
+        <select class="date-input" onchange="updatePropertyDistributionChart(this.value)">
+          <option value="type" selected>حسب النوع</option>
+          <option value="location">حسب الموقع</option>
+          <option value="price">حسب السعر</option>
+        </select>
+      </div>
+      <div class="report-chart">
+        <canvas id="propertyDistributionChart"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <!-- Export Section -->
+  <div class="export-section">
+    <h3>📥 تصدير التقارير</h3>
+    <div class="export-buttons">
+      <button onclick="exportReport('pdf')" class="export-btn">📄 تصدير PDF</button>
+      <button onclick="exportReport('excel')" class="export-btn">📊 تصدير Excel</button>
+      <button onclick="exportReport('csv')" class="export-btn">📥 تصدير CSV</button>
+      <button onclick="printReport()" class="export-btn">🖨️ طباعة</button>
+    </div>
+  </div>
+
+  <!-- Detailed Data Table -->
+  <div class="report-card">
+    <div class="report-header">
+      <h3>📋 البيانات التفصيلية</h3>
+      <button onclick="refreshData()" class="export-btn">🔄 تحديث</button>
+    </div>
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>التاريخ</th>
+          <th>العقارات الجديدة</th>
+          <th>المستخدمين الجدد</th>
+          <th>الإيرادات</th>
+          <th>المبيعات</th>
+          <th>معدل التحويل</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for data in detailed_data %}
+        <tr>
+          <td>{{ data.date }}</td>
+          <td>{{ data.new_properties|intcomma }}</td>
+          <td>{{ data.new_users|intcomma }}</td>
+          <td>{{ data.revenue|intcomma }}</td>
+          <td>{{ data.sales|intcomma }}</td>
+          <td>{{ data.conversion_rate }}%</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script>
+// Initialize Charts
+document.addEventListener('DOMContentLoaded', function() {
+  initCharts();
+});
+
+function initCharts() {
+  // Property Growth Chart
+  const growthCtx = document.getElementById('propertyGrowthChart').getContext('2d');
+  window.propertyGrowthChart = new Chart(growthCtx, {
+    type: 'line',
+    data: {
+      labels: generateDateLabels(30),
+      datasets: [{
+        label: 'العقارات الجديدة',
+        data: generateRandomData(30, 0, 20),
+        borderColor: '#FF7A00',
+        backgroundColor: 'rgba(255, 122, 0, 0.1)',
+        fill: true,
+        tension: 0.4
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: { legend: { display: false } },
+      scales: { y: { beginAtZero: true } }
+    }
+  });
+
+  // Revenue Chart
+  const revenueCtx = document.getElementById('revenueChart').getContext('2d');
+  window.revenueChart = new Chart(revenueCtx, {
+    type: 'bar',
+    data: {
+      labels: ['يناير', 'فبراير', 'مارس', 'أبريل', 'مايو', 'يونيو'],
+      datasets: [{
+        label: 'الإيرادات (د.ع)',
+        data: [1500000, 1800000, 2200000, 1900000, 2500000, 2800000],
+        backgroundColor: '#4ECDC4',
+        borderRadius: 8
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: { legend: { display: false } },
+      scales: { y: { beginAtZero: true } }
+    }
+  });
+
+  // User Activity Chart
+  const activityCtx = document.getElementById('userActivityChart').getContext('2d');
+  window.userActivityChart = new Chart(activityCtx, {
+    type: 'line',
+    data: {
+      labels: ['السبت', 'الأحد', 'الاثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة'],
+      datasets: [{
+        label: 'النشاط',
+        data: [120, 150, 180, 140, 160, 200, 90],
+        borderColor: '#667eea',
+        backgroundColor: 'rgba(102, 126, 234, 0.1)',
+        fill: true,
+        tension: 0.4
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: { legend: { display: false } },
+      scales: { y: { beginAtZero: true } }
+    }
+  });
+
+  // Property Distribution Chart
+  const distCtx = document.getElementById('propertyDistributionChart').getContext('2d');
+  window.propertyDistributionChart = new Chart(distCtx, {
+    type: 'doughnut',
+    data: {
+      labels: ['شقق', 'فيلات', 'أراضي', 'محلات', 'مستودعات'],
+      datasets: [{
+        data: [35, 25, 20, 12, 8],
+        backgroundColor: ['#FF7A00', '#FF6B6B', '#4ECDC4', '#667eea', '#F7DC6F'],
+        borderWidth: 0
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: { legend: { position: 'bottom' } }
+    }
+  });
+}
+
+function updatePropertyGrowthChart(days) {
+  window.propertyGrowthChart.data.labels = generateDateLabels(parseInt(days));
+  window.propertyGrowthChart.data.datasets[0].data = generateRandomData(parseInt(days), 0, 25);
+  window.propertyGrowthChart.update();
+}
+
+function updateRevenueChart(period) {
+  const dataMap = {
+    'monthly': [1500000, 1800000, 2200000, 1900000, 2500000, 2800000],
+    'quarterly': [4500000, 5200000, 5800000],
+    'yearly': [15000000, 18000000, 22000000]
+  };
+  const labelsMap = {
+    'monthly': ['يناير', 'فبراير', 'مارس', 'أبريل', 'مايو', 'يونيو'],
+    'quarterly': ['الربع الأول', 'الربع الثاني', 'الربع الثالث'],
+    'yearly': ['2023', '2024', '2025']
+  };
+  window.revenueChart.data.datasets[0].data = dataMap[period] || dataMap['monthly'];
+  window.revenueChart.data.labels = labelsMap[period] || labelsMap['monthly'];
+  window.revenueChart.update();
+}
+
+function updateUserActivityChart(period) {
+  const dataMap = {
+    'daily': [120, 150, 180, 140, 160, 200, 90],
+    'weekly': [800, 950, 1100, 900, 1050, 1200, 650],
+    'monthly': [3500, 4200, 4800, 3900, 4500, 5200, 2800]
+  };
+  window.userActivityChart.data.datasets[0].data = dataMap[period] || dataMap['daily'];
+  window.userActivityChart.update();
+}
+
+function updatePropertyDistributionChart(type) {
+  const dataMap = {
+    'type': [35, 25, 20, 12, 8],
+    'location': [40, 25, 15, 12, 8],
+    'price': [50, 25, 15, 7, 3]
+  };
+  window.propertyDistributionChart.data.datasets[0].data = dataMap[type] || dataMap['type'];
+  window.propertyDistributionChart.update();
+}
+
+function generateDateLabels(days) {
+  const labels = [];
+  const today = new Date();
+  for (let i = days - 1; i >= 0; i--) {
+    const date = new Date(today);
+    date.setDate(date.getDate() - i);
+    labels.push(date.toLocaleDateString('ar-EG', { month: 'short', day: 'numeric' }));
+  }
+  return labels;
+}
+
+function generateRandomData(count, min, max) {
+  const data = [];
+  for (let i = 0; i < count; i++) {
+    data.push(Math.floor(Math.random() * (max - min + 1)) + min);
+  }
+  return data;
+}
+
+function applyDateRange() {
+  const startDate = document.getElementById('startDate').value;
+  const endDate = document.getElementById('endDate').value;
+  
+  if (startDate && endDate) {
+    window.location.href = `?start_date=${startDate}&end_date=${endDate}`;
+  }
+}
+
+function resetDateRange() {
+  window.location.href = window.location.pathname;
+}
+
+function generateReport(type) {
+  alert(`جاري إنشاء تقرير ${type}...`);
+  // In production, this would generate and download the report
+}
+
+function exportReport(format) {
+  switch(format) {
+    case 'pdf':
+      alert('جاري تصدير PDF...');
+      break;
+    case 'excel':
+      alert('جاري تصدير Excel...');
+      break;
+    case 'csv':
+      alert('جاري تصدير CSV...');
+      break;
+  }
+}
+
+function printReport() {
+  window.print();
+}
+
+function refreshData() {
+  window.location.reload();
+}
+</script>
+{% endblock %}

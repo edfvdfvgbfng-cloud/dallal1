@@ -1,0 +1,737 @@
+{% extends 'properties/base.html' %}
+{% load static %}
+
+{% block title %}
+    {{ title }} - {{ site_name }}
+{% endblock %}
+
+{% block content %}
+<div class="service-provider-form-container">
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-10 mx-auto">
+                <div class="form-card">
+                    <div class="form-header">
+                        <h1 class="form-title">{{ title }}</h1>
+                        <p class="form-subtitle">أكمل المعلومات أدناه لإنشاء صفحة مقدم الخدمة</p>
+                        <div class="progress-indicator">
+                            <div class="progress-step active" data-step="1">
+                                <span class="step-number">1</span>
+                                <span class="step-label">المعلومات الأساسية</span>
+                            </div>
+                            <div class="progress-step" data-step="2">
+                                <span class="step-number">2</span>
+                                <span class="step-label">المعلومات المهنية</span>
+                            </div>
+                            <div class="progress-step" data-step="3">
+                                <span class="step-number">3</span>
+                                <span class="step-label">الموقع والتواصل</span>
+                            </div>
+                            <div class="progress-step" data-step="4">
+                                <span class="step-number">4</span>
+                                <span class="step-label">الوسائط</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <form method="post" enctype="multipart/form-data" class="service-provider-form" id="serviceProviderForm">
+                        {% csrf_token %}
+                        
+                        {% if form.errors %}
+                        <div class="alert alert-danger">
+                            <div class="alert-icon">
+                                <i class="fas fa-exclamation-triangle"></i>
+                            </div>
+                            <div class="alert-content">
+                                <h4>يرجى تصحيح الأخطاء التالية:</h4>
+                                <ul>
+                                    {% for field, errors in form.errors.items %}
+                                        {% for error in errors %}
+                                            <li>{{ field }}: {{ error }}</li>
+                                        {% endfor %}
+                                    {% endfor %}
+                                </ul>
+                            </div>
+                        </div>
+                        {% endif %}
+                        
+                        <!-- Step 1: Basic Information -->
+                        <div class="form-section active" data-section="1">
+                            <h3 class="section-title">
+                                <i class="fas fa-user section-icon"></i>
+                                المعلومات الأساسية
+                            </h3>
+                            
+                            <div class="form-grid">
+                                <div class="form-group full-width">
+                                    <label for="{{ form.page_type.id_for_label }}" class="form-label">نوع الصفحة</label>
+                                    <div class="form-control-wrapper">
+                                        {{ form.page_type }}
+                                        <i class="fas fa-chevron-down form-icon"></i>
+                                    </div>
+                                    <small class="form-hint">اختر نوع صفحة مقدم الخدمة</small>
+                                </div>
+                                
+                                <div class="form-group full-width">
+                                    <label for="{{ form.name.id_for_label }}" class="form-label">الاسم <span class="required">*</span></label>
+                                    <div class="form-control-wrapper">
+                                        {{ form.name }}
+                                        <i class="fas fa-building form-icon"></i>
+                                    </div>
+                                </div>
+                                
+                                <div class="form-group full-width">
+                                    <label for="{{ form.description.id_for_label }}" class="form-label">النبذة <span class="required">*</span></label>
+                                    <div class="form-control-wrapper">
+                                        {{ form.description }}
+                                        <i class="fas fa-align-left form-icon"></i>
+                                    </div>
+                                    <small class="form-hint">اكتب نبذة مختصرة عن خدماتك وخبرتك</small>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Step 2: Professional Info -->
+                        <div class="form-section" data-section="2">
+                            <h3 class="section-title">
+                                <i class="fas fa-briefcase section-icon"></i>
+                                المعلومات المهنية
+                            </h3>
+                            
+                            <div class="form-grid">
+                                <div class="form-group">
+                                    <label for="{{ form.category.id_for_label }}" class="form-label">الفئة الرئيسية <span class="required">*</span></label>
+                                    <div class="form-control-wrapper">
+                                        {{ form.category }}
+                                        <i class="fas fa-folder form-icon"></i>
+                                    </div>
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label for="{{ form.sub_categories.id_for_label }}" class="form-label">الفئات الفرعية</label>
+                                    <div class="form-control-wrapper">
+                                        {{ form.sub_categories }}
+                                        <i class="fas fa-tags form-icon"></i>
+                                    </div>
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label for="{{ form.years_of_experience.id_for_label }}" class="form-label">سنوات الخبرة</label>
+                                    <div class="form-control-wrapper">
+                                        {{ form.years_of_experience }}
+                                        <i class="fas fa-clock form-icon"></i>
+                                    </div>
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label for="{{ form.projects_count.id_for_label }}" class="form-label">عدد المشاريع</label>
+                                    <div class="form-control-wrapper">
+                                        {{ form.projects_count }}
+                                        <i class="fas fa-project-diagram form-icon"></i>
+                                    </div>
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label for="{{ form.clients_count.id_for_label }}" class="form-label">عدد العملاء</label>
+                                    <div class="form-control-wrapper">
+                                        {{ form.clients_count }}
+                                        <i class="fas fa-users form-icon"></i>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Step 3: Location & Contact -->
+                        <div class="form-section" data-section="3">
+                            <h3 class="section-title">
+                                <i class="fas fa-map-marker-alt section-icon"></i>
+                                الموقع والتواصل
+                            </h3>
+                            
+                            <div class="form-grid">
+                                <div class="form-group">
+                                    <label for="{{ form.governorate.id_for_label }}" class="form-label">المحافظة <span class="required">*</span></label>
+                                    <div class="form-control-wrapper">
+                                        {{ form.governorate }}
+                                        <i class="fas fa-map form-icon"></i>
+                                    </div>
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label for="{{ form.city.id_for_label }}" class="form-label">المدينة <span class="required">*</span></label>
+                                    <div class="form-control-wrapper">
+                                        {{ form.city }}
+                                        <i class="fas fa-city form-icon"></i>
+                                    </div>
+                                </div>
+                                
+                                <div class="form-group full-width">
+                                    <label for="{{ form.working_areas.id_for_label }}" class="form-label">المناطق التي يعمل بها</label>
+                                    <div class="form-control-wrapper">
+                                        {{ form.working_areas }}
+                                        <i class="fas fa-map-marked form-icon"></i>
+                                    </div>
+                                    <small class="form-hint">حدد المناطق التي تغطيها خدماتك</small>
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label for="{{ form.phone.id_for_label }}" class="form-label">رقم الهاتف <span class="required">*</span></label>
+                                    <div class="form-control-wrapper">
+                                        {{ form.phone }}
+                                        <i class="fas fa-phone form-icon"></i>
+                                    </div>
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label for="{{ form.whatsapp.id_for_label }}" class="form-label">واتساب</label>
+                                    <div class="form-control-wrapper">
+                                        {{ form.whatsapp }}
+                                        <i class="fab fa-whatsapp form-icon"></i>
+                                    </div>
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label for="{{ form.telegram.id_for_label }}" class="form-label">تيليجرام</label>
+                                    <div class="form-control-wrapper">
+                                        {{ form.telegram }}
+                                        <i class="fab fa-telegram form-icon"></i>
+                                    </div>
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label for="{{ form.facebook.id_for_label }}" class="form-label">فيسبوك</label>
+                                    <div class="form-control-wrapper">
+                                        {{ form.facebook }}
+                                        <i class="fab fa-facebook form-icon"></i>
+                                    </div>
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label for="{{ form.instagram.id_for_label }}" class="form-label">انستغرام</label>
+                                    <div class="form-control-wrapper">
+                                        {{ form.instagram }}
+                                        <i class="fab fa-instagram form-icon"></i>
+                                    </div>
+                                </div>
+                                
+                                <div class="form-group full-width">
+                                    <label for="{{ form.website.id_for_label }}" class="form-label">الموقع الإلكتروني</label>
+                                    <div class="form-control-wrapper">
+                                        {{ form.website }}
+                                        <i class="fas fa-globe form-icon"></i>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Step 4: Media & Working Hours -->
+                        <div class="form-section" data-section="4">
+                            <h3 class="section-title">
+                                <i class="fas fa-images section-icon"></i>
+                                الوسائط وأوقات العمل
+                            </h3>
+                            
+                            <div class="media-upload-section">
+                                <div class="upload-grid">
+                                    <div class="upload-item">
+                                        <label for="{{ form.profile_image.id_for_label }}" class="upload-label">
+                                            <i class="fas fa-user-circle upload-icon"></i>
+                                            <span>الصورة الشخصية</span>
+                                        </label>
+                                        {{ form.profile_image }}
+                                        <div class="upload-preview" id="profilePreview"></div>
+                                    </div>
+                                    
+                                    <div class="upload-item">
+                                        <label for="{{ form.cover_image.id_for_label }}" class="upload-label">
+                                            <i class="fas fa-image upload-icon"></i>
+                                            <span>صورة الغلاف</span>
+                                        </label>
+                                        {{ form.cover_image }}
+                                        <div class="upload-preview" id="coverPreview"></div>
+                                    </div>
+                                    
+                                    <div class="upload-item">
+                                        <label for="{{ form.logo.id_for_label }}" class="upload-label">
+                                            <i class="fas fa-shield-alt upload-icon"></i>
+                                            <span>الشعار</span>
+                                        </label>
+                                        {{ form.logo }}
+                                        <div class="upload-preview" id="logoPreview"></div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="form-grid">
+                                <div class="form-group full-width">
+                                    <label for="{{ form.working_hours.id_for_label }}" class="form-label">أوقات الدوام</label>
+                                    <div class="form-control-wrapper">
+                                        {{ form.working_hours }}
+                                        <i class="fas fa-clock form-icon"></i>
+                                    </div>
+                                    <small class="form-hint">مثال: السبت-الخميس: 9-5، الجمعة: 9-1</small>
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label for="{{ form.availability.id_for_label }}" class="form-label">الحالة</label>
+                                    <div class="form-control-wrapper">
+                                        {{ form.availability }}
+                                        <i class="fas fa-circle form-icon"></i>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Navigation Buttons -->
+                        <div class="form-navigation">
+                            <button type="button" class="btn btn-secondary prev-btn" id="prevBtn" style="display: none;">
+                                <i class="fas fa-arrow-right me-2"></i>السابق
+                            </button>
+                            <button type="button" class="btn btn-primary next-btn" id="nextBtn">
+                                التالي<i class="fas fa-arrow-left ms-2"></i>
+                            </button>
+                            <button type="submit" class="btn btn-success submit-btn" id="submitBtn" style="display: none;">
+                                <i class="fas fa-check me-2"></i>حفظ ونشر
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+.service-provider-form-container {
+    padding: 40px 20px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    min-height: 100vh;
+}
+
+.form-card {
+    background-color: white;
+    border-radius: 20px;
+    padding: 40px;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+}
+
+.form-header {
+    text-align: center;
+    margin-bottom: 40px;
+    padding-bottom: 30px;
+    border-bottom: 2px solid #f0f0f0;
+}
+
+.form-title {
+    font-size: 32px;
+    font-weight: bold;
+    color: #333;
+    margin-bottom: 10px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.form-subtitle {
+    font-size: 16px;
+    color: #666;
+    margin: 0;
+}
+
+.progress-indicator {
+    display: flex;
+    justify-content: center;
+    gap: 20px;
+    margin-top: 30px;
+}
+
+.progress-step {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    opacity: 0.5;
+    transition: all 0.3s;
+}
+
+.progress-step.active {
+    opacity: 1;
+}
+
+.step-number {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: #e0e0e0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    color: #666;
+    transition: all 0.3s;
+}
+
+.progress-step.active .step-number {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+}
+
+.step-label {
+    font-size: 12px;
+    color: #666;
+    font-weight: 500;
+}
+
+.progress-step.active .step-label {
+    color: #667eea;
+}
+
+.form-section {
+    display: none;
+    animation: fadeIn 0.5s ease-in;
+}
+
+.form-section.active {
+    display: block;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.section-title {
+    font-size: 20px;
+    font-weight: bold;
+    color: #333;
+    margin-bottom: 25px;
+    padding-bottom: 15px;
+    border-bottom: 2px solid #f0f0f0;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.section-icon {
+    color: #667eea;
+    font-size: 24px;
+}
+
+.form-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 20px;
+}
+
+.form-group {
+    margin-bottom: 25px;
+}
+
+.form-group.full-width {
+    grid-column: 1 / -1;
+}
+
+.form-label {
+    font-weight: 600;
+    margin-bottom: 8px;
+    color: #333;
+    display: block;
+}
+
+.required {
+    color: #e74c3c;
+}
+
+.form-control-wrapper {
+    position: relative;
+}
+
+.form-control-wrapper input,
+.form-control-wrapper select,
+.form-control-wrapper textarea {
+    width: 100%;
+    padding: 12px 40px 12px 15px;
+    border: 2px solid #e0e0e0;
+    border-radius: 10px;
+    font-size: 15px;
+    transition: all 0.3s;
+    background: #f9f9f9;
+}
+
+.form-control-wrapper input:focus,
+.form-control-wrapper select:focus,
+.form-control-wrapper textarea:focus {
+    border-color: #667eea;
+    background: white;
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+    outline: none;
+}
+
+.form-icon {
+    position: absolute;
+    right: 15px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #999;
+    pointer-events: none;
+}
+
+.form-hint {
+    display: block;
+    margin-top: 5px;
+    font-size: 13px;
+    color: #888;
+}
+
+.media-upload-section {
+    margin-bottom: 30px;
+}
+
+.upload-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 20px;
+}
+
+.upload-item {
+    text-align: center;
+}
+
+.upload-label {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    padding: 20px;
+    border: 2px dashed #ccc;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: all 0.3s;
+    background: #f9f9f9;
+}
+
+.upload-label:hover {
+    border-color: #667eea;
+    background: #f0f0ff;
+}
+
+.upload-icon {
+    font-size: 40px;
+    color: #667eea;
+}
+
+.upload-item input[type="file"] {
+    display: none;
+}
+
+.upload-preview {
+    margin-top: 15px;
+    height: 150px;
+    border-radius: 10px;
+    background: #f0f0f0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+}
+
+.upload-preview img {
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: cover;
+}
+
+.form-navigation {
+    display: flex;
+    justify-content: center;
+    gap: 15px;
+    margin-top: 40px;
+    padding-top: 30px;
+    border-top: 2px solid #f0f0f0;
+}
+
+.btn {
+    padding: 12px 30px;
+    border-radius: 10px;
+    font-weight: 600;
+    font-size: 16px;
+    border: none;
+    cursor: pointer;
+    transition: all 0.3s;
+    display: inline-flex;
+    align-items: center;
+}
+
+.btn-primary {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+}
+
+.btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(102, 126, 234, 0.4);
+}
+
+.btn-secondary {
+    background: #6c757d;
+    color: white;
+}
+
+.btn-secondary:hover {
+    background: #5a6268;
+}
+
+.btn-success {
+    background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+    color: white;
+}
+
+.btn-success:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(40, 167, 69, 0.4);
+}
+
+.alert {
+    border-radius: 10px;
+    padding: 20px;
+    margin-bottom: 30px;
+    display: flex;
+    gap: 15px;
+    align-items: flex-start;
+}
+
+.alert-danger {
+    background: #fee;
+    border: 1px solid #fcc;
+    color: #c33;
+}
+
+.alert-icon {
+    font-size: 24px;
+    color: #c33;
+}
+
+.alert-content h4 {
+    margin: 0 0 10px 0;
+    color: #c33;
+}
+
+.alert-content ul {
+    margin: 0;
+    padding-left: 20px;
+}
+
+.alert-content li {
+    margin-bottom: 5px;
+    color: #933;
+}
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.getElementById('serviceProviderForm');
+    const sections = document.querySelectorAll('.form-section');
+    const progressSteps = document.querySelectorAll('.progress-step');
+    const prevBtn = document.getElementById('prevBtn');
+    const nextBtn = document.getElementById('nextBtn');
+    const submitBtn = document.getElementById('submitBtn');
+    
+    let currentStep = 1;
+    const totalSteps = sections.length;
+    
+    // Form validation
+    function validateStep(step) {
+        const section = document.querySelector(`.form-section[data-section="${step}"]`);
+        const requiredFields = section.querySelectorAll('[required]');
+        let isValid = true;
+        
+        requiredFields.forEach(field => {
+            if (!field.value.trim()) {
+                field.style.borderColor = '#e74c3c';
+                isValid = false;
+            } else {
+                field.style.borderColor = '#e0e0e0';
+            }
+        });
+        
+        return isValid;
+    }
+    
+    // Navigation
+    nextBtn.addEventListener('click', function() {
+        if (validateStep(currentStep)) {
+            sections[currentStep - 1].classList.remove('active');
+            progressSteps[currentStep - 1].classList.remove('active');
+            
+            currentStep++;
+            
+            sections[currentStep - 1].classList.add('active');
+            progressSteps[currentStep - 1].classList.add('active');
+            
+            if (currentStep === totalSteps) {
+                nextBtn.style.display = 'none';
+                submitBtn.style.display = 'inline-flex';
+            }
+            
+            if (currentStep > 1) {
+                prevBtn.style.display = 'inline-flex';
+            }
+        }
+    });
+    
+    prevBtn.addEventListener('click', function() {
+        sections[currentStep - 1].classList.remove('active');
+        progressSteps[currentStep - 1].classList.remove('active');
+        
+        currentStep--;
+        
+        sections[currentStep - 1].classList.add('active');
+        progressSteps[currentStep - 1].classList.add('active');
+        
+        if (currentStep < totalSteps) {
+            nextBtn.style.display = 'inline-flex';
+            submitBtn.style.display = 'none';
+        }
+        
+        if (currentStep === 1) {
+            prevBtn.style.display = 'none';
+        }
+    });
+    
+    // File upload preview
+    document.querySelectorAll('input[type="file"]').forEach(input => {
+        input.addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const preview = input.parentElement.querySelector('.upload-preview');
+                    preview.innerHTML = `<img src="${e.target.result}" alt="Preview">`;
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+    });
+    
+    // Add required attribute to required fields
+    const requiredFields = ['name', 'page_type', 'category', 'governorate', 'city', 'phone'];
+    requiredFields.forEach(fieldName => {
+        const field = document.querySelector(`[name="${fieldName}"]`);
+        if (field) {
+            field.setAttribute('required', 'required');
+        }
+    });
+});
+</script>
+{% endblock %}

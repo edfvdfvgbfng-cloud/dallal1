@@ -1,0 +1,144 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ package.title }} - دلال{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <!-- Package Header -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-8">
+                    <h1 class="mb-2">{{ package.title }}</h1>
+                    <p class="text-muted mb-2">{{ package.destination }}</p>
+                    <p class="mb-2">{{ package.description }}</p>
+                    <div class="d-flex align-items-center gap-3">
+                        <span class="badge bg-info">{{ package.get_travel_type_display }}</span>
+                        <span class="text-muted">
+                            <i class="fas fa-clock"></i> {{ package.duration_days }} يوم
+                            {% if package.duration_nights %}{{ package.duration_nights }} ليلة{% endif %}
+                        </span>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card bg-light">
+                        <div class="card-body text-center">
+                            {% if package.discount_price %}
+                            <p class="text-muted text-decoration-line-through mb-1">{{ package.price }} {{ package.price_currency }}</p>
+                            <h3 class="text-danger mb-0">{{ package.discount_price }} {{ package.price_currency }}</h3>
+                            <span class="badge bg-danger">{{ package.discount_percentage }}% خصم</span>
+                            {% else %}
+                            <h3 class="mb-0">{{ package.price }} {{ package.price_currency }}</h3>
+                            {% endif %}
+                            <p class="text-muted mb-3">
+                                <i class="fas fa-users"></i> {{ package.available_seats }}/{{ package.max_participants }} مقاعد متاحة
+                            </p>
+                            {% if request.user.is_authenticated %}
+                            <a href="#" class="btn btn-primary w-100">احجز الآن</a>
+                            {% else %}
+                            <a href="/login/" class="btn btn-primary w-100">سجل الدخول للحجز</a>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Package Details -->
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">تفاصيل الرحلة</h5>
+                    <p><strong>الشركة:</strong> <a href="{% url 'travel_company_detail' package.company.id %}">{{ package.company.name }}</a></p>
+                    <p><strong>تاريخ الانطلاق:</strong> {{ package.departure_date|date:"Y-m-d H:i" }}</p>
+                    <p><strong>تاريخ العودة:</strong> {{ package.return_date|date:"Y-m-d H:i" }}</p>
+                    <p><strong>موعد انتهاء الحجز:</strong> {{ package.booking_deadline|date:"Y-m-d H:i" }}</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">السعة</h5>
+                    <p><strong>الحد الأقصى:</strong> {{ package.max_participants }} مشارك</p>
+                    <p><strong>المشاركين الحاليين:</strong> {{ package.current_participants }}</p>
+                    <p><strong>المقاعد المتاحة:</strong> {{ package.available_seats }}</p>
+                    {% if package.is_fully_booked %}
+                    <span class="badge bg-danger">محجوز بالكامل</span>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Itinerary -->
+    {% if package.itinerary %}
+    <div class="card mb-4">
+        <div class="card-body">
+            <h5 class="card-title">البرنامج الزمني</h5>
+            <pre>{{ package.itinerary }}</pre>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Inclusions & Exclusions -->
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">ما يشمله العرض</h5>
+                    <pre>{{ package.inclusions }}</pre>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">ما لا يشمله العرض</h5>
+                    <pre>{{ package.exclusions }}</pre>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Gallery -->
+    {% if package.gallery %}
+    <div class="card mb-4">
+        <div class="card-body">
+            <h5 class="card-title">معرض الصور</h5>
+            <pre>{{ package.gallery }}</pre>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Reviews -->
+    <div class="card">
+        <div class="card-body">
+            <h5 class="card-title">التقييمات</h5>
+            {% if package.reviews.all %}
+            <div class="row">
+                {% for review in package.reviews.all %}
+                <div class="col-md-6 mb-3">
+                    <div class="card">
+                        <div class="card-body">
+                            <h6 class="card-title">{{ review.title }}</h6>
+                            <div class="mb-2">
+                                <span class="badge bg-warning">{{ review.overall_rating }}/5</span>
+                            </div>
+                            <p class="card-text">{{ review.comment }}</p>
+                            <small class="text-muted">{{ review.user.username }} - {{ review.created_at|date:"Y-m-d" }}</small>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <p class="text-muted">لا توجد تقييمات بعد</p>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

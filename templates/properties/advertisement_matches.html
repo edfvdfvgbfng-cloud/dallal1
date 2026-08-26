@@ -1,0 +1,497 @@
+{% extends 'properties/base.html' %}
+{% load custom_filters %}
+
+{% block title %}المطابقات للإعلان - دلال{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-lg-12">
+            <div class="page-header mb-4">
+                <h1 class="page-title">المطابقات الذكية</h1>
+                <p class="page-subtitle">{{ advertisement.title }}</p>
+            </div>
+            
+            <div class="matches-container">
+                {% if matches %}
+                    <div class="matches-list">
+                        {% for match in matches %}
+                        <div class="match-card score-{{ match.match_score }}">
+                            <div class="match-header">
+                                <div class="match-score">
+                                    <div class="score-circle">
+                                        {{ match.match_score }}/5
+                                    </div>
+                                    <div class="score-label">درجة التطابق</div>
+                                </div>
+                                <div class="match-status">
+                                    {% if match.is_converted %}
+                                    <span class="status-badge status-converted">تم التحويل</span>
+                                    {% elif match.is_contacted %}
+                                    <span class="status-badge status-contacted">تم التواصل</span>
+                                    {% elif match.is_viewed %}
+                                    <span class="status-badge status-viewed">تمت المشاهدة</span>
+                                    {% else %}
+                                    <span class="status-badge status-new">جديد</span>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            
+                            <div class="match-body">
+                                {% if match.matched_property %}
+                                <div class="matched-item">
+                                    <div class="item-type">
+                                        <i class="fas fa-home"></i>
+                                        <span>عقار</span>
+                                    </div>
+                                    <div class="item-details">
+                                        <h4>{{ match.matched_property.title }}</h4>
+                                        <p>{{ match.matched_property.get_governorate_display }} - {{ match.matched_property.city|default:'' }}</p>
+                                        <p class="price">{{ match.matched_property.price|number_format }} د.ع</p>
+                                    </div>
+                                    <a href="{% url 'property_detail' match.matched_property.slug %}" class="btn btn-sm btn-outline-primary">عرض العقار</a>
+                                </div>
+                                {% endif %}
+                                
+                                {% if match.matched_broker %}
+                                <div class="matched-item">
+                                    <div class="item-type">
+                                        <i class="fas fa-user-tie"></i>
+                                        <span>دلال</span>
+                                    </div>
+                                    <div class="item-details">
+                                        <h4>{{ match.matched_broker.full_name }}</h4>
+                                        <p>{{ match.matched_broker.get_governorate_display }}</p>
+                                        <p class="phone">{{ match.matched_broker.phone }}</p>
+                                    </div>
+                                    <a href="{% url 'broker_profile' match.matched_broker.user.username %}" class="btn btn-sm btn-outline-primary">عرض الملف الشخصي</a>
+                                </div>
+                                {% endif %}
+                                
+                                {% if match.matched_user %}
+                                <div class="matched-item">
+                                    <div class="item-type">
+                                        <i class="fas fa-user"></i>
+                                        <span>مستخدم</span>
+                                    </div>
+                                    <div class="item-details">
+                                        <h4>{{ match.matched_user.username }}</h4>
+                                        <p>مستخدم مهتم بالبناء</p>
+                                    </div>
+                                    <a href="#" class="btn btn-sm btn-outline-primary">عرض الملف الشخصي</a>
+                                </div>
+                                {% endif %}
+                            </div>
+                            
+                            {% if match.match_reasons %}
+                            <div class="match-reasons">
+                                <h5>أسباب التطابق:</h5>
+                                <ul>
+                                    {% for reason, value in match.match_reasons.items %}
+                                    <li>{{ reason }}: {{ value }}</li>
+                                    {% endfor %}
+                                </ul>
+                            </div>
+                            {% endif %}
+                            
+                            <div class="match-actions">
+                                {% if not match.is_viewed %}
+                                <button class="btn btn-sm btn-outline-secondary" onclick="markAsViewed({{ match.id }})">
+                                    <i class="fas fa-eye"></i> تحديد كمشاهد
+                                </button>
+                                {% endif %}
+                                {% if not match.is_contacted %}
+                                <button class="btn btn-sm btn-outline-success" onclick="markAsContacted({{ match.id }})">
+                                    <i class="fas fa-phone"></i> تحديد كمتواصل
+                                </button>
+                                {% endif %}
+                                {% if not match.is_converted %}
+                                <button class="btn btn-sm btn-outline-primary" onclick="markAsConverted({{ match.id }})">
+                                    <i class="fas fa-check"></i> تحديد كمحول
+                                </button>
+                                {% endif %}
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <div class="empty-state text-center py-5">
+                        <i class="fas fa-search fa-3x text-muted mb-3"></i>
+                        <h3>لا توجد مطابقات</h3>
+                        <p class="text-muted">لم يتم العثور على مطابقات لهذا الإعلان بعد</p>
+                        <a href="{% url 'advertisement_detail' advertisement.id %}" class="btn btn-primary mt-3">
+                            العودة للإعلان
+                        </a>
+                    </div>
+                {% endif %}
+            </div>
+            
+            <div class="back-button mt-4">
+                <a href="{% url 'advertisement_detail' advertisement.id %}" class="btn btn-secondary">
+                    <i class="fas fa-arrow-right"></i> العودة للإعلان
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function markAsViewed(matchId) {
+    fetch(`/api/matches/${matchId}/view/`, {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': getCookie('csrftoken'),
+            'Content-Type': 'application/json',
+        },
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            location.reload();
+        }
+    });
+}
+
+function markAsContacted(matchId) {
+    fetch(`/api/matches/${matchId}/contact/`, {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': getCookie('csrftoken'),
+            'Content-Type': 'application/json',
+        },
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            location.reload();
+        }
+    });
+}
+
+function markAsConverted(matchId) {
+    fetch(`/api/matches/${matchId}/convert/`, {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': getCookie('csrftoken'),
+            'Content-Type': 'application/json',
+        },
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            location.reload();
+        }
+    });
+}
+
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+</script>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+.page-header {
+    text-align: center;
+    margin-bottom: 30px;
+}
+
+.page-title {
+    font-size: 2em;
+    color: #333;
+    margin-bottom: 10px;
+}
+
+.page-subtitle {
+    color: #666;
+    font-size: 1.1em;
+}
+
+.matches-container {
+    background: white;
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+}
+
+.matches-list {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.match-card {
+    background: #f8f9fa;
+    border-radius: 10px;
+    padding: 20px;
+    border-left: 4px solid #667eea;
+}
+
+.match-card.score-5 {
+    border-left-color: #28a745;
+    background: #d4edda;
+}
+
+.match-card.score-4 {
+    border-left-color: #28a745;
+}
+
+.match-card.score-3 {
+    border-left-color: #17a2b8;
+}
+
+.match-card.score-2 {
+    border-left-color: #ffc107;
+}
+
+.match-card.score-1 {
+    border-left-color: #fd7e14;
+}
+
+.match-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+}
+
+.match-score {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.score-circle {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 600;
+    font-size: 1.2em;
+}
+
+.score-label {
+    font-size: 0.9em;
+    color: #666;
+}
+
+.status-badge {
+    padding: 5px 10px;
+    border-radius: 20px;
+    font-size: 0.85em;
+    font-weight: 600;
+}
+
+.status-new {
+    background: #667eea;
+    color: white;
+}
+
+.status-viewed {
+    background: #17a2b8;
+    color: white;
+}
+
+.status-contacted {
+    background: #ffc107;
+    color: #333;
+}
+
+.status-converted {
+    background: #28a745;
+    color: white;
+}
+
+.match-body {
+    margin-bottom: 15px;
+}
+
+.matched-item {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    padding: 15px;
+    background: white;
+    border-radius: 8px;
+    margin-bottom: 10px;
+}
+
+.item-type {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 5px;
+    color: #667eea;
+    font-size: 0.9em;
+}
+
+.item-details {
+    flex: 1;
+}
+
+.item-details h4 {
+    margin: 0 0 5px 0;
+    font-size: 1.1em;
+}
+
+.item-details p {
+    margin: 5px 0;
+    color: #666;
+    font-size: 0.9em;
+}
+
+.item-details .price {
+    font-weight: 600;
+    color: #28a745;
+}
+
+.item-details .phone {
+    color: #667eea;
+}
+
+.match-reasons {
+    background: white;
+    padding: 15px;
+    border-radius: 8px;
+    margin-bottom: 15px;
+}
+
+.match-reasons h5 {
+    margin: 0 0 10px 0;
+    color: #333;
+}
+
+.match-reasons ul {
+    margin: 0;
+    padding-right: 20px;
+}
+
+.match-reasons li {
+    margin-bottom: 5px;
+    color: #555;
+}
+
+.match-actions {
+    display: flex;
+    gap: 10px;
+    padding-top: 15px;
+    border-top: 1px solid #ddd;
+}
+
+.empty-state {
+    background: white;
+    border-radius: 10px;
+    padding: 40px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+}
+
+.back-button {
+    text-align: center;
+}
+
+.btn {
+    padding: 10px 20px;
+    border-radius: 5px;
+    font-size: 1em;
+    font-weight: 600;
+    text-decoration: none;
+    border: none;
+    cursor: pointer;
+    transition: all 0.3s;
+}
+
+.btn-primary {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+}
+
+.btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(102, 126, 234, 0.3);
+}
+
+.btn-secondary {
+    background: #6c757d;
+    color: white;
+}
+
+.btn-secondary:hover {
+    background: #5a6268;
+}
+
+.btn-outline-primary {
+    background: transparent;
+    border: 1px solid #667eea;
+    color: #667eea;
+}
+
+.btn-outline-primary:hover {
+    background: #667eea;
+    color: white;
+}
+
+.btn-outline-secondary {
+    background: transparent;
+    border: 1px solid #6c757d;
+    color: #6c757d;
+}
+
+.btn-outline-secondary:hover {
+    background: #6c757d;
+    color: white;
+}
+
+.btn-outline-success {
+    background: transparent;
+    border: 1px solid #28a745;
+    color: #28a745;
+}
+
+.btn-outline-success:hover {
+    background: #28a745;
+    color: white;
+}
+
+.btn-sm {
+    padding: 8px 16px;
+    font-size: 0.9em;
+}
+
+@media (max-width: 768px) {
+    .match-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 10px;
+    }
+    
+    .matched-item {
+        flex-direction: column;
+        text-align: center;
+    }
+    
+    .match-actions {
+        flex-direction: column;
+    }
+    
+    .btn {
+        width: 100%;
+    }
+}
+</style>
+{% endblock %}

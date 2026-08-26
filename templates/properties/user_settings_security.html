@@ -1,0 +1,411 @@
+{% extends 'properties/base.html' %}
+{% load static %}
+
+{% block title %}الأمان | دلال{% endblock %}
+
+{% block extra_css %}
+<style>
+.security-container {
+  background: var(--bg-primary, #0B0B0B);
+  min-height: calc(100vh - var(--header-height, 72px));
+  padding: 2rem;
+}
+
+.security-card {
+  background: var(--card-bg, #161616);
+  border: 1px solid var(--border-primary, rgba(255, 122, 0, 0.15));
+  border-radius: var(--radius-lg, 16px);
+  padding: 1.5rem;
+  box-shadow: var(--shadow-lg, 0 10px 15px rgba(0, 0, 0, 0.5));
+  margin-bottom: 2rem;
+}
+
+.security-card h3 {
+  margin-bottom: 1.5rem;
+  color: var(--text-primary, #FFFFFF);
+  font-size: 1.25rem;
+  font-weight: 700;
+}
+
+.form-group {
+  margin-bottom: 1.25rem;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 0.5rem;
+  font-weight: 500;
+  color: var(--text-primary, #FFFFFF);
+}
+
+.form-control {
+  width: 100%;
+  padding: 0.75rem;
+  background: var(--bg-secondary, #1a1a1a);
+  border: 1px solid var(--border-primary, rgba(255, 122, 0, 0.15));
+  border-radius: var(--radius-sm, 8px);
+  font-size: 0.875rem;
+  color: var(--text-primary, #FFFFFF);
+  transition: all 0.3s ease;
+}
+
+.form-control:focus {
+  outline: none;
+  border-color: var(--primary, #FF7A00);
+  box-shadow: 0 0 0 3px rgba(255, 122, 0, 0.1);
+}
+
+.btn-primary {
+  background: var(--primary, #FF7A00);
+  border-color: var(--primary, #FF7A00);
+  color: white;
+  padding: 0.75rem 1.5rem;
+  border-radius: var(--radius-sm, 8px);
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.btn-primary:hover {
+  background: #ff9500;
+  border-color: #ff9500;
+  transform: translateY(-2px);
+  box-shadow: 0 5px 15px rgba(255, 122, 0, 0.3);
+}
+
+.btn-secondary {
+  background: var(--bg-secondary, #1a1a1a);
+  border: 1px solid var(--border-primary, rgba(255, 122, 0, 0.15));
+  color: var(--text-primary, #FFFFFF);
+  padding: 0.75rem 1.5rem;
+  border-radius: var(--radius-sm, 8px);
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  text-decoration: none;
+  display: inline-block;
+}
+
+.btn-secondary:hover {
+  border-color: var(--primary, #FF7A00);
+  text-decoration: none;
+  color: var(--text-primary, #FFFFFF);
+}
+
+.alert {
+  padding: 1rem;
+  border-radius: var(--radius-sm, 8px);
+  margin-bottom: 1rem;
+}
+
+.alert-success {
+  background: rgba(34, 197, 94, 0.1);
+  border: 1px solid rgba(34, 197, 94, 0.3);
+  color: #22c55e;
+}
+
+.alert-danger {
+  background: rgba(239, 68, 68, 0.1);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  color: #ef4444;
+}
+
+.alert-warning {
+  background: rgba(245, 158, 11, 0.1);
+  border: 1px solid rgba(245, 158, 11, 0.3);
+  color: #f59e0b;
+}
+
+.alert-info {
+  background: rgba(59, 130, 246, 0.1);
+  border: 1px solid rgba(59, 130, 246, 0.3);
+  color: #3b82f6;
+}
+
+.security-status {
+  padding: 1rem;
+  border-radius: var(--radius-sm, 8px);
+  margin-bottom: 1.25rem;
+  background: var(--bg-secondary, #1a1a1a);
+  border: 1px solid var(--border-primary, rgba(255, 122, 0, 0.15));
+}
+
+.security-status-item {
+  display: flex;
+  justify-content: space-between;
+  padding: 0.75rem 0;
+  border-bottom: 1px solid var(--border-primary, rgba(255, 122, 0, 0.15));
+  color: var(--text-primary, #FFFFFF);
+}
+
+.security-status-item:last-child {
+  border-bottom: none;
+}
+
+.status-badge {
+  padding: 0.25rem 0.75rem;
+  border-radius: 12px;
+  font-size: 0.75rem;
+  font-weight: 500;
+}
+
+.status-badge.active {
+  background: rgba(34, 197, 94, 0.1);
+  border: 1px solid rgba(34, 197, 94, 0.3);
+  color: #22c55e;
+}
+
+.status-badge.inactive {
+  background: rgba(239, 68, 68, 0.1);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  color: #ef4444;
+}
+
+.devices-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.device-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem;
+  background: var(--bg-secondary, #1a1a1a);
+  border: 1px solid var(--border-primary, rgba(255, 122, 0, 0.15));
+  border-radius: var(--radius-sm, 8px);
+  transition: all 0.3s ease;
+}
+
+.device-item:hover {
+  border-color: var(--primary, #FF7A00);
+}
+
+.device-item.current-device {
+  border-color: #22c55e;
+  background: rgba(34, 197, 94, 0.05);
+}
+
+.device-info {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  flex: 1;
+}
+
+.device-icon {
+  width: 3rem;
+  height: 3rem;
+  background: var(--bg-primary, #0B0B0B);
+  border: 1px solid var(--border-primary, rgba(255, 122, 0, 0.15));
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.25rem;
+  color: var(--primary, #FF7A00);
+}
+
+.device-details {
+  flex: 1;
+}
+
+.device-name {
+  font-weight: 600;
+  color: var(--text-primary, #FFFFFF);
+  margin-bottom: 0.25rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.current-badge {
+  background: rgba(34, 197, 94, 0.2);
+  color: #22c55e;
+  padding: 0.125rem 0.5rem;
+  border-radius: 12px;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.device-meta {
+  display: flex;
+  gap: 1rem;
+  font-size: 0.875rem;
+  color: var(--text-muted, rgba(255, 255, 255, 0.7));
+  margin-bottom: 0.25rem;
+}
+
+.device-meta span {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.device-system {
+  display: flex;
+  gap: 1rem;
+  font-size: 0.8rem;
+  color: var(--text-muted, rgba(255, 255, 255, 0.5));
+}
+
+.device-system span {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.btn-sm {
+  padding: 0.5rem 1rem;
+  font-size: 0.875rem;
+}
+
+.btn-danger {
+  background: #dc3545;
+  border-color: #dc3545;
+  color: #FFFFFF;
+  padding: 0.5rem 1rem;
+  border-radius: var(--radius-sm, 8px);
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.btn-danger:hover {
+  background: #e4757a;
+  border-color: #e4757a;
+  transform: translateY(-2px);
+}
+
+h1 {
+  color: var(--text-primary, #FFFFFF);
+  font-size: 1.5rem;
+  font-weight: 700;
+  margin: 0;
+}
+
+.d-flex {
+  display: flex;
+}
+
+.justify-content-between {
+  justify-content: space-between;
+}
+
+.align-items-center {
+  align-items: center;
+}
+
+.mb-4 {
+  margin-bottom: 1.5rem;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="security-container">
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <h1>الأمان</h1>
+    <a href="{% url 'user_settings' %}" class="btn-secondary">عودة للإعدادات</a>
+  </div>
+  
+  {% if messages %}
+    {% for message in messages %}
+      <div class="alert alert-{{ message.tags }}">
+        {{ message }}
+      </div>
+    {% endfor %}
+  {% endif %}
+  
+  <div class="security-card">
+    <h3>حالة الأمان</h3>
+    <div class="security-status">
+      <div class="security-status-item">
+        <span>المصادقة الثنائية</span>
+        <span class="status-badge {% if settings.two_factor_enabled %}active{% else %}inactive{% endif %}">
+          {% if settings.two_factor_enabled %}مفعلة{% else %}غير مفعلة{% endif %}
+        </span>
+      </div>
+      <div class="security-status-item">
+        <span>تاريخ آخر تسجيل دخول</span>
+        <span>منذ يوم</span>
+      </div>
+    </div>
+  </div>
+  
+  <div class="security-card">
+    <h3>تغيير كلمة المرور</h3>
+    <form method="POST">
+      {% csrf_token %}
+      <div class="form-group">
+        <label for="{{ form.current_password.id_for_label }}">كلمة المرور الحالية</label>
+        {{ form.current_password }}
+      </div>
+      <div class="form-group">
+        <label for="{{ form.new_password.id_for_label }}">كلمة المرور الجديدة</label>
+        {{ form.new_password }}
+      </div>
+      <div class="form-group">
+        <label for="{{ form.confirm_password.id_for_label }}">تأكيد كلمة المرور</label>
+        {{ form.confirm_password }}
+      </div>
+      <button type="submit" class="btn-primary">تغيير كلمة المرور</button>
+    </form>
+  </div>
+  
+  <div class="security-card">
+    <h3>الأجهزة المسجل الدخول منها</h3>
+    
+    {% if devices %}
+      <div class="devices-list">
+        {% for device in devices %}
+          <div class="device-item {% if device.is_current %}current-device{% endif %}">
+            <div class="device-info">
+              <div class="device-icon">
+                {% if device.device_type == 'desktop' %}
+                  <i class="fas fa-desktop"></i>
+                {% elif device.device_type == 'mobile' %}
+                  <i class="fas fa-mobile-alt"></i>
+                {% elif device.device_type == 'tablet' %}
+                  <i class="fas fa-tablet-alt"></i>
+                {% else %}
+                  <i class="fas fa-laptop"></i>
+                {% endif %}
+              </div>
+              <div class="device-details">
+                <div class="device-name">
+                  {{ device.device_name }}
+                  {% if device.is_current %}
+                    <span class="current-badge">الجهاز الحالي</span>
+                  {% endif %}
+                </div>
+                <div class="device-meta">
+                  <span><i class="fas fa-globe"></i> {{ device.ip_address }}</span>
+                  <span><i class="fas fa-clock"></i> {{ device.last_seen|date:"Y-m-d H:i" }}</span>
+                </div>
+                <div class="device-system">
+                  <span><i class="fab fa-{{ device.browser|lower }}"></i> {{ device.browser }} {{ device.browser_version }}</span>
+                  <span><i class="fas fa-laptop"></i> {{ device.operating_system }} {{ device.os_version }}</span>
+                </div>
+              </div>
+            </div>
+            {% if device.is_active and not device.is_current %}
+              <form action="/settings/security/revoke-device/{{ device.id }}/" method="POST" onsubmit="return confirm('هل أنت متأكد من إلغاء تفعيل هذا الجهاز؟');">
+                {% csrf_token %}
+                <button type="submit" class="btn-danger btn-sm">
+                  <i class="fas fa-times"></i> إلغاء التفعيل
+                </button>
+              </form>
+            {% endif %}
+          </div>
+        {% endfor %}
+      </div>
+    {% else %}
+      <div class="alert alert-info">
+        <i class="fas fa-info-circle"></i> لا توجد أجهزة مسجلة
+      </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

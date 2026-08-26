@@ -1,0 +1,191 @@
+{% extends 'properties/dashboard_base.html' %}
+{% load static %}
+{% load humanize %}
+
+{% block title %}إدارة الإشعارات المتقدمة{% endblock %}
+{% block dashboard_title %}إدارة <span>الإشعارات المتقدمة</span>{% endblock %}
+
+{% block dashboard_actions %}
+<a href="{% url 'admin_panel' %}" class="btn btn-outline">عودة للوحة الإدارة</a>
+<a href="{% url 'admin_bulk_messaging' %}" class="btn btn-primary">💬 رسائل جماعية</a>
+<a href="/admin/" target="_blank" class="btn btn-dark">🔧 Django Admin</a>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+.notifications-management {
+  background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+  min-height: 100vh;
+  padding: 2rem;
+}
+
+.stats-summary {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1rem;
+  margin-bottom: 2rem;
+}
+
+.stat-card {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  padding: 1.5rem;
+  text-align: center;
+}
+
+.stat-value {
+  font-size: 2rem;
+  font-weight: bold;
+  color: #4ecdc4;
+  margin-bottom: 0.5rem;
+}
+
+.stat-label {
+  color: #a0a0a0;
+  font-size: 0.9rem;
+}
+
+.notifications-table {
+  width: 100%;
+  border-collapse: collapse;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.notifications-table th,
+.notifications-table td {
+  padding: 15px;
+  text-align: left;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  color: #fff;
+}
+
+.notifications-table th {
+  background: rgba(255, 255, 255, 0.1);
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
+.notifications-table tr:hover {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.status-badge {
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.status-sent {
+  background: rgba(34, 197, 94, 0.2);
+  color: #22c55e;
+}
+
+.status-pending {
+  background: rgba(245, 158, 11, 0.2);
+  color: #f59e0b;
+}
+</style>
+{% endblock %}
+
+{% block dashboard_content %}
+<div class="notifications-management">
+  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+    <h2 style="color: #fff;">🔔 إدارة الإشعارات المتقدمة</h2>
+    <button class="btn btn-success" onclick="createNotification()">➕ إشعار جديد</button>
+  </div>
+  
+  <!-- Stats Summary -->
+  <div class="stats-summary">
+    <div class="stat-card">
+      <div class="stat-value">{{ total_notifications|intcomma }}</div>
+      <div class="stat-label">إجمالي الإشعارات</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-value">{{ sent_notifications|intcomma }}</div>
+      <div class="stat-label">تم الإرسال</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-value">{{ pending_notifications|intcomma }}</div>
+      <div class="stat-label">قيد الانتظار</div>
+    </div>
+  </div>
+  
+  <!-- Notifications Table -->
+  <table class="notifications-table">
+    <thead>
+      <tr>
+        <th>العنوان</th>
+        <th>النوع</th>
+        <th>المستهدف</th>
+        <th>تاريخ الإنشاء</th>
+        <th>الحالة</th>
+        <th>الإجراءات</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for notification in notifications %}
+      <tr>
+        <td>{{ notification.title }}</td>
+        <td>{{ notification.get_notification_type_display }}</td>
+        <td>{{ notification.target }}</td>
+        <td>{{ notification.created_at|date:"Y-m-d H:i" }}</td>
+        <td>
+          <span class="status-badge {% if notification.is_sent %}status-sent{% else %}status-pending{% endif %}">
+            {% if notification.is_sent %}تم الإرسال{% else %}قيد الانتظار{% endif %}
+          </span>
+        </td>
+        <td>
+          <button class="action-btn action-btn-edit" onclick="viewNotification({{ notification.id }})">👁️</button>
+          <button class="action-btn action-btn-delete" onclick="deleteNotification({{ notification.id }})">🗑️</button>
+        </td>
+      </tr>
+      {% empty %}
+      <tr>
+        <td colspan="6" style="text-align: center; padding: 2rem; color: #a0a0a0;">
+          لا توجد إشعارات
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+<script>
+function createNotification() {
+  window.location.href = '{% url "admin_create_notification" %}';
+}
+
+function viewNotification(notificationId) {
+  window.location.href = `/admin/properties/notification/${notificationId}/`;
+}
+
+function deleteNotification(notificationId) {
+  if (confirm('هل أنت متأكد من حذف هذا الإشعار؟')) {
+    fetch(`/api/notifications/${notificationId}/delete/`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRFToken': getCsrfToken()
+      }
+    })
+    .then(response => response.json())
+    .then(data => {
+      if (data.success) {
+        alert('تم حذف الإشعار بنجاح');
+        location.reload();
+      } else {
+        alert('حدث خطأ في الحذف');
+      }
+    });
+  }
+}
+
+function getCsrfToken() {
+  return document.querySelector('[name=csrfmiddlewaretoken]')?.value || '';
+}
+</script>
+{% endblock %}

@@ -1,0 +1,241 @@
+{% extends 'properties/base.html' %}
+{% load static %}
+
+{% block title %}رسائل المستخدمين | دلال{% endblock %}
+
+{% block extra_css %}
+<style>
+.messages-container {
+    background: var(--bg-primary, #0B0B0B);
+    min-height: calc(100vh - var(--header-height, 72px));
+    padding: 2rem;
+}
+
+.page-header {
+    background: var(--card-bg, #161616);
+    border: 1px solid var(--border-primary, rgba(255, 122, 0, 0.15));
+    border-radius: var(--radius-lg, 16px);
+    padding: 1.5rem;
+    margin-bottom: 2rem;
+    box-shadow: var(--shadow-lg, 0 10px 15px rgba(0, 0, 0, 0.5));
+}
+
+.page-title {
+    color: var(--text-primary, #FFFFFF);
+    font-size: 1.5rem;
+    font-weight: 700;
+    margin: 0;
+}
+
+.page-subtitle {
+    color: var(--text-muted, rgba(255, 255, 255, 0.7));
+    margin: 0.5rem 0 0 0;
+    font-size: 0.9rem;
+}
+
+.conversations-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+    gap: 1.5rem;
+}
+
+.conversation-card {
+    background: var(--card-bg, #161616);
+    border: 1px solid var(--border-primary, rgba(255, 122, 0, 0.15));
+    border-radius: var(--radius-lg, 16px);
+    padding: 1.5rem;
+    box-shadow: var(--shadow-lg, 0 10px 15px rgba(0, 0, 0, 0.5));
+    transition: all 0.3s ease;
+    cursor: pointer;
+}
+
+.conversation-card:hover {
+    border-color: var(--primary, #FF7A00);
+    transform: translateY(-4px);
+    box-shadow: 0 15px 25px rgba(255, 122, 0, 0.2);
+}
+
+.conversation-header {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 1rem;
+}
+
+.user-avatar {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    background: var(--bg-secondary, #1a1a1a);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    border: 2px solid var(--primary, #FF7A00);
+}
+
+.user-info {
+    flex: 1;
+}
+
+.user-name {
+    color: var(--text-primary, #FFFFFF);
+    font-size: 1.1rem;
+    font-weight: 600;
+    margin: 0;
+}
+
+.user-email {
+    color: var(--text-muted, rgba(255, 255, 255, 0.7));
+    font-size: 0.85rem;
+    margin: 0.25rem 0 0 0;
+}
+
+.conversation-stats {
+    display: flex;
+    gap: 1rem;
+    margin-bottom: 1rem;
+}
+
+.stat-item {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: var(--text-muted, rgba(255, 255, 255, 0.7));
+    font-size: 0.85rem;
+}
+
+.stat-item i {
+    color: var(--primary, #FF7A00);
+}
+
+.unread-badge {
+    background: var(--primary, #FF7A00);
+    color: white;
+    padding: 0.25rem 0.75rem;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: 600;
+}
+
+.last-message {
+    color: var(--text-muted, rgba(255, 255, 255, 0.7));
+    font-size: 0.9rem;
+    margin-bottom: 0.75rem;
+    line-height: 1.4;
+}
+
+.last-message-time {
+    color: var(--text-muted, rgba(255, 255, 255, 0.5));
+    font-size: 0.8rem;
+}
+
+.expiry-warning {
+    background: rgba(255, 122, 0, 0.1);
+    border: 1px solid rgba(255, 122, 0, 0.3);
+    color: #FF7A00;
+    padding: 0.5rem;
+    border-radius: var(--radius-sm, 8px);
+    font-size: 0.85rem;
+    margin-top: 0.75rem;
+}
+
+.empty-state {
+    background: var(--card-bg, #161616);
+    border: 1px solid var(--border-primary, rgba(255, 122, 0, 0.15));
+    border-radius: var(--radius-lg, 16px);
+    padding: 3rem;
+    text-align: center;
+    box-shadow: var(--shadow-lg, 0 10px 15px rgba(0, 0, 0, 0.5));
+}
+
+.empty-state i {
+    color: var(--text-muted, rgba(255, 255, 255, 0.5));
+    font-size: 3rem;
+    margin-bottom: 1rem;
+}
+
+.empty-state h3 {
+    color: var(--text-primary, #FFFFFF);
+    margin: 1rem 0 0.5rem 0;
+}
+
+.empty-state p {
+    color: var(--text-muted, rgba(255, 255, 255, 0.7));
+}
+
+@media (max-width: 768px) {
+    .messages-container {
+        padding: 1rem;
+    }
+
+    .conversations-grid {
+        grid-template-columns: 1fr;
+    }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="messages-container">
+    <div class="page-header">
+        <h1 class="page-title">رسائل المستخدمين</h1>
+        <p class="page-subtitle">إدارة رسائل المستخدمين معك</p>
+    </div>
+    
+    {% if conversations %}
+        <div class="conversations-grid">
+            {% for conversation in conversations %}
+                <a href="{% url 'broker_message_detail' conversation.conversation_id %}" class="conversation-card">
+                    <div class="conversation-header">
+                        <div class="user-avatar">
+                            <i class="fas fa-user"></i>
+                        </div>
+                        <div class="user-info">
+                            <h3 class="user-name">{{ conversation.user.username }}</h3>
+                            <p class="user-email">{{ conversation.user.email|default:"" }}</p>
+                        </div>
+                    </div>
+                    
+                    <div class="conversation-stats">
+                        <div class="stat-item">
+                            <i class="fas fa-comment"></i>
+                            <span>{{ conversation.get_messages_count }} رسالة</span>
+                        </div>
+                        <div class="stat-item">
+                            <i class="fas fa-clock"></i>
+                            <span>{{ conversation.created_at|date:"Y-m-d" }}</span>
+                        </div>
+                        {% if conversation.get_unread_count > 0 %}
+                            <span class="unread-badge">{{ conversation.get_unread_count }} جديد</span>
+                        {% endif %}
+                    </div>
+                    
+                    {% if conversation.last_message_at %}
+                        <div class="last-message">
+                            آخر رسالة: {{ conversation.last_message_at|timesince }} مضت
+                        </div>
+                    {% endif %}
+                    
+                    <div class="last-message-time">
+                        تنتهي: {{ conversation.expires_at|date:"Y-m-d" }}
+                    </div>
+                    
+                    {% if conversation.is_expired %}
+                        <div class="expiry-warning">
+                            <i class="fas fa-exclamation-triangle"></i>
+                            المحادثة منتهية الصلاحية
+                        </div>
+                    {% endif %}
+                </a>
+            {% endfor %}
+        </div>
+    {% else %}
+        <div class="empty-state">
+            <i class="fas fa-comments"></i>
+            <h3>لا توجد رسائل</h3>
+            <p>لم يرسل أي مستخدم رسائل إليك بعد</p>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

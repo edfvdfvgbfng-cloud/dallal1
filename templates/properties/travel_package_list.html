@@ -1,0 +1,74 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}رحلات السفر - دلال{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <h1 class="mb-4">رحلات السفر</h1>
+    
+    <!-- Filters -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <form method="get" class="row g-3">
+                <div class="col-md-4">
+                    <select name="type" class="form-control">
+                        <option value="">جميع الأنواع</option>
+                        <option value="domestic" {% if request.GET.type == 'domestic' %}selected{% endif %}>داخلي</option>
+                        <option value="international" {% if request.GET.type == 'international' %}selected{% endif %}>دولي</option>
+                        <option value="hajj" {% if request.GET.type == 'hajj' %}selected{% endif %}>حج</option>
+                        <option value="umrah" {% if request.GET.type == 'umrah' %}selected{% endif %}>عمرة</option>
+                        <option value="tourism" {% if request.GET.type == 'tourism' %}selected{% endif %}>سياحة</option>
+                    </select>
+                </div>
+                <div class="col-md-4">
+                    <button type="submit" class="btn btn-primary">تصفية</button>
+                    <a href="{% url 'travel_packages' %}" class="btn btn-secondary">إعادة تعيين</a>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    <!-- Packages List -->
+    {% if packages %}
+    <div class="row">
+        {% for package in packages %}
+        <div class="col-md-4 mb-4">
+            <div class="card h-100">
+                {% if package.cover_image %}
+                <img src="{{ package.cover_image.url }}" alt="{{ package.title }}" class="card-img-top" style="height: 200px; object-fit: cover;">
+                {% endif %}
+                <div class="card-body">
+                    <h5 class="card-title">{{ package.title }}</h5>
+                    <p class="card-text text-muted">{{ package.destination }}</p>
+                    <p class="card-text">
+                        <strong>الشركة:</strong> <a href="{% url 'travel_company_detail' package.company.id %}">{{ package.company.name }}</a>
+                    </p>
+                    <p class="card-text">
+                        <strong>السعر:</strong> {{ package.price }} {{ package.price_currency }}
+                        {% if package.discount_price %}
+                        <span class="badge bg-danger">{{ package.discount_percentage }}% خصم</span>
+                        {% endif %}
+                    </p>
+                    <p class="card-text">
+                        <i class="fas fa-calendar"></i> {{ package.departure_date|date:"Y-m-d" }}
+                    </p>
+                    <p class="card-text">
+                        <i class="fas fa-users"></i> {{ package.available_seats }}/{{ package.max_participants }} مقاعد متاحة
+                    </p>
+                    <a href="{% url 'travel_package_detail' package.pk package.slug %}" class="btn btn-primary w-100">
+                        التفاصيل والحجز
+                    </a>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="text-center py-5">
+        <i class="fas fa-plane fa-3x text-muted mb-3"></i>
+        <p class="text-muted">لا توجد رحلات حالياً</p>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

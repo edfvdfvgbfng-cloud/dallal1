@@ -1,0 +1,973 @@
+{% extends "properties/base.html" %}
+{% load static %}
+
+{% block title %}نشر وظيفة جديدة - دلال{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<style>
+.map-container {
+    position: relative;
+}
+
+.map-loading {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(255, 255, 255, 0.9);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    border-radius: 8px;
+}
+
+.map-loading.hidden {
+    display: none;
+}
+
+#map {
+    background-color: #e5e5e5;
+    min-height: 350px;
+}
+
+@media (max-width: 768px) {
+    #map {
+        height: 250px;
+    }
+}
+
+/* Fix for hidden fields */
+.field-section {
+    transition: all 0.3s ease;
+}
+
+.field-section.hidden {
+    display: none;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card">
+                <div class="card-header">
+                    <h4 class="mb-0">نشر وظيفة جديدة</h4>
+                </div>
+                <div class="card-body">
+                    <form method="POST" enctype="multipart/form-data">
+                        {% csrf_token %}
+                        
+                        <h5 class="mb-3">المعلومات الأساسية</h5>
+                        <div class="row g-3 mb-4">
+                            <div class="col-12">
+                                <label class="form-label">المسمى الوظيفي *</label>
+                                <input type="text" name="title" class="form-control" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">التصنيف</label>
+                                <select name="category" class="form-select" id="categorySelect">
+                                    <option value="">اختر التصنيف أو اكتب يدوياً</option>
+                                    {% for category in categories %}
+                                    <option value="{{ category.id }}">{{ category.icon }} {{ category.name_ar }}</option>
+                                    {% endfor %}
+                                    <option value="custom">أخرى (اكتب يدوياً)</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6" id="customCategoryDiv" style="display: none;">
+                                <label class="form-label">اكتب التصنيف يدوياً</label>
+                                <input type="text" name="custom_category" class="form-control" placeholder="اكتب التصنيف المطلوب">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">نوع الوظيفة *</label>
+                                <select name="job_type" class="form-select" required>
+                                    <option value="full_time">دوام كامل</option>
+                                    <option value="part_time">دوام جزئي</option>
+                                    <option value="contract">عقد</option>
+                                    <option value="freelance">عمل حر</option>
+                                    <option value="internship">تدريب</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">مستوى الخبرة *</label>
+                                <select name="experience_level" class="form-select" required>
+                                    <option value="entry">مبتدئ</option>
+                                    <option value="junior">جونيور</option>
+                                    <option value="mid" selected>متوسط</option>
+                                    <option value="senior">خبير</option>
+                                    <option value="lead">قائد فريق</option>
+                                    <option value="manager">مدير</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">تاريخ انتهاء الإعلان</label>
+                                <input type="date" name="expiry_date" class="form-control">
+                            </div>
+                        </div>
+                        
+                        <h5 class="mb-3">معلومات الشركة</h5>
+                        <div class="row g-3 mb-4">
+                            <div class="col-12">
+                                <label class="form-label">اسم الشركة *</label>
+                                <input type="text" name="company_name" class="form-control" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">شعار الشركة</label>
+                                <input type="file" name="company_logo" class="form-control" accept="image/*">
+                            </div>
+                            <div class="col-12">
+                                <label class="form-label">وصف الشركة</label>
+                                <textarea name="company_description" class="form-control" rows="3"></textarea>
+                            </div>
+                        </div>
+                        
+                        <h5 class="mb-3">الموقع</h5>
+                        <div class="row g-3 mb-4">
+                            <div class="col-12">
+                                <label class="form-label">موقع الوظيفة *</label>
+                                <div class="btn-group w-100" role="group">
+                                    <input type="radio" class="btn-check" name="location_type" id="insideIraq" value="inside_iraq" checked>
+                                    <label class="btn btn-outline-primary" for="insideIraq">داخل العراق</label>
+                                    
+                                    <input type="radio" class="btn-check" name="location_type" id="outsideIraq" value="outside_iraq">
+                                    <label class="btn btn-outline-primary" for="outsideIraq">خارج العراق</label>
+                                </div>
+                            </div>
+                            <div class="col-md-4" id="governorateDiv">
+                                <label class="form-label">المحافظة *</label>
+                                <select name="governorate" class="form-select" required>
+                                    <option value="">اختر المحافظة</option>
+                                    {% for gov in governorates %}
+                                    <option value="{{ gov.0 }}">{{ gov.1 }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="col-md-4" id="cityDiv">
+                                <label class="form-label">المدينة *</label>
+                                <input type="text" name="city" class="form-control" required>
+                            </div>
+                            <div class="col-md-4" id="countryDiv" style="display: none;">
+                                <label class="form-label">الدولة *</label>
+                                <select name="country" class="form-select">
+                                    <option value="">اختر الدولة</option>
+                                    <option value="uae">الإمارات العربية المتحدة</option>
+                                    <option value="saudi">السعودية</option>
+                                    <option value="kuwait">الكويت</option>
+                                    <option value="qatar">قطر</option>
+                                    <option value="bahrain">البحرين</option>
+                                    <option value="oman">عمان</option>
+                                    <option value="jordan">الأردن</option>
+                                    <option value="egypt">مصر</option>
+                                    <option value="turkey">تركيا</option>
+                                    <option value="iran">إيران</option>
+                                    <option value="syria">سوريا</option>
+                                    <option value="lebanon">لبنان</option>
+                                    <option value="other">أخرى</option>
+                                </select>
+                            </div>
+                            <div class="col-md-4" id="otherCountryDiv" style="display: none;">
+                                <label class="form-label">اسم الدولة الأخرى</label>
+                                <input type="text" name="other_country_name" class="form-control">
+                            </div>
+                            <div class="col-md-4" id="outsideCityDiv" style="display: none;">
+                                <label class="form-label">المدينة *</label>
+                                <input type="text" name="outside_city" class="form-control">
+                            </div>
+                            <div class="col-12">
+                                <label class="form-label">العنوان</label>
+                                <input type="text" name="address" class="form-control">
+                            </div>
+                            <div class="col-12">
+                                <label class="form-label">موقع GPS (اختياري)</label>
+                                <div class="alert alert-warning">
+                                    <i class="fas fa-exclamation-triangle"></i>
+                                    <strong>تلميح:</strong> إذا ظهر رسالة "تم رفض الوصول إلى الموقع الجغرافي":
+                                    <ul class="mb-0 mt-2">
+                                        <li>✅ افتح إعدادات المتصفح</li>
+                                        <li>✅ ابحث عن "الموقع" أو "Location"</li>
+                                        <li>✅ فعل "السماح بالوصول إلى موقعك"</li>
+                                        <li>✅ أو استخدم الخريطة أدناه لتحديد الموقع</li>
+                                    </ul>
+                                </div>
+                                <div class="alert alert-info">
+                                    <i class="fas fa-info-circle"></i>
+                                    <strong>طرق تحديد الموقع:</strong>
+                                    <ul class="mb-0 mt-2">
+                                        <li>🗺️ <strong>الأسهل:</strong> اضغط على الخريطة مباشرة لتحديد الموقع</li>
+                                        <li>✏️ <strong>يدوياً:</strong> أدخل الإحداثيات في الحقول أدناه</li>
+                                        <li>📍 <strong>GPS:</strong> استخدم زر "احصل على موقعي الحالي" (يتطلب إذن المتصفح)</li>
+                                    </ul>
+                                </div>
+                                <div class="row g-2">
+                                    <div class="col-md-6">
+                                        <label class="form-label text-muted small">خط العرض (Latitude)</label>
+                                        <input type="number" name="latitude" class="form-control" placeholder="مثال: 33.2232" step="any">
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label text-muted small">خط الطول (Longitude)</label>
+                                        <input type="number" name="longitude" class="form-control" placeholder="مثال: 43.6793" step="any">
+                                    </div>
+                                </div>
+                                <div class="mt-2">
+                                    <a href="https://www.google.com/maps" target="_blank" class="btn btn-sm btn-link p-0">
+                                        <i class="fas fa-external-link-alt"></i> احصل على الإحداثيات من Google Maps
+                                    </a>
+                                </div>
+                            </div>
+                            <div class="col-12">
+                                <label class="form-label">اختر الموقع على الخريطة</label>
+                                <div class="map-container">
+                                    <div id="map" style="height: 350px; width: 100%; border-radius: 8px; border: 2px solid #ddd; background-color: #f8f9fa;"></div>
+                                    <div id="mapLoading" class="map-loading">
+                                        <div class="spinner-border text-primary" role="status">
+                                            <span class="visually-hidden">جاري تحميل الخريطة...</span>
+                                        </div>
+                                        <p class="mt-2">جاري تحميل الخريطة...</p>
+                                    </div>
+                                    <div id="mapError" class="alert alert-danger mt-2" style="display: none;"></div>
+                                </div>
+                                <div class="d-flex gap-2 mt-3 flex-wrap">
+                                    <button type="button" class="btn btn-outline-primary btn-sm" id="getCurrentLocation">
+                                        <i class="fas fa-location-arrow"></i> احصل على موقعي الحالي
+                                    </button>
+                                    <button type="button" class="btn btn-outline-success btn-sm" id="getCurrentLocationHighAccuracy" style="display: none;">
+                                        <i class="fas fa-crosshairs"></i> دقة عالية
+                                    </button>
+                                    <button type="button" class="btn btn-outline-secondary btn-sm" id="clearLocation">
+                                        <i class="fas fa-trash"></i> مسح الموقع
+                                    </button>
+                                    <button type="button" class="btn btn-outline-info btn-sm" id="resetMapView">
+                                        <i class="fas fa-sync"></i> إعادة تعيين العرض
+                                    </button>
+                                </div>
+                                <div class="mt-2">
+                                    <small class="text-muted">
+                                        <i class="fas fa-info-circle"></i> إذا واجهت مشاكل في GPS، يمكنك تحديد الموقع على الخريطة مباشرة أو إدخال الإحداثيات يدوياً. الموقع اختياري للوظيفة.
+                                    </small>
+                                </div>
+                            </div>
+                            <div class="col-12">
+                                <div class="form-check">
+                                    <input type="checkbox" name="is_remote" class="form-check-input" id="isRemote">
+                                    <label class="form-check-label" for="isRemote">عمل عن بعد</label>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <h5 class="mb-3">الراتب</h5>
+                        <div class="row g-3 mb-4">
+                            <div class="col-md-3">
+                                <label class="form-label">الحد الأدنى</label>
+                                <input type="number" name="salary_min" class="form-control" step="0.01">
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label">الحد الأقصى</label>
+                                <input type="number" name="salary_max" class="form-control" step="0.01">
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label">العملة</label>
+                                <select name="salary_currency" class="form-select">
+                                    <option value="IQD" selected>دينار عراقي</option>
+                                    <option value="USD">دولار أمريكي</option>
+                                </select>
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label">الفترة</label>
+                                <select name="salary_period" class="form-select">
+                                    <option value="hourly">بالساعة</option>
+                                    <option value="daily">يومي</option>
+                                    <option value="monthly" selected>شهري</option>
+                                    <option value="yearly">سنوي</option>
+                                </select>
+                            </div>
+                            <div class="col-12">
+                                <div class="form-check">
+                                    <input type="checkbox" name="is_salary_negotiable" class="form-check-input" id="isSalaryNegotiable">
+                                    <label class="form-check-label" for="isSalaryNegotiable">الراتب قابل للتفاوض</label>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <h5 class="mb-3">الوصف والمتطلبات</h5>
+                        <div class="row g-3 mb-4">
+                            <div class="col-12">
+                                <label class="form-label">وصف الوظيفة *</label>
+                                <textarea name="description" class="form-control" rows="4" required></textarea>
+                            </div>
+                            <div class="col-12">
+                                <label class="form-label">المتطلبات *</label>
+                                <textarea name="requirements" class="form-control" rows="4" required></textarea>
+                            </div>
+                            <div class="col-12">
+                                <label class="form-label">المسؤوليات *</label>
+                                <textarea name="responsibilities" class="form-control" rows="4" required></textarea>
+                            </div>
+                            <div class="col-12">
+                                <label class="form-label">المزايا</label>
+                                <textarea name="benefits" class="form-control" rows="3"></textarea>
+                            </div>
+                            <div class="col-12">
+                                <label class="form-label">المهارات المطلوبة *</label>
+                                <textarea name="skills" class="form-control" rows="2" placeholder="فصل المهارات بفاصلة (مثال: Python, Django, SQL)" required></textarea>
+                            </div>
+                        </div>
+                        
+                        <h5 class="mb-3">الصور</h5>
+                        <div class="row g-3 mb-4">
+                            <div class="col-12">
+                                <label class="form-label">صورة موقع العمل الرئيسية</label>
+                                <input type="file" name="workplace_image" class="form-control" accept="image/*">
+                                <small class="text-muted">صورة تعطي فكرة عن بيئة العمل</small>
+                            </div>
+                            <div class="col-12">
+                                <label class="form-label">صور إضافية</label>
+                                <input type="file" name="additional_images" class="form-control" accept="image/*" multiple>
+                                <small class="text-muted">يمكنك رفع عدة صور إضافية (مكتب، اجتماعات، إلخ)</small>
+                            </div>
+                        </div>
+                        
+                        <h5 class="mb-3">معلومات الاتصال</h5>
+                        <div class="row g-3 mb-4">
+                            <div class="col-md-4">
+                                <label class="form-label">اسم جهة الاتصال *</label>
+                                <input type="text" name="contact_name" class="form-control" required>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">البريد الإلكتروني *</label>
+                                <input type="email" name="contact_email" class="form-control" required>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">رقم الهاتف *</label>
+                                <input type="text" name="contact_phone" class="form-control" required>
+                            </div>
+                        </div>
+                        
+                        <h5 class="mb-3">مدة النشر</h5>
+                        <div class="card mb-4 bg-light">
+                            <div class="card-body">
+                                {% if broker and broker.subscription_plan %}
+                                    <div class="alert alert-info mb-3">
+                                        <strong>اشتراكك الحالي:</strong> {{ broker.subscription_plan.name }}
+                                        <br>
+                                        <strong>مدة النشر المتاحة:</strong> {{ available_days }} يوم
+                                    </div>
+                                {% else %}
+                                    <div class="alert alert-warning mb-3">
+                                        <strong>المستخدم العادي:</strong> مدة النشر الافتراضية {{ available_days }} يوم
+                                        <br>
+                                        <small>للحصول على مدة أطول، يمكنك الاشتراك في خطة دلال</small>
+                                    </div>
+                                {% endif %}
+                                
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <label class="form-label">مدة النشر بالأيام</label>
+                                        <input type="number" name="posting_duration_days" class="form-control" 
+                                               value="{{ available_days }}" min="1" max="{{ available_days }}" required>
+                                        <small class="text-muted">الحد الأقصى: {{ available_days }} يوم</small>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label">تاريخ الانتهاء المتوقع</label>
+                                        <input type="text" class="form-control" id="expectedExpiry" readonly>
+                                        <small class="text-muted">يتم حسابه تلقائياً</small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <h5 class="mb-3">تفاصيل إضافية</h5>
+                        <div class="row g-3 mb-4">
+                            <div class="col-md-6">
+                                <label class="form-label">لغة الوظيفة</label>
+                                <select name="language" class="form-select">
+                                    <option value="arabic">عربي</option>
+                                    <option value="english">إنجليزي</option>
+                                    <option value="both">عربي وإنجليزي</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">بيئة العمل</label>
+                                <select name="work_environment" class="form-select">
+                                    <option value="onsite">في الموقع</option>
+                                    <option value="remote">عن بعد</option>
+                                    <option value="hybrid">هجين</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">ساعات العمل</label>
+                                <input type="text" name="work_hours" class="form-control" placeholder="مثال: 9-5, 8-4, مرن">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">الحد الأدنى للتعليم</label>
+                                <select name="education_requirement" class="form-select">
+                                    <option value="not_required">غير مطلوب</option>
+                                    <option value="high_school">شهادة ثانوية</option>
+                                    <option value="diploma">دبلوم</option>
+                                    <option value="bachelor">بكالوريوس</option>
+                                    <option value="master">ماجستير</option>
+                                    <option value="phd">دكتوراه</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">سنوات الخبرة المطلوبة</label>
+                                <input type="number" name="experience_years" class="form-control" placeholder="عدد السنوات">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">عدد الموظفين المطلوبين</label>
+                                <input type="number" name="number_of_positions" class="form-control" value="1" min="1">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">الجنس المطلوب</label>
+                                <select name="gender_requirement" class="form-select">
+                                    <option value="not_specified">غير محدد</option>
+                                    <option value="male">ذكر</option>
+                                    <option value="female">أنثى</option>
+                                    <option value="both">الجنسين</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">تاريخ بدء العمل</label>
+                                <input type="date" name="start_date" class="form-control">
+                            </div>
+                        </div>
+                        
+                        <h5 class="mb-3">المزايا والبدلات</h5>
+                        <div class="row g-3 mb-4">
+                            <div class="col-md-4">
+                                <div class="form-check">
+                                    <input type="checkbox" name="has_health_insurance" class="form-check-input" id="hasHealthInsurance">
+                                    <label class="form-check-label" for="hasHealthInsurance">تأمين صحي</label>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="form-check">
+                                    <input type="checkbox" name="has_transport_allowance" class="form-check-input" id="hasTransportAllowance">
+                                    <label class="form-check-label" for="hasTransportAllowance">بدلة نقل</label>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="form-check">
+                                    <input type="checkbox" name="has_housing_allowance" class="form-check-input" id="hasHousingAllowance">
+                                    <label class="form-check-label" for="hasHousingAllowance">بدلة سكن</label>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <h5 class="mb-3">معلومات الاتصال</h5>
+                        <div class="row g-3 mb-4">
+                            <div class="col-md-6">
+                                <label class="form-label">رقم الهاتف للاتصال</label>
+                                <input type="tel" name="phone_number" class="form-control" placeholder="رقم الهاتف">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">البريد الإلكتروني للاتصال</label>
+                                <input type="email" name="email_address" class="form-control" placeholder="البريد الإلكتروني">
+                            </div>
+                            <div class="col-12">
+                                <label class="form-label">رابط التقديم الخارجي (اختياري)</label>
+                                <input type="url" name="external_application_url" class="form-control" placeholder="رابط التقديم إذا كان على موقع آخر">
+                            </div>
+                        </div>
+                        
+                        <h5 class="mb-3">الإعدادات</h5>
+                        <div class="row g-3 mb-4">
+                            <div class="col-md-6">
+                                <div class="form-check">
+                                    <input type="checkbox" name="is_featured" class="form-check-input" id="isFeatured">
+                                    <label class="form-check-label" for="isFeatured">مميز (سيظهر بشكل بارز)</label>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-check">
+                                    <input type="checkbox" name="is_urgent" class="form-check-input" id="isUrgent">
+                                    <label class="form-check-label" for="isUrgent">عادية (سيظهر كفرصة عادية)</label>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="d-flex gap-2">
+                            <button type="submit" class="btn btn-primary">نشر الوظيفة</button>
+                            <a href="{% url 'jobs' %}" class="btn btn-secondary">إلغاء</a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+// Handle custom category selection
+(function() {
+    const categorySelect = document.getElementById('categorySelect');
+    const customCategoryDiv = document.getElementById('customCategoryDiv');
+    
+    if (categorySelect) {
+        categorySelect.addEventListener('change', function() {
+            if (this.value === 'custom') {
+                customCategoryDiv.style.display = 'block';
+                customCategoryDiv.classList.remove('hidden');
+            } else {
+                customCategoryDiv.style.display = 'none';
+                customCategoryDiv.classList.add('hidden');
+            }
+        });
+    }
+    
+    // Handle location type toggle (inside/outside Iraq)
+    const locationRadios = document.querySelectorAll('input[name="location_type"]');
+    const governorateDiv = document.getElementById('governorateDiv');
+    const cityDiv = document.getElementById('cityDiv');
+    const countryDiv = document.getElementById('countryDiv');
+    const outsideCityDiv = document.getElementById('outsideCityDiv');
+    const otherCountryDiv = document.getElementById('otherCountryDiv');
+    const countrySelect = document.querySelector('select[name="country"]');
+    
+    // Initialize visibility based on default selection
+    function initializeLocationFields() {
+        const selectedLocation = document.querySelector('input[name="location_type"]:checked');
+        if (selectedLocation && selectedLocation.value === 'inside_iraq') {
+            // Show Iraq fields
+            if (governorateDiv) governorateDiv.style.display = 'block';
+            if (cityDiv) cityDiv.style.display = 'block';
+            if (countryDiv) countryDiv.style.display = 'none';
+            if (outsideCityDiv) outsideCityDiv.style.display = 'none';
+            if (otherCountryDiv) otherCountryDiv.style.display = 'none';
+            
+            // Set required attributes
+            const govSelect = document.querySelector('select[name="governorate"]');
+            const cityInput = document.querySelector('input[name="city"]');
+            const countrySelect = document.querySelector('select[name="country"]');
+            const outsideCityInput = document.querySelector('input[name="outside_city"]');
+            
+            if (govSelect) govSelect.required = true;
+            if (cityInput) cityInput.required = true;
+            if (countrySelect) countrySelect.required = false;
+            if (outsideCityInput) outsideCityInput.required = false;
+        } else {
+            // Show outside Iraq fields
+            if (governorateDiv) governorateDiv.style.display = 'none';
+            if (cityDiv) cityDiv.style.display = 'none';
+            if (countryDiv) countryDiv.style.display = 'block';
+            if (outsideCityDiv) outsideCityDiv.style.display = 'block';
+            if (otherCountryDiv) otherCountryDiv.style.display = 'none';
+            
+            // Set required attributes
+            const govSelect = document.querySelector('select[name="governorate"]');
+            const cityInput = document.querySelector('input[name="city"]');
+            const countrySelect = document.querySelector('select[name="country"]');
+            const outsideCityInput = document.querySelector('input[name="outside_city"]');
+            
+            if (govSelect) govSelect.required = false;
+            if (cityInput) cityInput.required = false;
+            if (countrySelect) countrySelect.required = true;
+            if (outsideCityInput) outsideCityInput.required = true;
+        }
+    }
+    
+    // Initialize on load
+    initializeLocationFields();
+    
+    if (locationRadios.length > 0) {
+        locationRadios.forEach(radio => {
+            radio.addEventListener('change', function() {
+                initializeLocationFields();
+            });
+        });
+    }
+    
+    // Handle "other" country selection
+    if (countrySelect) {
+        countrySelect.addEventListener('change', function() {
+            if (this.value === 'other') {
+                if (otherCountryDiv) otherCountryDiv.style.display = 'block';
+                const otherCountryInput = document.querySelector('input[name="other_country_name"]');
+                if (otherCountryInput) otherCountryInput.required = true;
+            } else {
+                if (otherCountryDiv) otherCountryDiv.style.display = 'none';
+                const otherCountryInput = document.querySelector('input[name="other_country_name"]');
+                if (otherCountryInput) otherCountryInput.required = false;
+            }
+        });
+    }
+    
+    // Initialize "other" country on load
+    if (countrySelect && countrySelect.value === 'other') {
+        if (otherCountryDiv) otherCountryDiv.style.display = 'block';
+        const otherCountryInput = document.querySelector('input[name="other_country_name"]');
+        if (otherCountryInput) otherCountryInput.required = true;
+    }
+    
+    // Calculate expected expiry date
+    const durationInput = document.querySelector('input[name="posting_duration_days"]');
+    const expiryInput = document.getElementById('expectedExpiry');
+    
+    if (durationInput && expiryInput) {
+        function calculateExpiry() {
+            const days = parseInt(durationInput.value) || 30;
+            const today = new Date();
+            const expiry = new Date(today);
+            expiry.setDate(today.getDate() + days);
+            
+            // Format date in Arabic
+            const options = { year: 'numeric', month: 'long', day: 'numeric' };
+            expiryInput.value = expiry.toLocaleDateString('ar-IQ', options);
+        }
+        
+        // Calculate on load
+        calculateExpiry();
+        
+        // Recalculate when duration changes
+        durationInput.addEventListener('input', calculateExpiry);
+    }
+    
+    // Initialize Map
+    const mapContainer = document.getElementById('map');
+    const mapLoading = document.getElementById('mapLoading');
+    const mapError = document.getElementById('mapError');
+    
+    if (mapContainer) {
+        // Show loading initially
+        if (mapLoading) {
+            mapLoading.classList.remove('hidden');
+        }
+        
+        // Wait for DOM to be fully loaded
+        setTimeout(function() {
+            try {
+                // Check if Leaflet is loaded
+                if (typeof L === 'undefined') {
+                    throw new Error('مكتبة Leaflet لم يتم تحميلها بشكل صحيح');
+                }
+                
+                // Default to Iraq coordinates
+                const defaultLat = 33.2232;
+                const defaultLng = 43.6793;
+                
+                // Initialize map
+                const map = L.map('map', {
+                    center: [defaultLat, defaultLng],
+                    zoom: 6,
+                    zoomControl: true,
+                    scrollWheelZoom: true
+                });
+                
+                // Add tile layer with better error handling
+                const tileLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                    attribution: '© OpenStreetMap contributors',
+                    maxZoom: 19,
+                    minZoom: 3,
+                    errorTileUrl: 'https://via.placeholder.com/256/cccccc/666666?text=Map+Error'
+                });
+                
+                tileLayer.addTo(map);
+                
+                // Handle tile layer errors
+                tileLayer.on('tileerror', function(error) {
+                    console.error('Tile error:', error);
+                });
+                
+                // Hide loading after map is initialized
+                if (mapLoading) {
+                    mapLoading.classList.add('hidden');
+                }
+                
+                let marker = null;
+                let currentCircle = null;
+                
+                // Add click event to map
+                map.on('click', function(e) {
+                    try {
+                        const { lat, lng } = e.latlng;
+                        
+                        // Update input fields
+                        const latInput = document.querySelector('input[name="latitude"]');
+                        const lngInput = document.querySelector('input[name="longitude"]');
+                        
+                        if (latInput && lngInput) {
+                            latInput.value = lat.toFixed(6);
+                            lngInput.value = lng.toFixed(6);
+                            
+                            // Add visual feedback
+                            latInput.style.borderColor = '#28a745';
+                            lngInput.style.borderColor = '#28a745';
+                            
+                            setTimeout(() => {
+                                latInput.style.borderColor = '';
+                                lngInput.style.borderColor = '';
+                            }, 1000);
+                        }
+                        
+                        // Remove old marker and circle
+                        if (marker) {
+                            map.removeLayer(marker);
+                        }
+                        if (currentCircle) {
+                            map.removeLayer(currentCircle);
+                        }
+                        
+                        // Add new marker
+                        marker = L.marker([lat, lng], {
+                            draggable: true,
+                            title: 'موقع العمل'
+                        }).addTo(map);
+                        
+                        // Add circle for better visibility
+                        currentCircle = L.circle([lat, lng], {
+                            color: '#0d9488',
+                            fillColor: '#0d9488',
+                            fillOpacity: 0.2,
+                            radius: 500
+                        }).addTo(map);
+                        
+                        // Handle marker drag
+                        marker.on('dragend', function(e) {
+                            const newPos = e.target.getLatLng();
+                            if (latInput && lngInput) {
+                                latInput.value = newPos.lat.toFixed(6);
+                                lngInput.value = newPos.lng.toFixed(6);
+                            }
+                            
+                            // Update circle position
+                            if (currentCircle) {
+                                currentCircle.setLatLng(newPos);
+                            }
+                        });
+                        
+                        // Show popup with coordinates
+                        marker.bindPopup(`
+                            <div style="text-align: center; direction: rtl;">
+                                <strong>موقع العمل</strong><br>
+                                خط العرض: ${lat.toFixed(6)}<br>
+                                خط الطول: ${lng.toFixed(6)}
+                            </div>
+                        `).openPopup();
+                        
+                    } catch (error) {
+                        console.error('Error handling map click:', error);
+                        showMapError('حدث خطأ عند تحديد الموقع: ' + error.message);
+                    }
+                });
+                
+                // Get current location button
+                const getCurrentLocationBtn = document.getElementById('getCurrentLocation');
+                const getCurrentLocationHighAccuracyBtn = document.getElementById('getCurrentLocationHighAccuracy');
+                
+                function getCurrentLocation(highAccuracy = false) {
+                    if (!navigator.geolocation) {
+                        showMapError('المتصفح لا يدعم تحديد الموقع الجغرافي');
+                        return;
+                    }
+                    
+                    const btn = highAccuracy ? getCurrentLocationHighAccuracyBtn : getCurrentLocationBtn;
+                    btn.disabled = true;
+                    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> جاري جلب الموقع...';
+                    
+                    navigator.geolocation.getCurrentPosition(
+                        function(position) {
+                            try {
+                                const lat = position.coords.latitude;
+                                const lng = position.coords.longitude;
+                                const accuracy = position.coords.accuracy;
+                                
+                                // Update input fields
+                                const latInput = document.querySelector('input[name="latitude"]');
+                                const lngInput = document.querySelector('input[name="longitude"]');
+                                
+                                if (latInput && lngInput) {
+                                    latInput.value = lat.toFixed(6);
+                                    lngInput.value = lng.toFixed(6);
+                                }
+                                
+                                // Update map view and marker
+                                map.setView([lat, lng], 16);
+                                
+                                // Remove old marker and circle
+                                if (marker) {
+                                    map.removeLayer(marker);
+                                }
+                                if (currentCircle) {
+                                    map.removeLayer(currentCircle);
+                                }
+                                
+                                // Add new marker
+                                marker = L.marker([lat, lng], {
+                                    draggable: true,
+                                    title: 'موقعك الحالي'
+                                }).addTo(map);
+                                
+                                // Add accuracy circle
+                                currentCircle = L.circle([lat, lng], {
+                                    color: '#dc3545',
+                                    fillColor: '#dc3545',
+                                    fillOpacity: 0.2,
+                                    radius: accuracy
+                                }).addTo(map);
+                                
+                                // Show popup with accuracy info
+                                marker.bindPopup(`
+                                    <div style="text-align: center; direction: rtl;">
+                                        <strong>موقعك الحالي</strong><br>
+                                        خط العرض: ${lat.toFixed(6)}<br>
+                                        خط الطول: ${lng.toFixed(6)}<br>
+                                        دقة الموقع: ${Math.round(accuracy)} متر
+                                    </div>
+                                `).openPopup();
+                                
+                                // Show high accuracy button if it was successful
+                                if (!highAccuracy && getCurrentLocationHighAccuracyBtn) {
+                                    getCurrentLocationHighAccuracyBtn.style.display = 'inline-block';
+                                }
+                                
+                                btn.disabled = false;
+                                btn.innerHTML = highAccuracy ? '<i class="fas fa-crosshairs"></i> دقة عالية' : '<i class="fas fa-location-arrow"></i> احصل على موقعي الحالي';
+                                
+                            } catch (error) {
+                                console.error('Error processing location:', error);
+                                showMapError('حدث خطأ في معالجة الموقع: ' + error.message);
+                                btn.disabled = false;
+                                btn.innerHTML = highAccuracy ? '<i class="fas fa-crosshairs"></i> دقة عالية' : '<i class="fas fa-location-arrow"></i> احصل على موقعي الحالي';
+                            }
+                        },
+                        function(error) {
+                            console.error('Geolocation error:', error);
+                            let errorMessage = 'حدث خطأ في جلب الموقع';
+                            
+                            switch(error.code) {
+                                case error.PERMISSION_DENIED:
+                                    errorMessage = 'تم رفض الوصول إلى الموقع الجغرافي.<br><small>يمكنك تحديد الموقع على الخريطة أو إدخال الإحداثيات يدوياً.</small>';
+                                    break;
+                                case error.POSITION_UNAVAILABLE:
+                                    errorMessage = 'معلومات الموقع غير متاحة حالياً.<br><small>يمكنك تحديد الموقع على الخريطة أو إدخال الإحداثيات يدوياً.</small>';
+                                    break;
+                                case error.TIMEOUT:
+                                    errorMessage = 'انتهت مهلة جلب الموقع.<br><small>يمكنك تحديد الموقع على الخريطة أو إدخال الإحداثيات يدوياً.</small>';
+                                    break;
+                                default:
+                                    errorMessage = 'حدث خطأ في جلب الموقع.<br><small>يمكنك تحديد الموقع على الخريطة أو إدخال الإحداثيات يدوياً.</small>';
+                            }
+                            
+                            showMapError(errorMessage);
+                            btn.disabled = false;
+                            btn.innerHTML = highAccuracy ? '<i class="fas fa-crosshairs"></i> دقة عالية' : '<i class="fas fa-location-arrow"></i> احصل على موقعي الحالي';
+                        },
+                        {
+                            enableHighAccuracy: highAccuracy,
+                            timeout: highAccuracy ? 30000 : 20000,  // 30s for high accuracy, 20s for normal
+                            maximumAge: 600000  // Accept locations up to 10 minutes old
+                        }
+                    );
+                }
+                
+                if (getCurrentLocationBtn) {
+                    getCurrentLocationBtn.addEventListener('click', function() {
+                        getCurrentLocation(false);
+                    });
+                }
+                
+                if (getCurrentLocationHighAccuracyBtn) {
+                    getCurrentLocationHighAccuracyBtn.addEventListener('click', function() {
+                        getCurrentLocation(true);
+                    });
+                }
+                
+                // Clear location button
+                const clearLocationBtn = document.getElementById('clearLocation');
+                if (clearLocationBtn) {
+                    clearLocationBtn.addEventListener('click', function() {
+                        // Clear input fields
+                        const latInput = document.querySelector('input[name="latitude"]');
+                        const lngInput = document.querySelector('input[name="longitude"]');
+                        
+                        if (latInput) {
+                            latInput.value = '';
+                            latInput.style.borderColor = '';
+                        }
+                        if (lngInput) {
+                            lngInput.value = '';
+                            lngInput.style.borderColor = '';
+                        }
+                        
+                        // Remove marker and circle
+                        if (marker) {
+                            map.removeLayer(marker);
+                            marker = null;
+                        }
+                        if (currentCircle) {
+                            map.removeLayer(currentCircle);
+                            currentCircle = null;
+                        }
+                        
+                        // Reset map view to default
+                        map.setView([defaultLat, defaultLng], 6);
+                    });
+                }
+                
+                // Reset map view button
+                const resetMapViewBtn = document.getElementById('resetMapView');
+                if (resetMapViewBtn) {
+                    resetMapViewBtn.addEventListener('click', function() {
+                        map.setView([defaultLat, defaultLng], 6);
+                    });
+                }
+                
+                // Add marker if coordinates are already set
+                const existingLat = document.querySelector('input[name="latitude"]').value;
+                const existingLng = document.querySelector('input[name="longitude"]').value;
+                
+                if (existingLat && existingLng) {
+                    const lat = parseFloat(existingLat);
+                    const lng = parseFloat(existingLng);
+                    
+                    if (!isNaN(lat) && !isNaN(lng)) {
+                        map.setView([lat, lng], 13);
+                        
+                        marker = L.marker([lat, lng], {
+                            draggable: true,
+                            title: 'موقع العمل'
+                        }).addTo(map);
+                        
+                        currentCircle = L.circle([lat, lng], {
+                            color: '#0d9488',
+                            fillColor: '#0d9488',
+                            fillOpacity: 0.2,
+                            radius: 500
+                        }).addTo(map);
+                        
+                        marker.bindPopup(`
+                            <div style="text-align: center; direction: rtl;">
+                                <strong>موقع العمل المحدد</strong><br>
+                                خط العرض: ${lat.toFixed(6)}<br>
+                                خط الطول: ${lng.toFixed(6)}
+                            </div>
+                        `);
+                    }
+                }
+                
+                // Helper functions
+                function showMapError(message) {
+                    if (mapError) {
+                        mapError.style.display = 'block';
+                        mapError.innerHTML = message;
+                    }
+                }
+                
+            } catch (error) {
+                console.error('Error initializing map:', error);
+                showMapError('خطأ في تهيئة الخريطة: ' + error.message);
+                
+                if (mapLoading) {
+                    mapLoading.classList.add('hidden');
+                }
+            }
+        }, 500); // Small delay to ensure DOM is ready
+    }
+})();
+</script>
+{% endblock %}

@@ -1,0 +1,700 @@
+{% extends 'properties/base.html' %}
+{% load custom_filters %}
+
+{% block title %}لوحة تحكم القناة - {{ channel.name }}{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-lg-12">
+            <div class="dashboard-header">
+                <h1>لوحة تحكم القناة</h1>
+                <p class="text-muted">{{ channel.name }}</p>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Quick Stats -->
+    <div class="row mb-4">
+        <div class="col-lg-3 col-md-6">
+            <div class="stat-card">
+                <div class="stat-icon followers">
+                    <i class="fas fa-users"></i>
+                </div>
+                <div class="stat-content">
+                    <div class="stat-value">{{ channel.followers_count|number_format }}</div>
+                    <div class="stat-label">المتابعين</div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-3 col-md-6">
+            <div class="stat-card">
+                <div class="stat-icon views">
+                    <i class="fas fa-eye"></i>
+                </div>
+                <div class="stat-content">
+                    <div class="stat-value">{{ channel.views_count|number_format }}</div>
+                    <div class="stat-label">المشاهدات</div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-3 col-md-6">
+            <div class="stat-card">
+                <div class="stat-icon properties">
+                    <i class="fas fa-home"></i>
+                </div>
+                <div class="stat-content">
+                    <div class="stat-value">{{ channel.properties_count|number_format }}</div>
+                    <div class="stat-label">العقارات</div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-3 col-md-6">
+            <div class="stat-card">
+                <div class="stat-icon rating">
+                    <i class="fas fa-star"></i>
+                </div>
+                <div class="stat-content">
+                    <div class="stat-value">{{ channel.rating }}/5</div>
+                    <div class="stat-label">التقييم</div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Subscription Status -->
+    <div class="row mb-4">
+        <div class="col-lg-12">
+            <div class="subscription-card">
+                <div class="subscription-header">
+                    <h3>حالة الاشتراك</h3>
+                    <span class="subscription-badge {% if subscription.is_active %}active{% else %}inactive{% endif %}">
+                        {% if subscription.is_active %}نشط{% else %}غير نشط{% endif %}
+                    </span>
+                </div>
+                
+                <div class="subscription-details">
+                    <div class="detail-item">
+                        <span class="label">الخطة:</span>
+                        <span class="value">{{ subscription.get_plan_display }}</span>
+                    </div>
+                    
+                    <div class="detail-item">
+                        <span class="label">دورة الفوترة:</span>
+                        <span class="value">{{ subscription.get_billing_cycle_display }}</span>
+                    </div>
+                    
+                    <div class="detail-item">
+                        <span class="label">الأيام المتبقية:</span>
+                        <span class="value">{{ subscription.days_remaining }} يوم</span>
+                    </div>
+                    
+                    <div class="detail-item">
+                        <span class="label">الحد الأقصى للمنشورات:</span>
+                        <span class="value">{{ subscription.max_posts_per_month }}/شهر</span>
+                    </div>
+                    
+                    <div class="detail-item">
+                        <span class="label">الحد الأقصى للعقارات:</span>
+                        <span class="value">{{ subscription.max_properties }}</span>
+                    </div>
+                </div>
+                
+                <div class="subscription-actions">
+                    <a href="{% url 'manage_channel_subscription' channel.id %}" class="btn btn-primary">
+                        <i class="fas fa-cog"></i> إدارة الاشتراك
+                    </a>
+                    {% if subscription.auto_renew %}
+                    <span class="auto-renew-badge">
+                        <i class="fas fa-sync"></i> تجديد تلقائي مفعل
+                    </span>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Main Dashboard Content -->
+    <div class="row">
+        <div class="col-lg-8">
+            <!-- Recent Content -->
+            <div class="dashboard-card">
+                <div class="card-header">
+                    <h3>المحتوى الأخير</h3>
+                    <a href="#" class="btn btn-sm btn-outline-primary">
+                        <i class="fas fa-plus"></i> إضافة محتوى
+                    </a>
+                </div>
+                
+                <div class="card-body">
+                    {% if recent_content %}
+                    <div class="content-list">
+                        {% for content in recent_content %}
+                        <div class="content-item">
+                            <div class="content-type-badge">
+                                <i class="fas fa-{{ content.get_content_type_display }}"></i>
+                                {{ content.get_content_type_display }}
+                            </div>
+                            
+                            <div class="content-info">
+                                <h4>{{ content.title }}</h4>
+                                <p class="content-preview">{{ content.content|truncatewords:10 }}</p>
+                                
+                                <div class="content-stats">
+                                    <span><i class="fas fa-eye"></i> {{ content.views_count }}</span>
+                                    <span><i class="fas fa-heart"></i> {{ content.likes_count }}</span>
+                                    <span><i class="fas fa-comment"></i> {{ content.comments_count }}</span>
+                                </div>
+                            </div>
+                            
+                            <div class="content-status status-{{ content.status }}">
+                                {{ content.get_status_display }}
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <div class="empty-state">
+                        <i class="fas fa-newspaper fa-3x text-muted mb-3"></i>
+                        <h3>لا يوجد محتوى</h3>
+                        <p class="text-muted">ابدأ بنشر محتوى لقناتك</p>
+                        <a href="{% url 'create_channel_content' channel.id %}" class="btn btn-primary">
+                            إنشاء محتوى جديد
+                        </a>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <!-- Live Streams -->
+            <div class="dashboard-card mt-4">
+                <div class="card-header">
+                    <h3>البث المباشر</h3>
+                    <a href="#" class="btn btn-sm btn-outline-primary">
+                        <i class="fas fa-video"></i> إنشاء بث
+                    </a>
+                </div>
+                
+                <div class="card-body">
+                    {% if live_streams %}
+                    <div class="streams-list">
+                        {% for stream in live_streams %}
+                        <div class="stream-item">
+                            <div class="stream-thumbnail">
+                                {% if stream.thumbnail %}
+                                <img src="{{ stream.thumbnail.url }}" alt="{{ stream.title }}">
+                                {% else %}
+                                <div class="thumbnail-placeholder">
+                                    <i class="fas fa-video"></i>
+                                </div>
+                                {% endif %}
+                                
+                                <div class="stream-status status-{{ stream.status }}">
+                                    {{ stream.get_status_display }}
+                                </div>
+                            </div>
+                            
+                            <div class="stream-info">
+                                <h4>{{ stream.title }}</h4>
+                                <p class="stream-preview">{{ stream.description|truncatewords:8 }}</p>
+                                
+                                <div class="stream-stats">
+                                    <span><i class="fas fa-users"></i> {{ stream.viewers_count }}</span>
+                                    <span><i class="fas fa-heart"></i> {{ stream.likes_count }}</span>
+                                    <span><i class="fas fa-clock"></i> {{ stream.duration_minutes }} دقيقة</span>
+                                </div>
+                            </div>
+                            
+                            <div class="stream-actions">
+                                {% if stream.status == 'scheduled' %}
+                                <a href="#" class="btn btn-sm btn-outline-primary">
+                                    <i class="fas fa-play"></i> بدء البث
+                                </a>
+                                {% elif stream.status == 'live' %}
+                                <a href="#" class="btn btn-sm btn-danger">
+                                    <i class="fas fa-stop"></i> إيقاف البث
+                                </a>
+                                {% endif %}
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <div class="empty-state">
+                        <i class="fas fa-video fa-3x text-muted mb-3"></i>
+                        <h3>لا يوجد بث مباشر</h3>
+                        <p class="text-muted">ابدأ ببث مباشر للتواصل مع متابعيك</p>
+                        <a href="{% url 'create_channel_broadcast' channel.id %}" class="btn btn-primary">
+                            إنشاء بث مباشر
+                        </a>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-4">
+            <!-- Analytics Summary -->
+            <div class="dashboard-card">
+                <div class="card-header">
+                    <h3>إحصائيات متقدمة</h3>
+                </div>
+                
+                <div class="card-body">
+                    <div class="analytics-grid">
+                        <div class="analytics-item">
+                            <div class="analytics-label">الزوار الفريدين</div>
+                            <div class="analytics-value">{{ analytics.unique_visitors|number_format }}</div>
+                        </div>
+                        
+                        <div class="analytics-item">
+                            <div class="analytics-label">معدل التفاعل</div>
+                            <div class="analytics-value">{{ analytics.calculate_engagement_rate }}%</div>
+                        </div>
+                        
+                        <div class="analytics-item">
+                            <div class="analytics-label">متوسط مدة الجلسة</div>
+                            <div class="analytics-value">{{ analytics.average_session_duration }} ثانية</div>
+                        </div>
+                        
+                        <div class="analytics-item">
+                            <div class="analytics-label">معدل النمو الشهري</div>
+                            <div class="analytics-value">{{ analytics.monthly_growth_rate }}%</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Collaborations -->
+            <div class="dashboard-card mt-4">
+                <div class="card-header">
+                    <h3>التعاونات</h3>
+                    <a href="{% url 'create_channel_collaboration' %}" class="btn btn-sm btn-outline-primary">
+                        <i class="fas fa-handshake"></i> طلب تعاون
+                    </a>
+                </div>
+                
+                <div class="card-body">
+                    {% if collaborations %}
+                    <div class="collaborations-list">
+                        {% for collab in collaborations %}
+                        <div class="collaboration-item">
+                            <div class="collaboration-type">
+                                <i class="fas fa-{{ collab.get_collaboration_type_display }}"></i>
+                                {{ collab.get_collaboration_type_display }}
+                            </div>
+                            
+                            <div class="collaboration-info">
+                                <h4>{{ collab.title }}</h4>
+                                <div class="collaboration-status status-{{ collab.status }}">
+                                    {{ collab.get_status_display }}
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <div class="empty-state small">
+                        <i class="fas fa-handshake fa-2x text-muted mb-2"></i>
+                        <h4>لا يوجد تعاونات</h4>
+                        <p class="text-muted">ابدأ بالتعاون مع قنوات أخرى</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <!-- Quick Actions -->
+            <div class="dashboard-card mt-4">
+                <div class="card-header">
+                    <h3>إجراءات سريعة</h3>
+                </div>
+                
+                <div class="card-body">
+                    <div class="quick-actions">
+                        <a href="{% url 'create_channel_content' channel.id %}" class="quick-action">
+                            <i class="fas fa-plus-circle"></i>
+                            <span>إضافة محتوى</span>
+                        </a>
+                        
+                        <a href="{% url 'create_channel_broadcast' channel.id %}" class="quick-action">
+                            <i class="fas fa-video"></i>
+                            <span>إنشاء بث مباشر</span>
+                        </a>
+                        
+                        <a href="{% url 'create_channel_collaboration' %}" class="quick-action">
+                            <i class="fas fa-handshake"></i>
+                            <span>طلب تعاون</span>
+                        </a>
+                        
+                        <a href="{% url 'manage_channel_subscription' channel.id %}" class="quick-action">
+                            <i class="fas fa-crown"></i>
+                            <span>ترقية الاشتراك</span>
+                        </a>
+                        
+                        <a href="#" class="quick-action">
+                            <i class="fas fa-chart-line"></i>
+                            <span>عرض التفاصيل</span>
+                        </a>
+                        
+                        <a href="#" class="quick-action">
+                            <i class="fas fa-cog"></i>
+                            <span>الإعدادات</span>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+.dashboard-header {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 30px;
+    border-radius: 10px;
+    margin-bottom: 30px;
+}
+
+.dashboard-header h1 {
+    margin: 0 0 10px 0;
+    font-size: 2em;
+}
+
+.dashboard-header p {
+    margin: 0;
+    opacity: 0.9;
+}
+
+.stat-card {
+    background: white;
+    border-radius: 10px;
+    padding: 20px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    transition: transform 0.3s;
+}
+
+.stat-card:hover {
+    transform: translateY(-5px);
+}
+
+.stat-icon {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5em;
+    color: white;
+}
+
+.stat-icon.followers { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
+.stat-icon.views { background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); }
+.stat-icon.properties { background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); }
+.stat-icon.rating { background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%); }
+
+.stat-content {
+    flex: 1;
+}
+
+.stat-value {
+    font-size: 1.8em;
+    font-weight: 600;
+    color: #333;
+}
+
+.stat-label {
+    color: #666;
+    font-size: 0.9em;
+}
+
+.subscription-card {
+    background: white;
+    border-radius: 10px;
+    padding: 25px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+}
+
+.subscription-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    padding-bottom: 15px;
+    border-bottom: 2px solid #f0f0f0;
+}
+
+.subscription-header h3 {
+    margin: 0;
+    color: #333;
+}
+
+.subscription-badge {
+    padding: 8px 16px;
+    border-radius: 20px;
+    font-weight: 600;
+    font-size: 0.9em;
+}
+
+.subscription-badge.active {
+    background: #28a745;
+    color: white;
+}
+
+.subscription-badge.inactive {
+    background: #dc3545;
+    color: white;
+}
+
+.subscription-details {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 15px;
+    margin-bottom: 20px;
+}
+
+.detail-item {
+    display: flex;
+    justify-content: space-between;
+    padding: 10px;
+    background: #f8f9fa;
+    border-radius: 8px;
+}
+
+.detail-item .label {
+    font-weight: 600;
+    color: #555;
+}
+
+.detail-item .value {
+    color: #333;
+    font-weight: 600;
+}
+
+.subscription-actions {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.auto-renew-badge {
+    background: #17a2b8;
+    color: white;
+    padding: 8px 16px;
+    border-radius: 20px;
+    font-size: 0.9em;
+    font-weight: 600;
+}
+
+.dashboard-card {
+    background: white;
+    border-radius: 10px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    margin-bottom: 20px;
+}
+
+.card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px;
+    border-bottom: 2px solid #f0f0f0;
+}
+
+.card-header h3 {
+    margin: 0;
+    color: #333;
+}
+
+.card-body {
+    padding: 20px;
+}
+
+.content-list, .streams-list, .collaborations-list {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.content-item, .stream-item, .collaboration-item {
+    display: flex;
+    gap: 15px;
+    padding: 15px;
+    background: #f8f9fa;
+    border-radius: 8px;
+    transition: background 0.3s;
+}
+
+.content-item:hover, .stream-item:hover, .collaboration-item:hover {
+    background: #f0f0f0;
+}
+
+.content-type-badge, .stream-status, .collaboration-type {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 12px;
+    border-radius: 20px;
+    font-size: 0.85em;
+    font-weight: 600;
+    color: white;
+    background: #667eea;
+}
+
+.content-info, .stream-info, .collaboration-info {
+    flex: 1;
+}
+
+.content-info h4, .stream-info h4, .collaboration-info h4 {
+    margin: 0 0 5px 0;
+    color: #333;
+}
+
+.content-preview, .stream-preview {
+    color: #666;
+    margin-bottom: 10px;
+    font-size: 0.9em;
+}
+
+.content-stats, .stream-stats {
+    display: flex;
+    gap: 15px;
+    font-size: 0.85em;
+    color: #666;
+}
+
+.content-status, .stream-status, .collaboration-status {
+    padding: 5px 10px;
+    border-radius: 15px;
+    font-size: 0.8em;
+    font-weight: 600;
+}
+
+.status-published, .status-live, .status-active {
+    background: #28a745;
+    color: white;
+}
+
+.status-scheduled, .status-pending {
+    background: #ffc107;
+    color: #333;
+}
+
+.status-draft, .status-ended, .status-cancelled {
+    background: #6c757d;
+    color: white;
+}
+
+.stream-thumbnail {
+    width: 100px;
+    height: 60px;
+    border-radius: 8px;
+    overflow: hidden;
+    position: relative;
+}
+
+.stream-thumbnail img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.thumbnail-placeholder {
+    width: 100%;
+    height: 100%;
+    background: #667eea;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+}
+
+.analytics-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 15px;
+}
+
+.analytics-item {
+    padding: 15px;
+    background: #f8f9fa;
+    border-radius: 8px;
+    text-align: center;
+}
+
+.analytics-label {
+    font-size: 0.85em;
+    color: #666;
+    margin-bottom: 5px;
+}
+
+.analytics-value {
+    font-size: 1.5em;
+    font-weight: 600;
+    color: #333;
+}
+
+.quick-actions {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+}
+
+.quick-action {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    padding: 15px;
+    background: #f8f9fa;
+    border-radius: 8px;
+    text-decoration: none;
+    color: #333;
+    transition: background 0.3s;
+}
+
+.quick-action:hover {
+    background: #667eea;
+    color: white;
+}
+
+.quick-action i {
+    font-size: 1.5em;
+}
+
+.quick-action span {
+    font-size: 0.85em;
+    font-weight: 600;
+}
+
+.empty-state {
+    text-align: center;
+    padding: 40px 20px;
+    background: #f8f9fa;
+    border-radius: 8px;
+}
+
+.empty-state.small {
+    padding: 20px 10px;
+}
+
+.empty-state h3, .empty-state h4 {
+    color: #333;
+    margin-bottom: 10px;
+}
+
+.empty-state p {
+    color: #666;
+    margin-bottom: 20px;
+}
+</style>
+{% endblock %}

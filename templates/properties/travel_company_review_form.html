@@ -1,0 +1,338 @@
+{% extends 'properties/base.html' %}
+
+{% block title %}{{ title }}{% endblock %}
+
+{% block content %}
+<div class="container">
+  <div class="row">
+    <div class="col-lg-8 mx-auto">
+      <div class="card">
+        <div class="card-header">
+          <h2>{{ title }}</h2>
+          <p class="text-muted">{{ company.name }}</p>
+        </div>
+        
+        <div class="card-body">
+          <form method="post">
+            {% csrf_token %}
+            
+            <!-- التقييم العام -->
+            <div class="form-section">
+              <h4>التقييم العام</h4>
+              <div class="form-group">
+                <label class="form-label">التقييم العام</label>
+                <div class="rating-stars" data-field="overall_rating">
+                  {% for i in "12345" %}
+                  <button type="button" class="star-btn" data-value="{{ i }}">★</button>
+                  {% endfor %}
+                </div>
+                <input type="hidden" name="overall_rating" id="overall_rating" value="{% if review %}{{ review.overall_rating }}{% else %}3{% endif %}">
+              </div>
+            </div>
+
+            <!-- التقييمات التفصيلية -->
+            <div class="form-section">
+              <h4>التقييمات التفصيلية</h4>
+              
+              <div class="row">
+                <div class="col-md-6">
+                  <div class="form-group">
+                    <label class="form-label">جودة الخدمة</label>
+                    <div class="rating-stars" data-field="service_quality">
+                      {% for i in "12345" %}
+                      <button type="button" class="star-btn" data-value="{{ i }}">★</button>
+                      {% endfor %}
+                    </div>
+                    <input type="hidden" name="service_quality" id="service_quality" value="{% if review %}{{ review.service_quality }}{% else %}3{% endif %}">
+                  </div>
+                </div>
+                
+                <div class="col-md-6">
+                  <div class="form-group">
+                    <label class="form-label">القيمة مقابل السعر</label>
+                    <div class="rating-stars" data-field="price_value">
+                      {% for i in "12345" %}
+                      <button type="button" class="star-btn" data-value="{{ i }}">★</button>
+                      {% endfor %}
+                    </div>
+                    <input type="hidden" name="price_value" id="price_value" value="{% if review %}{{ review.price_value }}{% else %}3{% endif %}">
+                  </div>
+                </div>
+              </div>
+
+              <div class="row">
+                <div class="col-md-6">
+                  <div class="form-group">
+                    <label class="form-label">الموثوقية</label>
+                    <div class="rating-stars" data-field="reliability">
+                      {% for i in "12345" %}
+                      <button type="button" class="star-btn" data-value="{{ i }}">★</button>
+                      {% endfor %}
+                    </div>
+                    <input type="hidden" name="reliability" id="reliability" value="{% if review %}{{ review.reliability }}{% else %}3{% endif %}">
+                  </div>
+                </div>
+                
+                <div class="col-md-6">
+                  <div class="form-group">
+                    <label class="form-label">خدمة العملاء</label>
+                    <div class="rating-stars" data-field="customer_service">
+                      {% for i in "12345" %}
+                      <button type="button" class="star-btn" data-value="{{ i }}">★</button>
+                      {% endfor %}
+                    </div>
+                    <input type="hidden" name="customer_service" id="customer_service" value="{% if review %}{{ review.customer_service }}{% else %}3{% endif %}">
+                  </div>
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label class="form-label">الراحة</label>
+                <div class="rating-stars" data-field="comfort">
+                  {% for i in "12345" %}
+                  <button type="button" class="star-btn" data-value="{{ i }}">★</button>
+                  {% endfor %}
+                </div>
+                <input type="hidden" name="comfort" id="comfort" value="{% if review %}{{ review.comfort }}{% else %}3{% endif %}">
+              </div>
+            </div>
+
+            <!-- تفاصيل الرحلة -->
+            <div class="form-section">
+              <h4>تفاصيل الرحلة</h4>
+              
+              <div class="form-group">
+                <label class="form-label">عنوان التقييم</label>
+                <input type="text" name="title" class="form-control" 
+                       value="{% if review %}{{ review.title }}{% endif %}"
+                       placeholder="أعطِ تقييمك عنواناً موجزاً" required>
+              </div>
+
+              <div class="form-group">
+                <label class="form-label">التعليق بالعربية</label>
+                <textarea name="comment" class="form-control" rows="4" 
+                          placeholder="اكتب تجربتك مع هذه الشركة...">{% if review %}{{ review.comment }}{% endif %}</textarea>
+              </div>
+
+              <div class="form-group">
+                <label class="form-label">التعليق بالإنجليزية (اختياري)</label>
+                <textarea name="comment_en" class="form-control" rows="4" 
+                          placeholder="Write your experience in English...">{% if review %}{{ review.comment_en }}{% endif %}</textarea>
+              </div>
+
+              <div class="row">
+                <div class="col-md-6">
+                  <div class="form-group">
+                    <label class="form-label">تاريخ الرحلة</label>
+                    <input type="date" name="trip_date" class="form-control" 
+                           value="{% if review and review.trip_date %}{{ review.trip_date|date:'Y-m-d' }}{% endif %}">
+                  </div>
+                </div>
+                
+                <div class="col-md-6">
+                  <div class="form-group">
+                    <label class="form-label">الوجهة</label>
+                    <input type="text" name="destination" class="form-control" 
+                           value="{% if review %}{{ review.destination }}{% endif %}"
+                           placeholder="إلى أين سافرت؟">
+                  </div>
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label class="form-label">نوع السفر</label>
+                <select name="travel_type" class="form-control">
+                  <option value="">اختر نوع السفر</option>
+                  <option value="domestic" {% if review and review.travel_type == 'domestic' %}selected{% endif %}>داخلي</option>
+                  <option value="international" {% if review and review.travel_type == 'international' %}selected{% endif %}>دولي</option>
+                  <option value="hajj" {% if review and review.travel_type == 'hajj' %}selected{% endif %}>حج</option>
+                  <option value="umrah" {% if review and review.travel_type == 'umrah' %}selected{% endif %}>عمرة</option>
+                  <option value="tourism" {% if review and review.travel_type == 'tourism' %}selected{% endif %}>سياحة</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="form-actions">
+              <button type="submit" class="btn btn-primary">
+                {% if review %}
+                تحديث التقييم
+                {% else %}
+                إرسال التقييم
+                {% endif %}
+              </button>
+              <a href="{% url 'travel_company_detail' company.pk %}" class="btn btn-secondary">إلغاء</a>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<style>
+.form-section {
+  margin-bottom: 2rem;
+  padding-bottom: 1.5rem;
+  border-bottom: 1px solid #eee;
+}
+
+.form-section:last-child {
+  border-bottom: none;
+}
+
+.form-section h4 {
+  color: #667eea;
+  margin-bottom: 1rem;
+  font-weight: 600;
+}
+
+.form-group {
+  margin-bottom: 1.5rem;
+}
+
+.form-label {
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+  display: block;
+  color: #333;
+}
+
+.form-control {
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  padding: 0.75rem;
+  font-size: 1rem;
+  transition: border-color 0.3s;
+}
+
+.form-control:focus {
+  border-color: #667eea;
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+.rating-stars {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.star-btn {
+  background: none;
+  border: none;
+  font-size: 2rem;
+  color: #ddd;
+  cursor: pointer;
+  transition: color 0.2s;
+  padding: 0;
+}
+
+.star-btn:hover,
+.star-btn.active {
+  color: #ffc107;
+}
+
+.form-actions {
+  display: flex;
+  gap: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid #eee;
+}
+
+.btn {
+  padding: 0.75rem 1.5rem;
+  border-radius: 6px;
+  font-weight: 600;
+  text-decoration: none;
+  cursor: pointer;
+  border: none;
+  transition: all 0.3s;
+}
+
+.btn-primary {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+}
+
+.btn-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+}
+
+.btn-secondary {
+  background: #6c757d;
+  color: white;
+}
+
+.btn-secondary:hover {
+  background: #5a6268;
+}
+
+.card {
+  border: none;
+  border-radius: 12px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  margin-top: 2rem;
+}
+
+.card-header {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  padding: 1.5rem;
+  border-radius: 12px 12px 0 0;
+}
+
+.card-header h2 {
+  margin: 0;
+  font-size: 1.5rem;
+}
+
+.card-header p {
+  margin: 0.5rem 0 0 0;
+  opacity: 0.9;
+}
+
+.card-body {
+  padding: 2rem;
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Handle star ratings
+    const ratingContainers = document.querySelectorAll('.rating-stars');
+    
+    ratingContainers.forEach(container => {
+        const field = container.dataset.field;
+        const hiddenInput = document.getElementById(field);
+        const stars = container.querySelectorAll('.star-btn');
+        
+        // Set initial state
+        if (hiddenInput) {
+            const currentValue = parseInt(hiddenInput.value);
+            stars.forEach((star, index) => {
+                if (index < currentValue) {
+                    star.classList.add('active');
+                }
+            });
+        }
+        
+        // Handle click
+        stars.forEach((star, index) => {
+            star.addEventListener('click', function() {
+                const value = index + 1;
+                hiddenInput.value = value;
+                
+                // Update visual state
+                stars.forEach((s, i) => {
+                    if (i < value) {
+                        s.classList.add('active');
+                    } else {
+                        s.classList.remove('active');
+                    }
+                });
+            });
+        });
+    });
+});
+</script>
+{% endblock %}

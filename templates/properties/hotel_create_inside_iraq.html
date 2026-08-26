@@ -1,0 +1,675 @@
+{% extends 'properties/base.html' %}
+{% load static %}
+{% block title %}نشر فندق داخل العراق{% endblock %}
+
+{% block extra_css %}
+<!-- Leaflet CSS -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<link rel="stylesheet" href="https://unpkg.com/leaflet-draw@1.0.4/dist/leaflet.draw.css" />
+
+<style>
+.hotel-form-container {
+    padding: 40px 20px;
+    background: #000000;
+    min-height: 100vh;
+}
+
+.form-card {
+    background-color: #000000;
+    border-radius: 20px;
+    padding: 40px;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+    border: 1px solid #333;
+}
+
+.form-header {
+    text-align: center;
+    margin-bottom: 40px;
+    padding-bottom: 30px;
+    border-bottom: 2px solid #333;
+}
+
+.form-title {
+    font-size: 32px;
+    font-weight: bold;
+    color: #ffffff;
+    margin-bottom: 10px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.form-subtitle {
+    font-size: 16px;
+    color: #888888;
+    margin: 0;
+}
+
+.section-title {
+    font-size: 20px;
+    font-weight: bold;
+    color: #ffffff;
+    margin-bottom: 25px;
+    padding-bottom: 15px;
+    border-bottom: 2px solid #333;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.section-icon {
+    color: #667eea;
+    font-size: 24px;
+}
+
+.form-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 20px;
+}
+
+.form-group {
+    margin-bottom: 25px;
+}
+
+.form-group.full-width {
+    grid-column: 1 / -1;
+}
+
+.form-label {
+    font-weight: 600;
+    margin-bottom: 8px;
+    color: #ffffff;
+    display: block;
+}
+
+.required {
+    color: #e74c3c;
+}
+
+.form-control {
+    background-color: #000000 !important;
+    color: #ffffff !important;
+    border-color: #333 !important;
+    padding: 12px 15px;
+    border: 2px solid #333;
+    border-radius: 10px;
+    font-size: 15px;
+    transition: all 0.3s;
+}
+
+.form-control:focus {
+    background-color: #111111 !important;
+    border-color: #667eea !important;
+    color: #ffffff !important;
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+    outline: none;
+}
+
+select.form-control option {
+    background-color: #000000;
+    color: #ffffff;
+}
+
+.form-navigation {
+    display: flex;
+    justify-content: center;
+    gap: 15px;
+    margin-top: 40px;
+    padding-top: 30px;
+    border-top: 2px solid #333;
+}
+
+.btn {
+    padding: 12px 30px;
+    border-radius: 10px;
+    font-weight: 600;
+    font-size: 16px;
+    border: none;
+    cursor: pointer;
+    transition: all 0.3s;
+    display: inline-flex;
+    align-items: center;
+}
+
+.btn-primary {
+    background: linear-gradient(135deg, #ff8c00 0%, #ff6600 100%);
+    color: white;
+}
+
+.btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(255, 140, 0, 0.4);
+}
+
+.btn-secondary {
+    background: #333;
+    color: #ffffff;
+}
+
+.btn-secondary:hover {
+    background: #444;
+}
+
+.checkbox-group {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 10px;
+}
+
+.checkbox-group label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+    padding: 8px;
+    border: 1px solid #333;
+    border-radius: 8px;
+    transition: all 0.3s;
+    color: #ffffff;
+}
+
+.checkbox-group label:hover {
+    background: #111111;
+    border-color: #667eea;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="hotel-form-container">
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-12">
+                <div class="form-card">
+                    <div class="form-header">
+                        <h1 class="form-title">نشر فندق داخل العراق</h1>
+                        <p class="form-subtitle">أكمل جميع المعلومات المطلوبة لنشر الفندق داخل العراق</p>
+                    </div>
+
+                    <form method="post" enctype="multipart/form-data" class="hotel-form">
+                        {% csrf_token %}
+                        
+                        <!-- Basic Property Information -->
+                        <h3 class="section-title">
+                            <i class="fas fa-info-circle section-icon"></i>
+                            المعلومات الأساسية
+                        </h3>
+                        
+                        <div class="form-grid">
+                            <div class="form-group full-width">
+                                <label for="{{ property_form.title.id_for_label }}" class="form-label">عنوان الفندق <span class="required">*</span></label>
+                                {{ property_form.title }}
+                            </div>
+                            
+                            <div class="form-group full-width">
+                                <label for="{{ property_form.description.id_for_label }}" class="form-label">وصف الفندق <span class="required">*</span></label>
+                                {{ property_form.description }}
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="{{ property_form.governorate.id_for_label }}" class="form-label">المحافظة <span class="required">*</span></label>
+                                {{ property_form.governorate }}
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="{{ property_form.city.id_for_label }}" class="form-label">المدينة <span class="required">*</span></label>
+                                {{ property_form.city }}
+                            </div>
+                            
+                            <div class="form-group">
+                                <label class="form-label">القضاء</label>
+                                <input type="text" name="district" class="form-control">
+                            </div>
+                            
+                            <div class="form-group">
+                                <label class="form-label">الناحية</label>
+                                <input type="text" name="subdistrict" class="form-control">
+                            </div>
+                            
+                            <div class="form-group">
+                                <label class="form-label">المنطقة</label>
+                                <input type="text" name="area" class="form-control">
+                            </div>
+                            
+                            <div class="form-group">
+                                <label class="form-label">الحي</label>
+                                <input type="text" name="neighborhood" class="form-control">
+                            </div>
+                            
+                            <div class="form-group">
+                                <label class="form-label">المحلة</label>
+                                <input type="text" name="mahalla" class="form-control">
+                            </div>
+                            
+                            <div class="form-group">
+                                <label class="form-label">البلوك</label>
+                                <input type="text" name="block" class="form-control">
+                            </div>
+                            
+                            <div class="form-group">
+                                <label class="form-label">الشارع</label>
+                                <input type="text" name="street" class="form-control">
+                            </div>
+                            
+                            <div class="form-group">
+                                <label class="form-label">الزقاق</label>
+                                <input type="text" name="alley" class="form-control">
+                            </div>
+                            
+                            <div class="form-group">
+                                <label class="form-label">رقم الدار</label>
+                                <input type="text" name="house_number" class="form-control">
+                            </div>
+                            
+                            <div class="form-group">
+                                <label class="form-label">رقم العقار</label>
+                                <input type="text" name="property_number" class="form-control">
+                            </div>
+                            
+                            <div class="form-group">
+                                <label class="form-label">أقرب نقطة دالة</label>
+                                <input type="text" name="landmark" class="form-control">
+                            </div>
+                            
+                            <div class="form-group full-width">
+                                <label for="{{ property_form.address.id_for_label }}" class="form-label">العنوان التفصيلي <span class="required">*</span></label>
+                                {{ property_form.address }}
+                            </div>
+                            
+                            <!-- GPS Location -->
+                            <h3 class="section-title">
+                                <i class="fas fa-map-marker-alt section-icon"></i>
+                                الموقع الجغرافي
+                            </h3>
+                            
+                            <div class="form-grid">
+                                <div class="form-group">
+                                    <label class="form-label">خط العرض</label>
+                                    <div style="display: flex; gap: 10px;">
+                                        <input type="number" step="any" name="latitude" class="form-control" placeholder="مثال: 33.3152" id="latitude-input-hotel">
+                                        <button type="button" onclick="getLocationGPSHotel()" class="btn btn-secondary" style="white-space: nowrap;">
+                                            📍 GPS
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <div class="form-group">
+                                    <label class="form-label">خط الطول</label>
+                                    <input type="number" step="any" name="longitude" class="form-control" placeholder="مثال: 44.3661" id="longitude-input-hotel">
+                                </div>
+
+                                <div class="form-group full-width">
+                                    <label class="form-label">معاينة الموقع على الخريطة</label>
+                                    <div style="position: relative;">
+                                        <div id="location-preview-map-hotel" style="height: 300px; border-radius: 10px; border: 1px solid #333;"></div>
+                                        <div style="position: absolute; top: 10px; right: 10px; z-index: 1000; display: flex; gap: 5px;">
+                                            <button type="button" class="btn btn-secondary" onclick="changeMapLayer('hotel', 'osm')" style="padding: 5px 10px; font-size: 12px;">OpenStreetMap</button>
+                                            <button type="button" class="btn btn-secondary" onclick="changeMapLayer('hotel', 'satellite')" style="padding: 5px 10px; font-size: 12px;">Satellite</button>
+                                            <button type="button" class="btn btn-secondary" onclick="changeMapLayer('hotel', 'terrain')" style="padding: 5px 10px; font-size: 12px;">Terrain</button>
+                                            <button type="button" class="btn btn-secondary" onclick="changeMapLayer('hotel', 'dark')" style="padding: 5px 10px; font-size: 12px;">Dark</button>
+                                            <button type="button" class="btn btn-secondary" onclick="toggleMapFullscreen('hotel')" style="padding: 5px 10px; font-size: 12px;">⛶</button>
+                                        </div>
+                                    </div>
+                                    <p style="font-size: 0.8rem; color: #888888; margin-top: 5px;">
+                                        * اضغط على "GPS" لتحديد موقعك تلقائياً أو انقر على الخريطة لتحديد الموقع يدوياً
+                                    </p>
+                                </div>
+
+                                <div class="form-group full-width">
+                                    <label class="form-label" style="display: flex; align-items: center; gap: 10px; cursor: pointer;">
+                                        <input type="checkbox" name="enable_gps" id="enable-gps-hotel" style="width: 20px; height: 20px;">
+                                        <span>📍 نشر GPS - إظهار الموقع على خريطة المنصة</span>
+                                    </label>
+                                    <p style="font-size: 0.8rem; color: #888888; margin-top: 5px;">
+                                        عند تفعيل هذا الخيار، سيظهر موقع الفندق على خريطة المنصة الرئيسية
+                                    </p>
+                                </div>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="{{ property_form.price.id_for_label }}" class="form-label">السعر <span class="required">*</span></label>
+                                {{ property_form.price }}
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="{{ property_form.currency.id_for_label }}" class="form-label">العملة <span class="required">*</span></label>
+                                {{ property_form.currency }}
+                            </div>
+                        </div>
+                        
+                        <!-- Hotel Specific Information -->
+                        <h3 class="section-title">
+                            <i class="fas fa-hotel section-icon"></i>
+                            معلومات الفندق
+                        </h3>
+                        
+                        <div class="form-grid">
+                            <div class="form-group full-width">
+                                <label for="{{ hotel_form.hotel_name.id_for_label }}" class="form-label">اسم الفندق <span class="required">*</span></label>
+                                {{ hotel_form.hotel_name }}
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="{{ hotel_form.star_rating.id_for_label }}" class="form-label">عدد النجوم <span class="required">*</span></label>
+                                {{ hotel_form.star_rating }}
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="{{ hotel_form.classification.id_for_label }}" class="form-label">التصنيف</label>
+                                {{ hotel_form.classification }}
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="{{ hotel_form.total_rooms.id_for_label }}" class="form-label">عدد الغرف <span class="required">*</span></label>
+                                {{ hotel_form.total_rooms }}
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="{{ hotel_form.suites.id_for_label }}" class="form-label">الأجنحة</label>
+                                {{ hotel_form.suites }}
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="{{ hotel_form.family_rooms.id_for_label }}" class="form-label">الغرف العائلية</label>
+                                {{ hotel_form.family_rooms }}
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="{{ hotel_form.price_per_night.id_for_label }}" class="form-label">السعر لليلة</label>
+                                {{ hotel_form.price_per_night }}
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="{{ hotel_form.currency.id_for_label }}" class="form-label">عملة السعر</label>
+                                {{ hotel_form.currency }}
+                            </div>
+                            
+                            <div class="form-group full-width">
+                                <label for="{{ hotel_form.booking_url.id_for_label }}" class="form-label">رابط الحجز</label>
+                                {{ hotel_form.booking_url }}
+                            </div>
+                        </div>
+                        
+                        <!-- Hotel Services -->
+                        <h3 class="section-title">
+                            <i class="fas fa-concierge-bell section-icon"></i>
+                            الخدمات والمميزات
+                        </h3>
+                        
+                        <div class="form-grid">
+                            <div class="form-group full-width">
+                                <label class="form-label">الخدمات المتوفرة</label>
+                                <div class="checkbox-group">
+                                    <label>
+                                        {{ hotel_form.has_restaurant }} مطاعم
+                                    </label>
+                                    <label>
+                                        {{ hotel_form.has_cafe }} مقاهي
+                                    </label>
+                                    <label>
+                                        {{ hotel_form.has_pool }} مسابح
+                                    </label>
+                                    <label>
+                                        {{ hotel_form.has_gym }} نادي رياضي
+                                    </label>
+                                    <label>
+                                        {{ hotel_form.has_spa }} سبا
+                                    </label>
+                                    <label>
+                                        {{ hotel_form.has_conference_hall }} قاعة مؤتمرات
+                                    </label>
+                                    <label>
+                                        {{ hotel_form.direct_booking }} الحجز المباشر
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Submit Buttons -->
+                        <div class="form-navigation">
+                            <a href="{% url 'category_hotels' %}" class="btn btn-secondary">
+                                <i class="fas fa-arrow-right me-2"></i>إلغاء
+                            </a>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-check me-2"></i>نشر الفندق
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Leaflet JS -->
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://unpkg.com/leaflet-draw@1.0.4/dist/leaflet.draw.js"></script>
+
+<script>
+// GPS and Map Functions for Hotel
+let locationMapHotel = null;
+let locationMarkerHotel = null;
+let currentLayerHotel = null;
+
+// Change map layer
+function changeMapLayer(mapType, layerType) {
+  const map = locationMapHotel;
+  const containerId = 'location-preview-map-hotel';
+  
+  if (!map) return;
+  
+  // Remove existing tile layer
+  if (currentLayerHotel) {
+    map.removeLayer(currentLayerHotel);
+  }
+  
+  // Add new layer
+  let newLayer;
+  switch(layerType) {
+    case 'osm':
+      newLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '&copy; OpenStreetMap contributors'
+      });
+      break;
+    case 'satellite':
+      newLayer = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+        attribution: 'Tiles &copy; Esri'
+      });
+      break;
+    case 'terrain':
+      newLayer = L.tileLayer('https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png', {
+        attribution: '&copy; OpenTopoMap'
+      });
+      break;
+    case 'dark':
+      newLayer = L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}{r}.png', {
+        attribution: '&copy; CARTO'
+      });
+      break;
+    default:
+      newLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '&copy; OpenStreetMap contributors'
+      });
+  }
+  
+  newLayer.addTo(map);
+  currentLayerHotel = newLayer;
+}
+
+// Toggle map fullscreen
+function toggleMapFullscreen(mapType) {
+  const containerId = 'location-preview-map-hotel';
+  const mapContainer = document.getElementById(containerId);
+  
+  if (!mapContainer) return;
+  
+  if (!document.fullscreenElement) {
+    mapContainer.requestFullscreen().then(() => {
+      mapContainer.style.height = '100vh';
+      mapContainer.style.borderRadius = '0';
+      setTimeout(() => {
+        if (locationMapHotel) locationMapHotel.invalidateSize();
+      }, 100);
+    }).catch(err => {
+      console.error('Error entering fullscreen:', err);
+    });
+  } else {
+    document.exitFullscreen().then(() => {
+      mapContainer.style.height = '300px';
+      mapContainer.style.borderRadius = '10px';
+      setTimeout(() => {
+        if (locationMapHotel) locationMapHotel.invalidateSize();
+      }, 100);
+    });
+  }
+}
+
+// Get current GPS location for Hotel
+function getLocationGPSHotel() {
+  const enableGPS = document.getElementById('enable-gps-hotel');
+  if (!enableGPS || !enableGPS.checked) {
+    alert('يرجى تفعيل خيار "نشر GPS" أولاً لتحديد الموقع');
+    return;
+  }
+  
+  if (navigator.geolocation) {
+    const gpsBtn = document.querySelector('button[onclick="getLocationGPSHotel()"]');
+    if (gpsBtn) {
+      gpsBtn.textContent = '⏳ جاري تحديد الموقع...';
+      gpsBtn.disabled = true;
+    }
+    
+    navigator.geolocation.getCurrentPosition(
+      function(position) {
+        const lat = position.coords.latitude;
+        const lng = position.coords.longitude;
+        
+        document.getElementById('latitude-input-hotel').value = lat.toFixed(6);
+        document.getElementById('longitude-input-hotel').value = lng.toFixed(6);
+        
+        if (locationMapHotel && locationMarkerHotel) {
+          locationMapHotel.setView([lat, lng], 15);
+          locationMarkerHotel.setLatLng([lat, lng]);
+        }
+        
+        if (gpsBtn) {
+          gpsBtn.textContent = '📍 GPS';
+          gpsBtn.disabled = false;
+        }
+        
+        alert('تم تحديد الموقع بنجاح!');
+      },
+      function(error) {
+        if (gpsBtn) {
+          gpsBtn.textContent = '📍 GPS';
+          gpsBtn.disabled = false;
+        }
+        
+        let errorMessage = 'تعذر تحديد الموقع. ';
+        switch(error.code) {
+          case error.PERMISSION_DENIED:
+            errorMessage += 'يرجى السماح بالوصول إلى الموقع من إعدادات المتصفح.';
+            break;
+          case error.POSITION_UNAVAILABLE:
+            errorMessage += 'معلومات الموقع غير متوفرة. يرجى استخدام تحديد الموقع اليدوي.';
+            break;
+          case error.TIMEOUT:
+            errorMessage += 'انتهت مهلة تحديد الموقع. يرجى:\n1. التأكد من اتصال الإنترنت\n2. الانتقال إلى مكان مفتوح\n3. أو استخدام تحديد الموقع اليدوي بالنقر على الخريطة';
+            break;
+          default:
+            errorMessage += 'حدث خطأ غير معروف: ' + error.message;
+        }
+        alert(errorMessage);
+      },
+      {
+        enableHighAccuracy: true,
+        timeout: 30000,
+        maximumAge: 0
+      }
+    );
+  } else {
+    alert('المتصفح لا يدعم تحديد الموقع الجغرافي. يرجى استخدام تحديد الموقع اليدوي بالنقر على الخريطة.');
+  }
+}
+
+// Set location manually from map click
+function setManualLocationHotel(lat, lng) {
+  document.getElementById('latitude-input-hotel').value = lat.toFixed(6);
+  document.getElementById('longitude-input-hotel').value = lng.toFixed(6);
+  
+  if (locationMarkerHotel) {
+    locationMarkerHotel.setLatLng([lat, lng]);
+  }
+}
+
+// Initialize location preview map for Hotel
+function initLocationMapHotel() {
+  if (document.getElementById('location-preview-map-hotel')) {
+    const defaultCenter = [33.3152, 44.3661];
+    
+    locationMapHotel = L.map('location-preview-map-hotel', {
+      center: defaultCenter,
+      zoom: 6,
+      zoomControl: true
+    });
+    
+    currentLayerHotel = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '© OpenStreetMap contributors'
+    }).addTo(locationMapHotel);
+    
+    const drawnItems = new L.FeatureGroup();
+    locationMapHotel.addLayer(drawnItems);
+    
+    const drawControl = new L.Control.Draw({
+      draw: {
+        polygon: {
+          allowIntersection: false,
+          showArea: true
+        },
+        rectangle: true,
+        circle: false,
+        circlemarker: false,
+        marker: true,
+        polyline: false
+      },
+      edit: {
+        featureGroup: drawnItems,
+        remove: true
+      }
+    });
+    locationMapHotel.addControl(drawControl);
+    
+    locationMapHotel.on(L.Draw.Event.CREATED, function (e) {
+      const layer = e.layer;
+      drawnItems.addLayer(layer);
+      
+      if (e.layerType === 'marker') {
+        const latlng = layer.getLatLng();
+        setManualLocationHotel(latlng.lat, latlng.lng);
+      }
+    });
+    
+    locationMapHotel.on('click', function(e) {
+      setManualLocationHotel(e.latlng.lat, e.latlng.lng);
+    });
+    
+    locationMarkerHotel = L.marker(defaultCenter, {
+      draggable: true
+    }).addTo(locationMapHotel);
+    
+    locationMarkerHotel.on('dragend', function(e) {
+      const position = e.target.getLatLng();
+      setManualLocationHotel(position.lat, position.lng);
+    });
+  }
+}
+
+// Initialize on page load
+document.addEventListener('DOMContentLoaded', function() {
+  initLocationMapHotel();
+});
+</script>
+
+{% endblock %}

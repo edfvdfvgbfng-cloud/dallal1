@@ -1,0 +1,1020 @@
+{% extends 'properties/base.html' %}
+{% load static %}
+
+{% block title %}نشر فرصة عمل جديدة{% endblock %}
+
+{% block content %}
+<div class="enhanced-job-form-container">
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-12">
+                <div class="form-card">
+                    <div class="form-header">
+                        <h1 class="form-title">نشر فرصة عمل جديدة</h1>
+                        <p class="form-subtitle">أكمل جميع المعلومات المطلوبة لنشر فرصة العمل</p>
+                        
+                        <div class="progress-indicator">
+                            <div class="progress-step active" data-step="1">
+                                <span class="step-number">1</span>
+                                <span class="step-label">المعلومات الأساسية</span>
+                            </div>
+                            <div class="progress-step" data-step="2">
+                                <span class="step-number">2</span>
+                                <span class="step-label">تفاصيل الوظيفة</span>
+                            </div>
+                            <div class="progress-step" data-step="3">
+                                <span class="step-number">3</span>
+                                <span class="step-label">الموقع والراتب</span>
+                            </div>
+                            <div class="progress-step" data-step="4">
+                                <span class="step-number">4</span>
+                                <span class="step-label">المتطلبات والمهارات</span>
+                            </div>
+                            <div class="progress-step" data-step="5">
+                                <span class="step-number">5</span>
+                                <span class="step-label">اتصال ونشر</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <form method="post" enctype="multipart/form-data" class="enhanced-job-form" id="jobForm">
+                        {% csrf_token %}
+                        
+                        {% if form.errors %}
+                        <div class="alert alert-danger">
+                            <div class="alert-icon">
+                                <i class="fas fa-exclamation-triangle"></i>
+                            </div>
+                            <div class="alert-content">
+                                <h4>يرجى تصحيح الأخطاء التالية:</h4>
+                                <ul>
+                                    {% for field, errors in form.errors.items %}
+                                        {% for error in errors %}
+                                            <li>{{ field }}: {{ error }}</li>
+                                        {% endfor %}
+                                    {% endfor %}
+                                </ul>
+                            </div>
+                        </div>
+                        {% endif %}
+                        
+                        <!-- Step 1: Basic Information -->
+                        <div class="form-section active" data-section="1">
+                            <h3 class="section-title">
+                                <i class="fas fa-info-circle section-icon"></i>
+                                المعلومات الأساسية
+                            </h3>
+                            
+                            <div class="form-grid">
+                                <div class="form-group full-width">
+                                    <label for="{{ form.title.id_for_label }}" class="form-label">المسمى الوظيفي <span class="required">*</span></label>
+                                    {{ form.title }}
+                                </div>
+                                
+                                <div class="form-group full-width">
+                                    <label for="{{ form.company_name.id_for_label }}" class="form-label">اسم الشركة <span class="required">*</span></label>
+                                    {{ form.company_name }}
+                                </div>
+                                
+                                <div class="form-group full-width">
+                                    <label for="{{ form.company_description.id_for_label }}" class="form-label">وصف الشركة</label>
+                                    {{ form.company_description }}
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label for="{{ form.category.id_for_label }}" class="form-label">التصنيف</label>
+                                    {{ form.category }}
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label for="{{ form.job_type.id_for_label }}" class="form-label">نوع الوظيفة <span class="required">*</span></label>
+                                    {{ form.job_type }}
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label for="{{ form.experience_level.id_for_label }}" class="form-label">مستوى الخبرة <span class="required">*</span></label>
+                                    {{ form.experience_level }}
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label for="{{ form.number_of_positions.id_for_label }}" class="form-label">عدد الموظفين المطلوبين</label>
+                                    {{ form.number_of_positions }}
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label for="{{ form.start_date.id_for_label }}" class="form-label">تاريخ بدء العمل</label>
+                                    {{ form.start_date }}
+                                </div>
+                                
+                                <div class="form-group full-width">
+                                    <label for="{{ form.company_logo.id_for_label }}" class="form-label">شعار الشركة</label>
+                                    {{ form.company_logo }}
+                                </div>
+                                
+                                <div class="form-group full-width">
+                                    <label for="{{ form.workplace_image.id_for_label }}" class="form-label">صورة موقع العمل</label>
+                                    {{ form.workplace_image }}
+                                </div>
+                                
+                                <div class="form-group full-width">
+                                    <label for="{{ form.additional_images.id_for_label }}" class="form-label">صور إضافية</label>
+                                    {{ form.additional_images }}
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Step 2: Job Details -->
+                        <div class="form-section" data-section="2">
+                            <h3 class="section-title">
+                                <i class="fas fa-briefcase section-icon"></i>
+                                تفاصيل الوظيفة
+                            </h3>
+                            
+                            <div class="form-grid">
+                                <div class="form-group full-width">
+                                    <label for="{{ form.description.id_for_label }}" class="form-label">وصف الوظيفة <span class="required">*</span></label>
+                                    {{ form.description }}
+                                </div>
+                                
+                                <div class="form-group full-width">
+                                    <label for="{{ form.responsibilities.id_for_label }}" class="form-label">المسؤوليات <span class="required">*</span></label>
+                                    {{ form.responsibilities }}
+                                </div>
+                                
+                                <div class="form-group full-width">
+                                    <label for="{{ form.requirements.id_for_label }}" class="form-label">المتطلبات <span class="required">*</span></label>
+                                    {{ form.requirements }}
+                                </div>
+                                
+                                <div class="form-group full-width">
+                                    <label for="{{ form.benefits.id_for_label }}" class="form-label">المزايا</label>
+                                    {{ form.benefits }}
+                                </div>
+                                
+                                <div class="form-group full-width">
+                                    <label for="{{ form.skills.id_for_label }}" class="form-label">المهارات المطلوبة <span class="required">*</span></label>
+                                    {{ form.skills }}
+                                    <small class="form-text text-muted">مفصولة بفواصل (مثال: Python, Django, JavaScript)</small>
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label for="{{ form.language.id_for_label }}" class="form-label">لغة الوظيفة</label>
+                                    {{ form.language }}
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label for="{{ form.work_environment.id_for_label }}" class="form-label">بيئة العمل</label>
+                                    {{ form.work_environment }}
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label for="{{ form.work_hours.id_for_label }}" class="form-label">ساعات العمل</label>
+                                    {{ form.work_hours }}
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Step 3: Location and Salary -->
+                        <div class="form-section" data-section="3">
+                            <h3 class="section-title">
+                                <i class="fas fa-map-marker-alt section-icon"></i>
+                                الموقع والراتب
+                            </h3>
+                            
+                            <div class="form-grid">
+                                <div class="form-group">
+                                    <label for="{{ form.location_type.id_for_label }}" class="form-label">نوع الموقع <span class="required">*</span></label>
+                                    {{ form.location_type }}
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label for="{{ form.is_remote.id_for_label }}" class="form-label">عمل عن بعد</label>
+                                    {{ form.is_remote }}
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label for="{{ form.governorate.id_for_label }}" class="form-label">المحافظة</label>
+                                    {{ form.governorate }}
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label for="{{ form.city.id_for_label }}" class="form-label">المدينة</label>
+                                    {{ form.city }}
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label for="{{ form.country.id_for_label }}" class="form-label">الدولة</label>
+                                    {{ form.country }}
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label for="{{ form.other_country_name.id_for_label }}" class="form-label">اسم الدولة الأخرى</label>
+                                    {{ form.other_country_name }}
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label for="{{ form.outside_city.id_for_label }}" class="form-label">المدينة (خارج العراق)</label>
+                                    {{ form.outside_city }}
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label class="form-label">القضاء</label>
+                                    <input type="text" name="district" class="form-control">
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label class="form-label">الناحية</label>
+                                    <input type="text" name="subdistrict" class="form-control">
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label class="form-label">المنطقة</label>
+                                    <input type="text" name="area" class="form-control">
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label class="form-label">الحي</label>
+                                    <input type="text" name="neighborhood" class="form-control">
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label class="form-label">المحلة</label>
+                                    <input type="text" name="mahalla" class="form-control">
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label class="form-label">البلوك</label>
+                                    <input type="text" name="block" class="form-control">
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label class="form-label">الشارع</label>
+                                    <input type="text" name="street" class="form-control">
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label class="form-label">الزقاق</label>
+                                    <input type="text" name="alley" class="form-control">
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label class="form-label">رقم الدار</label>
+                                    <input type="text" name="house_number" class="form-control">
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label class="form-label">رقم العقار</label>
+                                    <input type="text" name="property_number" class="form-control">
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label class="form-label">أقرب نقطة دالة</label>
+                                    <input type="text" name="landmark" class="form-control">
+                                </div>
+                                
+                                <div class="form-group full-width">
+                                    <label for="{{ form.address.id_for_label }}" class="form-label">العنوان</label>
+                                    {{ form.address }}
+                                </div>
+                                
+                                <!-- GPS Location -->
+                                <div class="form-group full-width">
+                                    <label class="form-label">الموقع الجغرافي</label>
+                                    <div style="display: flex; gap: 10px; margin-bottom: 10px;">
+                                        <div style="flex: 1;">
+                                            <label style="font-size: 0.9rem; margin-bottom: 5px;">خط العرض</label>
+                                            <input type="number" step="any" name="latitude" class="form-control" placeholder="مثال: 33.3152" id="latitude-input-job">
+                                        </div>
+                                        <div style="flex: 1;">
+                                            <label style="font-size: 0.9rem; margin-bottom: 5px;">خط الطول</label>
+                                            <input type="number" step="any" name="longitude" class="form-control" placeholder="مثال: 44.3661" id="longitude-input-job">
+                                        </div>
+                                        <div style="display: flex; align-items: flex-end;">
+                                            <button type="button" onclick="getLocationGPSJob()" class="btn btn-secondary" style="white-space: nowrap; height: 46px;">
+                                                📍 GPS
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="form-group full-width">
+                                    <label class="form-label">معاينة الموقع على الخريطة</label>
+                                    <div style="position: relative;">
+                                        <div id="location-preview-map-job" style="height: 300px; border-radius: 10px; border: 1px solid #ddd;"></div>
+                                        <div style="position: absolute; top: 10px; right: 10px; z-index: 1000; display: flex; gap: 5px;">
+                                            <button type="button" class="btn btn-secondary" onclick="changeMapLayer('job', 'osm')" style="padding: 5px 10px; font-size: 12px;">OpenStreetMap</button>
+                                            <button type="button" class="btn btn-secondary" onclick="changeMapLayer('job', 'satellite')" style="padding: 5px 10px; font-size: 12px;">Satellite</button>
+                                            <button type="button" class="btn btn-secondary" onclick="changeMapLayer('job', 'terrain')" style="padding: 5px 10px; font-size: 12px;">Terrain</button>
+                                            <button type="button" class="btn btn-secondary" onclick="changeMapLayer('job', 'dark')" style="padding: 5px 10px; font-size: 12px;">Dark</button>
+                                            <button type="button" class="btn btn-secondary" onclick="toggleMapFullscreen('job')" style="padding: 5px 10px; font-size: 12px;">⛶</button>
+                                        </div>
+                                    </div>
+                                    <p style="font-size: 0.8rem; color: #6c757d; margin-top: 5px;">
+                                        * اضغط على "GPS" لتحديد موقعك تلقائياً أو انقر على الخريطة لتحديد الموقع يدوياً
+                                    </p>
+                                </div>
+
+                                <div class="form-group full-width">
+                                    <label class="form-check-label" style="display: flex; align-items: center; gap: 10px; cursor: pointer;">
+                                        <input type="checkbox" name="enable_gps" id="enable-gps-job" style="width: 20px; height: 20px;">
+                                        <span>📍 نشر GPS - إظهار الموقع على خريطة المنصة</span>
+                                    </label>
+                                    <p style="font-size: 0.8rem; color: #6c757d; margin-top: 5px;">
+                                        عند تفعيل هذا الخيار، سيظهر موقع الوظيفة على خريطة المنصة الرئيسية
+                                    </p>
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label for="{{ form.salary_min.id_for_label }}" class="form-label">الحد الأدنى للراتب</label>
+                                    {{ form.salary_min }}
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label for="{{ form.salary_max.id_for_label }}" class="form-label">الحد الأقصى للراتب</label>
+                                    {{ form.salary_max }}
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label for="{{ form.salary_currency.id_for_label }}" class="form-label">عملة الراتب</label>
+                                    {{ form.salary_currency }}
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label for="{{ form.salary_period.id_for_label }}" class="form-label">فترة الراتب</label>
+                                    {{ form.salary_period }}
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label for="{{ form.is_salary_negotiable.id_for_label }}" class="form-label">الراتب قابل للتفاوض</label>
+                                    {{ form.is_salary_negotiable }}
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Step 4: Requirements and Skills -->
+                        <div class="form-section" data-section="4">
+                            <h3 class="section-title">
+                                <i class="fas fa-graduation-cap section-icon"></i>
+                                المتطلبات والمهارات
+                            </h3>
+                            
+                            <div class="form-grid">
+                                <div class="form-group">
+                                    <label for="{{ form.education_requirement.id_for_label }}" class="form-label">الحد الأدنى للتعليم</label>
+                                    {{ form.education_requirement }}
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label for="{{ form.experience_years.id_for_label }}" class="form-label">سنوات الخبرة المطلوبة</label>
+                                    {{ form.experience_years }}
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label for="{{ form.gender_requirement.id_for_label }}" class="form-label">الجنس المطلوب</label>
+                                    {{ form.gender_requirement }}
+                                </div>
+                                
+                                <div class="form-group full-width">
+                                    <label class="form-label">المزايا الإضافية</label>
+                                    <div class="checkbox-group">
+                                        <label>{{ form.has_health_insurance }} تأمين صحي</label>
+                                        <label>{{ form.has_transport_allowance }} بدلة نقل</label>
+                                        <label>{{ form.has_housing_allowance }} بدلة سكن</label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Step 5: Contact and Publish -->
+                        <div class="form-section" data-section="5">
+                            <h3 class="section-title">
+                                <i class="fas fa-paper-plane section-icon"></i>
+                                اتصال ونشر
+                            </h3>
+                            
+                            <div class="form-grid">
+                                <div class="form-group">
+                                    <label for="{{ form.contact_name.id_for_label }}" class="form-label">اسم جهة الاتصال <span class="required">*</span></label>
+                                    {{ form.contact_name }}
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label for="{{ form.contact_email.id_for_label }}" class="form-label">البريد الإلكتروني <span class="required">*</span></label>
+                                    {{ form.contact_email }}
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label for="{{ form.contact_phone.id_for_label }}" class="form-label">رقم الهاتف <span class="required">*</span></label>
+                                    {{ form.contact_phone }}
+                                </div>
+                                
+                                <div class="form-group full-width">
+                                    <label for="{{ form.external_application_url.id_for_label }}" class="form-label">رابط التقديم الخارجي</label>
+                                    {{ form.external_application_url }}
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label for="{{ form.expiry_date.id_for_label }}" class="form-label">تاريخ انتهاء الإعلان</label>
+                                    {{ form.expiry_date }}
+                                </div>
+                                
+                                <div class="form-group full-width">
+                                    <label class="form-label">خيارات النشر</label>
+                                    <div class="checkbox-group">
+                                        <label>{{ form.is_featured }} مميز</label>
+                                        <label>{{ form.is_urgent }} عاجل</label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Navigation Buttons -->
+                        <div class="form-navigation">
+                            <button type="button" class="btn btn-secondary prev-btn" id="prevBtn" style="display: none;">
+                                <i class="fas fa-arrow-right me-2"></i>السابق
+                            </button>
+                            <button type="button" class="btn btn-primary next-btn" id="nextBtn">
+                                التالي<i class="fas fa-arrow-left ms-2"></i>
+                            </button>
+                            <button type="submit" class="btn btn-success submit-btn" id="submitBtn" style="display: none;">
+                                <i class="fas fa-check me-2"></i>نشر الوظيفة
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<!-- Leaflet CSS -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<link rel="stylesheet" href="https://unpkg.com/leaflet-draw@1.0.4/dist/leaflet.draw.css" />
+
+<style>
+.enhanced-job-form-container {
+    padding: 40px 20px;
+    background: #000000;
+    min-height: 100vh;
+}
+
+.form-card {
+    background-color: #000000;
+    border-radius: 20px;
+    padding: 40px;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+    border: 1px solid #333;
+}
+
+.form-header {
+    text-align: center;
+    margin-bottom: 40px;
+    padding-bottom: 30px;
+    border-bottom: 2px solid #333;
+}
+
+.form-title {
+    font-size: 32px;
+    font-weight: bold;
+    color: #ffffff;
+    margin-bottom: 10px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.form-subtitle {
+    font-size: 16px;
+    color: #888888;
+    margin: 0;
+}
+
+.progress-indicator {
+    display: flex;
+    justify-content: center;
+    gap: 20px;
+    margin-top: 30px;
+}
+
+.progress-step {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    opacity: 0.5;
+    transition: all 0.3s;
+}
+
+.progress-step.active {
+    opacity: 1;
+}
+
+.step-number {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: #222222;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    color: #888888;
+    transition: all 0.3s;
+}
+
+.progress-step.active .step-number {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+}
+
+.step-label {
+    font-size: 12px;
+    color: #888888;
+    font-weight: 500;
+}
+
+.form-section {
+    display: none;
+    animation: fadeIn 0.5s ease-in;
+}
+
+.form-section.active {
+    display: block;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.section-title {
+    font-size: 20px;
+    font-weight: bold;
+    color: #ffffff;
+    margin-bottom: 25px;
+    padding-bottom: 15px;
+    border-bottom: 2px solid #333;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.section-icon {
+    color: #667eea;
+    font-size: 24px;
+}
+
+.form-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 20px;
+}
+
+.form-group {
+    margin-bottom: 25px;
+}
+
+.form-group.full-width {
+    grid-column: 1 / -1;
+}
+
+.form-label {
+    font-weight: 600;
+    margin-bottom: 8px;
+    color: #ffffff;
+    display: block;
+}
+
+.required {
+    color: #e74c3c;
+}
+
+.form-control-wrapper input,
+.form-control-wrapper select,
+.form-control-wrapper textarea {
+    width: 100%;
+    padding: 12px 15px;
+    border: 2px solid #333;
+    border-radius: 10px;
+    font-size: 15px;
+    transition: all 0.3s;
+    background: #000000;
+    color: #ffffff;
+}
+
+.form-control-wrapper input:focus,
+.form-control-wrapper select:focus,
+.form-control-wrapper textarea:focus {
+    border-color: #667eea;
+    background: #111111;
+    box-shadow:0 0 0 3px rgba(102, 126, 234, 0.1);
+    outline: none;
+}
+
+.checkbox-group {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 10px;
+}
+
+.checkbox-group label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+    padding: 8px;
+    border: 1px solid #333;
+    border-radius: 8px;
+    transition: all 0.3s;
+    color: #ffffff;
+}
+
+.checkbox-group label:hover {
+    background: #111111;
+    border-color: #667eea;
+}
+
+.form-navigation {
+    display: flex;
+    justify-content: center;
+    gap: 15px;
+    margin-top: 40px;
+    padding-top: 30px;
+    border-top: 2px solid #333;
+}
+
+.btn {
+    padding: 12px 30px;
+    border-radius: 10px;
+    font-weight: 600;
+    font-size: 16px;
+    border: none;
+    cursor: pointer;
+    transition: all 0.3s;
+    display: inline-flex;
+    align-items: center;
+}
+
+.btn-primary {
+    background: linear-gradient(135deg, #ff8c00 0%, #ff6600 100%);
+    color: white;
+}
+
+.btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(255, 140, 0, 0.4);
+}
+
+.btn-secondary {
+    background: #333;
+    color: #ffffff;
+}
+
+.btn-secondary:hover {
+    background: #444;
+}
+
+.btn-success {
+    background: linear-gradient(135deg, #ff8c00 0%, #ff6600 100%);
+    color: white;
+}
+
+.btn-success:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(255, 140, 0, 0.4);
+}
+
+.form-control {
+    background-color: #000000 !important;
+    color: #ffffff !important;
+    border-color: #333 !important;
+}
+
+.form-control:focus {
+    background-color: #111111 !important;
+    border-color: #667eea !important;
+    color: #ffffff !important;
+}
+
+select.form-control option {
+    background-color: #000000;
+    color: #ffffff;
+}
+
+small.form-text {
+    color: #888888;
+}
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.getElementById('jobForm');
+    const sections = document.querySelectorAll('.form-section');
+    const progressSteps = document.querySelectorAll('.progress-step');
+    const prevBtn = document.getElementById('prevBtn');
+    const nextBtn = document.getElementById('nextBtn');
+    const submitBtn = document.getElementById('submitBtn');
+    
+    let currentStep = 1;
+    const totalSteps = sections.length;
+    
+    function validateStep(step) {
+        const section = document.querySelector(`.form-section[data-section="${step}"]`);
+        const requiredFields = section.querySelectorAll('[required]');
+        let isValid = true;
+        
+        requiredFields.forEach(field => {
+            if (!field.value.trim()) {
+                field.style.borderColor = '#e74c3c';
+                isValid = false;
+            } else {
+                field.style.borderColor = '#e0e0e0';
+            }
+        });
+        
+        return isValid;
+    }
+    
+    nextBtn.addEventListener('click', function() {
+        if (validateStep(currentStep)) {
+            sections[currentStep - 1].classList.remove('active');
+            progressSteps[currentStep - 1].classList.remove('active');
+            
+            currentStep++;
+            
+            sections[currentStep - 1].classList.add('active');
+            progressSteps[currentStep - 1].classList.add('active');
+            
+            if (currentStep === totalSteps) {
+                nextBtn.style.display = 'none';
+                submitBtn.style.display = 'inline-flex';
+            }
+            
+            if (currentStep > 1) {
+                prevBtn.style.display = 'inline-flex';
+            }
+        }
+    });
+    
+    prevBtn.addEventListener('click', function() {
+        sections[currentStep - 1].classList.remove('active');
+        progressSteps[currentStep - 1].classList.remove('active');
+        
+        currentStep--;
+        
+        sections[currentStep - 1].classList.add('active');
+        progressSteps[currentStep - 1].classList.add('active');
+        
+        if (currentStep < totalSteps) {
+            nextBtn.style.display = 'inline-flex';
+            submitBtn.style.display = 'none';
+        }
+        
+        if (currentStep === 1) {
+            prevBtn.style.display = 'none';
+        }
+    });
+});
+</script>
+
+<!-- Leaflet JS -->
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://unpkg.com/leaflet-draw@1.0.4/dist/leaflet.draw.js"></script>
+
+<script>
+// GPS and Map Functions for Job
+let locationMapJob = null;
+let locationMarkerJob = null;
+let currentLayerJob = null;
+
+// Change map layer
+function changeMapLayer(mapType, layerType) {
+  const map = locationMapJob;
+  const containerId = 'location-preview-map-job';
+  
+  if (!map) return;
+  
+  // Remove existing tile layer
+  if (currentLayerJob) {
+    map.removeLayer(currentLayerJob);
+  }
+  
+  // Add new layer
+  let newLayer;
+  switch(layerType) {
+    case 'osm':
+      newLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '&copy; OpenStreetMap contributors'
+      });
+      break;
+    case 'satellite':
+      newLayer = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+        attribution: 'Tiles &copy; Esri'
+      });
+      break;
+    case 'terrain':
+      newLayer = L.tileLayer('https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png', {
+        attribution: '&copy; OpenTopoMap'
+      });
+      break;
+    case 'dark':
+      newLayer = L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}{r}.png', {
+        attribution: '&copy; CARTO'
+      });
+      break;
+    default:
+      newLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '&copy; OpenStreetMap contributors'
+      });
+  }
+  
+  newLayer.addTo(map);
+  currentLayerJob = newLayer;
+}
+
+// Toggle map fullscreen
+function toggleMapFullscreen(mapType) {
+  const containerId = 'location-preview-map-job';
+  const mapContainer = document.getElementById(containerId);
+  
+  if (!mapContainer) return;
+  
+  if (!document.fullscreenElement) {
+    mapContainer.requestFullscreen().then(() => {
+      mapContainer.style.height = '100vh';
+      mapContainer.style.borderRadius = '0';
+      setTimeout(() => {
+        if (locationMapJob) locationMapJob.invalidateSize();
+      }, 100);
+    }).catch(err => {
+      console.error('Error entering fullscreen:', err);
+    });
+  } else {
+    document.exitFullscreen().then(() => {
+      mapContainer.style.height = '300px';
+      mapContainer.style.borderRadius = '10px';
+      setTimeout(() => {
+        if (locationMapJob) locationMapJob.invalidateSize();
+      }, 100);
+    });
+  }
+}
+
+// Get current GPS location for Job
+function getLocationGPSJob() {
+  const enableGPS = document.getElementById('enable-gps-job');
+  if (!enableGPS || !enableGPS.checked) {
+    alert('يرجى تفعيل خيار "نشر GPS" أولاً لتحديد الموقع');
+    return;
+  }
+  
+  if (navigator.geolocation) {
+    const gpsBtn = document.querySelector('button[onclick="getLocationGPSJob()"]');
+    if (gpsBtn) {
+      gpsBtn.textContent = '⏳ جاري تحديد الموقع...';
+      gpsBtn.disabled = true;
+    }
+    
+    navigator.geolocation.getCurrentPosition(
+      function(position) {
+        const lat = position.coords.latitude;
+        const lng = position.coords.longitude;
+        
+        document.getElementById('latitude-input-job').value = lat.toFixed(6);
+        document.getElementById('longitude-input-job').value = lng.toFixed(6);
+        
+        if (locationMapJob && locationMarkerJob) {
+          locationMapJob.setView([lat, lng], 15);
+          locationMarkerJob.setLatLng([lat, lng]);
+        }
+        
+        if (gpsBtn) {
+          gpsBtn.textContent = '📍 GPS';
+          gpsBtn.disabled = false;
+        }
+        
+        alert('تم تحديد الموقع بنجاح!');
+      },
+      function(error) {
+        if (gpsBtn) {
+          gpsBtn.textContent = '📍 GPS';
+          gpsBtn.disabled = false;
+        }
+        
+        let errorMessage = 'تعذر تحديد الموقع. ';
+        switch(error.code) {
+          case error.PERMISSION_DENIED:
+            errorMessage += 'يرجى السماح بالوصول إلى الموقع من إعدادات المتصفح.';
+            break;
+          case error.POSITION_UNAVAILABLE:
+            errorMessage += 'معلومات الموقع غير متوفرة. يرجى استخدام تحديد الموقع اليدوي.';
+            break;
+          case error.TIMEOUT:
+            errorMessage += 'انتهت مهلة تحديد الموقع. يرجى:\n1. التأكد من اتصال الإنترنت\n2. الانتقال إلى مكان مفتوح\n3. أو استخدام تحديد الموقع اليدوي بالنقر على الخريطة';
+            break;
+          default:
+            errorMessage += 'حدث خطأ غير معروف: ' + error.message;
+        }
+        alert(errorMessage);
+      },
+      {
+        enableHighAccuracy: true,
+        timeout: 30000,
+        maximumAge: 0
+      }
+    );
+  } else {
+    alert('المتصفح لا يدعم تحديد الموقع الجغرافي. يرجى استخدام تحديد الموقع اليدوي بالنقر على الخريطة.');
+  }
+}
+
+// Set location manually from map click
+function setManualLocationJob(lat, lng) {
+  document.getElementById('latitude-input-job').value = lat.toFixed(6);
+  document.getElementById('longitude-input-job').value = lng.toFixed(6);
+  
+  if (locationMarkerJob) {
+    locationMarkerJob.setLatLng([lat, lng]);
+  }
+}
+
+// Initialize location preview map for Job
+function initLocationMapJob() {
+  if (document.getElementById('location-preview-map-job')) {
+    const defaultCenter = [33.3152, 44.3661];
+    
+    locationMapJob = L.map('location-preview-map-job', {
+      center: defaultCenter,
+      zoom: 6,
+      zoomControl: true
+    });
+    
+    currentLayerJob = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '© OpenStreetMap contributors'
+    }).addTo(locationMapJob);
+    
+    const drawnItems = new L.FeatureGroup();
+    locationMapJob.addLayer(drawnItems);
+    
+    const drawControl = new L.Control.Draw({
+      draw: {
+        polygon: {
+          allowIntersection: false,
+          showArea: true
+        },
+        rectangle: true,
+        circle: false,
+        circlemarker: false,
+        marker: true,
+        polyline: false
+      },
+      edit: {
+        featureGroup: drawnItems,
+        remove: true
+      }
+    });
+    locationMapJob.addControl(drawControl);
+    
+    locationMapJob.on(L.Draw.Event.CREATED, function (e) {
+      const layer = e.layer;
+      drawnItems.addLayer(layer);
+      
+      if (e.layerType === 'marker') {
+        const latlng = layer.getLatLng();
+        setManualLocationJob(latlng.lat, latlng.lng);
+      }
+    });
+    
+    locationMapJob.on('click', function(e) {
+      setManualLocationJob(e.latlng.lat, e.latlng.lng);
+    });
+    
+    locationMarkerJob = L.marker(defaultCenter, {
+      draggable: true
+    }).addTo(locationMapJob);
+    
+    locationMarkerJob.on('dragend', function(e) {
+      const position = e.target.getLatLng();
+      setManualLocationJob(position.lat, position.lng);
+    });
+  }
+}
+
+// Initialize on page load
+document.addEventListener('DOMContentLoaded', function() {
+  initLocationMapJob();
+});
+</script>
+
+{% endblock %}

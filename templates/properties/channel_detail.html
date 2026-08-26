@@ -1,0 +1,698 @@
+{% extends 'properties/base.html' %}
+{% load custom_filters %}
+
+{% block title %}{{ channel.name }} - دلال{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-lg-8">
+            <div class="channel-detail">
+                <div class="channel-header">
+                    {% if channel.cover_image %}
+                    <div class="channel-cover">
+                        <img src="{{ channel.cover_image.url }}" alt="{{ channel.name }}">
+                    </div>
+                    {% endif %}
+                    
+                    <div class="channel-info-section">
+                        <div class="channel-logo-section">
+                            {% if channel.logo %}
+                            <img src="{{ channel.logo.url }}" alt="{{ channel.name }}" class="channel-logo">
+                            {% else %}
+                            <div class="channel-logo-placeholder">
+                                <i class="fas fa-building"></i>
+                            </div>
+                            {% endif %}
+                            
+                            <div class="channel-actions">
+                                {% if is_owner %}
+                                <a href="{% url 'channel_dashboard' channel.id %}" class="btn btn-primary btn-sm">
+                                    <i class="fas fa-cog"></i> لوحة التحكم
+                                </a>
+                                {% endif %}
+                                
+                                {% if user.is_authenticated %}
+                                <button class="btn btn-success btn-sm" onclick="followChannel({{ channel.id }})">
+                                    <i class="fas fa-user-plus"></i> متابعة
+                                </button>
+                                {% else %}
+                                <a href="{% url 'login' %}" class="btn btn-success btn-sm">
+                                    <i class="fas fa-user-plus"></i> متابعة
+                                </a>
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        <div class="channel-details">
+                            <h1 class="channel-name">{{ channel.name }}</h1>
+                            <p class="channel-broker">{{ channel.broker.display_name }}</p>
+                            <p class="channel-description">{{ channel.description }}</p>
+                            
+                            <div class="channel-badges">
+                                {% if channel.is_verified %}
+                                <span class="badge badge-success">
+                                    <i class="fas fa-check-circle"></i> موثق
+                                </span>
+                                {% endif %}
+                                
+                                {% if channel.is_featured %}
+                                <span class="badge badge-warning">
+                                    <i class="fas fa-star"></i> مميز
+                                </span>
+                                {% endif %}
+                                
+                                <span class="badge badge-info">
+                                    {{ channel.get_channel_type_display }}
+                                </span>
+                                
+                                <span class="badge badge-secondary">
+                                    {{ channel.get_category_display }}
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="channel-stats-bar">
+                    <div class="stat">
+                        <div class="stat-icon">
+                            <i class="fas fa-users"></i>
+                        </div>
+                        <div class="stat-content">
+                            <div class="stat-value">{{ channel.followers_count|number_format }}</div>
+                            <div class="stat-label">متابع</div>
+                        </div>
+                    </div>
+                    
+                    <div class="stat">
+                        <div class="stat-icon">
+                            <i class="fas fa-eye"></i>
+                        </div>
+                        <div class="stat-content">
+                            <div class="stat-value">{{ channel.views_count|number_format }}</div>
+                            <div class="stat-label">مشاهدة</div>
+                        </div>
+                    </div>
+                    
+                    <div class="stat">
+                        <div class="stat-icon">
+                            <i class="fas fa-home"></i>
+                        </div>
+                        <div class="stat-content">
+                            <div class="stat-value">{{ channel.properties_count|number_format }}</div>
+                            <div class="stat-label">عقار</div>
+                        </div>
+                    </div>
+                    
+                    <div class="stat">
+                        <div class="stat-icon">
+                            <i class="fas fa-star"></i>
+                        </div>
+                        <div class="stat-content">
+                            <div class="stat-value">{{ channel.rating }}/5</div>
+                            <div class="stat-label">تقييم</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Channel Content -->
+                <div class="channel-content-section">
+                    <h3>محتوى القناة</h3>
+                    
+                    {% if content %}
+                    <div class="content-grid">
+                        {% for item in content %}
+                        <div class="content-card">
+                            <div class="content-type">
+                                <i class="fas fa-{{ item.get_content_type_display }}"></i>
+                                <span>{{ item.get_content_type_display }}</span>
+                            </div>
+                            
+                            <h4 class="content-title">{{ item.title }}</h4>
+                            <p class="content-preview">{{ item.content|truncatewords:15 }}</p>
+                            
+                            <div class="content-stats">
+                                <span><i class="fas fa-eye"></i> {{ item.views_count }}</span>
+                                <span><i class="fas fa-heart"></i> {{ item.likes_count }}</span>
+                                <span><i class="fas fa-comment"></i> {{ item.comments_count }}</span>
+                            </div>
+                            
+                            <div class="content-actions">
+                                <button class="btn btn-sm btn-outline-primary" onclick="likeContent({{ item.id }})">
+                                    <i class="fas fa-heart"></i> إعجاب
+                                </button>
+                                <a href="#" class="btn btn-sm btn-outline-secondary">
+                                    <i class="fas fa-share"></i> مشاركة
+                                </a>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <div class="empty-content">
+                        <i class="fas fa-newspaper fa-3x text-muted mb-3"></i>
+                        <h3>لا يوجد محتوى</h3>
+                        <p class="text-muted">لم يتم نشر أي محتوى بعد</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-4">
+            <div class="sidebar">
+                <!-- Analytics Summary -->
+                <div class="sidebar-card">
+                    <h3>إحصائيات القناة</h3>
+                    <div class="analytics-summary">
+                        <div class="analytics-item">
+                            <span class="label">الزوار الفريدين:</span>
+                            <span class="value">{{ analytics.unique_visitors|number_format }}</span>
+                        </div>
+                        <div class="analytics-item">
+                            <span class="label">معدل التفاعل:</span>
+                            <span class="value">{{ analytics.calculate_engagement_rate }}%</span>
+                        </div>
+                        <div class="analytics-item">
+                            <span class="label">متوسط مدة الجلسة:</span>
+                            <span class="value">{{ analytics.average_session_duration }} ثانية</span>
+                        </div>
+                        <div class="analytics-item">
+                            <span class="label">معدل النمو الشهري:</span>
+                            <span class="value">{{ analytics.monthly_growth_rate }}%</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Social Links -->
+                <div class="sidebar-card">
+                    <h3>وسائل التواصل</h3>
+                    <div class="social-links">
+                        {% if channel.whatsapp %}
+                        <a href="https://wa.me/{{ channel.whatsapp }}" class="social-link whatsapp">
+                            <i class="fab fa-whatsapp"></i> واتساب
+                        </a>
+                        {% endif %}
+                        
+                        {% if channel.facebook %}
+                        <a href="{{ channel.facebook }}" class="social-link facebook">
+                            <i class="fab fa-facebook"></i> فيسبوك
+                        </a>
+                        {% endif %}
+                        
+                        {% if channel.instagram %}
+                        <a href="{{ channel.instagram }}" class="social-link instagram">
+                            <i class="fab fa-instagram"></i> انستغرام
+                        </a>
+                        {% endif %}
+                        
+                        {% if channel.telegram %}
+                        <a href="https://t.me/{{ channel.telegram }}" class="social-link telegram">
+                            <i class="fab fa-telegram"></i> تيليجرام
+                        </a>
+                        {% endif %}
+                        
+                        {% if channel.youtube %}
+                        <a href="{{ channel.youtube }}" class="social-link youtube">
+                            <i class="fab fa-youtube"></i> يوتيوب
+                        </a>
+                        {% endif %}
+                        
+                        {% if channel.phone %}
+                        <a href="tel:{{ channel.phone }}" class="social-link phone">
+                            <i class="fas fa-phone"></i> {{ channel.phone }}
+                        </a>
+                        {% endif %}
+                    </div>
+                </div>
+                
+                <!-- Contact Info -->
+                <div class="sidebar-card">
+                    <h3>معلومات الاتصال</h3>
+                    <div class="contact-info">
+                        {% if channel.phone %}
+                        <div class="contact-item">
+                            <i class="fas fa-phone"></i>
+                            <span>{{ channel.phone }}</span>
+                        </div>
+                        {% endif %}
+                        
+                        {% if channel.email %}
+                        <div class="contact-item">
+                            <i class="fas fa-envelope"></i>
+                            <span>{{ channel.email }}</span>
+                        </div>
+                        {% endif %}
+                        
+                        {% if channel.address %}
+                        <div class="contact-item">
+                            <i class="fas fa-map-marker-alt"></i>
+                            <span>{{ channel.address }}</span>
+                        </div>
+                        {% endif %}
+                        
+                        {% if channel.work_area %}
+                        <div class="contact-item">
+                            <i class="fas fa-briefcase"></i>
+                            <span>{{ channel.work_area }}</span>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+                
+                <!-- Broker Info -->
+                <div class="sidebar-card">
+                    <h3>معلومات الدلال</h3>
+                    <div class="broker-info">
+                        <div class="broker-item">
+                            <span class="label">الاسم:</span>
+                            <span class="value">{{ channel.broker.full_name }}</span>
+                        </div>
+                        
+                        {% if channel.experience_years %}
+                        <div class="broker-item">
+                            <span class="label">الخبرة:</span>
+                            <span class="value">{{ channel.experience_years }} سنة</span>
+                        </div>
+                        {% endif %}
+                        
+                        {% if channel.specialization %}
+                        <div class="broker-item">
+                            <span class="label">التخصص:</span>
+                            <span class="value">{{ channel.specialization }}</span>
+                        </div>
+                        {% endif %}
+                        
+                        {% if channel.governorate %}
+                        <div class="broker-item">
+                            <span class="label">المحافظة:</span>
+                            <span class="value">{{ channel.get_governorate_display }}</span>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function followChannel(channelId) {
+    fetch(`/channels/${channelId}/follow/`, {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': getCookie('csrftoken'),
+            'Content-Type': 'application/json',
+        },
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            location.reload();
+        }
+    });
+}
+
+function likeContent(contentId) {
+    fetch(`/channels/content/${contentId}/like/`, {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': getCookie('csrftoken'),
+            'Content-Type': 'application/json',
+        },
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            location.reload();
+        }
+    });
+}
+
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+</script>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+.channel-detail {
+    background: white;
+    border-radius: 10px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    overflow: hidden;
+}
+
+.channel-header {
+    position: relative;
+}
+
+.channel-cover {
+    width: 100%;
+    height: 200px;
+    overflow: hidden;
+}
+
+.channel-cover img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.channel-info-section {
+    background: white;
+    padding: 20px;
+    display: flex;
+    gap: 20px;
+    position: relative;
+    margin-top: -50px;
+    border-radius: 10px 10px 0 0;
+}
+
+.channel-logo-section {
+    position: relative;
+}
+
+.channel-logo {
+    width: 100px;
+    height: 100px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 4px solid white;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+}
+
+.channel-logo-placeholder {
+    width: 100px;
+    height: 100px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 2em;
+    border: 4px solid white;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+}
+
+.channel-actions {
+    margin-top: 10px;
+    display: flex;
+    gap: 10px;
+}
+
+.channel-details {
+    flex: 1;
+}
+
+.channel-name {
+    margin: 0 0 10px 0;
+    font-size: 1.8em;
+    color: #333;
+}
+
+.channel-broker {
+    color: #666;
+    margin-bottom: 10px;
+    font-size: 1.1em;
+}
+
+.channel-description {
+    color: #555;
+    line-height: 1.6;
+    margin-bottom: 15px;
+}
+
+.channel-badges {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.badge {
+    padding: 5px 12px;
+    border-radius: 20px;
+    font-size: 0.85em;
+    font-weight: 600;
+}
+
+.badge-success {
+    background: #28a745;
+    color: white;
+}
+
+.badge-warning {
+    background: #ffc107;
+    color: #333;
+}
+
+.badge-info {
+    background: #17a2b8;
+    color: white;
+}
+
+.channel-stats-bar {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 15px;
+    padding: 20px;
+    background: #f8f9fa;
+    margin: 20px;
+    border-radius: 10px;
+}
+
+.stat {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    padding: 15px;
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+}
+
+.stat-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.2em;
+}
+
+.stat-content {
+    flex: 1;
+}
+
+.stat-value {
+    font-size: 1.5em;
+    font-weight: 600;
+    color: #333;
+}
+
+.stat-label {
+    font-size: 0.85em;
+    color: #666;
+}
+
+.channel-content-section {
+    padding: 20px;
+}
+
+.channel-content-section h3 {
+    color: #333;
+    margin-bottom: 20px;
+    font-size: 1.3em;
+    border-bottom: 2px solid #667eea;
+    padding-bottom: 10px;
+}
+
+.content-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 20px;
+}
+
+.content-card {
+    background: #f8f9fa;
+    border-radius: 8px;
+    padding: 15px;
+    transition: transform 0.3s, box-shadow 0.3s;
+}
+
+.content-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+}
+
+.content-type {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 10px;
+    color: #667eea;
+    font-weight: 600;
+}
+
+.content-title {
+    margin: 0 0 10px 0;
+    color: #333;
+    font-size: 1.1em;
+}
+
+.content-preview {
+    color: #666;
+    margin-bottom: 15px;
+    line-height: 1.5;
+}
+
+.content-stats {
+    display: flex;
+    gap: 15px;
+    margin-bottom: 15px;
+    font-size: 0.9em;
+    color: #666;
+}
+
+.content-actions {
+    display: flex;
+    gap: 10px;
+}
+
+.empty-content {
+    text-align: center;
+    padding: 40px 20px;
+    background: #f8f9fa;
+    border-radius: 8px;
+}
+
+.sidebar {
+    position: sticky;
+    top: 20px;
+}
+
+.sidebar-card {
+    background: white;
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    margin-bottom: 20px;
+}
+
+.sidebar-card h3 {
+    margin-top: 0;
+    color: #333;
+    font-size: 1.1em;
+    border-bottom: 2px solid #667eea;
+    padding-bottom: 10px;
+}
+
+.analytics-summary {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.analytics-item {
+    display: flex;
+    justify-content: space-between;
+    padding: 8px 0;
+    border-bottom: 1px solid #eee;
+}
+
+.analytics-item .label {
+    font-weight: 600;
+    color: #555;
+}
+
+.analytics-item .value {
+    color: #333;
+    font-weight: 600;
+}
+
+.social-links {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.social-link {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px;
+    border-radius: 8px;
+    text-decoration: none;
+    color: #333;
+    transition: background 0.3s;
+}
+
+.social-link:hover {
+    background: #f8f9fa;
+}
+
+.social-link.whatsapp { color: #25D366; }
+.social-link.facebook { color: #1877F2; }
+.social-link.instagram { color: #E4405F; }
+.social-link.telegram { color: #0088cc; }
+.social-link.youtube { color: #FF0000; }
+.social-link.phone { color: #667eea; }
+
+.contact-info {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.contact-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    color: #555;
+}
+
+.contact-item i {
+    color: #667eea;
+    width: 20px;
+}
+
+.broker-info {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.broker-item {
+    display: flex;
+    justify-content: space-between;
+    padding: 8px 0;
+    border-bottom: 1px solid #eee;
+}
+
+.broker-item .label {
+    font-weight: 600;
+    color: #555;
+}
+
+.broker-item .value {
+    color: #333;
+}
+</style>
+{% endblock %}

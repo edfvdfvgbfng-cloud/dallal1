@@ -1,0 +1,914 @@
+{% extends "properties/dashboard_base.html" %}
+{% load static %}
+
+{% block title %}طلب تجديد اشتراك{% endblock %}
+{% block dashboard_title %}طلب تجديد <span>الاشتراك</span>{% endblock %}
+
+{% block dashboard_content %}
+<div class="container py-5" id="subscription-container" 
+     data-regular-price="{{ regular_price_per_day|default:50 }}" 
+     data-premium-price="{{ premium_price_per_day|default:1000 }}" 
+     data-service-price="{{ regular_price_per_day|default:50 }}"
+     data-debug="{{ regular_price_per_day|default:50 }},{{ premium_price_per_day|default:1000 }},{{ regular_price_per_day|default:50 }}">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card reveal visible">
+                <div class="card-header bg-primary text-white">
+                    <h3 class="mb-0">🔄 طلب تجديد اشتراك</h3>
+                </div>
+                <div class="card-body">
+                    {% if messages %}
+                        {% for message in messages %}
+                            <div class="alert alert-{{ message.tags }} alert-dismissible fade show">
+                                {{ message }}
+                                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                            </div>
+                        {% endfor %}
+                    {% endif %}
+
+                    <!-- Current Subscription Info -->
+                    {% if current_subscription %}
+                    <div class="alert alert-info mb-4">
+                        <h5 class="alert-heading">📊 اشتراكك الحالي</h5>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <p class="mb-1"><strong>الخطة:</strong> {{ current_subscription.plan.name }}</p>
+                                <p class="mb-1"><strong>تاريخ الانتهاء:</strong> {{ current_subscription.end_date|date:"Y-m-d H:i" }}</p>
+                            </div>
+                            <div class="col-md-6">
+                                <p class="mb-1"><strong>الأيام المتبقية:</strong> {{ current_subscription.get_days_remaining }} يوم</p>
+                                <p class="mb-1"><strong>العقارات المستخدمة:</strong> {{ current_subscription.properties_used }} / {{ current_subscription.plan.max_properties }}</p>
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    <!-- Usage Statistics -->
+                    <div class="card mb-4 bg-light">
+                        <div class="card-body">
+                            <h5 class="card-title">📈 إحصائيات استخدامك الحالي</h5>
+                            <div class="row">
+                                <div class="col-md-3">
+                                    <div class="text-center">
+                                        <h3 class="text-primary">{{ user_properties_count|default:0 }}</h3>
+                                        <small>عقارات منشورة</small>
+                                    </div>
+                                </div>
+                                <div class="col-md-3">
+                                    <div class="text-center">
+                                        <h3 class="text-success">{{ premium_properties_count|default:0 }}</h3>
+                                        <small>عقارات مميزة</small>
+                                    </div>
+                                </div>
+                                <div class="col-md-3">
+                                    <div class="text-center">
+                                        <h3 class="text-warning">{{ days_remaining|default:0 }}</h3>
+                                        <small>أيام متبقية</small>
+                                    </div>
+                                </div>
+                                <div class="col-md-3">
+                                    <div class="text-center">
+                                        <h3 class="text-info">{{ total_cost_this_month|default:0 }}</h3>
+                                        <small>التكلفة هذا الشهر</small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Pricing Guide -->
+                    <div class="card mb-4 border-primary">
+                        <div class="card-header bg-primary text-white">
+                            <h5 class="mb-0">💰 دليل التسعير</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <h6 class="text-primary">المنشورات العادية</h6>
+                                    <ul class="list-unstyled">
+                                        <li>🏠 عقارات: {{ regular_price_per_day|default:50 }} دينار/منشور/يوم</li>
+                                        <li>🏨 فنادق: {{ regular_price_per_day|default:50 }} دينار/منشور/يوم</li>
+                                        <li>🏖️ منتجعات: {{ regular_price_per_day|default:50 }} دينار/منشور/يوم</li>
+                                        <li>✈️ شركات سفر: {{ regular_price_per_day|default:50 }} دينار/يوم</li>
+                                        <li>➕ وظائف: {{ regular_price_per_day|default:50 }} دينار/يوم</li>
+                                    </ul>
+                                </div>
+                                <div class="col-md-6">
+                                    <h6 class="text-warning">المنشورات المميزة</h6>
+                                    <ul class="list-unstyled">
+                                        <li>🏠 عقارات مميزة: {{ premium_price_per_day|default:1000 }} دينار/منشور/يوم</li>
+                                        <li>🏨 فنادق مميزة: {{ premium_price_per_day|default:1000 }} دينار/منشور/يوم</li>
+                                        <li>🏖️ منتجعات مميزة: {{ premium_price_per_day|default:1000 }} دينار/منشور/يوم</li>
+                                    </ul>
+                                    <hr>
+                                    <h6 class="text-success">الخدمات الإضافية</h6>
+                                    <ul class="list-unstyled">
+                                        <li>🏗️ طلبات بناء: {{ regular_price_per_day|default:50 }} دينار/يوم</li>
+                                        <li>🔨 مزادات: {{ regular_price_per_day|default:50 }} دينار/يوم</li>
+                                    </ul>
+                                </div>
+                            </div>
+                            <div class="alert alert-success mt-3">
+                                <strong>🎁 الخصومات:</strong>
+                                <ul class="mb-0">
+                                    <li>5% خصم للاشتراكات 180 يوم فأكثر</li>
+                                    <li>10% خصم للاشتراكات السنوية (365 يوم)</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Subscription Plans Selection -->
+                    <div class="mb-4">
+                        <label class="form-label fw-bold">نظام التسعير حسب المنشورات</label>
+                        <div class="card subscription-plan-card border-primary">
+                            <div class="card-body">
+                                <h5 class="card-title">خطة النشر حسب المنشورات</h5>
+                                <p class="card-text">
+                                    <span class="price">عادي: {{ regular_price_per_day|default:50 }} دينار/منشور/يوم | مميز: {{ premium_price_per_day|default:1000 }} دينار/منشور/يوم</span>
+                                </p>
+                                <ul class="list-unstyled small">
+                                    <li>✅ حدد عدد المنشورات العادية والمميزة</li>
+                                    <li>✅ حدد مدة الاشتراك بالأيام</li>
+                                    <li>✅ التسعير حسب عدد المنشورات والمدة</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+
+                    <form method="post">
+                        {% csrf_token %}
+                        
+                        <div class="mb-4">
+                            <label class="form-label fw-bold">اختر نوع الاشتراك أو الخدمة</label>
+                            <div class="card">
+                                <div class="card-body">
+                                    <div class="row">
+                                        <!-- اشتراكات العقارات -->
+                                        <div class="col-md-12 mb-3">
+                                            <div class="row">
+                                                <div class="col-md-6 mb-2">
+                                                    <div class="form-check">
+                                                        <input class="form-check-input" type="checkbox" name="subscription_type" value="travel_company" id="sub_travel_company">
+                                                        <label class="form-check-label" for="sub_travel_company">
+                                                            ✈️ شركة سفر
+                                                        </label>
+                                                    </div>
+                                                </div>
+                                                <div class="col-md-6 mb-2">
+                                                    <div class="form-check">
+                                                        <input class="form-check-input" type="checkbox" name="subscription_type" value="job_posting" id="sub_job_posting">
+                                                        <label class="form-check-label" for="sub_job_posting">
+                                                            ➕ نشر وظيفة
+                                                        </label>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <!-- أنواع العقارات -->
+                                        <div class="col-md-12 mb-3">
+                                            <div class="row">
+                                                <div class="col-md-6 mb-2">
+                                                    <div class="form-check">
+                                                        <input class="form-check-input" type="checkbox" name="property_types" value="properties_iraq" id="prop_iraq">
+                                                        <label class="form-check-label" for="prop_iraq">
+                                                            🏠 عقارات داخل العراق
+                                                        </label>
+                                                    </div>
+                                                </div>
+                                                <div class="col-md-6 mb-2">
+                                                    <div class="form-check">
+                                                        <input class="form-check-input" type="checkbox" name="property_types" value="properties_outside" id="prop_outside">
+                                                        <label class="form-check-label" for="prop_outside">
+                                                            🌍 عقارات خارج العراق
+                                                        </label>
+                                                    </div>
+                                                </div>
+                                                <div class="col-md-6 mb-2">
+                                                    <div class="form-check">
+                                                        <input class="form-check-input" type="checkbox" name="property_types" value="hotels_iraq" id="prop_hotels_iraq">
+                                                        <label class="form-check-label" for="prop_hotels_iraq">
+                                                            🏨 فنادق داخل العراق
+                                                        </label>
+                                                    </div>
+                                                </div>
+                                                <div class="col-md-6 mb-2">
+                                                    <div class="form-check">
+                                                        <input class="form-check-input" type="checkbox" name="property_types" value="hotels_outside" id="prop_hotels_outside">
+                                                        <label class="form-check-label" for="prop_hotels_outside">
+                                                            🏨 فنادق خارج العراق
+                                                        </label>
+                                                    </div>
+                                                </div>
+                                                <div class="col-md-6 mb-2">
+                                                    <div class="form-check">
+                                                        <input class="form-check-input" type="checkbox" name="property_types" value="resorts_iraq" id="prop_resorts_iraq">
+                                                        <label class="form-check-label" for="prop_resorts_iraq">
+                                                            🏖️ منتجعات داخل العراق
+                                                        </label>
+                                                    </div>
+                                                </div>
+                                                <div class="col-md-6 mb-2">
+                                                    <div class="form-check">
+                                                        <input class="form-check-input" type="checkbox" name="property_types" value="resorts_outside" id="prop_resorts_outside">
+                                                        <label class="form-check-label" for="prop_resorts_outside">
+                                                            🏖️ منتجعات خارج العراق
+                                                        </label>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <!-- خدمات إضافية -->
+                                        <div class="col-md-12">
+                                            <h6 class="text-warning mb-2">⚡ خدمات إضافية</h6>
+                                            <div class="row">
+                                                <div class="col-md-6 mb-2">
+                                                    <div class="form-check">
+                                                        <input class="form-check-input" type="checkbox" name="additional_services" value="auctions" id="service_auctions">
+                                                        <label class="form-check-label" for="service_auctions">
+                                                            🔨 مزادات
+                                                        </label>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <small class="text-muted">يمكنك تحديد خدمات إضافية مع اشتراك العقارات</small>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <small class="text-muted">اختر نوع الاشتراك أو أنواع العقارات أو خدمات إضافية</small>
+                        </div>
+
+                        <div class="mb-4">
+                            <label class="form-label fw-bold">عدد المنشورات</label>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <label for="regular_count" class="form-label">منشورات عادية ({{ regular_price_per_day|default:50 }} دينار/منشور/يوم)</label>
+                                    <input type="number" class="form-control" id="regular_count" name="regular_count" min="0" value="1">
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="premium_count" class="form-label">منشورات مميزة (1000 دينار/منشور/يوم)</label>
+                                    <input type="number" class="form-control" id="premium_count" name="premium_count" min="0" value="1">
+                                </div>
+                            </div>
+                            <small class="text-muted">المنشورات المميزة تحصل على عرض أعلى في نتائج البحث</small>
+                        </div>
+
+                        <div class="mb-4">
+                            <label for="days_requested" class="form-label fw-bold">عدد الأيام</label>
+                            <div class="input-group">
+                                <input type="number" class="form-control" id="days_requested" name="days_requested" min="1" value="30" required>
+                                <select class="form-select" id="days_preset" style="max-width: 150px;">
+                                    <option value="">اختر</option>
+                                    <option value="30">30 يوم</option>
+                                    <option value="90">90 يوم</option>
+                                    <option value="180">180 يوم</option>
+                                    <option value="365">365 يوم</option>
+                                </select>
+                            </div>
+                            <small class="text-muted">أدخل عدد الأيام المطلوبة أو اختر من القائمة</small>
+                        </div>
+
+                        <div class="mb-4">
+                            <label class="form-label fw-bold">التكلفة التقديرية</label>
+                            <div class="row">
+                                <div class="col-md-8">
+                                    <div class="alert alert-secondary d-flex justify-content-between align-items-center" id="estimated_cost">
+                                        <span>حساب...</span>
+                                        <span class="badge bg-success" id="savings_badge" style="display: none;">وفرت 0%</span>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="card bg-light">
+                                        <div class="card-body text-center">
+                                            <small class="text-muted">التكلفة النهائية</small>
+                                            <h4 class="text-primary mb-0" id="final_cost">0 دينار</h4>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="row mt-2">
+                                <div class="col-md-4">
+                                    <small class="text-muted">تكلفة المنشورات العادية: <span id="regular_cost">0</span> دينار</small>
+                                </div>
+                                <div class="col-md-4">
+                                    <small class="text-muted">تكلفة المنشورات المميزة: <span id="premium_cost">0</span> دينار</small>
+                                </div>
+                                <div class="col-md-4">
+                                    <small class="text-muted">تكلفة الخدمات الإضافية: <span id="services_cost">0</span> دينار</small>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Subscription Quality Indicator -->
+                        <div class="mb-4">
+                            <label class="form-label fw-bold">مؤشر جودة الاشتراك</label>
+                            <div class="progress mb-2" style="height: 25px;">
+                                <div class="progress-bar bg-success" id="quality_bar" role="progressbar" style="width: 0%;">0%</div>
+                            </div>
+                            <small class="text-muted" id="quality_text">حدد خدمات للحصول على تقييم جودة الاشتراك</small>
+                        </div>
+
+                        <!-- Comparison with Previous -->
+                        <div class="mb-4">
+                            <label class="form-label fw-bold">مقارنة مع الاشتراك السابق</label>
+                            <div class="card bg-light">
+                                <div class="card-body">
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <h6 class="text-muted">الاشتراك الحالي</h6>
+                                            <p>المدة: <span id="current_duration">{{ days_remaining|default:0 }}</span> يوم</p>
+                                            <p>التكلفة: <span id="current_cost">{{ total_cost_this_month|default:0 }}</span> دينار</p>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <h6 class="text-primary">الاشتراك الجديد</h6>
+                                            <p>المدة: <span id="new_duration">0</span> يوم</p>
+                                            <p>التكلفة: <span id="new_cost">0</span> دينار</p>
+                                        </div>
+                                    </div>
+                                    <div class="alert alert-info mt-2" id="comparison_message" style="display: none;">
+                                        <strong>📊 التوفير المحتمل:</strong> <span id="potential_savings">0</span> دينار
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Payment Method Selection -->
+                        <div class="mb-4">
+                            <label class="form-label fw-bold">طريقة الدفع المفضلة</label>
+                            <div class="row">
+                                <div class="col-md-4">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="radio" name="payment_method" value="wallet" id="payment_wallet" checked>
+                                        <label class="form-check-label" for="payment_wallet">
+                                            💳 المحفظة الإلكترونية
+                                        </label>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="radio" name="payment_method" value="bank" id="payment_bank">
+                                        <label class="form-check-label" for="payment_bank">
+                                            🏦 التحويل البنكي
+                                        </label>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="radio" name="payment_method" value="cash" id="payment_cash">
+                                        <label class="form-check-label" for="payment_cash">
+                                            💵 الدفع النقدي
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Auto-Renewal Option -->
+                        <div class="mb-4">
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" id="auto_renewal" name="auto_renewal">
+                                <label class="form-check-label" for="auto_renewal">
+                                    <strong>🔄 التجديد التلقائي</strong>
+                                    <small class="d-block text-muted">سيتم تجديد الاشتراك تلقائياً عند انتهائه بنفس الشروط</small>
+                                </label>
+                            </div>
+                        </div>
+
+                        <!-- Notification Preferences -->
+                        <div class="mb-4">
+                            <label class="form-label fw-bold">تفضيلات الإشعارات</label>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" id="notify_email" name="notify_email" checked>
+                                        <label class="form-check-label" for="notify_email">
+                                            📧 إشعارات البريد الإلكتروني
+                                        </label>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" id="notify_sms" name="notify_sms">
+                                        <label class="form-check-label" for="notify_sms">
+                                            📱 إشعارات الرسائل النصية
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mb-4">
+                            <label for="notes" class="form-label fw-bold">ملاحظات</label>
+                            <textarea class="form-control" id="notes" name="notes" rows="3" maxlength="500"></textarea>
+                            <div class="d-flex justify-content-between">
+                                <small class="text-muted">الحد الأقصى 500 حرف</small>
+                                <small class="text-muted"><span id="char_count">0</span>/500</small>
+                            </div>
+                        </div>
+
+                        <div class="mb-4">
+                            <div class="alert alert-info">
+                                <h5 class="alert-heading">💬 هل تحتاج مساعدة؟</h5>
+                                <p class="mb-2">إذا كان لديك أي استفسار بخصوص الاشتراك، يمكنك التواصل مع الإدارة مباشرة.</p>
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <a href="/admin-panel/contact/" class="btn btn-info btn-sm">
+                                            📩 مراسلة الإدارة
+                                        </a>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <a href="#" class="btn btn-outline-info btn-sm" data-bs-toggle="modal" data-bs-target="#faqModal">
+                                            ❓ الأسئلة الشائعة
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- FAQ Modal -->
+                        <div class="modal fade" id="faqModal" tabindex="-1" aria-hidden="true">
+                            <div class="modal-dialog modal-lg">
+                                <div class="modal-content">
+                                    <div class="modal-header">
+                                        <h5 class="modal-title">❓ الأسئلة الشائعة</h5>
+                                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                    </div>
+                                    <div class="modal-body">
+                                        <div class="accordion" id="faqAccordion">
+                                            <div class="accordion-item">
+                                                <h2 class="accordion-header">
+                                                    <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#faq1">
+                                                        كيف يتم حساب التكلفة؟
+                                                    </button>
+                                                </h2>
+                                                <div id="faq1" class="accordion-collapse collapse show" data-bs-parent="#faqAccordion">
+                                                    <div class="accordion-body">
+                                                        التكلفة تُحسب بناءً على عدد المنشورات (عادية {{ regular_price_per_day|default:50 }} دينار/يوم، مميزة {{ premium_price_per_day|default:1000 }} دينار/يوم) وعدد الأيام، مع خصومات للمدد الطويلة.
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="accordion-item">
+                                                <h2 class="accordion-header">
+                                                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faq2">
+                                                        ما الفرق بين المنشورات العادية والمميزة؟
+                                                    </button>
+                                                </h2>
+                                                <div id="faq2" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                                                    <div class="accordion-body">
+                                                        المنشورات المميزة تظهر في نتائج البحث أولاً وتحصل على عرض أكبر، مما يزيد من فرص بيع أو تأجير المحتوى بشكل أسرع.
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="accordion-item">
+                                                <h2 class="accordion-header">
+                                                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faq3">
+                                                        هل يمكنني تغيير الاشتراك لاحقاً؟
+                                                    </button>
+                                                </h2>
+                                                <div id="faq3" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                                                    <div class="accordion-body">
+                                                        نعم، يمكنك طلب تعديل الاشتراك في أي وقت من خلال لوحة التحكم أو التواصل مع الإدارة.
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-primary btn-lg">
+                                <span class="btn-icon">📝</span>
+                                <span>إرسال طلب التجديد</span>
+                            </button>
+                            <a href="/dashboard/" class="btn btn-outline-secondary">
+                                إلغاء
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.subscription-plan-card {
+    cursor: pointer;
+    transition: all 0.3s ease;
+    border: 2px solid #dee2e6;
+}
+
+.subscription-plan-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+}
+
+.subscription-plan-card.border-primary {
+    border-color: #0d6efd;
+    background-color: rgba(13, 110, 253, 0.05);
+}
+
+.subscription-plan-card .price {
+    font-size: 1.5rem;
+    font-weight: bold;
+    color: #0d6efd;
+}
+
+.subscription-plan-card input[type="radio"] {
+    display: none;
+}
+
+.subscription-plan-card label {
+    cursor: pointer;
+    width: 100%;
+}
+
+.service-btn {
+    border: 2px solid #0d6efd;
+    border-radius: 8px;
+    padding: 10px;
+    transition: all 0.3s ease;
+    text-align: center;
+    display: block;
+    text-decoration: none;
+    color: #0d6efd;
+}
+
+.service-btn:hover {
+    background-color: #0d6efd;
+    color: white;
+    transform: translateY(-3px);
+    box-shadow: 0 4px 8px rgba(13, 110, 253, 0.3);
+}
+
+.category-section h6 {
+    border-bottom: 2px solid #dee2e6;
+    padding-bottom: 8px;
+    margin-bottom: 12px;
+}
+
+.form-check-input:checked + .form-check-label {
+    font-weight: bold;
+    color: #0d6efd;
+}
+</style>
+
+<script>
+console.log('=== Script loaded ===');
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('=== DOMContentLoaded fired ===');
+    const regularCountInput = document.getElementById('regular_count');
+    const premiumCountInput = document.getElementById('premium_count');
+    const daysInput = document.getElementById('days_requested');
+    const daysPreset = document.getElementById('days_preset');
+    const costDisplay = document.getElementById('estimated_cost');
+    const savingsBadge = document.getElementById('savings_badge');
+    const subscriptionTypeInputs = document.querySelectorAll('input[name="subscription_type"]');
+    const propertyTypeInputs = document.querySelectorAll('input[name="property_types"]');
+    const additionalServiceInputs = document.querySelectorAll('input[name="additional_services"]');
+    const planInputs = document.querySelectorAll('input[name="selected_plan"]');
+
+    // Check if elements exist
+    console.log('DOM Elements:', {
+        regularCountInput: !!regularCountInput,
+        premiumCountInput: !!premiumCountInput,
+        daysInput: !!daysInput,
+        daysPreset: !!daysPreset,
+        costDisplay: !!costDisplay,
+        subscriptionTypeInputs: subscriptionTypeInputs.length,
+        propertyTypeInputs: propertyTypeInputs.length,
+        additionalServiceInputs: additionalServiceInputs.length,
+        planInputs: planInputs.length
+    });
+
+    // Get prices from data attributes (more reliable than inline template variables)
+    const container = document.getElementById('subscription-container');
+    const regularPrice = container ? parseFloat(container.dataset.regularPrice) : 50.0;
+    const premiumPrice = container ? parseFloat(container.dataset.premiumPrice) : 1000.0;
+    const servicePrice = container ? parseFloat(container.dataset.servicePrice) : 50.0;
+
+    console.log('Container and prices:', { container, regularPrice, premiumPrice, servicePrice });
+    
+    // Days preset handler
+    daysPreset.addEventListener('change', function() {
+        if (this.value) {
+            daysInput.value = this.value;
+            calculateCost();
+        }
+    });
+    
+    function calculateCost() {
+        console.log('=== calculateCost called ===');
+        try {
+            if (!regularCountInput || !premiumCountInput || !daysInput || !costDisplay) {
+                console.error('Required DOM elements not found:', {
+                    regularCountInput: !!regularCountInput,
+                    premiumCountInput: !!premiumCountInput,
+                    daysInput: !!daysInput,
+                    costDisplay: !!costDisplay
+                });
+                return;
+            }
+
+            const regularCount = parseInt(regularCountInput.value) || 0;
+            const premiumCount = parseInt(premiumCountInput.value) || 0;
+            const days = parseInt(daysInput.value) || 0;
+
+            console.log('Input values:', {
+                regularCount: regularCountInput.value,
+                premiumCount: premiumCountInput.value,
+                days: daysInput.value,
+                parsed: { regularCount, premiumCount, days }
+            });
+
+            // Try to get prices from data attributes, fall back to hardcoded values
+            let regularPrice = 50.0;
+            let premiumPrice = 1000.0;
+            let servicePrice = 50.0;
+
+            const container = document.getElementById('subscription-container');
+            if (container) {
+                const attrRegular = parseFloat(container.dataset.regularPrice);
+                const attrPremium = parseFloat(container.dataset.premiumPrice);
+                const attrService = parseFloat(container.dataset.servicePrice);
+                
+                if (!isNaN(attrRegular)) regularPrice = attrRegular;
+                if (!isNaN(attrPremium)) premiumPrice = attrPremium;
+                if (!isNaN(attrService)) servicePrice = attrService;
+                
+                console.log('Prices from data attributes:', { 
+                    regularPrice, 
+                    premiumPrice, 
+                    servicePrice,
+                    raw: container.dataset.debug
+                });
+            } else {
+                console.warn('Container not found, using hardcoded prices');
+            }
+
+            console.log('Final prices used:', { regularPrice, premiumPrice, servicePrice });
+
+            // Get selected subscription types (now multiple)
+            const selectedSubscriptionTypes = [];
+            subscriptionTypeInputs.forEach(input => {
+                if (input.checked) {
+                    selectedSubscriptionTypes.push(input.value);
+                }
+            });
+
+            // Get selected property types
+            const selectedPropertyTypes = [];
+            propertyTypeInputs.forEach(input => {
+                if (input.checked) {
+                    selectedPropertyTypes.push(input.value);
+                }
+            });
+
+            // Get selected additional services
+            const selectedAdditionalServices = [];
+            additionalServiceInputs.forEach(input => {
+                if (input.checked) {
+                    selectedAdditionalServices.push(input.value);
+                }
+            });
+
+        // Check if a plan is selected
+        let selectedPlanPrice = 0;
+        planInputs.forEach(input => {
+            if (input.checked) {
+                const planPrice = parseFloat(input.dataset.price) || 0;
+                selectedPlanPrice = planPrice;
+            }
+        });
+
+        let totalCost = 0;
+
+        // Always calculate based on counts (primary method)
+        const regularCost = regularPrice * regularCount * days;
+        const premiumCost = premiumPrice * premiumCount * days;
+        totalCost = regularCost + premiumCost;
+
+        console.log('Base cost calculation:', { 
+            regularPrice, 
+            regularCount, 
+            days, 
+            regularCost,
+            premiumPrice, 
+            premiumCount, 
+            premiumCost,
+            totalCost 
+        });
+
+        // Add cost for subscription types (if any)
+        if (selectedSubscriptionTypes.length > 0) {
+            const subscriptionCost = regularPrice * selectedSubscriptionTypes.length * days;
+            totalCost += subscriptionCost;
+            console.log('Added subscription cost:', subscriptionCost);
+        }
+
+        // Add cost for additional services (if any)
+        if (selectedAdditionalServices.length > 0) {
+            const servicesCost = servicePrice * selectedAdditionalServices.length * days;
+            totalCost += servicesCost;
+            console.log('Added services cost:', servicesCost);
+        }
+
+        console.log('Final total cost:', totalCost);
+
+        // Update display
+        if (costDisplay) {
+            costDisplay.textContent = totalCost.toLocaleString('ar-EG') + ' دينار';
+            console.log('Updated cost display to:', costDisplay.textContent);
+        } else {
+            console.error('costDisplay element not found');
+        }
+
+        // Update cost breakdown (use already calculated values)
+        const servicesCost = selectedAdditionalServices.length > 0 ? servicePrice * selectedAdditionalServices.length * days : 0;
+
+        console.log('Cost breakdown:', { regularCost, premiumCost, servicesCost });
+
+        const regularCostEl = document.getElementById('regular_cost');
+        const premiumCostEl = document.getElementById('premium_cost');
+        const servicesCostEl = document.getElementById('services_cost');
+        const finalCostEl = document.getElementById('final_cost');
+
+        if (regularCostEl) regularCostEl.textContent = regularCost.toLocaleString('ar-EG');
+        if (premiumCostEl) premiumCostEl.textContent = premiumCost.toLocaleString('ar-EG');
+        if (servicesCostEl) servicesCostEl.textContent = servicesCost.toLocaleString('ar-EG');
+        if (finalCostEl) finalCostEl.textContent = totalCost.toLocaleString('ar-EG') + ' دينار';
+
+        console.log('=== calculateCost completed ===');
+
+        // Apply discounts
+        let discountPercent = 0;
+        if (days >= 365) {
+            discountPercent = 10; // 10% for yearly
+        } else if (days >= 180) {
+            discountPercent = 5; // 5% for 6 months
+        }
+
+        if (discountPercent > 0) {
+            const savings = totalCost * (discountPercent / 100);
+            totalCost = totalCost - savings;
+
+            if (savingsBadge) {
+                savingsBadge.textContent = `وفرت ${discountPercent}%`;
+                savingsBadge.style.display = 'inline';
+            }
+        } else {
+            if (savingsBadge) {
+                savingsBadge.style.display = 'none';
+            }
+        }
+
+        costDisplay.textContent = totalCost.toLocaleString('ar-EG') + ' دينار';
+
+        // Update quality indicator
+        const totalServices = selectedSubscriptionTypes.length + selectedPropertyTypes.length + selectedAdditionalServices.length + regularCount + premiumCount;
+        const qualityPercentage = Math.min((totalServices / 10) * 100, 100);
+        const qualityBar = document.getElementById('quality_bar');
+        const qualityText = document.getElementById('quality_text');
+        
+        qualityBar.style.width = qualityPercentage + '%';
+        
+        if (qualityPercentage >= 80) {
+            qualityBar.className = 'progress-bar bg-success';
+            qualityText.textContent = 'اشتراك ممتاز! - يغطي معظم الخدمات';
+        } else if (qualityPercentage >= 50) {
+            qualityBar.className = 'progress-bar bg-info';
+            qualityText.textContent = 'اشتراك جيد - يغطي الخدمات الأساسية';
+        } else if (qualityPercentage >= 20) {
+            qualityBar.className = 'progress-bar bg-warning';
+            qualityText.textContent = 'اشتراك متوسط - قد تحتاج لخدمات إضافية';
+        } else {
+            qualityBar.className = 'progress-bar bg-danger';
+            qualityText.textContent = 'اشتراك محدود - ننصح بإضافة المزيد من الخدمات';
+        }
+        
+        // Update comparison
+        const currentDuration = parseInt(document.getElementById('current_duration').textContent) || 0;
+        const currentCost = parseInt(document.getElementById('current_cost').textContent) || 0;
+        
+        document.getElementById('new_duration').textContent = days;
+        document.getElementById('new_cost').textContent = totalCost.toLocaleString();
+        
+        const comparisonMessage = document.getElementById('comparison_message');
+        const potentialSavings = document.getElementById('potential_savings');
+        
+        if (currentDuration > 0 && currentCost > 0) {
+            const dailyRate = currentCost / currentDuration;
+            const projectedCost = dailyRate * days;
+            const savings = projectedCost - totalCost;
+            
+            if (savings > 0) {
+                comparisonMessage.style.display = 'block';
+                potentialSavings.textContent = savings.toLocaleString();
+            } else {
+                comparisonMessage.style.display = 'none';
+            }
+        } else {
+            comparisonMessage.style.display = 'none';
+        }
+    } catch (error) {
+        console.error('Error in calculateCost:', error);
+        costDisplay.textContent = 'خطأ في الحساب';
+    }
+    }  // End of calculateCost function
+    
+    // Add event listeners for subscription types
+    subscriptionTypeInputs.forEach(input => {
+        input.addEventListener('change', calculateCost);
+    });
+
+    // Add event listeners for property types
+    propertyTypeInputs.forEach(input => {
+        input.addEventListener('change', calculateCost);
+    });
+
+    // Add event listeners for additional services
+    additionalServiceInputs.forEach(input => {
+        input.addEventListener('change', calculateCost);
+    });
+
+    // Add event listeners for count inputs
+    if (regularCountInput) {
+        regularCountInput.addEventListener('input', calculateCost);
+        regularCountInput.addEventListener('change', calculateCost);
+    }
+    if (premiumCountInput) {
+        premiumCountInput.addEventListener('input', calculateCost);
+        premiumCountInput.addEventListener('change', calculateCost);
+    }
+    if (daysInput) {
+        daysInput.addEventListener('input', calculateCost);
+        daysInput.addEventListener('change', calculateCost);
+    }
+
+    planInputs.forEach(input => {
+        input.addEventListener('change', calculateCost);
+    });
+    
+    // Character count for notes
+    const notesInput = document.getElementById('notes');
+    const charCount = document.getElementById('char_count');
+    
+    if (notesInput && charCount) {
+        notesInput.addEventListener('input', function() {
+            const currentLength = this.value.length;
+            charCount.textContent = currentLength;
+            
+            if (currentLength >= 500) {
+                charCount.classList.add('text-danger');
+            } else {
+                charCount.classList.remove('text-danger');
+            }
+        });
+    }
+    
+    // Initial calculation with multiple attempts
+    console.log('=== Starting cost calculation attempts ===');
+    
+    // Force calculation immediately
+    console.log('Attempt 1: Immediate');
+    calculateCost();
+    
+    // Force calculation after a small delay
+    setTimeout(() => {
+        console.log('Attempt 2: After 300ms');
+        calculateCost();
+    }, 300);
+    
+    // Force calculation again
+    setTimeout(() => {
+        console.log('Attempt 3: After 800ms');
+        calculateCost();
+    }, 800);
+    
+    // Force calculation one more time after 2 seconds
+    setTimeout(() => {
+        console.log('Attempt 4: After 2000ms (final)');
+        calculateCost();
+    }, 2000);
+    
+    // Also trigger calculation when user interacts with days preset
+    if (daysPreset) {
+        daysPreset.addEventListener('change', function() {
+            console.log('Days preset changed to:', this.value);
+            if (this.value) {
+                daysInput.value = this.value;
+                calculateCost();
+            }
+        });
+    }
+    
+    console.log('=== DOMContentLoaded completed ===');
+});
+</script>
+
+{% endblock %}

@@ -1,0 +1,337 @@
+{% extends "properties/base.html" %}
+{% load static %}
+
+{% block title %}{{ job.title }} - دلال{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row">
+        <div class="col-lg-8">
+            <!-- Job Details Card -->
+            <div class="card mb-4">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-start mb-4">
+                        <div>
+                            <h1 class="h3 mb-2">{{ job.title }}</h1>
+                            <p class="text-muted mb-0">{{ job.company_name }}</p>
+                        </div>
+                        {% if job.company_logo %}
+                        <img src="{{ job.company_logo.url }}" alt="{{ job.company_name }}" class="company-logo-large">
+                        {% endif %}
+                    </div>
+                    
+                    <div class="mb-4">
+                        <span class="badge bg-primary">{{ job.get_job_type_display }}</span>
+                        <span class="badge bg-info">{{ job.get_experience_level_display }}</span>
+                        {% if job.is_urgent %}
+                        <span class="badge bg-danger">عادية</span>
+                        {% endif %}
+                        {% if job.is_featured %}
+                        <span class="badge bg-warning">مميز</span>
+                        {% endif %}
+                        {% if job.is_remote %}
+                        <span class="badge bg-success">عمل عن بعد</span>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="job-info-grid mb-4">
+                        <div class="info-item">
+                            <i class="fas fa-map-marker-alt"></i>
+                            <span>
+                                {% if job.location_type == 'inside_iraq' %}
+                                    {{ job.get_governorate_display }} - {{ job.city }}
+                                {% else %}
+                                    {% if job.country == 'other' %}
+                                        {{ job.outside_city }} - {{ job.outside_city }}
+                                    {% else %}
+                                        {{ job.get_country_display }} - {{ job.outside_city }}
+                                    {% endif %}
+                                {% endif %}
+                            </span>
+                        </div>
+                        <div class="info-item">
+                            <i class="fas fa-money-bill-wave"></i>
+                            <span>{{ job.salary_range }}</span>
+                        </div>
+                        <div class="info-item">
+                            <i class="fas fa-eye"></i>
+                            <span>{{ job.views_count }} مشاهدة</span>
+                        </div>
+                        <div class="info-item">
+                            <i class="fas fa-users"></i>
+                            <span>{{ job.applications_count }} متقدم</span>
+                        </div>
+                    </div>
+                    
+                    <hr>
+                    
+                    <div class="mb-4">
+                        <h5>وصف الوظيفة</h5>
+                        <p>{{ job.description|linebreaks }}</p>
+                    </div>
+                    
+                    <div class="mb-4">
+                        <h5>المتطلبات</h5>
+                        <p>{{ job.requirements|linebreaks }}</p>
+                    </div>
+                    
+                    <div class="mb-4">
+                        <h5>المسؤوليات</h5>
+                        <p>{{ job.responsibilities|linebreaks }}</p>
+                    </div>
+                    
+                    {% if job.benefits %}
+                    <div class="mb-4">
+                        <h5>المزايا</h5>
+                        <p>{{ job.benefits|linebreaks }}</p>
+                    </div>
+                    {% endif %}
+                    
+                    <div class="mb-4">
+                        <h5>المهارات المطلوبة</h5>
+                        <div class="skills-container">
+                            {% for skill in job.skills.split(',') %}
+                            <span class="skill-tag">{{ skill.strip }}</span>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    
+                    <hr>
+                    
+                    <div class="contact-info">
+                        <h5>معلومات الاتصال</h5>
+                        <p><strong>الاسم:</strong> {{ job.contact_name }}</p>
+                        <p><strong>البريد الإلكتروني:</strong> {{ job.contact_email }}</p>
+                        <p><strong>الهاتف:</strong> {{ job.contact_phone }}</p>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Apply Button -->
+            {% if user.is_authenticated %}
+            <button class="btn btn-primary btn-lg w-100 mb-4" data-bs-toggle="modal" data-bs-target="#applyModal">
+                التقديم على هذه الوظيفة
+            </button>
+            {% else %}
+            <a href="/login/?next={% url 'job_detail' job.slug %}" class="btn btn-primary btn-lg w-100 mb-4">
+                سجل دخول للتقديم
+            </a>
+            {% endif %}
+        </div>
+        
+        <div class="col-lg-4">
+            <!-- Company Info Card -->
+            <div class="card mb-4">
+                <div class="card-body">
+                    <h5 class="card-title mb-3">معلومات الشركة</h5>
+                    {% if job.company_logo %}
+                    <div class="text-center mb-3">
+                        <img src="{{ job.company_logo.url }}" alt="{{ job.company_name }}" class="company-logo-medium">
+                    </div>
+                    {% endif %}
+                    <h6>{{ job.company_name }}</h6>
+                    {% if job.company_description %}
+                    <p class="text-muted small">{{ job.company_description|truncatewords:30 }}</p>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <!-- Job Info Card -->
+            <div class="card mb-4">
+                <div class="card-body">
+                    <h5 class="card-title mb-3">تفاصيل الوظيفة</h5>
+                    <ul class="list-unstyled">
+                        <li class="mb-2">
+                            <strong>نوع الوظيفة:</strong> {{ job.get_job_type_display }}
+                        </li>
+                        <li class="mb-2">
+                            <strong>مستوى الخبرة:</strong> {{ job.get_experience_level_display }}
+                        </li>
+                        <li class="mb-2">
+                            <strong>الموقع:</strong> {{ job.governorate }} - {{ job.city }}
+                        </li>
+                        <li class="mb-2">
+                            <strong>الراتب:</strong> {{ job.salary_range }}
+                        </li>
+                        <li class="mb-2">
+                            <strong>تاريخ النشر:</strong> {{ job.created_at|date:"Y-m-d" }}
+                        </li>
+                        {% if job.expiry_date %}
+                        <li class="mb-2">
+                            <strong>تاريخ الانتهاء:</strong> {{ job.expiry_date|date:"Y-m-d" }}
+                        </li>
+                        {% endif %}
+                    </ul>
+                </div>
+            </div>
+            
+            <!-- Share Card -->
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title mb-3">مشاركة الوظيفة</h5>
+                    <div class="d-flex gap-2">
+                        <button class="btn btn-outline-primary btn-sm" onclick="shareJob('facebook')">
+                            <i class="fab fa-facebook-f"></i>
+                        </button>
+                        <button class="btn btn-outline-info btn-sm" onclick="shareJob('twitter')">
+                            <i class="fab fa-twitter"></i>
+                        </button>
+                        <button class="btn btn-outline-success btn-sm" onclick="shareJob('whatsapp')">
+                            <i class="fab fa-whatsapp"></i>
+                        </button>
+                        <button class="btn btn-outline-secondary btn-sm" onclick="copyLink()">
+                            <i class="fas fa-link"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Apply Modal -->
+{% if user.is_authenticated %}
+<div class="modal fade" id="applyModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">التقديم على {{ job.title }}</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="applyForm" method="POST" action="{% url 'job_apply' job.slug %}" enctype="multipart/form-data">
+                    {% csrf_token %}
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label">الاسم الكامل *</label>
+                            <input type="text" name="full_name" class="form-control" required value="{{ user.get_full_name }}">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">البريد الإلكتروني *</label>
+                            <input type="email" name="email" class="form-control" required value="{{ user.email }}">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">رقم الهاتف *</label>
+                            <input type="text" name="phone" class="form-control" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">المسمى الوظيفي الحالي</label>
+                            <input type="text" name="current_position" class="form-control">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">الشركة الحالية</label>
+                            <input type="text" name="current_company" class="form-control">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">سنوات الخبرة</label>
+                            <input type="number" name="years_of_experience" class="form-control" min="0" value="0">
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label">ملف السيرة الذاتية *</label>
+                            <input type="file" name="cv_file" class="form-control" accept=".pdf,.doc,.docx" required>
+                            <small class="text-muted">الملفات المسموحة: PDF, DOC, DOCX</small>
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label">رسالة التقديم</label>
+                            <textarea name="cover_letter" class="form-control" rows="4"></textarea>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">رابط الأعمال السابقة</label>
+                            <input type="url" name="portfolio_url" class="form-control">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">الراتب المتوقع</label>
+                            <input type="number" name="expected_salary" class="form-control" step="0.01">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">تاريخ التوفر</label>
+                            <input type="date" name="available_date" class="form-control">
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">إلغاء</button>
+                <button type="submit" form="applyForm" class="btn btn-primary">إرسال الطلب</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<style>
+.company-logo-large {
+    width: 80px;
+    height: 80px;
+    object-fit: contain;
+    border-radius: 8px;
+}
+
+.company-logo-medium {
+    width: 100px;
+    height: 100px;
+    object-fit: contain;
+    border-radius: 8px;
+}
+
+.job-info-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+}
+
+.info-item {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.info-item i {
+    color: #0d9488;
+    font-size: 1.2rem;
+}
+
+.skills-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+
+.skill-tag {
+    background: #e9ecef;
+    padding: 0.25rem 0.75rem;
+    border-radius: 20px;
+    font-size: 0.9rem;
+}
+</style>
+
+<script>
+function shareJob(platform) {
+    const url = encodeURIComponent(window.location.href);
+    const title = encodeURIComponent('{{ job.title }}');
+    
+    let shareUrl;
+    switch(platform) {
+        case 'facebook':
+            shareUrl = `https://www.facebook.com/sharer/sharer.php?u=${url}`;
+            break;
+        case 'twitter':
+            shareUrl = `https://twitter.com/intent/tweet?url=${url}&text=${title}`;
+            break;
+        case 'whatsapp':
+            shareUrl = `https://wa.me/?text=${title}%20${url}`;
+            break;
+    }
+    
+    if (shareUrl) {
+        window.open(shareUrl, '_blank', 'width=600,height=400');
+    }
+}
+
+function copyLink() {
+    navigator.clipboard.writeText(window.location.href).then(() => {
+        alert('تم نسخ الرابط!');
+    });
+}
+</script>
+{% endblock %}

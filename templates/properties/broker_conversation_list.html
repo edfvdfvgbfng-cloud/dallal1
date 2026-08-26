@@ -1,0 +1,912 @@
+{% extends 'properties/base.html' %}
+{% load static %}
+
+{% block title %}المحادثات | دلال{% endblock %}
+
+{% block extra_css %}
+<style>
+.conversations-container {
+  background: var(--bg-primary, #0B0B0B);
+  min-height: calc(100vh - var(--header-height, 72px));
+  padding: 2rem;
+}
+
+.page-header {
+  background: var(--card-bg, #161616);
+  border: 1px solid var(--border-primary, rgba(255, 122, 0, 0.15));
+  border-radius: var(--radius-lg, 16px);
+  padding: 1.5rem;
+  margin-bottom: 2rem;
+  box-shadow: var(--shadow-lg, 0 10px 15px rgba(0, 0, 0, 0.5));
+}
+
+.page-title {
+  color: var(--text-primary, #FFFFFF);
+  font-size: 1.5rem;
+  font-weight: 700;
+  margin: 0;
+}
+
+.page-subtitle {
+  color: var(--text-muted, rgba(255, 255, 255, 0.7));
+  margin: 0.5rem 0 0 0;
+  font-size: 0.9rem;
+}
+
+.search-section {
+  background: var(--card-bg, #161616);
+  border: 1px solid var(--border-primary, rgba(255, 122, 0, 0.15));
+  border-radius: var(--radius-lg, 16px);
+  padding: 1.5rem;
+  margin-bottom: 2rem;
+  box-shadow: var(--shadow-lg, 0 10px 15px rgba(0, 0, 0, 0.5));
+}
+
+.search-box {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 1rem;
+  align-items: center;
+}
+
+.search-input {
+  flex: 1;
+  background: var(--bg-secondary, #1a1a1a);
+  border: 1px solid var(--border-primary, rgba(255, 122, 0, 0.15));
+  border-radius: var(--radius-sm, 8px);
+  padding: 0.75rem 1rem;
+  color: var(--text-primary, #FFFFFF);
+  font-size: 0.9rem;
+}
+
+.search-input:focus {
+  outline: none;
+  border-color: var(--primary, #FF7A00);
+  box-shadow: 0 0 0 3px rgba(255, 122, 0, 0.2);
+}
+
+.btn-primary {
+  background: var(--primary, #FF7A00);
+  border-color: var(--primary, #FF7A00);
+  color: white;
+  padding: 0.75rem 1.5rem;
+  border-radius: var(--radius-sm, 8px);
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  border: none;
+  white-space: nowrap;
+}
+
+.btn-primary:hover {
+  background: #ff9500;
+  border-color: #ff9500;
+  transform: translateY(-2px);
+  box-shadow: 0 5px 15px rgba(255, 122, 0, 0.3);
+}
+
+.tabs-section {
+  background: var(--card-bg, #161616);
+  border: 1px solid var(--border-primary, rgba(255, 122, 0, 0.15));
+  border-radius: var(--radius-lg, 16px);
+  padding: 1.5rem;
+  margin-bottom: 2rem;
+  box-shadow: var(--shadow-lg, 0 10px 15px rgba(0, 0, 0, 0.5));
+}
+
+.tabs {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.tab-btn {
+  padding: 0.75rem 1.5rem;
+  background: var(--bg-secondary, #1a1a1a);
+  border: 1px solid var(--border-primary, rgba(255, 122, 0, 0.15));
+  border-radius: var(--radius-sm, 8px);
+  color: var(--text-primary, #FFFFFF);
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-weight: 500;
+}
+
+.tab-btn:hover {
+  border-color: var(--primary, #FF7A00);
+}
+
+.tab-btn.active {
+  background: var(--primary, #FF7A00);
+  font-weight: 700;
+  border-color: var(--primary, #FF7A00);
+  box-shadow: 0 5px 15px rgba(255, 122, 0, 0.3);
+}
+
+.conversations-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+  gap: 1.5rem;
+}
+
+.conversation-card {
+  background: var(--card-bg, #161616);
+  border: 1px solid var(--border-primary, rgba(255, 122, 0, 0.15));
+  border-radius: var(--radius-lg, 16px);
+  padding: 1.5rem;
+  box-shadow: var(--shadow-lg, 0 10px 15px rgba(0, 0, 0, 0.5));
+  transition: all 0.3s ease;
+  cursor: pointer;
+}
+
+.conversation-card:hover {
+  border-color: var(--primary, #FF7A00);
+  transform: translateY(-4px);
+  box-shadow: 0 15px 25px rgba(255, 122, 0, 0.2);
+}
+
+.conversation-header {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.broker-avatar {
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  background: var(--bg-secondary, #1a1a1a);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.5rem;
+  border: 2px solid var(--primary, #FF7A00);
+}
+
+.broker-info {
+  flex: 1;
+}
+
+.broker-name {
+  color: var(--text-primary, #FFFFFF);
+  font-size: 1.1rem;
+  font-weight: 600;
+  margin: 0;
+}
+
+.broker-office {
+  color: var(--text-muted, rgba(255, 255, 255, 0.7));
+  font-size: 0.85rem;
+  margin: 0.25rem 0 0 0;
+}
+
+.conversation-stats {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.stat-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: var(--text-muted, rgba(255, 255, 255, 0.7));
+  font-size: 0.85rem;
+}
+
+.stat-item i {
+  color: var(--primary, #FF7A00);
+}
+
+.unread-badge {
+  background: var(--primary, #FF7A00);
+  color: white;
+  padding: 0.25rem 0.75rem;
+  border-radius: 20px;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.last-message {
+  color: var(--text-muted, rgba(255, 255, 255, 0.7));
+  font-size: 0.9rem;
+  margin-bottom: 0.75rem;
+  line-height: 1.4;
+}
+
+.last-message-time {
+  color: var(--text-muted, rgba(255, 255, 255, 0.5));
+  font-size: 0.8rem;
+}
+
+.expiry-warning {
+  background: rgba(255, 122, 0, 0.1);
+  border: 1px solid rgba(255, 122, 0, 0.3);
+  color: #FF7A00;
+  padding: 0.5rem;
+  border-radius: var(--radius-sm, 8px);
+  font-size: 0.85rem;
+  margin-top: 0.75rem;
+}
+
+.empty-state {
+  background: var(--card-bg, #161616);
+  border: 1px solid var(--border-primary, rgba(255, 122, 0, 0.15));
+  border-radius: var(--radius-lg, 16px);
+  padding: 3rem;
+  text-align: center;
+  box-shadow: var(--shadow-lg, 0 10px 15px rgba(0, 0, 0, 0.5));
+}
+
+.empty-state i {
+  color: var(--text-muted, rgba(255, 255, 255, 0.5));
+  font-size: 3rem;
+  margin-bottom: 1rem;
+}
+
+.empty-state h3 {
+  color: var(--text-primary, #FFFFFF);
+  margin: 1rem 0 0.5rem 0;
+}
+
+.empty-state p {
+  color: var(--text-muted, rgba(255, 255, 255, 0.7));
+  margin-bottom: 1.5rem;
+}
+
+.btn-primary {
+  background: var(--primary, #FF7A00);
+  border-color: var(--primary, #FF7A00);
+  color: white;
+  padding: 0.75rem 1.5rem;
+  border-radius: var(--radius-sm, 8px);
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  border: none;
+  white-space: nowrap;
+  margin: 0 auto;
+}
+
+.btn-primary:hover {
+  background: #ff9500;
+  border-color: #ff9500;
+  transform: translateY(-2px);
+  box-shadow: 0 5px 15px rgba(255, 122, 0, 0.3);
+}
+
+.users-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+.user-card {
+  background: var(--bg-secondary, #1a1a1a);
+  border: 1px solid var(--border-primary, rgba(255, 122, 0, 0.15));
+  border-radius: var(--radius-sm, 8px);
+  padding: 1rem;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.user-card:hover {
+  border-color: var(--primary, #FF7A00);
+  transform: translateY(-2px);
+}
+
+.user-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: var(--bg-primary, #0B0B0B);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.2rem;
+  color: var(--text-muted, rgba(255, 255, 255, 0.7));
+}
+
+.user-info {
+  flex: 1;
+}
+
+.user-name {
+  color: var(--text-primary, #FFFFFF);
+  font-size: 0.95rem;
+  font-weight: 600;
+  margin: 0;
+}
+
+.user-role {
+  color: var(--text-muted, rgba(255, 255, 255, 0.7));
+  font-size: 0.8rem;
+  margin: 0.25rem 0 0 0;
+}
+
+.modal {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.8);
+  z-index: 10000;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.modal.active {
+  display: flex;
+}
+
+.modal-content {
+  background: var(--card-bg, #161616);
+  border: 1px solid var(--border-primary, rgba(255, 122, 0, 0.15));
+  border-radius: var(--radius-lg, 16px);
+  padding: 2rem;
+  max-width: 600px;
+  width: 90%;
+  max-height: 80vh;
+  overflow-y: auto;
+  cursor: default;
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+}
+
+.modal-title {
+  color: var(--text-primary, #FFFFFF);
+  font-size: 1.25rem;
+  font-weight: 700;
+  margin: 0;
+}
+
+.modal-close {
+  background: none;
+  border: none;
+  color: var(--text-muted, rgba(255, 255, 255, 0.7));
+  font-size: 1.5rem;
+  cursor: pointer;
+  transition: color 0.3s ease;
+}
+
+.modal-close:hover {
+  color: var(--text-primary, #FFFFFF);
+}
+
+@media (max-width: 768px) {
+  .conversations-container {
+    padding: 1rem;
+  }
+
+  .conversations-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .search-box {
+    flex-direction: column;
+  }
+
+  .tabs {
+    flex-wrap: wrap;
+  }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="conversations-container">
+  <div class="page-header">
+    <h1 class="page-title">المحادثات</h1>
+    <p class="page-subtitle">إدارة المحادثات مع الدلالين، الإدارة، والمستخدمين</p>
+  </div>
+
+  <!-- قسم البحث -->
+  <div class="search-section">
+    <div class="search-box">
+      <input type="text" id="searchInput" class="search-input" placeholder="ابحث عن المستخدمين بالاسم...">
+      <button class="btn btn-primary" id="newMessageBtn">
+        <span>✏️</span>
+        <span>ابدأ محادثة جديدة</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- الأقسام -->
+  <div class="tabs-section">
+    <div class="tabs">
+      <button class="tab-btn active" data-tab="brokers">الدلالين</button>
+      <button class="tab-btn" data-tab="admin">الإدارة</button>
+      <button class="tab-btn" data-tab="users">المستخدمين</button>
+    </div>
+
+    <!-- قسم الدلالين -->
+    <div id="brokers-section" class="tab-content">
+      {% if conversations %}
+        <div class="conversations-grid">
+          {% for conversation in conversations %}
+            <a href="{% url 'broker_conversation_detail' conversation.conversation_id %}" class="conversation-card">
+              <div class="conversation-header">
+                <div class="broker-avatar">
+                  {% if conversation.broker.profile_image %}
+                    <img src="{{ conversation.broker.profile_image.url }}" alt="{{ conversation.broker.user.username }}" style="width: 100%; height: 100%; border-radius: 50%; object-fit: cover;">
+                  {% else %}
+                    <i class="fas fa-user"></i>
+                  {% endif %}
+                </div>
+                <div class="broker-info">
+                  <h3 class="broker-name">{{ conversation.broker.user.username }}</h3>
+                  <p class="broker-office">{{ conversation.broker.office_name|default:"دلال" }}</p>
+                </div>
+                {% if conversation.is_verified %}
+                  <span class="verified-badge">
+                    <i class="fas fa-check-circle"></i>
+                  </span>
+                {% endif %}
+              </div>
+
+              <div class="conversation-stats">
+                <div class="stat-item">
+                  <i class="fas fa-comment"></i>
+                  <span>{{ conversation.get_messages_count }} رسالة</span>
+                </div>
+                <div class="stat-item">
+                  <i class="fas fa-clock"></i>
+                  <span>{{ conversation.created_at|date:"Y-m-d" }}</span>
+                </div>
+                {% if conversation.get_unread_count > 0 %}
+                  <span class="unread-badge">{{ conversation.get_unread_count }} جديد</span>
+                {% endif %}
+              </div>
+
+              {% if conversation.last_message_at %}
+                <div class="last-message">
+                  آخر رسالة: {{ conversation.last_message_at|timesince }} مضت
+                </div>
+              {% endif %}
+
+              <div class="last-message-time">
+                تنتهي: {{ conversation.expires_at|date:"Y-m-d" }}
+              </div>
+
+              {% if conversation.is_expired %}
+                <div class="expiry-warning">
+                  <i class="fas fa-exclamation-triangle"></i>
+                  المحادثة منتهية الصلاحية
+                </div>
+              {% endif %}
+            </a>
+          {% endfor %}
+        </div>
+      {% else %}
+        <div class="empty-state">
+          <i class="fas fa-comments"></i>
+          <h3>لا توجد محادثات مع الدلالين</h3>
+          <p>ابدأ المحادثة مع الدلالين للتواصل معهم</p>
+          <button class="btn btn-primary new-message-trigger">
+            <span>✏️</span>
+            <span>ابدأ محادثة جديدة</span>
+          </button>
+        </div>
+      {% endif %}
+    </div>
+
+    <!-- قسم الإدارة -->
+    <div id="admin-section" class="tab-content" style="display: none;">
+      <div class="empty-state">
+        <i class="fas fa-user-shield"></i>
+        <h3>قسم الإدارة</h3>
+        <p>يمكنك التواصل مع فريق الإدارة من هنا</p>
+        <button class="btn btn-primary new-message-trigger">
+          <span>✏️</span>
+          <span>ابدأ محادثة جديدة</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- قسم المستخدمين -->
+    <div id="users-section" class="tab-content" style="display: none;">
+      <div id="all-users-list" class="users-list">
+        <!-- سيتم تحميل المستخدمين من خلال API -->
+      </div>
+      <div id="users-empty" class="empty-state" style="display: none;">
+        <i class="fas fa-users"></i>
+        <h3>لا توجد مستخدمين</h3>
+        <p>ابحث عن المستخدمين للتواصل معهم</p>
+        <button class="btn btn-primary new-message-trigger">
+          <span>✏️</span>
+          <span>ابدأ محادثة جديدة</span>
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal لبدء محادثة جديدة -->
+<div id="newMessageModal" class="modal">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h2 class="modal-title">بدء محادثة جديدة</h2>
+      <button class="modal-close" onclick="closeNewMessageModal()">&times;</button>
+    </div>
+    <div id="newMessageContent">
+      <!-- سيتم تحميل المستخدمين هنا -->
+    </div>
+  </div>
+</div>
+
+<script>
+let currentTab = 'brokers';
+
+// Initialize event listeners when DOM is ready
+document.addEventListener('DOMContentLoaded', function() {
+  console.log('DOM loaded, initializing event listeners');
+  
+  // Tab buttons
+  document.querySelectorAll('.tab-btn').forEach(btn => {
+    btn.addEventListener('click', function() {
+      const tab = this.getAttribute('data-tab');
+      console.log('Tab clicked:', tab);
+      switchTab(tab);
+    });
+  });
+  
+  // New message buttons
+  document.getElementById('newMessageBtn')?.addEventListener('click', openNewMessageModal);
+  
+  document.querySelectorAll('.new-message-trigger').forEach(btn => {
+    btn.addEventListener('click', openNewMessageModal);
+  });
+  
+  // Search input
+  document.getElementById('searchInput')?.addEventListener('keyup', searchUsers);
+  
+  // Modal close button
+  document.querySelector('.modal-close')?.addEventListener('click', closeNewMessageModal);
+  
+  // Close modal when clicking outside
+  document.getElementById('newMessageModal')?.addEventListener('click', function(e) {
+    if (e.target === this) {
+      closeNewMessageModal();
+    }
+  });
+  
+  // Messenger app event listeners
+  initializeMessengerEventListeners();
+  
+  console.log('Event listeners initialized');
+});
+
+// Initialize messenger event listeners
+function initializeMessengerEventListeners() {
+  console.log('Initializing messenger event listeners');
+  
+  // New message modal button
+  document.querySelectorAll('.action-btn[title="محادثة جديدة"]').forEach(btn => {
+    btn.addEventListener('click', openNewMessageModal);
+  });
+  
+  // Settings button
+  document.querySelectorAll('.action-btn[title="الإعدادات"]').forEach(btn => {
+    btn.addEventListener('click', toggleSettings);
+  });
+  
+  // Conversations tabs
+  document.querySelectorAll('.conversations-tabs .tab-btn').forEach(btn => {
+    btn.addEventListener('click', function() {
+      const tab = this.getAttribute('data-tab');
+      switchConversationsTab(tab);
+    });
+  });
+  
+  // Close modal buttons
+  document.querySelectorAll('.modal-close').forEach(btn => {
+    btn.addEventListener('click', function() {
+      const modal = this.closest('.modal');
+      if (modal) {
+        modal.style.display = 'none';
+      }
+    });
+  });
+  
+  // Enter key for message input
+  const messageInput = document.getElementById('message-input');
+  if (messageInput) {
+    messageInput.addEventListener('keypress', function(e) {
+      if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        sendMessage();
+      }
+    });
+  }
+  
+  console.log('Messenger event listeners initialized');
+}
+
+function switchTab(tab) {
+  console.log('Switching to tab:', tab);
+  currentTab = tab;
+  
+  // إخفاء جميع الأقسام
+  document.querySelectorAll('.tab-content').forEach(section => {
+    section.style.display = 'none';
+  });
+  
+  // إزالة التفعيل من جميع الأزرار
+  document.querySelectorAll('.tab-btn').forEach(btn => {
+    btn.classList.remove('active');
+  });
+  
+  // إظهار القسم المحدد
+  const targetSection = document.getElementById(tab + '-section');
+  if (targetSection) {
+    targetSection.style.display = 'block';
+  }
+  
+  // تفعيل الزر المحدد
+  const activeBtn = document.querySelector(`.tab-btn[data-tab="${tab}"]`);
+  if (activeBtn) {
+    activeBtn.classList.add('active');
+  }
+  
+  // تحميل البيانات حسب القسم
+  if (tab === 'users') {
+    loadAllUsers();
+  }
+}
+
+function searchUsers() {
+  const searchTerm = document.getElementById('searchInput')?.value.toLowerCase() || '';
+  console.log('Searching for:', searchTerm, 'in tab:', currentTab);
+  
+  if (currentTab === 'users') {
+    filterUsers(searchTerm);
+  } else if (currentTab === 'brokers') {
+    filterBrokers(searchTerm);
+  }
+}
+
+function filterUsers(searchTerm) {
+  const userCards = document.querySelectorAll('.user-card');
+  userCards.forEach(card => {
+    const userName = card.querySelector('.user-name').textContent.toLowerCase();
+    if (userName.includes(searchTerm)) {
+      card.style.display = 'flex';
+    } else {
+      card.style.display = 'none';
+    }
+  });
+}
+
+function filterBrokers(searchTerm) {
+  const brokerCards = document.querySelectorAll('.conversation-card');
+  brokerCards.forEach(card => {
+    const brokerName = card.querySelector('.broker-name').textContent.toLowerCase();
+    if (brokerName.includes(searchTerm)) {
+      card.style.display = 'block';
+    } else {
+      card.style.display = 'none';
+    }
+  });
+}
+
+function loadAllUsers() {
+  fetch('/api/users/all/')
+    .then(response => response.json())
+    .then(data => {
+      const usersList = document.getElementById('all-users-list');
+      const emptyState = document.getElementById('users-empty');
+      
+      if (data.users && data.users.length > 0) {
+        usersList.innerHTML = '';
+        data.users.forEach(user => {
+          const userCard = document.createElement('div');
+          userCard.className = 'user-card';
+          userCard.onclick = () => startConversation(user.id);
+          
+          userCard.innerHTML = `
+            <div class="user-avatar">
+              ${user.profile_image ? `<img src="${user.profile_image}" alt="${user.username}" style="width: 100%; height: 100%; border-radius: 50%; object-fit: cover;">` : '<i class="fas fa-user"></i>'}
+            </div>
+            <div class="user-info">
+              <h4 class="user-name">${user.username}</h4>
+              <p class="user-role">${user.role || 'مستخدم'}</p>
+            </div>
+          `;
+          
+          usersList.appendChild(userCard);
+        });
+        usersList.style.display = 'grid';
+        emptyState.style.display = 'none';
+      } else {
+        usersList.style.display = 'none';
+        emptyState.style.display = 'block';
+      }
+    })
+    .catch(error => {
+      console.error('Error loading users:', error);
+      document.getElementById('all-users-list').style.display = 'none';
+      document.getElementById('users-empty').style.display = 'block';
+    });
+}
+
+function startConversation(userId) {
+  console.log('Starting conversation with user ID:', userId);
+  
+  // إنشاء محادثة جديدة مع المستخدم
+  const csrfToken = getCookie('csrftoken');
+  console.log('CSRF Token:', csrfToken ? 'Found' : 'Not found');
+  
+  fetch('/api/conversations/create/', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'X-CSRFToken': csrfToken
+    },
+    body: JSON.stringify({
+      recipient_id: userId
+    })
+  })
+  .then(response => {
+    console.log('Create conversation response:', response);
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    return response.json();
+  })
+  .then(data => {
+    console.log('Create conversation data:', data);
+    if (data.success) {
+      window.location.href = `/broker-conversations/${data.conversation_id}/`;
+    } else {
+      alert('حدث خطأ أثناء إنشاء المحادثة: ' + (data.error || 'خطأ غير معروف'));
+    }
+  })
+  .catch(error => {
+    console.error('Error creating conversation:', error);
+    alert('حدث خطأ أثناء إنشاء المحادثة: ' + error.message);
+  });
+}
+
+function openNewMessageModal() {
+  console.log('Opening new message modal');
+  const modal = document.getElementById('newMessageModal');
+  if (modal) {
+    modal.classList.add('active');
+    loadAllUsersForModal();
+  } else {
+    console.error('Modal element not found');
+  }
+}
+
+function closeNewMessageModal() {
+  const modal = document.getElementById('newMessageModal');
+  if (modal) {
+    modal.classList.remove('active');
+  }
+}
+
+// Messenger specific functions
+function toggleSettings() {
+  console.log('Toggle settings');
+  // Implement settings toggle
+}
+
+function switchConversationsTab(tab) {
+  console.log('Switching conversations tab:', tab);
+  
+  // Update active state
+  document.querySelectorAll('.conversations-tabs .tab-btn').forEach(btn => {
+    btn.classList.remove('active');
+    if (btn.getAttribute('data-tab') === tab) {
+      btn.classList.add('active');
+    }
+  });
+  
+  // Filter conversations based on tab
+  if (tab === 'conversations') {
+    // Show conversations
+  } else if (tab === 'people') {
+    // Show people list
+    loadAllUsers();
+  }
+}
+
+function sendMessage() {
+  console.log('Send message function');
+  const input = document.getElementById('message-input');
+  if (input && input.value.trim()) {
+    // Implement message sending
+    console.log('Message:', input.value);
+    input.value = '';
+  }
+}
+
+// Additional utility functions
+function getCsrfToken() {
+  return document.querySelector('[name=csrfmiddlewaretoken]')?.value || getCookie('csrftoken');
+}
+
+function loadAllUsersForModal() {
+  console.log('Loading users for modal');
+  const content = document.getElementById('newMessageContent');
+  if (!content) {
+    console.error('Content element not found');
+    return;
+  }
+  
+  content.innerHTML = '<p style="color: var(--text-muted); text-align: center;">جاري التحميل...</p>';
+  
+  fetch('/api/users/all/')
+    .then(response => {
+      console.log('Response received:', response);
+      return response.json();
+    })
+    .then(data => {
+      console.log('Data received:', data);
+      
+      if (data.users && data.users.length > 0) {
+        let html = '<div class="users-list">';
+        data.users.forEach(user => {
+          html += `
+            <div class="user-card" onclick="startConversation(${user.id}); closeNewMessageModal();">
+              <div class="user-avatar">
+                ${user.profile_image ? `<img src="${user.profile_image}" alt="${user.username}" style="width: 100%; height: 100%; border-radius: 50%; object-fit: cover;">` : '<i class="fas fa-user"></i>'}
+              </div>
+              <div class="user-info">
+                <h4 class="user-name">${user.username}</h4>
+                <p class="user-role">${user.role || 'مستخدم'}</p>
+              </div>
+            </div>
+          `;
+        });
+        html += '</div>';
+        content.innerHTML = html;
+      } else {
+        content.innerHTML = '<p style="color: var(--text-muted); text-align: center;">لا توجد مستخدمين متاحين</p>';
+      }
+    })
+    .catch(error => {
+      console.error('Error loading users:', error);
+      content.innerHTML = '<p style="color: var(--text-muted); text-align: center;">حدث خطأ أثناء تحميل المستخدمين</p>';
+    });
+}
+
+function getCookie(name) {
+  let cookieValue = null;
+  if (document.cookie && document.cookie !== '') {
+    const cookies = document.cookie.split(';');
+    for (let i = 0; i < cookies.length; i++) {
+      const cookie = cookies[i].trim();
+      if (cookie.substring(0, name.length + 1) === (name + '=')) {
+        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+        break;
+      }
+    }
+  }
+  return cookieValue;
+}
+
+// تحميل المستخدمين عند فتح الصفحة
+document.addEventListener('DOMContentLoaded', function() {
+  // يمكن تحميل بيانات إضافية هنا
+});
+</script>
+{% endblock %}

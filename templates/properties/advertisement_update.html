@@ -1,0 +1,54 @@
+{% extends 'properties/base.html' %}
+
+{% block title %}تعديل إعلان - دلال{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-lg-12">
+            <div class="page-header mb-4">
+                <h1 class="page-title">تعديل إعلان البناء</h1>
+                <p class="page-subtitle">{{ advertisement.title }}</p>
+            </div>
+            
+            <div class="form-card">
+                <form method="post">
+                    {% csrf_token %}
+                    
+                    <!-- إعادة استخدام نفس نموذج الإنشاء مع الحقول الإضافية -->
+                    {% include 'properties/advertisement_form_fields.html' with form=form %}
+                    
+                    <!-- Additional fields for update -->
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label for="{{ form.status.id_for_label }}" class="form-label">الحالة</label>
+                            {{ form.status }}
+                            {% if form.status.errors %}
+                                <div class="error-message">{{ form.status.errors }}</div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="{{ form.expires_at.id_for_label }}" class="form-label">تاريخ الانتهاء</label>
+                            {{ form.expires_at }}
+                            {% if form.expires_at.errors %}
+                                <div class="error-message">{{ form.expires_at.errors }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <!-- Submit Buttons -->
+                    <div class="form-navigation">
+                        <a href="{% url 'advertisement_detail' advertisement.id %}" class="btn btn-secondary">
+                            <i class="fas fa-arrow-right me-2"></i>إلغاء
+                        </a>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save me-2"></i>حفظ التغييرات
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

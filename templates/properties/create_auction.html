@@ -1,0 +1,557 @@
+{% extends 'properties/_form_page.html' %}
+
+{% block extra_css %}
+<!-- Leaflet CSS -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<link rel="stylesheet" href="https://unpkg.com/leaflet-draw@1.0.4/dist/leaflet.draw.css" />
+{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card shadow-lg" style="background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%); border: none;">
+                <div class="card-header text-white" style="background: linear-gradient(135deg, #ff6b35 0%, #f7931e 100%);">
+                    <h3 class="mb-0 text-center">🔨 إنشاء مزاد عقاري جديد</h3>
+                </div>
+                <div class="card-body p-4">
+                    {% if messages %}
+                        {% for message in messages %}
+                            <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                                {{ message }}
+                                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                            </div>
+                        {% endfor %}
+                    {% endif %}
+                    
+                    <form method="POST" action="">
+                        {% csrf_token %}
+                        
+                        <div class="mb-4">
+                            <label class="form-label text-white fw-bold">العقار *</label>
+                            <select name="property" class="form-select" required>
+                                <option value="">اختر العقار</option>
+                                {% for property in properties %}
+                                    <option value="{{ property.id }}">{{ property.display_title }} - {{ property.price|floatformat:0 }} د.ع</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        
+                        <div class="mb-4">
+                            <label class="form-label text-white fw-bold">نوع المزاد *</label>
+                            <select name="auction_type" class="form-select" required>
+                                {% for type_value, type_label in auction_types %}
+                                    <option value="{{ type_value }}">{{ type_label }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        
+                        <div class="mb-4">
+                            <label class="form-label text-white fw-bold">عنوان المزاد *</label>
+                            <input type="text" name="title" class="form-control" required placeholder="مثال: منزل فاخر في بغداد">
+                        </div>
+                        
+                        <div class="mb-4">
+                            <label class="form-label text-white fw-bold">وصف المزاد *</label>
+                            <textarea name="description" class="form-control" rows="4" required placeholder="اكتب وصفاً تفصيلياً للمزاد..."></textarea>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6 mb-4">
+                                <label class="form-label text-white fw-bold">سعر البداية (د.ع) *</label>
+                                <input type="number" name="starting_price" class="form-control" required placeholder="100000000">
+                            </div>
+                            <div class="col-md-6 mb-4">
+                                <label class="form-label text-white fw-bold">أقل زيادة (د.ع)</label>
+                                <input type="number" name="minimum_increment" class="form-control" value="100000" placeholder="100000">
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6 mb-4">
+                                <label class="form-label text-white fw-bold">السعر الاحتياطي (د.ع)</label>
+                                <input type="number" name="reserve_price" class="form-control" placeholder="اختياري">
+                            </div>
+                            <div class="col-md-6 mb-4">
+                                <label class="form-label text-white fw-bold">مبلغ التأمين (د.ع)</label>
+                                <input type="number" name="deposit_amount" class="form-control" value="0" placeholder="0">
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6 mb-4">
+                                <label class="form-label text-white fw-bold">تاريخ البداية *</label>
+                                <input type="datetime-local" name="start_date" class="form-control" required>
+                            </div>
+                            <div class="col-md-6 mb-4">
+                                <label class="form-label text-white fw-bold">تاريخ النهاية *</label>
+                                <input type="datetime-local" name="end_date" class="form-control" required>
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6 mb-4">
+                                <label class="form-label text-white fw-bold">رقم التواصل</label>
+                                <input type="text" name="contact_phone" class="form-control" placeholder="07xxxxxxxxx">
+                            </div>
+                            <div class="col-md-6 mb-4">
+                                <label class="form-label text-white fw-bold">البريد الإلكتروني</label>
+                                <input type="email" name="contact_email" class="form-control" placeholder="email@example.com">
+                            </div>
+                        </div>
+                        
+                        <div class="mb-4">
+                            <label class="form-label text-white fw-bold">الحد الأقصى للمشاركين</label>
+                            <input type="number" name="max_participants" class="form-control" placeholder="اتركه فارغاً لعدم التحديد">
+                        </div>
+                        
+                        <hr class="my-4 border-light">
+                        
+                        <h5 class="text-white mb-4">📍 معلومات الموقع</h5>
+                        
+                        <div class="row">
+                            <div class="col-md-6 mb-4">
+                                <label class="form-label text-white fw-bold">المحافظة</label>
+                                <select name="governorate" class="form-select">
+                                    <option value="">اختر المحافظة</option>
+                                    <option value="بغداد">بغداد</option>
+                                    <option value="البصرة">البصرة</option>
+                                    <option value="نينوى">نينوى</option>
+                                    <option value="أربيل">أربيل</option>
+                                    <option value="دهوك">دهوك</option>
+                                    <option value="السليمانية">السليمانية</option>
+                                    <option value="كربلاء">كربلاء</option>
+                                    <option value="النجف">النجف</option>
+                                    <option value="ديالى">ديالى</option>
+                                    <option value="الأنبار">الأنبار</option>
+                                    <option value="بابل">بابل</option>
+                                    <option value="واسط">واسط</option>
+                                    <option value="صلاح الدين">صلاح الدين</option>
+                                    <option value="ذي قار">ذي قار</option>
+                                    <option value="ميسان">ميسان</option>
+                                    <option value="المثنى">المثنى</option>
+                                    <option value="القادسية">القادسية</option>
+                                    <option value="كركوك">كركوك</option>
+                                    <option value="حلبجة">حلبجة</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6 mb-4">
+                                <label class="form-label text-white fw-bold">المدينة</label>
+                                <input type="text" name="city" class="form-control" placeholder="مثال: الكاظمية">
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6 mb-4">
+                                <label class="form-label text-white fw-bold">القضاء</label>
+                                <input type="text" name="district" class="form-control" placeholder="مثال: الكرخ">
+                            </div>
+                            <div class="col-md-6 mb-4">
+                                <label class="form-label text-white fw-bold">الناحية</label>
+                                <input type="text" name="subdistrict" class="form-control" placeholder="مثال: المنصور">
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6 mb-4">
+                                <label class="form-label text-white fw-bold">المنطقة</label>
+                                <input type="text" name="area" class="form-control" placeholder="مثال: الجامعة">
+                            </div>
+                            <div class="col-md-6 mb-4">
+                                <label class="form-label text-white fw-bold">الحي</label>
+                                <input type="text" name="neighborhood" class="form-control" placeholder="مثال: حي 14 رمضان">
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6 mb-4">
+                                <label class="form-label text-white fw-bold">المحلة</label>
+                                <input type="text" name="mahalla" class="form-control" placeholder="مثال: محلة 706">
+                            </div>
+                            <div class="col-md-6 mb-4">
+                                <label class="form-label text-white fw-bold">البلوك</label>
+                                <input type="text" name="block" class="form-control" placeholder="مثال: 15">
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6 mb-4">
+                                <label class="form-label text-white fw-bold">الشارع</label>
+                                <input type="text" name="street" class="form-control" placeholder="مثال: شارع 62">
+                            </div>
+                            <div class="col-md-6 mb-4">
+                                <label class="form-label text-white fw-bold">الزقاق</label>
+                                <input type="text" name="alley" class="form-control" placeholder="مثال: زقاق 5">
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6 mb-4">
+                                <label class="form-label text-white fw-bold">رقم الدار</label>
+                                <input type="text" name="house_number" class="form-control" placeholder="مثال: 12">
+                            </div>
+                            <div class="col-md-6 mb-4">
+                                <label class="form-label text-white fw-bold">رقم العقار</label>
+                                <input type="text" name="property_number" class="form-control" placeholder="مثال: 8/15">
+                            </div>
+                        </div>
+                        
+                        <div class="mb-4">
+                            <label class="form-label text-white fw-bold">أقرب نقطة دالة</label>
+                            <input type="text" name="landmark" class="form-control" placeholder="مثال: قرب جامع الإمام الصادق">
+                        </div>
+                        
+                        <hr class="my-4 border-light">
+                        
+                        <h5 class="text-white mb-4">🌍 الموقع الجغرافي</h5>
+                        
+                        <div class="row">
+                            <div class="col-md-6 mb-4">
+                                <label class="form-label text-white fw-bold">خط العرض</label>
+                                <div class="input-group">
+                                    <input type="number" step="any" name="latitude" class="form-control" placeholder="مثال: 33.3152" id="latitude-input-auction">
+                                    <button type="button" onclick="getLocationGPSAuction()" class="btn btn-outline-light">
+                                        📍 GPS
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="col-md-6 mb-4">
+                                <label class="form-label text-white fw-bold">خط الطول</label>
+                                <input type="number" step="any" name="longitude" class="form-control" placeholder="مثال: 44.3661" id="longitude-input-auction">
+                            </div>
+                        </div>
+                        
+                        <div class="mb-4">
+                            <label class="form-label text-white fw-bold">معاينة الموقع على الخريطة</label>
+                            <div style="position: relative;">
+                                <div id="location-preview-map-auction" style="height: 300px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.2);"></div>
+                                <div style="position: absolute; top: 10px; right: 10px; z-index: 1000; display: flex; gap: 5px;">
+                                    <button type="button" class="btn btn-sm btn-outline-light" onclick="changeMapLayer('auction', 'osm')">OpenStreetMap</button>
+                                    <button type="button" class="btn btn-sm btn-outline-light" onclick="changeMapLayer('auction', 'satellite')">Satellite</button>
+                                    <button type="button" class="btn btn-sm btn-outline-light" onclick="changeMapLayer('auction', 'terrain')">Terrain</button>
+                                    <button type="button" class="btn btn-sm btn-outline-light" onclick="changeMapLayer('auction', 'dark')">Dark</button>
+                                    <button type="button" class="btn btn-sm btn-outline-light" onclick="toggleMapFullscreen('auction')">⛶</button>
+                                </div>
+                            </div>
+                            <small class="text-light">* اضغط على "GPS" لتحديد موقعك تلقائياً أو انقر على الخريطة لتحديد الموقع يدوياً</small>
+                        </div>
+                        
+                        <div class="mb-4">
+                            <div class="form-check">
+                                <input type="checkbox" name="enable_gps" id="enable-gps-auction" class="form-check-input" style="width: 20px; height: 20px;">
+                                <label class="form-check-label text-white fw-bold" for="enable-gps-auction">
+                                    📍 نشر GPS - إظهار الموقع على خريطة المنصة
+                                </label>
+                            </div>
+                            <small class="text-light">عند تفعيل هذا الخيار، سيظهر موقع المزاد على خريطة المنصة الرئيسية</small>
+                        </div>
+                        
+                        <hr class="my-4 border-light">
+                        
+                        <div class="mb-4">
+                            <label class="form-label text-white fw-bold">شروط المزاد *</label>
+                            <textarea name="terms" class="form-control" rows="4" required placeholder="اكتب شروط وأحكام المزاد..."></textarea>
+                        </div>
+                        
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-lg text-white fw-bold" style="background: linear-gradient(135deg, #ff6b35 0%, #f7931e 100%);">
+                                إنشاء المزاد
+                            </button>
+                            <a href="{% url 'auctions_list' %}" class="btn btn-outline-light">
+                                إلغاء
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Leaflet JS -->
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://unpkg.com/leaflet-draw@1.0.4/dist/leaflet.draw.js"></script>
+
+<script>
+// Global variables for auction map
+let mapAuction = null;
+let markerAuction = null;
+let drawnItemsAuction = null;
+let currentLayerAuction = 'osm';
+let isFullscreenAuction = false;
+
+// Initialize the auction location preview map
+function initAuctionMap() {
+    const lat = document.getElementById('latitude-input-auction').value || 33.3152;
+    const lng = document.getElementById('longitude-input-auction').value || 44.3661;
+    
+    if (mapAuction) {
+        mapAuction.remove();
+    }
+    
+    mapAuction = L.map('location-preview-map-auction').setView([lat, lng], 13);
+    
+    // Default OpenStreetMap layer
+    updateMapLayer('auction', 'osm');
+    
+    // Add draw control
+    drawnItemsAuction = new L.FeatureGroup();
+    mapAuction.addLayer(drawnItemsAuction);
+    
+    const drawControl = new L.Control.Draw({
+        draw: {
+            polygon: {
+                allowIntersection: false,
+                showArea: true
+            },
+            polyline: true,
+            rectangle: true,
+            circle: false,
+            marker: true,
+            circlemarker: false
+        },
+        edit: {
+            featureGroup: drawnItemsAuction,
+            remove: true
+        }
+    });
+    mapAuction.addControl(drawControl);
+    
+    // Handle draw events
+    mapAuction.on(L.Draw.Event.CREATED, function(event) {
+        const layer = event.layer;
+        drawnItemsAuction.addLayer(layer);
+        
+        if (event.layerType === 'marker') {
+            const latlng = layer.getLatLng();
+            document.getElementById('latitude-input-auction').value = latlng.lat;
+            document.getElementById('longitude-input-auction').value = latlng.lng;
+            
+            if (markerAuction) {
+                mapAuction.removeLayer(markerAuction);
+            }
+            markerAuction = layer;
+        }
+    });
+    
+    // Click on map to add marker
+    mapAuction.on('click', function(e) {
+        const lat = e.latlng.lat;
+        const lng = e.latlng.lng;
+        
+        document.getElementById('latitude-input-auction').value = lat;
+        document.getElementById('longitude-input-auction').value = lng;
+        
+        if (markerAuction) {
+            mapAuction.removeLayer(markerAuction);
+        }
+        
+        markerAuction = L.marker([lat, lng]).addTo(mapAuction);
+    });
+    
+    // Add initial marker if coordinates exist
+    if (document.getElementById('latitude-input-auction').value && 
+        document.getElementById('longitude-input-auction').value) {
+        markerAuction = L.marker([lat, lng]).addTo(mapAuction);
+    }
+}
+
+// Get GPS location for auction
+function getLocationGPSAuction() {
+    if (!navigator.geolocation) {
+        alert('متصفحك لا يدعم تحديد الموقع الجغرافي');
+        return;
+    }
+    
+    const button = event.target;
+    button.disabled = true;
+    button.textContent = '⏳ جاري تحديد الموقع...';
+    
+    navigator.geolocation.getCurrentPosition(
+        function(position) {
+            const lat = position.coords.latitude;
+            const lng = position.coords.longitude;
+            
+            document.getElementById('latitude-input-auction').value = lat;
+            document.getElementById('longitude-input-auction').value = lng;
+            
+            if (mapAuction) {
+                mapAuction.setView([lat, lng], 16);
+                if (markerAuction) {
+                    mapAuction.removeLayer(markerAuction);
+                }
+                markerAuction = L.marker([lat, lng]).addTo(mapAuction);
+            }
+            
+            button.disabled = false;
+            button.textContent = '📍 GPS';
+            
+            alert('تم تحديد الموقع بنجاح!');
+        },
+        function(error) {
+            button.disabled = false;
+            button.textContent = '📍 GPS';
+            
+            let errorMessage = '';
+            switch(error.code) {
+                case error.PERMISSION_DENIED:
+                    errorMessage = 'تم رفض إذن الوصول للموقع. يرجى تفعيل خدمة الموقع في متصفحك والمحاولة مرة أخرى.';
+                    break;
+                case error.POSITION_UNAVAILABLE:
+                    errorMessage = 'معلومات الموقع غير متوفرة حالياً. يرجى المحاولة مرة أخرى.';
+                    break;
+                case error.TIMEOUT:
+                    errorMessage = 'انتهت مهلة تحديد الموقع. يرجى المحاولة مرة أخرى.';
+                    break;
+                default:
+                    errorMessage = 'حدث خطأ أثناء تحديد الموقع. يرجى المحاولة مرة أخرى.';
+            }
+            alert(errorMessage);
+        },
+        {
+            enableHighAccuracy: true,
+            timeout: 30000,
+            maximumAge: 0
+        }
+    );
+}
+
+// Change map layer
+function changeMapLayer(prefix, layerType) {
+    if (prefix === 'auction') {
+        currentLayerAuction = layerType;
+        updateMapLayer(prefix, layerType);
+    } else if (prefix === 'service') {
+        currentLayerService = layerType;
+        updateMapLayer(prefix, layerType);
+    }
+}
+
+function updateMapLayer(prefix, layerType) {
+    let map = null;
+    if (prefix === 'auction') {
+        map = mapAuction;
+    } else if (prefix === 'service') {
+        map = mapService;
+    }
+    
+    if (!map) return;
+    
+    // Remove all tile layers
+    map.eachLayer(function(layer) {
+        if (layer instanceof L.TileLayer) {
+            map.removeLayer(layer);
+        }
+    });
+    
+    let tileUrl = '';
+    let attribution = '';
+    
+    switch(layerType) {
+        case 'osm':
+            tileUrl = 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png';
+            attribution = '© OpenStreetMap contributors';
+            break;
+        case 'satellite':
+            tileUrl = 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}';
+            attribution = '© Esri';
+            break;
+        case 'terrain':
+            tileUrl = 'https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png';
+            attribution = '© OpenTopoMap';
+            break;
+        case 'dark':
+            tileUrl = 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png';
+            attribution = '© CartoDB';
+            break;
+        default:
+            tileUrl = 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png';
+            attribution = '© OpenStreetMap contributors';
+    }
+    
+    L.tileLayer(tileUrl, {
+        attribution: attribution,
+        maxZoom: 19
+    }).addTo(map);
+}
+
+// Toggle map fullscreen
+function toggleMapFullscreen(prefix) {
+    let mapContainer = null;
+    let isFullscreen = false;
+    
+    if (prefix === 'auction') {
+        mapContainer = document.getElementById('location-preview-map-auction');
+        isFullscreen = isFullscreenAuction;
+        isFullscreenAuction = !isFullscreenAuction;
+    } else if (prefix === 'service') {
+        mapContainer = document.getElementById('location-preview-map-service');
+        isFullscreen = isFullscreenService;
+        isFullscreenService = !isFullscreenService;
+    }
+    
+    if (!mapContainer) return;
+    
+    if (!isFullscreen) {
+        mapContainer.style.position = 'fixed';
+        mapContainer.style.top = '0';
+        mapContainer.style.left = '0';
+        mapContainer.style.width = '100vw';
+        mapContainer.style.height = '100vh';
+        mapContainer.style.zIndex = '9999';
+    } else {
+        mapContainer.style.position = 'relative';
+        mapContainer.style.top = 'auto';
+        mapContainer.style.left = 'auto';
+        mapContainer.style.width = '100%';
+        mapContainer.style.height = '300px';
+        mapContainer.style.zIndex = '1';
+    }
+    
+    let map = null;
+    if (prefix === 'auction') {
+        map = mapAuction;
+    } else if (prefix === 'service') {
+        map = mapService;
+    }
+    
+    if (map) {
+        setTimeout(() => {
+            map.invalidateSize();
+        }, 100);
+    }
+}
+
+// Initialize map when page loads
+document.addEventListener('DOMContentLoaded', function() {
+    initAuctionMap();
+    
+    // Update map when coordinates change manually
+    document.getElementById('latitude-input-auction').addEventListener('change', function() {
+        const lat = parseFloat(this.value);
+        const lng = parseFloat(document.getElementById('longitude-input-auction').value);
+        
+        if (lat && lng && mapAuction) {
+            mapAuction.setView([lat, lng], 16);
+            if (markerAuction) {
+                mapAuction.removeLayer(markerAuction);
+            }
+            markerAuction = L.marker([lat, lng]).addTo(mapAuction);
+        }
+    });
+    
+    document.getElementById('longitude-input-auction').addEventListener('change', function() {
+        const lng = parseFloat(this.value);
+        const lat = parseFloat(document.getElementById('latitude-input-auction').value);
+        
+        if (lat && lng && mapAuction) {
+            mapAuction.setView([lat, lng], 16);
+            if (markerAuction) {
+                mapAuction.removeLayer(markerAuction);
+            }
+            markerAuction = L.marker([lat, lng]).addTo(mapAuction);
+        }
+    });
+});
+</script>
+{% endblock %}
