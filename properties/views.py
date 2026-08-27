@@ -15579,15 +15579,17 @@ def mark_all_read(request):
     return redirect('notification_center')
 
 
-@login_required
 def get_unread_count(request):
     """الحصول على عدد الإشعارات غير المقروءة (AJAX)"""
     from .models import NotificationRecipient
     
-    count = NotificationRecipient.objects.filter(
-        user=request.user,
-        is_read=False
-    ).count()
+    if request.user.is_authenticated:
+        count = NotificationRecipient.objects.filter(
+            user=request.user,
+            is_read=False
+        ).count()
+    else:
+        count = 0
     
     return JsonResponse({'count': count})
 
