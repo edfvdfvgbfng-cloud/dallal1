@@ -185,36 +185,7 @@
         </div>
       </div>
 
-      <div class="contract-section">
-        <h3>التوقيعات</h3>
-        <div class="contract-signatures">
-          <div class="signature-area">
-            <div class="signature-label">توقيع العميل</div>
-            <div class="signature-box">
-              {% if active_contract.client_signature %}
-                <img src="{{ active_contract.client_signature.url }}" alt="توقيع العميل">
-              {% else %}
-                <div class="signature-placeholder">بانتظار التوقيع</div>
-              {% endif %}
-            </div>
-            <button class="signature-btn" onclick="signContract('client')">توقيع إلكتروني</button>
-          </div>
 
-          {% if active_contract.broker %}
-          <div class="signature-area">
-            <div class="signature-label">توقيع الدلال</div>
-            <div class="signature-box">
-              {% if active_contract.broker_signature %}
-                <img src="{{ active_contract.broker_signature.url }}" alt="توقيع الدلال">
-              {% else %}
-                <div class="signature-placeholder">بانتظار التوقيع</div>
-              {% endif %}
-            </div>
-            <button class="signature-btn" onclick="signContract('broker')">توقيع إلكتروني</button>
-          </div>
-          {% endif %}
-        </div>
-      </div>
 
       {% if active_contract.notes %}
       <div class="contract-section">
@@ -1599,62 +1570,6 @@
   font-weight: 500;
 }
 
-.contract-signatures {
-  display: flex;
-  gap: 20px;
-  flex-wrap: wrap;
-}
-
-.signature-area {
-  flex: 1;
-  min-width: 200px;
-}
-
-.signature-label {
-  font-weight: 600;
-  color: #ffffff;
-  margin-bottom: 12px;
-}
-
-.signature-box {
-  height: 100px;
-  background: #1a1a1a;
-  border: 2px dashed #404040;
-  border-radius: 8px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  margin-bottom: 12px;
-  overflow: hidden;
-}
-
-.signature-box img {
-  max-width: 100%;
-  max-height: 100%;
-  object-fit: contain;
-}
-
-.signature-placeholder {
-  color: #808080;
-  font-style: italic;
-}
-
-.signature-btn {
-  width: 100%;
-  padding: 10px;
-  border: none;
-  border-radius: 8px;
-  background: #667eea;
-  color: #ffffff;
-  font-weight: 600;
-  cursor: pointer;
-  transition: background 0.3s ease;
-}
-
-.signature-btn:hover {
-  background: #5568d3;
-}
-
 .contract-footer {
   padding: 20px;
   border-top: 1px solid #404040;
@@ -1922,10 +1837,6 @@
   .mobile-back-btn {
     display: block !important;
   }
-
-  .contract-signatures {
-    flex-direction: column;
-  }
 }
 
 @media (min-width: 769px) {
@@ -1966,46 +1877,249 @@ document.querySelectorAll('.contract-tab-btn').forEach(btn => {
 
 // Payment functions
 function openPaymentModal() {
-  alert('سيتم فتح نافذة إضافة دفعة جديدة');
+  const contractId = document.getElementById('current-contract-id').value;
+  const amount = prompt('أدخل مبلغ الدفعة:');
+  const dueDate = prompt('أدخل تاريخ الاستحقاق (YYYY-MM-DD):');
+  const paymentMethod = prompt('طريقة الدفع (cash/bank_transfer/check/card/online):') || 'cash';
+  const notes = prompt('ملاحظات (اختياري):') || '';
+  
+  if (amount && dueDate) {
+    fetch(`/api/real-estate/contracts/${contractId}/payments/create/`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+      },
+      body: JSON.stringify({
+        amount: parseFloat(amount),
+        due_date: dueDate,
+        payment_method: paymentMethod,
+        notes: notes
+      })
+    })
+    .then(response => response.json())
+    .then(data => {
+      if (data.success) {
+        alert('تم إنشاء الدفعة بنجاح');
+        window.location.reload();
+      } else {
+        alert('حدث خطأ: ' + (data.error || 'غير معروف'));
+      }
+    })
+    .catch(error => {
+      alert('حدث خطأ في الاتصال');
+      console.error(error);
+    });
+  }
 }
 
 function editPayment(paymentId) {
-  alert(`تعديل الدفعة رقم ${paymentId}`);
+  const amount = prompt('أدخل المبلغ الجديد:');
+  const dueDate = prompt('أدخل تاريخ الاستحقاق الجديد (YYYY-MM-DD):');
+  const paymentMethod = prompt('طريقة الدفع (cash/bank_transfer/check/card/online):');
+  const notes = prompt('ملاحظات (اختياري):');
+  
+  const data = {};
+  if (amount) data.amount = parseFloat(amount);
+  if (dueDate) data.due_date = dueDate;
+  if (paymentMethod) data.payment_method = paymentMethod;
+  if (notes !== null) data.notes = notes;
+  
+  if (Object.keys(data).length > 0) {
+    fetch(`/api/real-estate/payments/${paymentId}/update/`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+      },
+      body: JSON.stringify(data)
+    })
+    .then(response => response.json())
+    .then(data => {
+      if (data.success) {
+        alert('تم تحديث الدفعة بنجاح');
+        window.location.reload();
+      } else {
+        alert('حدث خطأ: ' + (data.error || 'غير معروف'));
+      }
+    })
+    .catch(error => {
+      alert('حدث خطأ في الاتصال');
+      console.error(error);
+    });
+  }
 }
 
 function deletePayment(paymentId) {
   if (confirm('هل تريد حذف هذه الدفعة؟')) {
-    alert(`تم حذف الدفعة رقم ${paymentId}`);
+    fetch(`/api/real-estate/payments/${paymentId}/delete/`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+      }
+    })
+    .then(response => response.json())
+    .then(data => {
+      if (data.success) {
+        alert('تم حذف الدفعة بنجاح');
+        window.location.reload();
+      } else {
+        alert('حدث خطأ: ' + (data.error || 'غير معروف'));
+      }
+    })
+    .catch(error => {
+      alert('حدث خطأ في الاتصال');
+      console.error(error);
+    });
   }
 }
 
 // Document functions
 function openDocumentModal() {
-  alert('سيتم فتح نافذة رفع وثيقة جديدة');
+  const contractId = document.getElementById('current-contract-id').value;
+  const documentType = prompt('نوع الوثيقة (contract/addendum/amendment/receipt/invoice/id_copy/property_docs/other):') || 'other';
+  const title = prompt('عنوان الوثيقة:');
+  const description = prompt('الوصف (اختياري):') || '';
+  
+  if (title) {
+    // For file upload, we'd need a proper form with file input
+    // This is a simplified version
+    alert('يرجى استخدام نموذج رفع الملفات المخصص لهذا الغرض');
+  }
 }
 
 function downloadDocument(documentId) {
+  // This would typically open the file URL
   alert(`تحميل الوثيقة رقم ${documentId}`);
 }
 
 function deleteDocument(documentId) {
   if (confirm('هل تريد حذف هذه الوثيقة؟')) {
-    alert(`تم حذف الوثيقة رقم ${documentId}`);
+    fetch(`/api/real-estate/documents/${documentId}/delete/`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+      }
+    })
+    .then(response => response.json())
+    .then(data => {
+      if (data.success) {
+        alert('تم حذف الوثيقة بنجاح');
+        window.location.reload();
+      } else {
+        alert('حدث خطأ: ' + (data.error || 'غير معروف'));
+      }
+    })
+    .catch(error => {
+      alert('حدث خطأ في الاتصال');
+      console.error(error);
+    });
   }
 }
 
 // Reminder functions
 function openReminderModal() {
-  alert('سيتم فتح نافذة إضافة تذكير جديد');
+  const contractId = document.getElementById('current-contract-id').value;
+  const reminderType = prompt('نوع التذكير (renewal/expiration/payment/inspection/other):') || 'other';
+  const title = prompt('عنوان التذكير:');
+  const description = prompt('الوصف (اختياري):') || '';
+  const reminderDate = prompt('تاريخ التذكير (YYYY-MM-DD):');
+  const daysBefore = prompt('أيام قبل التذكير:') || '7';
+  
+  if (title && reminderDate) {
+    fetch(`/api/real-estate/contracts/${contractId}/reminders/create/`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+      },
+      body: JSON.stringify({
+        reminder_type: reminderType,
+        title: title,
+        description: description,
+        reminder_date: reminderDate,
+        reminder_days_before: parseInt(daysBefore)
+      })
+    })
+    .then(response => response.json())
+    .then(data => {
+      if (data.success) {
+        alert('تم إنشاء التذكير بنجاح');
+        window.location.reload();
+      } else {
+        alert('حدث خطأ: ' + (data.error || 'غير معروف'));
+      }
+    })
+    .catch(error => {
+      alert('حدث خطأ في الاتصال');
+      console.error(error);
+    });
+  }
 }
 
 function editReminder(reminderId) {
-  alert(`تعديل التذكير رقم ${reminderId}`);
+  const reminderType = prompt('نوع التذكير (renewal/expiration/payment/inspection/other):');
+  const title = prompt('عنوان التذكير:');
+  const description = prompt('الوصف (اختياري):');
+  const reminderDate = prompt('تاريخ التذكير (YYYY-MM-DD):');
+  const daysBefore = prompt('أيام قبل التذكير:');
+  
+  const data = {};
+  if (reminderType) data.reminder_type = reminderType;
+  if (title) data.title = title;
+  if (description !== null) data.description = description;
+  if (reminderDate) data.reminder_date = reminderDate;
+  if (daysBefore) data.reminder_days_before = parseInt(daysBefore);
+  
+  if (Object.keys(data).length > 0) {
+    fetch(`/api/real-estate/reminders/${reminderId}/update/`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+      },
+      body: JSON.stringify(data)
+    })
+    .then(response => response.json())
+    .then(data => {
+      if (data.success) {
+        alert('تم تحديث التذكير بنجاح');
+        window.location.reload();
+      } else {
+        alert('حدث خطأ: ' + (data.error || 'غير معروف'));
+      }
+    })
+    .catch(error => {
+      alert('حدث خطأ في الاتصال');
+      console.error(error);
+    });
+  }
 }
 
 function deleteReminder(reminderId) {
   if (confirm('هل تريد حذف هذا التذكير؟')) {
-    alert(`تم حذف التذكير رقم ${reminderId}`);
+    fetch(`/api/real-estate/reminders/${reminderId}/delete/`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+      }
+    })
+    .then(response => response.json())
+    .then(data => {
+      if (data.success) {
+        alert('تم حذف التذكير بنجاح');
+        window.location.reload();
+      } else {
+        alert('حدث خطأ: ' + (data.error || 'غير معروف'));
+      }
+    })
+    .catch(error => {
+      alert('حدث خطأ في الاتصال');
+      console.error(error);
+    });
   }
 }
 
@@ -2057,31 +2171,110 @@ function toggleContractMenu() {
   alert('القائمة الإضافية');
 }
 
-function signContract(party) {
-  alert(`جاري توقيع العقد من طرف ${party}...`);
-}
-
 function submitForApproval() {
+  const contractId = document.getElementById('current-contract-id').value;
   if (confirm('هل تريد إرسال العقد للموافقة؟')) {
-    alert('تم إرسال العقد للموافقة');
+    fetch(`/api/real-estate/contracts/${contractId}/update/`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+      },
+      body: JSON.stringify({ status: 'pending' })
+    })
+    .then(response => response.json())
+    .then(data => {
+      if (data.success) {
+        alert('تم إرسال العقد للموافقة');
+        window.location.reload();
+      } else {
+        alert('حدث خطأ: ' + (data.error || 'غير معروف'));
+      }
+    })
+    .catch(error => {
+      alert('حدث خطأ في الاتصال');
+      console.error(error);
+    });
   }
 }
 
 function approveContract() {
+  const contractId = document.getElementById('current-contract-id').value;
   if (confirm('هل تريد الموافقة على هذا العقد؟')) {
-    alert('تمت الموافقة على العقد');
+    fetch(`/api/real-estate/contracts/${contractId}/approve/`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+      }
+    })
+    .then(response => response.json())
+    .then(data => {
+      if (data.success) {
+        alert('تمت الموافقة على العقد');
+        window.location.reload();
+      } else {
+        alert('حدث خطأ: ' + (data.error || 'غير معروف'));
+      }
+    })
+    .catch(error => {
+      alert('حدث خطأ في الاتصال');
+      console.error(error);
+    });
   }
 }
 
 function rejectContract() {
+  const contractId = document.getElementById('current-contract-id').value;
   if (confirm('هل تريد رفض هذا العقد؟')) {
-    alert('تم رفض العقد');
+    fetch(`/api/real-estate/contracts/${contractId}/update/`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+      },
+      body: JSON.stringify({ status: 'cancelled' })
+    })
+    .then(response => response.json())
+    .then(data => {
+      if (data.success) {
+        alert('تم رفض العقد');
+        window.location.reload();
+      } else {
+        alert('حدث خطأ: ' + (data.error || 'غير معروف'));
+      }
+    })
+    .catch(error => {
+      alert('حدث خطأ في الاتصال');
+      console.error(error);
+    });
   }
 }
 
 function terminateContract() {
+  const contractId = document.getElementById('current-contract-id').value;
   if (confirm('هل تريد إنهاء هذا العقد؟')) {
-    alert('تم إنهاء العقد');
+    fetch(`/api/real-estate/contracts/${contractId}/update/`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+      },
+      body: JSON.stringify({ status: 'terminated' })
+    })
+    .then(response => response.json())
+    .then(data => {
+      if (data.success) {
+        alert('تم إنهاء العقد');
+        window.location.reload();
+      } else {
+        alert('حدث خطأ: ' + (data.error || 'غير معروف'));
+      }
+    })
+    .catch(error => {
+      alert('حدث خطأ في الاتصال');
+      console.error(error);
+    });
   }
 }
 
@@ -2180,34 +2373,6 @@ function toggleContractMenu() {
   alert('القائمة الإضافية');
 }
 
-function signContract(party) {
-  alert(`جاري توقيع العقد من طرف ${party}...`);
-}
-
-function submitForApproval() {
-  if (confirm('هل تريد إرسال العقد للموافقة؟')) {
-    alert('تم إرسال العقد للموافقة');
-  }
-}
-
-function approveContract() {
-  if (confirm('هل تريد الموافقة على هذا العقد؟')) {
-    alert('تمت الموافقة على العقد');
-  }
-}
-
-function rejectContract() {
-  if (confirm('هل تريد رفض هذا العقد؟')) {
-    alert('تم رفض العقد');
-  }
-}
-
-function terminateContract() {
-  if (confirm('هل تريد إنهاء هذا العقد؟')) {
-    alert('تم إنهاء العقد');
-  }
-}
-
 function closeContract() {
   window.location.href = '/dashboard/contracts/';
 }
@@ -2218,6 +2383,10 @@ function showMobileSidebar() {
 
 function toggleContractFilters() {
   alert('فلاتر العقود');
+}
+
+function openContract(contractId) {
+  window.location.href = `/dashboard/contracts/?contract_id=${contractId}`;
 }
 
 // Tab switching
