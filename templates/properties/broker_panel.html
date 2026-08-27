@@ -55,48 +55,33 @@
   <div class="form-card" style="margin-top:1.5rem">
     <h3>🌐 الصفحة المستقلة</h3>
     <p style="color:#666; margin-bottom:1rem">تفعيل صفحة مستقلة للدلال لا تظهر عقاراتك في الصفحة الرئيسية للموقع، وتكون لك صفحة خاصة برابط مخصص.</p>
-    
-    <form method="POST" action="{% url 'broker_standalone_settings' %}">
-      {% csrf_token %}
-      <div class="form-group">
-        <label>
-          <input type="checkbox" name="has_standalone_page" {% if broker.has_standalone_page %}checked{% endif %} onchange="this.form.submit()">
-          تفعيل الصفحة المستقلة
-        </label>
-      </div>
-      
-      {% if broker.has_standalone_page %}
-      <div class="form-group" style="margin-top:1rem">
-        <label for="slug">رابط الصفحة (Slug)</label>
-        <input type="text" name="slug" id="slug" value="{{ broker.slug|default:'' }}" class="form-control" placeholder="مثال: ahmed-broker" pattern="[a-zA-Z0-9-_]+" title="أحرف إنجليزية وأرقام وشرطات فقط">
-        <small style="color:#666">سيكون رابط صفحتك: {{ request.get_host }}/d/<span id="slug-preview">{{ broker.slug|default:'your-slug' }}</span></small>
-      </div>
-      
-      <div class="form-group" style="margin-top:1rem">
-        <label for="cover_image">صورة الغلاف</label>
-        <input type="file" name="cover_image" id="cover_image" class="form-control" accept="image/*">
-        {% if broker.cover_image %}
-        <img src="{{ broker.cover_image.url }}" alt="غلاف الصفحة" style="max-width:200px; margin-top:10px; border-radius:8px">
+
+    <div style="margin-bottom:1rem">
+      <div style="padding:1rem; background:{% if broker.page_display_mode == 'standalone_only' or broker.page_display_mode == 'both' %}#e8f5e9{% else %}#fff3e0{% endif %}; border-radius:8px; border:1px solid {% if broker.page_display_mode == 'standalone_only' or broker.page_display_mode == 'both' %}#4caf50{% else %}#ff9800{% endif %}">
+        <strong>الحالة الحالية:</strong>
+        {% if broker.page_display_mode == 'standalone_only' %}
+          🌐 الصفحة المستقلة فقط
+        {% elif broker.page_display_mode == 'both' %}
+          🔄 الاثنين معاً
+        {% else %}
+          🏠 الصفحة الرئيسية فقط
         {% endif %}
       </div>
-      
-      <div class="form-group" style="margin-top:1rem">
-        <label for="bio">نبذة عن الدلال</label>
-        <textarea name="bio" id="bio" class="form-control" rows="4">{{ broker.bio|default:'' }}</textarea>
-      </div>
-      
-      <button type="submit" class="btn btn-primary" style="margin-top:1rem">حفظ الإعدادات</button>
-      
-      {% if broker.slug %}
-      <div style="margin-top:1rem; padding:1rem; background:#e8f5e9; border-radius:8px; border:1px solid #4caf50">
-        <strong>رابط صفحتك:</strong>
-        <a href="{% url 'broker_standalone_page' broker.slug %}" target="_blank" style="color:#2e7d32; text-decoration:none">
-          {{ request.get_host }}/d/{{ broker.slug }}
-        </a>
-      </div>
-      {% endif %}
-      {% endif %}
-    </form>
+    </div>
+
+    <a href="{% url 'broker_standalone_settings' %}" class="btn btn-primary" style="display:inline-block; padding:12px 24px; text-decoration:none; color:white; border-radius:8px; margin-bottom:1rem">
+      ⚙️ إعدادات الصفحة المستقلة
+    </a>
+
+    {% if broker.slug %}
+    <div style="padding:1rem; background:#e8f5e9; border-radius:8px; border:1px solid #4caf50">
+      <strong>🔗 رابط صفحتك:</strong>
+      <a href="{% url 'broker_standalone_page' broker.slug %}" target="_blank" style="color:#2e7d32; text-decoration:none; display:inline-flex; align-items:center; gap:8px; margin-top:8px">
+        {{ request.get_host }}/d/{{ broker.slug }}
+        <span style="font-size:14px">↗️</span>
+      </a>
+    </div>
+    {% endif %}
   </div>
 
   <!-- Quick Actions -->
