@@ -246,6 +246,7 @@ svg {
   overflow: visible;
   width: 100%;
   box-sizing: border-box;
+  min-width: 0;
 }
 
 .logo {
@@ -358,9 +359,11 @@ svg {
 
   .nav-links {
     gap: var(--spacing-sm);
-    display: flex;
+    display: flex !important;
     align-items: center;
     flex-wrap: wrap;
+    visibility: visible !important;
+    opacity: 1 !important;
   }
 
   .nav-links a {
@@ -394,10 +397,14 @@ svg {
 }
 
 .nav-links {
-  display: flex;
+  display: flex !important;
   list-style: none;
   gap: 8px;
   flex-wrap: wrap;
+  visibility: visible !important;
+  opacity: 1 !important;
+  position: relative;
+  z-index: 1;
 }
 
 .nav-links a {
@@ -3121,10 +3128,12 @@ svg {
   }
 
   .nav-links {
-    display: flex;
+    display: flex !important;
     align-items: center;
     gap: 6px;
     flex-wrap: wrap;
+    visibility: visible !important;
+    opacity: 1 !important;
   }
 
   .nav-links a {
@@ -3143,7 +3152,8 @@ svg {
     flex-direction: row;
     gap: 8px;
     padding: 8px 12px;
-    height: 50px;
+    height: auto;
+    min-height: 50px;
   }
 
   .logo {
@@ -3305,10 +3315,12 @@ svg {
   }
 
   .nav-links {
-    display: flex;
+    display: flex !important;
     align-items: center;
     gap: 3px;
     flex-wrap: wrap;
+    visibility: visible !important;
+    opacity: 1 !important;
   }
 
   .nav-links a {
@@ -3363,10 +3375,12 @@ svg {
   }
 
   .nav-links {
-    display: flex;
+    display: flex !important;
     align-items: center;
     gap: 2px;
     flex-wrap: wrap;
+    visibility: visible !important;
+    opacity: 1 !important;
   }
 
   .nav-links a {
@@ -3409,10 +3423,12 @@ svg {
   }
 
   .nav-links {
-    display: flex;
+    display: flex !important;
     align-items: center;
     gap: 2px;
     flex-wrap: wrap;
+    visibility: visible !important;
+    opacity: 1 !important;
   }
 
   .nav-links a {
