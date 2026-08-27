@@ -1,4 +1,0 @@
-Force Railway rebuild - 2026-08-25-05-30 - Fix session persistence
-- Changed SESSION_ENGINE from cache to db
-- Removed database deletion from run_server.py
-- Fixed SESSION_COOKIE_SAMESITE for Railway HTTPS

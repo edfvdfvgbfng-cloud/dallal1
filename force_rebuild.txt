@@ -1,2 +1,0 @@
-# Force complete Railway rebuild - 2026-08-24-15-00
-# Multi-stage build to bypass cache
