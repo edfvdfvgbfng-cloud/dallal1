@@ -247,6 +247,7 @@ svg {
   width: 100%;
   box-sizing: border-box;
   min-width: 0;
+  flex-wrap: nowrap;
 }
 
 .logo {
@@ -258,6 +259,7 @@ svg {
   font-weight: 700;
   font-size: 1.25rem;
   transition: var(--transition);
+  flex-shrink: 0;
 }
 
 .logo:hover {
@@ -350,6 +352,7 @@ svg {
 
   .logo {
     font-size: 1.15rem;
+    flex-shrink: 0;
   }
 
   .logo img {
@@ -361,21 +364,26 @@ svg {
     gap: var(--spacing-sm);
     display: flex !important;
     align-items: center;
-    flex-wrap: wrap;
+    flex-wrap: nowrap;
     visibility: visible !important;
     opacity: 1 !important;
+    min-width: 0;
   }
 
   .nav-links a {
     font-size: 0.85rem;
     padding: 6px 10px;
     white-space: nowrap;
+    flex-shrink: 1;
+    min-width: 0;
   }
 
   .nav-links .btn {
     display: inline-flex !important;
     font-size: 0.75rem !important;
     padding: 6px 12px !important;
+    flex-shrink: 0;
+    min-width: fit-content;
   }
 }
   bottom: -4px;
@@ -400,11 +408,12 @@ svg {
   display: flex !important;
   list-style: none;
   gap: 8px;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   visibility: visible !important;
   opacity: 1 !important;
   position: relative;
   z-index: 1;
+  min-width: 0;
 }
 
 .nav-links a {
@@ -416,6 +425,9 @@ svg {
   position: relative;
   padding: 10px 16px;
   border-radius: var(--radius-sm);
+  white-space: nowrap;
+  flex-shrink: 1;
+  min-width: 0;
 }
 
 .nav-links a:hover {
@@ -3131,21 +3143,26 @@ svg {
     display: flex !important;
     align-items: center;
     gap: 6px;
-    flex-wrap: wrap;
+    flex-wrap: nowrap;
     visibility: visible !important;
     opacity: 1 !important;
+    min-width: 0;
   }
 
   .nav-links a {
     font-size: 0.75rem;
     padding: 5px 8px;
     white-space: nowrap;
+    flex-shrink: 1;
+    min-width: 0;
   }
 
   .nav-links .btn {
     display: inline-flex !important;
     font-size: 0.7rem !important;
     padding: 5px 10px !important;
+    flex-shrink: 0;
+    min-width: fit-content;
   }
 
   .nav-container {
@@ -3154,11 +3171,13 @@ svg {
     padding: 8px 12px;
     height: auto;
     min-height: 50px;
+    flex-wrap: nowrap;
   }
 
   .logo {
     font-size: 1rem;
     flex-shrink: 0;
+    min-width: fit-content;
   }
 
   .logo img {
@@ -3318,15 +3337,18 @@ svg {
     display: flex !important;
     align-items: center;
     gap: 3px;
-    flex-wrap: wrap;
+    flex-wrap: nowrap;
     visibility: visible !important;
     opacity: 1 !important;
+    min-width: 0;
   }
 
   .nav-links a {
     font-size: 0.65rem;
     padding: 3px 5px;
     white-space: nowrap;
+    flex-shrink: 1;
+    min-width: 0;
   }
 
   .nav-links .btn {
@@ -3378,15 +3400,18 @@ svg {
     display: flex !important;
     align-items: center;
     gap: 2px;
-    flex-wrap: wrap;
+    flex-wrap: nowrap;
     visibility: visible !important;
     opacity: 1 !important;
+    min-width: 0;
   }
 
   .nav-links a {
     font-size: 0.6rem;
     padding: 2px 4px;
     white-space: nowrap;
+    flex-shrink: 1;
+    min-width: 0;
   }
 
   .nav-links .btn {
@@ -3426,15 +3451,18 @@ svg {
     display: flex !important;
     align-items: center;
     gap: 2px;
-    flex-wrap: wrap;
+    flex-wrap: nowrap;
     visibility: visible !important;
     opacity: 1 !important;
+    min-width: 0;
   }
 
   .nav-links a {
     font-size: 0.55rem;
     padding: 2px 3px;
     white-space: nowrap;
+    flex-shrink: 1;
+    min-width: 0;
   }
 
   .nav-links .btn {
