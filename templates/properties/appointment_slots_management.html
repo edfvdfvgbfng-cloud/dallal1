@@ -1,0 +1,360 @@
+{% extends 'properties/base.html' %}
+{% load static %}
+
+{% block title %}فترات التوافر{% endblock %}
+
+{% block content %}
+<div class="appointment-slots-management">
+  <div class="page-header">
+    <h1>⏰ فترات التوافر</h1>
+    <div class="header-actions">
+      <a href="{% url 'appointments_management' %}" class="btn btn-secondary">
+        <span>📋</span>
+        <span>إدارة المواعيد</span>
+      </a>
+      <button class="btn btn-primary" onclick="openAddSlotModal()">إضافة فترة</button>
+    </div>
+  </div>
+
+  <!-- Slots Grid -->
+  <div class="slots-grid">
+    {% for day_name, day_slots in slots|groupby:"day_of_week" %}
+    <div class="day-section">
+      <h3>{{ day_slots.0.get_day_of_week_display }}</h3>
+      <div class="slots-list">
+        {% for slot in day_slots %}
+        <div class="slot-card {% if not slot.is_available %}unavailable{% endif %}">
+          <div class="slot-time">
+            {{ slot.start_time }} - {{ slot.end_time }}
+          </div>
+          <div class="slot-details">
+            <span class="slot-max">الحد الأقصى: {{ slot.max_appointments }}</span>
+            <span class="slot-status">
+              {% if slot.is_available %}متاح{% else %}غير متاح{% endif %}
+            </span>
+          </div>
+          <div class="slot-actions">
+            <button class="btn btn-sm btn-warning" onclick="toggleSlot({{ slot.id }})">
+              {% if slot.is_available %}تعطيل{% else %}تفعيل{% endif %}
+            </button>
+            <button class="btn btn-sm btn-danger" onclick="deleteSlot({{ slot.id }})">حذف</button>
+          </div>
+        </div>
+        {% empty %}
+        <div class="empty-slots">
+          <p>لا توجد فترات متاحة</p>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+
+  <!-- Add Slot Modal -->
+  <div class="modal" id="add-slot-modal" style="display: none;">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3>إضافة فترة توافر جديدة</h3>
+        <button class="modal-close" onclick="closeAddSlotModal()">✕</button>
+      </div>
+      <div class="modal-body">
+        <form id="add-slot-form" method="POST" action="{% url 'appointment_slots_management' %}">
+          {% csrf_token %}
+          <input type="hidden" name="action" value="add">
+          
+          <div class="form-group">
+            <label>يوم الأسبوع</label>
+            <select name="day_of_week" required>
+              <option value="">اختر اليوم</option>
+              <option value="monday">الاثنين</option>
+              <option value="tuesday">الثلاثاء</option>
+              <option value="wednesday">الأربعاء</option>
+              <option value="thursday">الخميس</option>
+              <option value="friday">الجمعة</option>
+              <option value="saturday">السبت</option>
+              <option value="sunday">الأحد</option>
+            </select>
+          </div>
+          
+          <div class="form-row">
+            <div class="form-group">
+              <label>وقت البدء</label>
+              <input type="time" name="start_time" required>
+            </div>
+            <div class="form-group">
+              <label>وقت الانتهاء</label>
+              <input type="time" name="end_time" required>
+            </div>
+          </div>
+          
+          <div class="form-group">
+            <label>الحد الأقصى للمواعيد</label>
+            <input type="number" name="max_appointments" value="1" min="1" required>
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" onclick="closeAddSlotModal()">إلغاء</button>
+        <button class="btn btn-primary" onclick="submitAddSlot()">إضافة</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<style>
+.appointment-slots-management {
+  padding: 20px;
+  background: #f5f5f5;
+  min-height: 100vh;
+}
+
+.page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 30px;
+}
+
+.page-header h1 {
+  font-size: 2rem;
+  color: #333;
+  margin: 0;
+}
+
+.header-actions {
+  display: flex;
+  gap: 10px;
+}
+
+.slots-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 20px;
+}
+
+.day-section {
+  background: white;
+  padding: 20px;
+  border-radius: 10px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.day-section h3 {
+  margin-top: 0;
+  margin-bottom: 15px;
+  color: #333;
+  border-bottom: 2px solid #007bff;
+  padding-bottom: 10px;
+}
+
+.slots-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.slot-card {
+  padding: 15px;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  background: #f9f9f9;
+}
+
+.slot-card.unavailable {
+  opacity: 0.6;
+  background: #f5f5f5;
+}
+
+.slot-time {
+  font-size: 1.2rem;
+  font-weight: 600;
+  color: #333;
+  margin-bottom: 10px;
+}
+
+.slot-details {
+  display: flex;
+  gap: 15px;
+  margin-bottom: 10px;
+  font-size: 0.9rem;
+  color: #666;
+}
+
+.slot-actions {
+  display: flex;
+  gap: 10px;
+}
+
+.empty-slots {
+  text-align: center;
+  padding: 20px;
+  color: #999;
+}
+
+.modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0,0,0,0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.modal-content {
+  background: white;
+  border-radius: 10px;
+  width: 90%;
+  max-width: 500px;
+  max-height: 90vh;
+  overflow-y: auto;
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px;
+  border-bottom: 1px solid #eee;
+}
+
+.modal-header h3 {
+  margin: 0;
+}
+
+.modal-close {
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  cursor: pointer;
+}
+
+.modal-body {
+  padding: 20px;
+}
+
+.modal-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  padding: 20px;
+  border-top: 1px solid #eee;
+}
+
+.form-group {
+  margin-bottom: 15px;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 5px;
+  font-weight: 600;
+  color: #333;
+}
+
+.form-group input,
+.form-group select {
+  width: 100%;
+  padding: 10px;
+  border: 1px solid #ddd;
+  border-radius: 5px;
+  font-size: 1rem;
+}
+
+.form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 15px;
+}
+
+.btn {
+  padding: 10px 20px;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 1rem;
+  transition: all 0.3s;
+}
+
+.btn-primary {
+  background: #007bff;
+  color: white;
+}
+
+.btn-secondary {
+  background: #6c757d;
+  color: white;
+}
+
+.btn-success {
+  background: #28a745;
+  color: white;
+}
+
+.btn-danger {
+  background: #dc3545;
+  color: white;
+}
+
+.btn-warning {
+  background: #ffc107;
+  color: #333;
+}
+
+.btn-sm {
+  padding: 5px 10px;
+  font-size: 0.85rem;
+}
+</style>
+
+<script>
+function openAddSlotModal() {
+  document.getElementById('add-slot-modal').style.display = 'flex';
+}
+
+function closeAddSlotModal() {
+  document.getElementById('add-slot-modal').style.display = 'none';
+}
+
+function submitAddSlot() {
+  document.getElementById('add-slot-form').submit();
+}
+
+function toggleSlot(slotId) {
+  const form = new FormData();
+  form.append('action', 'toggle');
+  form.append('slot_id', slotId);
+  form.append('csrfmiddlewaretoken', document.querySelector('[name=csrfmiddlewaretoken]').value);
+  
+  fetch('{% url "appointment_slots_management" %}', {
+    method: 'POST',
+    body: form
+  })
+  .then(response => response.text())
+  .then(data => {
+    window.location.reload();
+  });
+}
+
+function deleteSlot(slotId) {
+  if (confirm('هل تريد حذف هذه الفترة؟')) {
+    const form = new FormData();
+    form.append('action', 'delete');
+    form.append('slot_id', slotId);
+    form.append('csrfmiddlewaretoken', document.querySelector('[name=csrfmiddlewaretoken]').value);
+    
+    fetch('{% url "appointment_slots_management" %}', {
+      method: 'POST',
+      body: form
+    })
+    .then(response => response.text())
+    .then(data => {
+      window.location.reload();
+    });
+  }
+}
+</script>
+{% endblock %}

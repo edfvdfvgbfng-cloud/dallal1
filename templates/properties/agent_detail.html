@@ -1,0 +1,459 @@
+{% extends 'properties/base.html' %}
+{% load static %}
+
+{% block title %}تفاصيل الوكيل{% endblock %}
+
+{% block content %}
+<div class="agent-detail">
+  <div class="page-header">
+    <h1>🤵 تفاصيل الوكيل</h1>
+    <div class="header-actions">
+      <a href="{% url 'agents_management' %}" class="btn btn-secondary">
+        <span>←</span>
+        <span>عودة</span>
+      </a>
+      <button class="btn btn-warning" onclick="document.getElementById('edit-form').style.display='block'">تعديل</button>
+    </div>
+  </div>
+
+  <!-- Agent Info Card -->
+  <div class="agent-card">
+    <div class="card-header">
+      <div class="agent-avatar">
+        {% if agent.avatar %}
+          <img src="{{ agent.avatar.url }}" alt="{{ agent.full_name }}">
+        {% else %}
+          <div class="avatar-placeholder">{{ agent.full_name|slice:":1"|upper }}</div>
+        {% endif %}
+      </div>
+      <div class="agent-info">
+        <h2>{{ agent.full_name }}</h2>
+        <div class="agent-meta">
+          <span class="agent-specialization">{{ agent.get_specialization_display }}</span>
+          <span class="agent-status status-{{ agent.status }}">
+            {{ agent.get_status_display }}
+          </span>
+          <span class="agent-tier tier-{{ agent.commission_tier }}">
+            {{ agent.get_commission_tier_display }}
+          </span>
+        </div>
+      </div>
+    </div>
+
+    <div class="card-body">
+      <div class="info-section">
+        <h3>معلومات الاتصال</h3>
+        <div class="info-grid">
+          <div class="info-item">
+            <span class="label">📞 الهاتف:</span>
+            <span class="value">{{ agent.phone }}</span>
+          </div>
+          {% if agent.secondary_phone %}
+          <div class="info-item">
+            <span class="label">📱 هاتف إضافي:</span>
+            <span class="value">{{ agent.secondary_phone }}</span>
+          </div>
+          {% endif %}
+          {% if agent.email %}
+          <div class="info-item">
+            <span class="label">📧 البريد:</span>
+            <span class="value">{{ agent.email }}</span>
+          </div>
+          {% endif %}
+          <div class="info-item">
+            <span class="label">📍 العنوان:</span>
+            <span class="value">{{ agent.address|default:'-' }}</span>
+          </div>
+          <div class="info-item">
+            <span class="label">🏙️ المدينة:</span>
+            <span class="value">{{ agent.city|default:'-' }}</span>
+          </div>
+          <div class="info-item">
+            <span class="label">🌍 المحافظة:</span>
+            <span class="value">{{ agent.governorate|default:'-' }}</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="info-section">
+        <h3>معلومات العمل</h3>
+        <div class="info-grid">
+          <div class="info-item">
+            <span class="label">🏛️ التخصص:</span>
+            <span class="value">{{ agent.get_specialization_display }}</span>
+          </div>
+          <div class="info-item">
+            <span class="label">💰 مستوى العمولة:</span>
+            <span class="value">{{ agent.get_commission_tier_display }}</span>
+          </div>
+          <div class="info-item">
+            <span class="label">📊 نسبة العمولة:</span>
+            <span class="value">{{ agent.commission_rate }}%</span>
+          </div>
+          <div class="info-item">
+            <span class="label">🎯 الهدف الشهري:</span>
+            <span class="value">{{ agent.monthly_target|intcomma }} د.ع</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="info-section">
+        <h3>الإحصائيات</h3>
+        <div class="stats-grid">
+          <div class="stat-item">
+            <span class="stat-label">عدد العملاء</span>
+            <span class="stat-value">{{ agent.client_count }}</span>
+          </div>
+          <div class="stat-item">
+            <span class="stat-label">المبيعات المنجزة</span>
+            <span class="stat-value">{{ agent.sales_completed }}</span>
+          </div>
+          <div class="stat-item">
+            <span class="stat-label">إجمالي العمولات</span>
+            <span class="stat-value">{{ agent.total_commissions|intcomma }} د.ع</span>
+          </div>
+          <div class="stat-item">
+            <span class="stat-label">التقييم</span>
+            <span class="stat-value">{{ agent.rating|default:'-' }}</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="info-section">
+        <h3>التواريخ</h3>
+        <div class="info-grid">
+          <div class="info-item">
+            <span class="label">📅 تاريخ الانضمام:</span>
+            <span class="value">{{ agent.joined_date|date:"Y-m-d"|default:'-' }}</span>
+          </div>
+          <div class="info-item">
+            <span class="label">📅 آخر نشاط:</span>
+            <span class="value">{{ agent.last_activity|date:"Y-m-d"|default:'-' }}</span>
+          </div>
+          <div class="info-item">
+            <span class="label">📅 تاريخ الإنشاء:</span>
+            <span class="value">{{ agent.created_at|date:"Y-m-d" }}</span>
+          </div>
+        </div>
+      </div>
+
+      {% if agent.bio %}
+      <div class="info-section">
+        <h3>نبذة عن الوكيل</h3>
+        <div class="bio-content">{{ agent.bio|linebreaks }}</div>
+      </div>
+      {% endif %}
+
+      {% if agent.notes %}
+      <div class="info-section">
+        <h3>ملاحظات</h3>
+        <div class="notes-content">{{ agent.notes|linebreaks }}</div>
+      </div>
+      {% endif %}
+    </div>
+
+    <div class="card-footer">
+      <form method="POST" action="" class="action-form">
+        {% csrf_token %}
+        <input type="hidden" name="action" value="add_sale">
+        <input type="number" name="amount" placeholder="المبلغ" class="form-control" style="width: 150px; display: inline-block;">
+        <button type="submit" class="btn btn-success">💰 إضافة مبيعات</button>
+      </form>
+      <form method="POST" action="" class="action-form">
+        {% csrf_token %}
+        <input type="hidden" name="action" value="add_client">
+        <button type="submit" class="btn btn-info">👥 إضافة عميل</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Edit Form Modal -->
+  <div class="modal" id="edit-form" style="display: none;">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3>تعديل بيانات الوكيل</h3>
+        <button class="modal-close" onclick="document.getElementById('edit-form').style.display='none'">✕</button>
+      </div>
+      <div class="modal-body">
+        <form method="POST" action="" enctype="multipart/form-data">
+          {% csrf_token %}
+          <input type="hidden" name="action" value="update">
+          {{ form.as_p }}
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" onclick="document.getElementById('edit-form').style.display='none'">إلغاء</button>
+        <button class="btn btn-primary" onclick="document.querySelector('#edit-form form').submit()">حفظ</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<style>
+.agent-detail {
+  padding: 20px;
+  background: #f5f5f5;
+  min-height: 100vh;
+}
+
+.page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 30px;
+}
+
+.page-header h1 {
+  font-size: 2rem;
+  color: #333;
+  margin: 0;
+}
+
+.header-actions {
+  display: flex;
+  gap: 10px;
+}
+
+.agent-card {
+  background: white;
+  border-radius: 10px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  overflow: hidden;
+}
+
+.card-header {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  padding: 30px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+}
+
+.agent-avatar {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  overflow: hidden;
+  background: white;
+}
+
+.agent-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.avatar-placeholder {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 2rem;
+  font-weight: bold;
+  color: #667eea;
+}
+
+.agent-info h2 {
+  margin: 0 0 10px 0;
+  font-size: 1.5rem;
+}
+
+.agent-meta {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.agent-specialization,
+.agent-status,
+.agent-tier {
+  padding: 5px 10px;
+  border-radius: 15px;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.agent-specialization { background: rgba(255,255,255,0.2); }
+.agent-status.active { background: #d4edda; color: #155724; }
+.agent-status.inactive { background: #e2e3e5; color: #383d41; }
+.agent-status.on_leave { background: #fff3cd; color: #856404; }
+.agent-tier.elite { background: #f8d7da; color: #721c24; }
+
+.card-body {
+  padding: 30px;
+}
+
+.info-section {
+  margin-bottom: 30px;
+}
+
+.info-section h3 {
+  margin-bottom: 15px;
+  color: #333;
+  border-bottom: 2px solid #667eea;
+  padding-bottom: 10px;
+}
+
+.info-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 15px;
+}
+
+.info-item {
+  display: flex;
+  flex-direction: column;
+}
+
+.info-item .label {
+  color: #666;
+  font-size: 0.9rem;
+  margin-bottom: 5px;
+}
+
+.info-item .value {
+  color: #333;
+  font-weight: 500;
+}
+
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 15px;
+}
+
+.stat-item {
+  background: #f9f9f9;
+  padding: 15px;
+  border-radius: 8px;
+  text-align: center;
+}
+
+.stat-item .stat-label {
+  color: #666;
+  font-size: 0.85rem;
+  margin-bottom: 5px;
+}
+
+.stat-item .stat-value {
+  color: #333;
+  font-size: 1.5rem;
+  font-weight: bold;
+}
+
+.bio-content,
+.notes-content {
+  background: #f9f9f9;
+  padding: 15px;
+  border-radius: 8px;
+  white-space: pre-wrap;
+}
+
+.card-footer {
+  display: flex;
+  gap: 10px;
+  padding: 20px 30px;
+  background: #f9f9f9;
+  border-top: 1px solid #eee;
+}
+
+.action-form {
+  display: inline;
+}
+
+.action-form .form-control {
+  margin-right: 10px;
+}
+
+.modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0,0,0,0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.modal-content {
+  background: white;
+  border-radius: 10px;
+  width: 90%;
+  max-width: 600px;
+  max-height: 90vh;
+  overflow-y: auto;
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px;
+  border-bottom: 1px solid #eee;
+}
+
+.modal-header h3 {
+  margin: 0;
+}
+
+.modal-close {
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  cursor: pointer;
+}
+
+.modal-body {
+  padding: 20px;
+}
+
+.modal-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  padding: 20px;
+  border-top: 1px solid #eee;
+}
+
+.btn {
+  padding: 10px 20px;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 1rem;
+  transition: all 0.3s;
+  text-decoration: none;
+  display: inline-block;
+}
+
+.btn-primary {
+  background: #667eea;
+  color: white;
+}
+
+.btn-secondary {
+  background: #6c757d;
+  color: white;
+}
+
+.btn-success {
+  background: #28a745;
+  color: white;
+}
+
+.btn-info {
+  background: #17a2b8;
+  color: white;
+}
+
+.btn-warning {
+  background: #ffc107;
+  color: #333;
+}
+</style>
+{% endblock %}

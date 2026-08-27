@@ -14,7 +14,7 @@ from django.core.paginator import Paginator
 from django.db.models import Q, Count, Sum, Avg
 from .utils import match_advertisement_with_targets
 from .channel_views import ChannelListView, ChannelDetailView
-from .models import Property, Job, Backup, Hotel, Resort, ServiceProvider, ServiceAdvertisement, Auction, UserProfile, Conversation, RealEstateContract
+from .models import Property, Job, Backup, Hotel, Resort, ServiceProvider, ServiceAdvertisement, Auction, UserProfile, Conversation, RealEstateContract, Customer, Agent
 from django.http import JsonResponse, HttpResponse
 from django.urls import reverse
 from django.shortcuts import get_object_or_404, redirect, render
@@ -29,7 +29,7 @@ from rest_framework.response import Response
 
 # Advertising system imports
 from .models import BuildingAdvertisement, AdResponse, AdMatch, AdNotificationSettings, Property, Broker, BrokerConversation, BrokerMessage
-from .forms import BuildingAdvertisementForm, BuildingAdvertisementUpdateForm, AdResponseForm, AdSearchForm, AdNotificationSettingsForm, BrokerMessageForm, BrokerConversationForm, RealEstateContractForm, ContractPaymentForm, ContractDocumentForm, ContractReminderForm
+from .forms import BuildingAdvertisementForm, BuildingAdvertisementUpdateForm, AdResponseForm, AdSearchForm, AdNotificationSettingsForm, BrokerMessageForm, BrokerConversationForm, RealEstateContractForm, ContractPaymentForm, ContractDocumentForm, ContractReminderForm, CustomerForm, AgentForm
 
 
 # ==================== Targeted Advertising Views ====================
@@ -21529,6 +21529,291 @@ def real_estate_contracts_page(request):
 
 
 @login_required
+def contract_payment_create(request, contract_id):
+    """إنشاء دفعة جديدة لعقد"""
+    if not request.user.is_superuser:
+        return JsonResponse({'success': False, 'error': 'غير مصرح'}, status=403)
+    
+    try:
+        contract = get_object_or_404(RealEstateContract, id=contract_id)
+        
+        if request.method == 'POST':
+            data = json.loads(request.body)
+            
+            # Generate payment number
+            year = timezone.now().year
+            count = ContractPayment.objects.filter(
+                payment_number__startswith=f'PAY-{year}'
+            ).count()
+            payment_number = f'PAY-{year}-{count + 1:04d}'
+            
+            payment = ContractPayment.objects.create(
+                contract=contract,
+                payment_number=payment_number,
+                amount=data.get('amount', 0),
+                payment_method=data.get('payment_method', 'cash'),
+                due_date=data.get('due_date'),
+                notes=data.get('notes', ''),
+                created_by=request.user
+            )
+            
+            return JsonResponse({
+                'success': True,
+                'message': 'تم إنشاء الدفعة بنجاح',
+                'payment_id': payment.id,
+                'payment_number': payment.payment_number
+            })
+    
+    except Exception as e:
+        logger.error(f"Error in contract_payment_create: {e}")
+        return JsonResponse({'success': False, 'error': str(e)}, status=500)
+
+
+@login_required
+def contract_payment_update(request, payment_id):
+    """تحديث دفعة عقد"""
+    if not request.user.is_superuser:
+        return JsonResponse({'success': False, 'error': 'غير مصرح'}, status=403)
+    
+    try:
+        payment = get_object_or_404(ContractPayment, id=payment_id)
+        
+        if request.method == 'POST':
+            data = json.loads(request.body)
+            
+            if 'amount' in data:
+                payment.amount = data['amount']
+            if 'payment_method' in data:
+                payment.payment_method = data['payment_method']
+            if 'due_date' in data:
+                payment.due_date = data['due_date']
+            if 'notes' in data:
+                payment.notes = data['notes']
+            
+            payment.save()
+            
+            return JsonResponse({
+                'success': True,
+                'message': 'تم تحديث الدفعة بنجاح'
+            })
+    
+    except Exception as e:
+        logger.error(f"Error in contract_payment_update: {e}")
+        return JsonResponse({'success': False, 'error': str(e)}, status=500)
+
+
+@login_required
+def contract_payment_delete(request, payment_id):
+    """حذف دفعة عقد"""
+    if not request.user.is_superuser:
+        return JsonResponse({'success': False, 'error': 'غير مصرح'}, status=403)
+    
+    try:
+        payment = get_object_or_404(ContractPayment, id=payment_id)
+        
+        if request.method == 'POST':
+            payment.delete()
+            return JsonResponse({
+                'success': True,
+                'message': 'تم حذف الدفعة بنجاح'
+            })
+    
+    except Exception as e:
+        logger.error(f"Error in contract_payment_delete: {e}")
+        return JsonResponse({'success': False, 'error': str(e)}, status=500)
+
+
+@login_required
+def contract_payment_mark_paid(request, payment_id):
+    """تسجيل دفعة كمكتملة"""
+    if not request.user.is_superuser:
+        return JsonResponse({'success': False, 'error': 'غير مصرح'}, status=403)
+    
+    try:
+        payment = get_object_or_404(ContractPayment, id=payment_id)
+        
+        if request.method == 'POST':
+            data = json.loads(request.body)
+            amount = data.get('amount', payment.amount)
+            
+            payment.mark_as_paid(amount)
+            
+            return JsonResponse({
+                'success': True,
+                'message': 'تم تسجيل الدفعة بنجاح'
+            })
+    
+    except Exception as e:
+        logger.error(f"Error in contract_payment_mark_paid: {e}")
+        return JsonResponse({'success': False, 'error': str(e)}, status=500)
+
+
+@login_required
+def contract_document_create(request, contract_id):
+    """رفع وثيقة جديدة لعقد"""
+    if not request.user.is_superuser:
+        return JsonResponse({'success': False, 'error': 'غير مصرح'}, status=403)
+    
+    try:
+        contract = get_object_or_404(RealEstateContract, id=contract_id)
+        
+        if request.method == 'POST':
+            data = json.loads(request.body)
+            
+            document = ContractDocument.objects.create(
+                contract=contract,
+                document_type=data.get('document_type', 'other'),
+                title=data.get('title', ''),
+                description=data.get('description', ''),
+                file=data.get('file'),
+                uploaded_by=request.user
+            )
+            
+            return JsonResponse({
+                'success': True,
+                'message': 'تم رفع الوثيقة بنجاح',
+                'document_id': document.id
+            })
+    
+    except Exception as e:
+        logger.error(f"Error in contract_document_create: {e}")
+        return JsonResponse({'success': False, 'error': str(e)}, status=500)
+
+
+@login_required
+def contract_document_delete(request, document_id):
+    """حذف وثيقة عقد"""
+    if not request.user.is_superuser:
+        return JsonResponse({'success': False, 'error': 'غير مصرح'}, status=403)
+    
+    try:
+        document = get_object_or_404(ContractDocument, id=document_id)
+        
+        if request.method == 'POST':
+            document.delete()
+            return JsonResponse({
+                'success': True,
+                'message': 'تم حذف الوثيقة بنجاح'
+            })
+    
+    except Exception as e:
+        logger.error(f"Error in contract_document_delete: {e}")
+        return JsonResponse({'success': False, 'error': str(e)}, status=500)
+
+
+@login_required
+def contract_reminder_create(request, contract_id):
+    """إنشاء تذكير جديد لعقد"""
+    if not request.user.is_superuser:
+        return JsonResponse({'success': False, 'error': 'غير مصرح'}, status=403)
+    
+    try:
+        contract = get_object_or_404(RealEstateContract, id=contract_id)
+        
+        if request.method == 'POST':
+            data = json.loads(request.body)
+            
+            reminder = ContractReminder.objects.create(
+                contract=contract,
+                reminder_type=data.get('reminder_type', 'other'),
+                title=data.get('title', ''),
+                description=data.get('description', ''),
+                reminder_date=data.get('reminder_date'),
+                reminder_days_before=data.get('reminder_days_before', 7),
+                created_by=request.user
+            )
+            
+            return JsonResponse({
+                'success': True,
+                'message': 'تم إنشاء التذكير بنجاح',
+                'reminder_id': reminder.id
+            })
+    
+    except Exception as e:
+        logger.error(f"Error in contract_reminder_create: {e}")
+        return JsonResponse({'success': False, 'error': str(e)}, status=500)
+
+
+@login_required
+def contract_reminder_update(request, reminder_id):
+    """تحديث تذكير عقد"""
+    if not request.user.is_superuser:
+        return JsonResponse({'success': False, 'error': 'غير مصرح'}, status=403)
+    
+    try:
+        reminder = get_object_or_404(ContractReminder, id=reminder_id)
+        
+        if request.method == 'POST':
+            data = json.loads(request.body)
+            
+            if 'reminder_type' in data:
+                reminder.reminder_type = data['reminder_type']
+            if 'title' in data:
+                reminder.title = data['title']
+            if 'description' in data:
+                reminder.description = data['description']
+            if 'reminder_date' in data:
+                reminder.reminder_date = data['reminder_date']
+            if 'reminder_days_before' in data:
+                reminder.reminder_days_before = data['reminder_days_before']
+            
+            reminder.save()
+            
+            return JsonResponse({
+                'success': True,
+                'message': 'تم تحديث التذكير بنجاح'
+            })
+    
+    except Exception as e:
+        logger.error(f"Error in contract_reminder_update: {e}")
+        return JsonResponse({'success': False, 'error': str(e)}, status=500)
+
+
+@login_required
+def contract_reminder_delete(request, reminder_id):
+    """حذف تذكير عقد"""
+    if not request.user.is_superuser:
+        return JsonResponse({'success': False, 'error': 'غير مصرح'}, status=403)
+    
+    try:
+        reminder = get_object_or_404(ContractReminder, id=reminder_id)
+        
+        if request.method == 'POST':
+            reminder.delete()
+            return JsonResponse({
+                'success': True,
+                'message': 'تم حذف التذكير بنجاح'
+            })
+    
+    except Exception as e:
+        logger.error(f"Error in contract_reminder_delete: {e}")
+        return JsonResponse({'success': False, 'error': str(e)}, status=500)
+
+
+@login_required
+def contract_reminder_mark_sent(request, reminder_id):
+    """تحديد التذكير كمرسل"""
+    if not request.user.is_superuser:
+        return JsonResponse({'success': False, 'error': 'غير مصرح'}, status=403)
+    
+    try:
+        reminder = get_object_or_404(ContractReminder, id=reminder_id)
+        
+        if request.method == 'POST':
+            reminder.mark_as_sent()
+            reminder.save()
+            
+            return JsonResponse({
+                'success': True,
+                'message': 'تم تحديد التذكير كمرسل'
+            })
+    
+    except Exception as e:
+        logger.error(f"Error in contract_reminder_mark_sent: {e}")
+        return JsonResponse({'success': False, 'error': str(e)}, status=500)
+
+
+@login_required
 def payments_commissions(request):
     """نظام إدارة الدفعات والعمولات"""
     if not request.user.is_superuser:
@@ -22681,6 +22966,855 @@ def broker_appointment_detail(request, appointment_id):
     return render(request, 'properties/broker_appointment_detail.html', {
         'appointment': appointment,
     })
+
+
+@login_required
+def appointments_management(request):
+    """نظام إدارة المواعيد الشامل"""
+    try:
+        from .models import Appointment, BrokerAppointment
+        
+        # Get user's appointments
+        if hasattr(request.user, 'broker_profile'):
+            # Broker view
+            broker_appointments = BrokerAppointment.objects.filter(
+                broker=request.user.broker_profile
+            ).select_related('user', 'property').order_by('-appointment_date', '-appointment_time')
+            
+            user_appointments = Appointment.objects.filter(
+                target_type='broker',
+                target_id=request.user.broker_profile.id
+            ).order_by('-appointment_date', '-appointment_time')
+        else:
+            # Regular user view
+            broker_appointments = BrokerAppointment.objects.filter(
+                user=request.user
+            ).select_related('broker', 'property').order_by('-appointment_date', '-appointment_time')
+            
+            user_appointments = Appointment.objects.filter(
+                user=request.user
+            ).order_by('-appointment_date', '-appointment_time')
+        
+        # Statistics
+        from django.utils import timezone
+        today = timezone.now().date()
+        
+        upcoming_broker = broker_appointments.filter(
+            appointment_date__gte=today,
+            status='pending'
+        ).count()
+        
+        upcoming_user = user_appointments.filter(
+            appointment_date__gte=today,
+            status='pending'
+        ).count()
+        
+        completed_broker = broker_appointments.filter(status='completed').count()
+        completed_user = user_appointments.filter(status='completed').count()
+        
+        return render(request, 'properties/appointments_management.html', {
+            'broker_appointments': broker_appointments,
+            'user_appointments': user_appointments,
+            'upcoming_broker': upcoming_broker,
+            'upcoming_user': upcoming_user,
+            'completed_broker': completed_broker,
+            'completed_user': completed_user,
+        })
+    
+    except Exception as e:
+        logger.error(f"Error in appointments_management: {e}")
+        return render(request, 'properties/appointments_management.html', {
+            'broker_appointments': [],
+            'user_appointments': [],
+            'upcoming_broker': 0,
+            'upcoming_user': 0,
+            'completed_broker': 0,
+            'completed_user': 0,
+        })
+
+
+@login_required
+def appointment_calendar(request):
+    """تقويم المواعيد"""
+    try:
+        from .models import Appointment, BrokerAppointment
+        from django.utils import timezone
+        import calendar
+        
+        # Get month and year from query params
+        year = int(request.GET.get('year', timezone.now().year))
+        month = int(request.GET.get('month', timezone.now().month))
+        
+        # Get all appointments for the month
+        from django.db.models import Q
+        
+        if hasattr(request.user, 'broker_profile'):
+            # Broker view
+            broker_appointments = BrokerAppointment.objects.filter(
+                broker=request.user.broker_profile,
+                appointment_date__year=year,
+                appointment_date__month=month
+            ).select_related('user', 'property')
+            
+            user_appointments = Appointment.objects.filter(
+                Q(target_type='broker', target_id=request.user.broker_profile.id) |
+                Q(user=request.user),
+                appointment_date__year=year,
+                appointment_date__month=month
+            )
+        else:
+            # Regular user view
+            broker_appointments = BrokerAppointment.objects.filter(
+                user=request.user,
+                appointment_date__year=year,
+                appointment_date__month=month
+            ).select_related('broker', 'property')
+            
+            user_appointments = Appointment.objects.filter(
+                user=request.user,
+                appointment_date__year=year,
+                appointment_date__month=month
+            )
+        
+        # Create calendar data
+        cal = calendar.Calendar()
+        month_days = cal.monthdayscalendar(year, month)
+        
+        # Arabic month names
+        arabic_months = {
+            1: 'يناير', 2: 'فبراير', 3: 'مارس', 4: 'أبريل',
+            5: 'مايو', 6: 'يونيو', 7: 'يوليو', 8: 'أغسطس',
+            9: 'سبتمبر', 10: 'أكتوبر', 11: 'نوفمبر', 12: 'ديسمبر'
+        }
+        month_name = arabic_months.get(month, calendar.month_name[month])
+        
+        # Group appointments by date
+        appointments_by_date = {}
+        
+        for appt in broker_appointments:
+            date_key = appt.appointment_date.day
+            if date_key not in appointments_by_date:
+                appointments_by_date[date_key] = []
+            appointments_by_date[date_key].append({
+                'type': 'broker',
+                'id': appt.id,
+                'time': appt.appointment_time.strftime('%H:%M'),
+                'title': f'{appt.user.username} - {appt.get_appointment_type_display()}',
+                'status': appt.status,
+            })
+        
+        for appt in user_appointments:
+            date_key = appt.appointment_date.day
+            if date_key not in appointments_by_date:
+                appointments_by_date[date_key] = []
+            appointments_by_date[date_key].append({
+                'type': 'user',
+                'id': appt.id,
+                'time': appt.appointment_time.strftime('%H:%M'),
+                'title': appt.get_appointment_type_display(),
+                'status': appt.status,
+            })
+        
+        # Convert to a simple dict for template (JSON serializable)
+        appointments_dict = {}
+        for day, appointments in appointments_by_date.items():
+            appointments_dict[str(day)] = [
+                {
+                    'type': appt['type'],
+                    'id': appt['id'],
+                    'time': appt['time'],
+                    'title': appt['title'],
+                    'status': appt['status'],
+                }
+                for appt in appointments
+            ]
+        
+        # Navigation
+        prev_month = month - 1 if month > 1 else 12
+        prev_year = year if month > 1 else year - 1
+        next_month = month + 1 if month < 12 else 1
+        next_year = year if month < 12 else year + 1
+        
+        return render(request, 'properties/appointment_calendar.html', {
+            'year': year,
+            'month': month,
+            'month_name': month_name,
+            'month_days': month_days,
+            'appointments_by_date': appointments_dict,
+            'prev_year': prev_year,
+            'prev_month': prev_month,
+            'next_year': next_year,
+            'next_month': next_month,
+        })
+    
+    except Exception as e:
+        logger.error(f"Error in appointment_calendar: {e}")
+        return render(request, 'properties/appointment_calendar.html', {
+            'year': timezone.now().year,
+            'month': timezone.now().month,
+            'month_name': calendar.month_name[timezone.now().month],
+            'month_days': [],
+            'appointments_by_date': {},
+        })
+
+
+@login_required
+def appointment_reschedule(request, appointment_id):
+    """إعادة جدولة موعد"""
+    try:
+        from .models import Appointment, BrokerAppointment
+        
+        # Try to find in either model
+        try:
+            appointment = BrokerAppointment.objects.get(id=appointment_id)
+            is_broker = True
+        except BrokerAppointment.DoesNotExist:
+            appointment = Appointment.objects.get(id=appointment_id)
+            is_broker = False
+        
+        # Check permissions
+        if is_broker:
+            if not hasattr(request.user, 'broker_profile') or appointment.broker != request.user.broker_profile:
+                if appointment.user != request.user:
+                    return JsonResponse({'success': False, 'error': 'غير مصرح'}, status=403)
+        else:
+            if appointment.user != request.user:
+                return JsonResponse({'success': False, 'error': 'غير مصرح'}, status=403)
+        
+        if request.method == 'POST':
+            data = json.loads(request.body)
+            new_date = data.get('new_date')
+            new_time = data.get('new_time')
+            
+            if not new_date or not new_time:
+                return JsonResponse({'success': False, 'error': 'التاريخ والوقت مطلوبان'}, status=400)
+            
+            if is_broker:
+                # For broker appointments, just update
+                appointment.appointment_date = new_date
+                appointment.appointment_time = new_time
+                appointment.status = 'pending'
+                appointment.save()
+            else:
+                # For regular appointments, use reschedule method
+                appointment.reschedule(new_date, new_time)
+            
+            return JsonResponse({
+                'success': True,
+                'message': 'تم إعادة جدولة الموعد بنجاح'
+            })
+    
+    except Exception as e:
+        logger.error(f"Error in appointment_reschedule: {e}")
+        return JsonResponse({'success': False, 'error': str(e)}, status=500)
+
+
+@login_required
+def appointment_slots_management(request):
+    """إدارة فترات التوافر للمواعيد"""
+    if not hasattr(request.user, 'broker_profile'):
+        messages.error(request, 'يجب أن تكون دلال للوصول لهذه الصفحة')
+        return redirect('home')
+    
+    try:
+        from .models import AppointmentSlot
+        
+        broker = request.user.broker_profile
+        slots = AppointmentSlot.objects.filter(broker=broker).order_by('day_of_week', 'start_time')
+        
+        if request.method == 'POST':
+            action = request.POST.get('action')
+            
+            if action == 'add':
+                day_of_week = request.POST.get('day_of_week')
+                start_time = request.POST.get('start_time')
+                end_time = request.POST.get('end_time')
+                max_appointments = request.POST.get('max_appointments', 1)
+                
+                if day_of_week and start_time and end_time:
+                    try:
+                        AppointmentSlot.objects.create(
+                            broker=broker,
+                            day_of_week=day_of_week,
+                            start_time=start_time,
+                            end_time=end_time,
+                            max_appointments=int(max_appointments)
+                        )
+                        messages.success(request, 'تم إضافة فترة التوافر بنجاح')
+                    except Exception as e:
+                        messages.error(request, f'حدث خطأ: {str(e)}')
+            
+            elif action == 'delete':
+                slot_id = request.POST.get('slot_id')
+                try:
+                    slot = AppointmentSlot.objects.get(id=slot_id, broker=broker)
+                    slot.delete()
+                    messages.success(request, 'تم حذف فترة التوافر')
+                except AppointmentSlot.DoesNotExist:
+                    messages.error(request, 'فترة التوافر غير موجودة')
+            
+            elif action == 'toggle':
+                slot_id = request.POST.get('slot_id')
+                try:
+                    slot = AppointmentSlot.objects.get(id=slot_id, broker=broker)
+                    slot.is_available = not slot.is_available
+                    slot.save()
+                    messages.success(request, 'تم تحديث فترة التوافر')
+                except AppointmentSlot.DoesNotExist:
+                    messages.error(request, 'فترة التوافر غير موجودة')
+            
+            return redirect('appointment_slots_management')
+        
+        return render(request, 'properties/appointment_slots_management.html', {
+            'slots': slots,
+        })
+    
+    except Exception as e:
+        logger.error(f"Error in appointment_slots_management: {e}")
+        return render(request, 'properties/appointment_slots_management.html', {
+            'slots': [],
+        })
+
+
+@login_required
+def customers_management(request):
+    """نظام إدارة العملاء"""
+    if not request.user.is_superuser:
+        messages.error(request, 'غير مصرح')
+        return redirect('home')
+    
+    try:
+        from .models import Customer
+        
+        customers = Customer.objects.all().select_related(
+            'user', 'assigned_broker', 'assigned_agent'
+        ).order_by('-created_at')
+        
+        # Filter by status if provided
+        status_filter = request.GET.get('status')
+        if status_filter:
+            customers = customers.filter(status=status_filter)
+        
+        # Filter by type if provided
+        type_filter = request.GET.get('type')
+        if type_filter:
+            customers = customers.filter(customer_type=type_filter)
+        
+        # Filter by priority if provided
+        priority_filter = request.GET.get('priority')
+        if priority_filter:
+            customers = customers.filter(priority=priority_filter)
+        
+        # Search functionality
+        search_query = request.GET.get('search')
+        if search_query:
+            customers = customers.filter(
+                Q(user__username__icontains=search_query) |
+                Q(user__email__icontains=search_query) |
+                Q(phone__icontains=search_query) |
+                Q(company_name__icontains=search_query)
+            )
+        
+        # Pagination
+        from django.core.paginator import Paginator
+        paginator = Paginator(customers, 20)
+        page_number = request.GET.get('page')
+        customers_page = paginator.get_page(page_number)
+        
+        # Statistics
+        total_customers = customers.count()
+        active_customers = customers.filter(status='active').count()
+        vip_customers = customers.filter(priority='vip').count()
+        total_revenue = customers.aggregate(total=Sum('total_spent'))['total'] or 0
+        
+        return render(request, 'properties/customers_management.html', {
+            'customers': customers_page,
+            'status_filter': status_filter,
+            'type_filter': type_filter,
+            'priority_filter': priority_filter,
+            'search_query': search_query,
+            'total_customers': total_customers,
+            'active_customers': active_customers,
+            'vip_customers': vip_customers,
+            'total_revenue': total_revenue,
+        })
+    
+    except Exception as e:
+        logger.error(f"Error in customers_management: {e}")
+        return render(request, 'properties/customers_management.html', {
+            'customers': [],
+            'status_filter': None,
+            'type_filter': None,
+            'priority_filter': None,
+            'search_query': None,
+            'total_customers': 0,
+            'active_customers': 0,
+            'vip_customers': 0,
+            'total_revenue': 0,
+        })
+
+
+@login_required
+def customer_detail(request, customer_id):
+    """عرض تفاصيل عميل"""
+    if not request.user.is_superuser:
+        messages.error(request, 'غير مصرح')
+        return redirect('home')
+    
+    try:
+        from .models import Customer
+        
+        customer = get_object_or_404(Customer, id=customer_id)
+        
+        if request.method == 'POST':
+            action = request.POST.get('action')
+            
+            if action == 'update':
+                form = CustomerForm(request.POST, instance=customer)
+                if form.is_valid():
+                    form.save()
+                    messages.success(request, 'تم تحديث بيانات العميل بنجاح')
+                    return redirect('customer_detail', customer_id=customer.id)
+            
+            elif action == 'mark_contacted':
+                customer.mark_as_contacted()
+                messages.success(request, 'تم تحديث تاريخ التواصل')
+                return redirect('customer_detail', customer_id=customer.id)
+            
+            elif action == 'add_inquiry':
+                customer.add_inquiry()
+                messages.success(request, 'تم إضافة استفسار جديد')
+                return redirect('customer_detail', customer_id=customer.id)
+            
+            elif action == 'add_purchase':
+                amount = request.POST.get('amount', 0)
+                if amount:
+                    customer.add_purchase(float(amount))
+                    messages.success(request, 'تم إضافة عملية شراء جديدة')
+                    return redirect('customer_detail', customer.id)
+        
+        form = CustomerForm(instance=customer)
+        
+        return render(request, 'properties/customer_detail.html', {
+            'customer': customer,
+            'form': form,
+        })
+    
+    except Exception as e:
+        logger.error(f"Error in customer_detail: {e}")
+        messages.error(request, f'حدث خطأ: {str(e)}')
+        return redirect('customers_management')
+
+
+@login_required
+def customer_create(request):
+    """إنشاء عميل جديد"""
+    if not request.user.is_superuser:
+        messages.error(request, 'غير مصرح')
+        return redirect('home')
+    
+    try:
+        if request.method == 'POST':
+            form = CustomerForm(request.POST)
+            if form.is_valid():
+                customer = form.save(commit=False)
+                customer.first_contact_date = timezone.now().date()
+                customer.last_contact_date = timezone.now().date()
+                customer.save()
+                messages.success(request, 'تم إنشاء العميل بنجاح')
+                return redirect('customer_detail', customer_id=customer.id)
+        else:
+            form = CustomerForm()
+        
+        return render(request, 'properties/customer_form.html', {
+            'form': form,
+            'title': 'إضافة عميل جديد',
+        })
+    
+    except Exception as e:
+        logger.error(f"Error in customer_create: {e}")
+        messages.error(request, f'حدث خطأ: {str(e)}')
+        return redirect('customers_management')
+
+
+@login_required
+def agents_management(request):
+    """نظام إدارة الوكلاء"""
+    if not request.user.is_superuser:
+        messages.error(request, 'غير مصرح')
+        return redirect('home')
+    
+    try:
+        from .models import Agent
+        
+        agents = Agent.objects.all().select_related('user').order_by('-created_at')
+        
+        # Filter by status if provided
+        status_filter = request.GET.get('status')
+        if status_filter:
+            agents = agents.filter(status=status_filter)
+        
+        # Filter by type if provided
+        type_filter = request.GET.get('type')
+        if type_filter:
+            agents = agents.filter(agent_type=type_filter)
+        
+        # Search functionality
+        search_query = request.GET.get('search')
+        if search_query:
+            agents = agents.filter(
+                Q(full_name__icontains=search_query) |
+                Q(email__icontains=search_query) |
+                Q(phone__icontains=search_query)
+            )
+        
+        # Pagination
+        from django.core.paginator import Paginator
+        paginator = Paginator(agents, 20)
+        page_number = request.GET.get('page')
+        agents_page = paginator.get_page(page_number)
+        
+        # Statistics
+        total_agents = agents.count()
+        active_agents = agents.filter(status='active').count()
+        verified_agents = agents.filter(is_verified=True).count()
+        total_revenue = agents.aggregate(total=Sum('total_revenue'))['total'] or 0
+        
+        return render(request, 'properties/agents_management.html', {
+            'agents': agents_page,
+            'status_filter': status_filter,
+            'type_filter': type_filter,
+            'search_query': search_query,
+            'total_agents': total_agents,
+            'active_agents': active_agents,
+            'verified_agents': verified_agents,
+            'total_revenue': total_revenue,
+        })
+    
+    except Exception as e:
+        logger.error(f"Error in agents_management: {e}")
+        return render(request, 'properties/agents_management.html', {
+            'agents': [],
+            'status_filter': None,
+            'type_filter': None,
+            'search_query': None,
+            'total_agents': 0,
+            'active_agents': 0,
+            'verified_agents': 0,
+            'total_revenue': 0,
+        })
+
+
+@login_required
+def agent_detail(request, agent_id):
+    """عرض تفاصيل وكيل"""
+    if not request.user.is_superuser:
+        messages.error(request, 'غير مصرح')
+        return redirect('home')
+    
+    try:
+        from .models import Agent
+        
+        agent = get_object_or_404(Agent, id=agent_id)
+        
+        if request.method == 'POST':
+            action = request.POST.get('action')
+            
+            if action == 'update':
+                form = AgentForm(request.POST, instance=agent)
+                if form.is_valid():
+                    form.save()
+                    messages.success(request, 'تم تحديث بيانات الوكيل بنجاح')
+                    return redirect('agent_detail', agent_id=agent.id)
+            
+            elif action == 'verify':
+                agent.is_verified = True
+                agent.save()
+                messages.success(request, 'تم توثيق الوكيل')
+                return redirect('agent_detail', agent_id=agent.id)
+            
+            elif action == 'suspend':
+                agent.status = 'suspended'
+                agent.save()
+                messages.success(request, 'تم إيقاف الوكيل')
+                return redirect('agent_detail', agent_id=agent.id)
+            
+            elif action == 'activate':
+                agent.status = 'active'
+                agent.save()
+                messages.success(request, 'تم تفعيل الوكيل')
+                return redirect('agent_detail', agent_id=agent.id)
+        
+        form = AgentForm(instance=agent)
+        
+        return render(request, 'properties/agent_detail.html', {
+            'agent': agent,
+            'form': form,
+        })
+    
+    except Exception as e:
+        logger.error(f"Error in agent_detail: {e}")
+        messages.error(request, f'حدث خطأ: {str(e)}')
+        return redirect('agents_management')
+
+
+@login_required
+def agent_create(request):
+    """إنشاء وكيل جديد"""
+    if not request.user.is_superuser:
+        messages.error(request, 'غير مصرح')
+        return redirect('home')
+    
+    try:
+        if request.method == 'POST':
+            form = AgentForm(request.POST, request.FILES)
+            if form.is_valid():
+                agent = form.save(commit=False)
+                agent.save()
+                messages.success(request, 'تم إنشاء الوكيل بنجاح')
+                return redirect('agent_detail', agent_id=agent.id)
+        else:
+            form = AgentForm()
+        
+        return render(request, 'properties/agent_form.html', {
+            'form': form,
+            'title': 'إضافة وكيل جديد',
+        })
+    
+    except Exception as e:
+        logger.error(f"Error in agent_create: {e}")
+        messages.error(request, f'حدث خطأ: {str(e)}')
+        return redirect('agents_management')
+
+
+@login_required
+def customer_update(request, customer_id):
+    """تحديث بيانات عميل"""
+    if not request.user.is_superuser:
+        messages.error(request, 'غير مصرح')
+        return redirect('home')
+    
+    try:
+        from .models import Customer
+        
+        customer = get_object_or_404(Customer, id=customer_id)
+        
+        if request.method == 'POST':
+            form = CustomerForm(request.POST, instance=customer)
+            if form.is_valid():
+                form.save()
+                messages.success(request, 'تم تحديث بيانات العميل بنجاح')
+                return redirect('customer_detail', customer_id=customer.id)
+        else:
+            form = CustomerForm(instance=customer)
+        
+        return render(request, 'properties/customer_form.html', {
+            'form': form,
+            'title': 'تعديل بيانات العميل',
+        })
+    
+    except Exception as e:
+        logger.error(f"Error in customer_update: {e}")
+        messages.error(request, f'حدث خطأ: {str(e)}')
+        return redirect('customer_detail', customer_id=customer_id)
+
+
+@login_required
+def customer_delete(request, customer_id):
+    """حذف عميل"""
+    if not request.user.is_superuser:
+        messages.error(request, 'غير مصرح')
+        return redirect('home')
+    
+    try:
+        from .models import Customer
+        
+        customer = get_object_or_404(Customer, id=customer_id)
+        customer.delete()
+        messages.success(request, 'تم حذف العميل بنجاح')
+        return redirect('customers_management')
+    
+    except Exception as e:
+        logger.error(f"Error in customer_delete: {e}")
+        messages.error(request, f'حدث خطأ: {str(e)}')
+        return redirect('customers_management')
+
+
+@login_required
+def agent_update(request, agent_id):
+    """تحديث بيانات وكيل"""
+    if not request.user.is_superuser:
+        messages.error(request, 'غير مصرح')
+        return redirect('home')
+    
+    try:
+        from .models import Agent
+        
+        agent = get_object_or_404(Agent, id=agent_id)
+        
+        if request.method == 'POST':
+            form = AgentForm(request.POST, request.FILES, instance=agent)
+            if form.is_valid():
+                form.save()
+                messages.success(request, 'تم تحديث بيانات الوكيل بنجاح')
+                return redirect('agent_detail', agent_id=agent.id)
+        else:
+            form = AgentForm(instance=agent)
+        
+        return render(request, 'properties/agent_form.html', {
+            'form': form,
+            'title': 'تعديل بيانات الوكيل',
+        })
+    
+    except Exception as e:
+        logger.error(f"Error in agent_update: {e}")
+        messages.error(request, f'حدث خطأ: {str(e)}')
+        return redirect('agent_detail', agent_id=agent_id)
+
+
+@login_required
+def agent_delete(request, agent_id):
+    """حذف وكيل"""
+    if not request.user.is_superuser:
+        messages.error(request, 'غير مصرح')
+        return redirect('home')
+    
+    try:
+        from .models import Agent
+        
+        agent = get_object_or_404(Agent, id=agent_id)
+        agent.delete()
+        messages.success(request, 'تم حذف الوكيل بنجاح')
+        return redirect('agents_management')
+    
+    except Exception as e:
+        logger.error(f"Error in agent_delete: {e}")
+        messages.error(request, f'حدث خطأ: {str(e)}')
+        return redirect('agents_management')
+
+
+@login_required
+def admin_dashboard_enhanced(request):
+    """لوحة تحكم الإدارة الاحترافية مع إدارة العملاء والوكلاء"""
+    if not request.user.is_superuser:
+        messages.error(request, 'غير مصرح')
+        return redirect('home')
+    
+    try:
+        from django.db.models import Sum, Count, Avg
+        from datetime import timedelta, datetime
+        
+        # إحصائيات العملاء
+        total_customers = Customer.objects.count()
+        active_customers = Customer.objects.filter(status='active').count()
+        vip_customers = Customer.objects.filter(priority='vip').count()
+        total_customer_revenue = Customer.objects.aggregate(total=Sum('total_spent'))['total'] or 0
+        
+        # إحصائيات الوكلاء
+        total_agents = Agent.objects.count()
+        active_agents = Agent.objects.filter(status='active').count()
+        top_agents = Agent.objects.filter(commission_tier='elite').count()
+        total_agent_commissions = Agent.objects.aggregate(total=Sum('total_commissions'))['total'] or 0
+        
+        # إحصائيات العقارات
+        total_properties = Property.objects.count()
+        active_properties = Property.objects.filter(status='active').count()
+        sold_properties = Property.objects.filter(status='sold').count()
+        
+        # إحصائيات المستخدمين
+        total_users = User.objects.count()
+        active_users = User.objects.filter(is_active=True).count()
+        
+        # إحصائيات الدلالين
+        from .models import Broker
+        total_brokers = Broker.objects.count()
+        active_brokers = Broker.objects.filter(is_active=True).count()
+        verified_brokers = Broker.objects.filter(is_verified=True).count()
+        
+        # إحصائيات العقود
+        total_contracts = RealEstateContract.objects.count()
+        active_contracts = RealEstateContract.objects.filter(status='active').count()
+        completed_contracts = RealEstateContract.objects.filter(status='completed').count()
+        
+        # إحصائيات المواعيد
+        from .models import Appointment
+        total_appointments = Appointment.objects.count()
+        pending_appointments = Appointment.objects.filter(status='pending').count()
+        confirmed_appointments = Appointment.objects.filter(status='confirmed').count()
+        
+        # إحصائيات الإيرادات
+        from .models import FinancialTransaction
+        today = timezone.now().date()
+        yesterday = today - timedelta(days=1)
+        
+        daily_revenue = FinancialTransaction.objects.filter(
+            created_at__date=today,
+            status='completed'
+        ).aggregate(total=Sum('sale_price'))['total'] or 0
+        
+        monthly_revenue = FinancialTransaction.objects.filter(
+            created_at__date__gte=today - timedelta(days=30),
+            status='completed'
+        ).aggregate(total=Sum('sale_price'))['total'] or 0
+        
+        # آخر العمليات
+        recent_customers = Customer.objects.order_by('-created_at')[:5]
+        recent_agents = Agent.objects.order_by('-created_at')[:5]
+        recent_contracts = RealEstateContract.objects.order_by('-created_at')[:5]
+        
+        context = {
+            # إحصائيات العملاء
+            'total_customers': total_customers,
+            'active_customers': active_customers,
+            'vip_customers': vip_customers,
+            'total_customer_revenue': total_customer_revenue,
+            
+            # إحصائيات الوكلاء
+            'total_agents': total_agents,
+            'active_agents': active_agents,
+            'top_agents': top_agents,
+            'total_agent_commissions': total_agent_commissions,
+            
+            # إحصائيات العقارات
+            'total_properties': total_properties,
+            'active_properties': active_properties,
+            'sold_properties': sold_properties,
+            
+            # إحصائيات المستخدمين
+            'total_users': total_users,
+            'active_users': active_users,
+            
+            # إحصائيات الدلالين
+            'total_brokers': total_brokers,
+            'active_brokers': active_brokers,
+            'verified_brokers': verified_brokers,
+            
+            # إحصائيات العقود
+            'total_contracts': total_contracts,
+            'active_contracts': active_contracts,
+            'completed_contracts': completed_contracts,
+            
+            # إحصائيات المواعيد
+            'total_appointments': total_appointments,
+            'pending_appointments': pending_appointments,
+            'confirmed_appointments': confirmed_appointments,
+            
+            # إحصائيات الإيرادات
+            'daily_revenue': daily_revenue,
+            'monthly_revenue': monthly_revenue,
+            
+            # آخر العمليات
+            'recent_customers': recent_customers,
+            'recent_agents': recent_agents,
+            'recent_contracts': recent_contracts,
+        }
+        
+        return render(request, 'properties/admin_dashboard_enhanced.html', context)
+    
+    except Exception as e:
+        logger.error(f"Error in admin_dashboard_enhanced: {e}")
+        messages.error(request, f'حدث خطأ: {str(e)}')
+        return redirect('home')
 
 
 @login_required

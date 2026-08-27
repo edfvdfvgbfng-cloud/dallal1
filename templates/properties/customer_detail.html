@@ -1,0 +1,480 @@
+{% extends 'properties/base.html' %}
+{% load static %}
+
+{% block title %}تفاصيل العميل{% endblock %}
+
+{% block content %}
+<div class="customer-detail">
+  <div class="page-header">
+    <h1>👥 تفاصيل العميل</h1>
+    <div class="header-actions">
+      <a href="{% url 'customers_management' %}" class="btn btn-secondary">
+        <span>←</span>
+        <span>عودة</span>
+      </a>
+      <button class="btn btn-warning" onclick="document.getElementById('edit-form').style.display='block'">تعديل</button>
+    </div>
+  </div>
+
+  <!-- Customer Info Card -->
+  <div class="customer-card">
+    <div class="card-header">
+      <div class="customer-avatar">
+        {% if customer.user.user_profile.avatar %}
+          <img src="{{ customer.user.user_profile.avatar.url }}" alt="{{ customer.get_full_name }}">
+        {% else %}
+          <div class="avatar-placeholder">{{ customer.get_full_name|slice:":1"|upper }}</div>
+        {% endif %}
+      </div>
+      <div class="customer-info">
+        <h2>{{ customer.get_full_name }}</h2>
+        <div class="customer-meta">
+          <span class="customer-type">{{ customer.get_customer_type_display }}</span>
+          <span class="customer-status status-{{ customer.status }}">
+            {{ customer.get_status_display }}
+          </span>
+          <span class="customer-priority priority-{{ customer.priority }}">
+            {{ customer.get_priority_display }}
+          </span>
+        </div>
+      </div>
+    </div>
+
+    <div class="card-body">
+      <div class="info-section">
+        <h3>معلومات الاتصال</h3>
+        <div class="info-grid">
+          <div class="info-item">
+            <span class="label">📞 الهاتف:</span>
+            <span class="value">{{ customer.phone }}</span>
+          </div>
+          {% if customer.secondary_phone %}
+          <div class="info-item">
+            <span class="label">📱 هاتف إضافي:</span>
+            <span class="value">{{ customer.secondary_phone }}</span>
+          </div>
+          {% endif %}
+          {% if customer.email %}
+          <div class="info-item">
+            <span class="label">📧 البريد:</span>
+            <span class="value">{{ customer.email }}</span>
+          </div>
+          {% endif %}
+          <div class="info-item">
+            <span class="label">📍 العنوان:</span>
+            <span class="value">{{ customer.address|default:'-' }}</span>
+          </div>
+          <div class="info-item">
+            <span class="label">🏙️ المدينة:</span>
+            <span class="value">{{ customer.city|default:'-' }}</span>
+          </div>
+          <div class="info-item">
+            <span class="label">🌍 المحافظة:</span>
+            <span class="value">{{ customer.governorate|default:'-' }}</span>
+          </div>
+        </div>
+      </div>
+
+      {% if customer.customer_type == 'company' %}
+      <div class="info-section">
+        <h3>معلومات الشركة</h3>
+        <div class="info-grid">
+          <div class="info-item">
+            <span class="label">🏢 اسم الشركة:</span>
+            <span class="value">{{ customer.company_name }}</span>
+          </div>
+          <div class="info-item">
+            <span class="label">📋 رقم التسجيل:</span>
+            <span class="value">{{ customer.company_registration }}</span>
+          </div>
+          <div class="info-item">
+            <span class="label">🧾 الرقم الضريبي:</span>
+            <span class="value">{{ customer.tax_id }}</span>
+          </div>
+        </div>
+      </div>
+      {% endif %}
+
+      <div class="info-section">
+        <h3>التفضيلات</h3>
+        <div class="info-grid">
+          <div class="info-item">
+            <span class="label">💬 طريقة التواصل:</span>
+            <span class="value">{{ customer.get_preferred_contact_method_display }}</span>
+          </div>
+          <div class="info-item">
+            <span class="label">🌐 اللغة:</span>
+            <span class="value">{{ customer.get_preferred_language_display }}</span>
+          </div>
+          <div class="info-item">
+            <span class="label">👨‍💼 الدلال المخصص:</span>
+            <span class="value">{{ customer.assigned_broker.user.username|default:'-' }}</span>
+          </div>
+          <div class="info-item">
+            <span class="label">🤵 الوكيل المخصص:</span>
+            <span class="value">{{ customer.assigned_agent.full_name|default:'-' }}</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="info-section">
+        <h3>الإحصائيات</h3>
+        <div class="stats-grid">
+          <div class="stat-item">
+            <span class="stat-label">العقارات المعروضة</span>
+            <span class="stat-value">{{ customer.total_properties_viewed }}</span>
+          </div>
+          <div class="stat-item">
+            <span class="stat-label">الاستفسارات</span>
+            <span class="stat-value">{{ customer.total_inquiries }}</span>
+          </div>
+          <div class="stat-item">
+            <span class="stat-label">المشتريات</span>
+            <span class="stat-value">{{ customer.total_purchases }}</span>
+          </div>
+          <div class="stat-item">
+            <span class="stat-label">إجمالي الإنفاق</span>
+            <span class="stat-value">{{ customer.total_spent|intcomma }} د.ع</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="info-section">
+        <h3>التواريخ</h3>
+        <div class="info-grid">
+          <div class="info-item">
+            <span class="label">📅 أول تواصل:</span>
+            <span class="value">{{ customer.first_contact_date|date:"Y-m-d"|default:'-' }}</span>
+          </div>
+          <div class="info-item">
+            <span class="label">📅 آخر تواصل:</span>
+            <span class="value">{{ customer.last_contact_date|date:"Y-m-d"|default:'-' }}</span>
+          </div>
+          <div class="info-item">
+            <span class="label">📅 آخر شراء:</span>
+            <span class="value">{{ customer.last_purchase_date|date:"Y-m-d"|default:'-' }}</span>
+          </div>
+          <div class="info-item">
+            <span class="label">📅 تاريخ الإنشاء:</span>
+            <span class="value">{{ customer.created_at|date:"Y-m-d" }}</span>
+          </div>
+        </div>
+      </div>
+
+      {% if customer.notes %}
+      <div class="info-section">
+        <h3>ملاحظات</h3>
+        <div class="notes-content">{{ customer.notes|linebreaks }}</div>
+      </div>
+      {% endif %}
+    </div>
+
+    <div class="card-footer">
+      <form method="POST" action="" class="action-form">
+        {% csrf_token %}
+        <input type="hidden" name="action" value="mark_contacted">
+        <button type="submit" class="btn btn-success">✅ تسجيل تواصل</button>
+      </form>
+      <form method="POST" action="" class="action-form">
+        {% csrf_token %}
+        <input type="hidden" name="action" value="add_inquiry">
+        <button type="submit" class="btn btn-info">❓ إضافة استفسار</button>
+      </form>
+      <form method="POST" action="" class="action-form">
+        {% csrf_token %}
+        <input type="hidden" name="action" value="add_purchase">
+        <input type="number" name="amount" placeholder="المبلغ" class="form-control" style="width: 150px; display: inline-block;">
+        <button type="submit" class="btn btn-warning">💰 إضافة شراء</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Edit Form Modal -->
+  <div class="modal" id="edit-form" style="display: none;">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3>تعديل بيانات العميل</h3>
+        <button class="modal-close" onclick="document.getElementById('edit-form').style.display='none'">✕</button>
+      </div>
+      <div class="modal-body">
+        <form method="POST" action="">
+          {% csrf_token %}
+          <input type="hidden" name="action" value="update">
+          {{ form.as_p }}
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" onclick="document.getElementById('edit-form').style.display='none'">إلغاء</button>
+        <button class="btn btn-primary" onclick="document.querySelector('#edit-form form').submit()">حفظ</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<style>
+.customer-detail {
+  padding: 20px;
+  background: #f5f5f5;
+  min-height: 100vh;
+}
+
+.page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 30px;
+}
+
+.page-header h1 {
+  font-size: 2rem;
+  color: #333;
+  margin: 0;
+}
+
+.header-actions {
+  display: flex;
+  gap: 10px;
+}
+
+.customer-card {
+  background: white;
+  border-radius: 10px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  overflow: hidden;
+}
+
+.card-header {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  padding: 30px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+}
+
+.customer-avatar {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  overflow: hidden;
+  background: white;
+}
+
+.customer-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.avatar-placeholder {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 2rem;
+  font-weight: bold;
+  color: #667eea;
+}
+
+.customer-info h2 {
+  margin: 0 0 10px 0;
+  font-size: 1.5rem;
+}
+
+.customer-meta {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.customer-type,
+.customer-status,
+.customer-priority {
+  padding: 5px 10px;
+  border-radius: 15px;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.customer-type { background: rgba(255,255,255,0.2); }
+.customer-status.active { background: #d4edda; color: #155724; }
+.customer-status.inactive { background: #e2e3e5; color: #383d41; }
+.customer-status.blacklisted { background: #f8d7da; color: #721c24; }
+.customer-priority.vip { background: #f8d7da; color: #721c24; }
+
+.card-body {
+  padding: 30px;
+}
+
+.info-section {
+  margin-bottom: 30px;
+}
+
+.info-section h3 {
+  margin-bottom: 15px;
+  color: #333;
+  border-bottom: 2px solid #667eea;
+  padding-bottom: 10px;
+}
+
+.info-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 15px;
+}
+
+.info-item {
+  display: flex;
+  flex-direction: column;
+}
+
+.info-item .label {
+  color: #666;
+  font-size: 0.9rem;
+  margin-bottom: 5px;
+}
+
+.info-item .value {
+  color: #333;
+  font-weight: 500;
+}
+
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 15px;
+}
+
+.stat-item {
+  background: #f9f9f9;
+  padding: 15px;
+  border-radius: 8px;
+  text-align: center;
+}
+
+.stat-item .stat-label {
+  color: #666;
+  font-size: 0.85rem;
+  margin-bottom: 5px;
+}
+
+.stat-item .stat-value {
+  color: #333;
+  font-size: 1.5rem;
+  font-weight: bold;
+}
+
+.notes-content {
+  background: #f9f9f9;
+  padding: 15px;
+  border-radius: 8px;
+  white-space: pre-wrap;
+}
+
+.card-footer {
+  display: flex;
+  gap: 10px;
+  padding: 20px 30px;
+  background: #f9f9f9;
+  border-top: 1px solid #eee;
+}
+
+.action-form {
+  display: inline;
+}
+
+.action-form .form-control {
+  margin-right: 10px;
+}
+
+.modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0,0,0,0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.modal-content {
+  background: white;
+  border-radius: 10px;
+  width: 90%;
+  max-width: 600px;
+  max-height: 90vh;
+  overflow-y: auto;
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px;
+  border-bottom: 1px solid #eee;
+}
+
+.modal-header h3 {
+  margin: 0;
+}
+
+.modal-close {
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  cursor: pointer;
+}
+
+.modal-body {
+  padding: 20px;
+}
+
+.modal-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  padding: 20px;
+  border-top: 1px solid #eee;
+}
+
+.btn {
+  padding: 10px 20px;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 1rem;
+  transition: all 0.3s;
+  text-decoration: none;
+  display: inline-block;
+}
+
+.btn-primary {
+  background: #667eea;
+  color: white;
+}
+
+.btn-secondary {
+  background: #6c757d;
+  color: white;
+}
+
+.btn-success {
+  background: #28a745;
+  color: white;
+}
+
+.btn-info {
+  background: #17a2b8;
+  color: white;
+}
+
+.btn-warning {
+  background: #ffc107;
+  color: #333;
+}
+</style>
+{% endblock %}

@@ -452,10 +452,13 @@ def broker_list(request):
     # Pagination
     paginator = Paginator(brokers, 20)
     page_number = request.GET.get('page', 1)
-    brokers = paginator.get_page(page_number)
+    brokers_page = paginator.get_page(page_number)
+    
+    # Keep original queryset for stats calculation
+    brokers_queryset = brokers
     
     broker_data = []
-    for b in brokers:
+    for b in brokers_page:
         prop_count = Property.objects.filter(Q(owner=b.user) | Q(broker=b)).count()
         views = Property.objects.filter(Q(owner=b.user) | Q(broker=b)).aggregate(
             t=Sum('views_count')
@@ -532,9 +535,9 @@ def broker_list(request):
     from django.utils import timezone
     
     one_month_ago = timezone.now() - timedelta(days=30)
-    monthly_new_brokers = brokers.filter(created_at__gte=one_month_ago).count()
+    monthly_new_brokers = brokers_queryset.filter(created_at__gte=one_month_ago).count()
     monthly_properties = Property.objects.filter(
-        Q(owner__in=[b.user for b in brokers]) | Q(broker__in=brokers),
+        Q(owner__in=[b.user for b in brokers_queryset]) | Q(broker__in=brokers_queryset),
         created_at__gte=one_month_ago
     ).count()
     
@@ -542,7 +545,7 @@ def broker_list(request):
     active_percentage = (active_brokers / total_brokers * 100) if total_brokers > 0 else 0
     
     # Calculate expired subscriptions
-    expired_subscriptions = brokers.filter(
+    expired_subscriptions = brokers_queryset.filter(
         subscription_end_date__lt=timezone.now().date(),
         is_active=True
     ).count()
@@ -571,7 +574,7 @@ def broker_list(request):
         'expired_subscriptions': expired_subscriptions,
         'total_revenue': total_revenue,
         'plans': SubscriptionPlan.objects.filter(is_active=True),
-        'brokers': brokers,  # Pass paginated brokers object
+        'brokers': brokers_page,  # Pass paginated brokers object
     })
 
 

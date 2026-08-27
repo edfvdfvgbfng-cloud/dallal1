@@ -6,7 +6,7 @@ from django.contrib.auth.models import User
 from django.utils import timezone
 
 from .constants import COMMON_NASIRIYAH_DISTRICTS, IRAQ_GOVERNORATES
-from .models import Property, Message, SiteSettings, PropertyImage, PropertyVideo, PropertyNote, VirtualTour360, Auction, Bid, FinancialTransaction, Expense, Payment, Report, Profit, SubscriptionPlan, UserSettings, BlockedUser, SavedSearch, OfficePresence, PresenceNotification, BrokerSubscription, BrokerNotificationSettings, AutoBid, AuctionRating, AuctionLiveStream, AuctionAdvertisement, Hotel, Resort, PaymentMethod, PropertyPayment, PropertyNotification, SubscriptionRequest, BrokerChannel, ChannelRating, ChannelReview, ChannelReviewReply, ChannelMilestone, OutsideProperty, PropertyHotel, PropertyResort, PropertyDocument, PropertyMediaStats, WhatsAppMessage, TelegramMessage, AppointmentBooking, PropertyInquiry, LiveStream, LiveStreamComment, UserProfile, ServiceProvider, ServiceAdvertisement, HotelPage, HotelPost, HotelRoom, HotelOffer, HotelBooking, ServiceProviderCategory, ServiceProviderPage, ServiceProviderWork, ServiceProviderService, ServiceProviderGallery, ServiceProviderVideo, ServiceProvider360, ServiceProviderFollower, ServiceProviderRating, ServiceProviderContact, ServiceProviderQuote, Job, JobCategory, JobImage, JobVideo, BuildingAdvertisement, AdResponse, AdNotificationSettings, ChannelSubscription, ChannelContent, ChannelBroadcast, ChannelCollaboration, ChannelAdvertisement, SupportMessage, Notification, NotificationRecipient, Broker, BrokerConversation, BrokerMessage, RealEstateContract, ContractPayment, ContractDocument, ContractReminder, TravelPackage, TravelPackageImage, TravelPackageBooking, TravelPackageReview
+from .models import Property, Message, SiteSettings, PropertyImage, PropertyVideo, PropertyNote, VirtualTour360, Auction, Bid, FinancialTransaction, Expense, Payment, Report, Profit, SubscriptionPlan, UserSettings, BlockedUser, SavedSearch, OfficePresence, PresenceNotification, BrokerSubscription, BrokerNotificationSettings, AutoBid, AuctionRating, AuctionLiveStream, AuctionAdvertisement, Hotel, Resort, PaymentMethod, PropertyPayment, PropertyNotification, SubscriptionRequest, BrokerChannel, ChannelRating, ChannelReview, ChannelReviewReply, ChannelMilestone, OutsideProperty, PropertyHotel, PropertyResort, PropertyDocument, PropertyMediaStats, WhatsAppMessage, TelegramMessage, AppointmentBooking, PropertyInquiry, LiveStream, LiveStreamComment, UserProfile, ServiceProvider, ServiceAdvertisement, HotelPage, HotelPost, HotelRoom, HotelOffer, HotelBooking, ServiceProviderCategory, ServiceProviderPage, ServiceProviderWork, ServiceProviderService, ServiceProviderGallery, ServiceProviderVideo, ServiceProvider360, ServiceProviderFollower, ServiceProviderRating, ServiceProviderContact, ServiceProviderQuote, Job, JobCategory, JobImage, JobVideo, BuildingAdvertisement, AdResponse, AdNotificationSettings, ChannelSubscription, ChannelContent, ChannelBroadcast, ChannelCollaboration, ChannelAdvertisement, SupportMessage, Notification, NotificationRecipient, Broker, BrokerConversation, BrokerMessage, RealEstateContract, ContractPayment, ContractDocument, ContractReminder, TravelPackage, TravelPackageImage, TravelPackageBooking, TravelPackageReview, Customer, Agent
 
 
 def _fc(placeholder=''):
@@ -1439,6 +1439,125 @@ class TravelPackageForm(forms.ModelForm):
             'meta_title': 'عنوان SEO',
             'meta_description': 'وصف SEO',
         }
+
+
+class CustomerForm(forms.ModelForm):
+    """نموذج إدارة العملاء"""
+    
+    class Meta:
+        model = Customer
+        fields = [
+            'customer_type', 'phone', 'secondary_phone', 'email', 'address',
+            'city', 'governorate', 'preferred_contact_method', 'preferred_language',
+            'priority', 'status', 'assigned_broker', 'assigned_agent', 'notes',
+            'company_name', 'company_registration', 'tax_id',
+        ]
+        widgets = {
+            'customer_type': forms.Select(attrs={'class': 'form-control'}),
+            'phone': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'رقم الهاتف'}),
+            'secondary_phone': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'هاتف إضافي'}),
+            'email': forms.EmailInput(attrs={'class': 'form-control', 'placeholder': 'البريد الإلكتروني'}),
+            'address': forms.Textarea(attrs={'class': 'form-control', 'rows': 3, 'placeholder': 'العنوان'}),
+            'city': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'المدينة'}),
+            'governorate': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'المحافظة'}),
+            'preferred_contact_method': forms.Select(attrs={'class': 'form-control'}),
+            'preferred_language': forms.Select(attrs={'class': 'form-control'}),
+            'priority': forms.Select(attrs={'class': 'form-control'}),
+            'status': forms.Select(attrs={'class': 'form-control'}),
+            'assigned_broker': forms.Select(attrs={'class': 'form-control'}),
+            'assigned_agent': forms.Select(attrs={'class': 'form-control'}),
+            'notes': forms.Textarea(attrs={'class': 'form-control', 'rows': 3, 'placeholder': 'ملاحظات'}),
+            'company_name': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'اسم الشركة'}),
+            'company_registration': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'رقم التسجيل'}),
+            'tax_id': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'الرقم الضريبي'}),
+        }
+        labels = {
+            'customer_type': 'نوع العميل',
+            'phone': 'الهاتف',
+            'secondary_phone': 'هاتف إضافي',
+            'email': 'البريد الإلكتروني',
+            'address': 'العنوان',
+            'city': 'المدينة',
+            'governorate': 'المحافظة',
+            'preferred_contact_method': 'طريقة التواصل المفضلة',
+            'preferred_language': 'اللغة المفضلة',
+            'priority': 'الأولوية',
+            'status': 'الحالة',
+            'assigned_broker': 'الدلال المخصص',
+            'assigned_agent': 'الوكيل المخصص',
+            'notes': 'ملاحظات',
+            'company_name': 'اسم الشركة',
+            'company_registration': 'رقم التسجيل',
+            'tax_id': 'الرقم الضريبي',
+        }
+    
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # Filter broker and agent choices to active ones only
+        from .models import Broker, Agent
+        self.fields['assigned_broker'].queryset = Broker.objects.filter(is_active=True)
+        self.fields['assigned_agent'].queryset = Agent.objects.filter(status='active')
+
+
+class AgentForm(forms.ModelForm):
+    """نموذج إدارة الوكلاء"""
+    
+    class Meta:
+        model = Agent
+        fields = [
+            'agent_type', 'full_name', 'phone', 'email', 'license_number',
+            'license_expiry', 'office_address', 'city', 'governorate',
+            'commission_type', 'commission_rate', 'fixed_commission',
+            'status', 'is_verified', 'notes',
+        ]
+        widgets = {
+            'agent_type': forms.Select(attrs={'class': 'form-control'}),
+            'full_name': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'الاسم الكامل'}),
+            'phone': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'رقم الهاتف'}),
+            'email': forms.EmailInput(attrs={'class': 'form-control', 'placeholder': 'البريد الإلكتروني'}),
+            'license_number': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'رقم الرخصة'}),
+            'license_expiry': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
+            'office_address': forms.Textarea(attrs={'class': 'form-control', 'rows': 3, 'placeholder': 'عنوان المكتب'}),
+            'city': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'المدينة'}),
+            'governorate': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'المحافظة'}),
+            'commission_type': forms.Select(attrs={'class': 'form-control'}),
+            'commission_rate': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01', 'min': 0, 'max': 100, 'placeholder': 'نسبة العمولة'}),
+            'fixed_commission': forms.NumberInput(attrs={'class': 'form-control', 'min': 0, 'placeholder': 'العمولة الثابتة'}),
+            'status': forms.Select(attrs={'class': 'form-control'}),
+            'is_verified': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+            'notes': forms.Textarea(attrs={'class': 'form-control', 'rows': 3, 'placeholder': 'ملاحظات'}),
+        }
+        labels = {
+            'agent_type': 'نوع الوكيل',
+            'full_name': 'الاسم الكامل',
+            'phone': 'الهاتف',
+            'email': 'البريد الإلكتروني',
+            'license_number': 'رقم الرخصة',
+            'license_expiry': 'تاريخ انتهاء الرخصة',
+            'office_address': 'عنوان المكتب',
+            'city': 'المدينة',
+            'governorate': 'المحافظة',
+            'commission_type': 'نوع العمولة',
+            'commission_rate': 'نسبة العمولة (%)',
+            'fixed_commission': 'العمولة الثابتة',
+            'status': 'الحالة',
+            'is_verified': 'موثق',
+            'notes': 'ملاحظات',
+        }
+    
+    def clean(self):
+        cleaned_data = super().clean()
+        commission_type = cleaned_data.get('commission_type')
+        commission_rate = cleaned_data.get('commission_rate')
+        fixed_commission = cleaned_data.get('fixed_commission')
+        
+        if commission_type == 'percentage' and not commission_rate:
+            raise forms.ValidationError('يجب تحديد نسبة العمولة عند اختيار النوع المئوي')
+        
+        if commission_type == 'fixed' and not fixed_commission:
+            raise forms.ValidationError('يجب تحديد العمولة الثابتة عند اختيار النوع الثابت')
+        
+        return cleaned_data
     
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)

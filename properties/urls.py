@@ -94,6 +94,7 @@ urlpatterns = [
     # Admin Panel
     path('admin-panel/', views.admin_panel_enhanced, name='admin_panel'),
     path('admin-panel/legacy/', views.admin_panel, name='admin_panel_legacy'),
+    path('admin-panel/enhanced/', views.admin_dashboard_enhanced, name='admin_dashboard_enhanced'),
     path('admin-panel/brokers/', views.admin_brokers_management, name='admin_brokers_management'),
     path('admin-panel/contact/', views.admin_contact_view, name='admin_contact'),
     path('admin-panel/contact/quick-search/', views.quick_search_users, name='quick_search_users'),
@@ -662,6 +663,23 @@ urlpatterns = [
     path('api/real-estate/contracts/<int:contract_id>/update/', views.contract_update, name='contract_update'),
     path('api/real-estate/contracts/<int:contract_id>/delete/', views.contract_delete, name='contract_delete'),
     path('api/real-estate/contracts/<int:contract_id>/approve/', views.contract_approve, name='contract_approve'),
+    
+    # Contract Payments
+    path('api/real-estate/contracts/<int:contract_id>/payments/create/', views.contract_payment_create, name='contract_payment_create'),
+    path('api/real-estate/payments/<int:payment_id>/update/', views.contract_payment_update, name='contract_payment_update'),
+    path('api/real-estate/payments/<int:payment_id>/delete/', views.contract_payment_delete, name='contract_payment_delete'),
+    path('api/real-estate/payments/<int:payment_id>/mark-paid/', views.contract_payment_mark_paid, name='contract_payment_mark_paid'),
+    
+    # Contract Documents
+    path('api/real-estate/contracts/<int:contract_id>/documents/create/', views.contract_document_create, name='contract_document_create'),
+    path('api/real-estate/documents/<int:document_id>/delete/', views.contract_document_delete, name='contract_document_delete'),
+    
+    # Contract Reminders
+    path('api/real-estate/contracts/<int:contract_id>/reminders/create/', views.contract_reminder_create, name='contract_reminder_create'),
+    path('api/real-estate/reminders/<int:reminder_id>/update/', views.contract_reminder_update, name='contract_reminder_update'),
+    path('api/real-estate/reminders/<int:reminder_id>/delete/', views.contract_reminder_delete, name='contract_reminder_delete'),
+    path('api/real-estate/reminders/<int:reminder_id>/mark-sent/', views.contract_reminder_mark_sent, name='contract_reminder_mark_sent'),
+    
     path('api/real-estate/payments/', views.payments_commissions, name='payments_commissions'),
     path('api/real-estate/maps/', views.geographic_maps, name='geographic_maps'),
     path('api/advanced/reports/', views.advanced_reports_management, name='advanced_reports_management'),
@@ -756,6 +774,26 @@ urlpatterns = [
     path('broker/<int:broker_id>/appointment/book/', views.broker_appointment_booking, name='broker_appointment_booking'),
     path('broker/appointments/', views.broker_appointments_list, name='broker_appointments_list'),
     path('broker/appointments/<int:appointment_id>/', views.broker_appointment_detail, name='broker_appointment_detail'),
+    
+    # Advanced appointments management
+    path('dashboard/appointments/', views.appointments_management, name='appointments_management'),
+    path('dashboard/appointments/calendar/', views.appointment_calendar, name='appointment_calendar'),
+    path('api/appointments/<int:appointment_id>/reschedule/', views.appointment_reschedule, name='appointment_reschedule'),
+    path('dashboard/appointments/slots/', views.appointment_slots_management, name='appointment_slots_management'),
+    
+    # Customer Management System
+    path('dashboard/customers/', views.customers_management, name='customers_management'),
+    path('dashboard/customers/<int:customer_id>/', views.customer_detail, name='customer_detail'),
+    path('dashboard/customers/create/', views.customer_create, name='customer_create'),
+    path('dashboard/customers/<int:customer_id>/edit/', views.customer_update, name='customer_update'),
+    path('dashboard/customers/<int:customer_id>/delete/', views.customer_delete, name='customer_delete'),
+    
+    # Agent Management System
+    path('dashboard/agents/', views.agents_management, name='agents_management'),
+    path('dashboard/agents/<int:agent_id>/', views.agent_detail, name='agent_detail'),
+    path('dashboard/agents/create/', views.agent_create, name='agent_create'),
+    path('dashboard/agents/<int:agent_id>/edit/', views.agent_update, name='agent_update'),
+    path('dashboard/agents/<int:agent_id>/delete/', views.agent_delete, name='agent_delete'),
     
     # Broker profile (must be last as it's a catch-all)
     path('broker/<str:username>/', views.broker_profile, name='broker_profile'),

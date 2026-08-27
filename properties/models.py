@@ -9543,30 +9543,48 @@ class Review(models.Model):
 
 
 class Appointment(models.Model):
-    """نموذج المواعيد"""
+    """نموذج المواعيد المتقدم"""
     
     APPOINTMENT_TYPE_PROPERTY_VIEWING = 'property_viewing'
     APPOINTMENT_TYPE_PHONE_CALL = 'phone_call'
     APPOINTMENT_TYPE_MEETING = 'meeting'
     APPOINTMENT_TYPE_VIDEO_CALL = 'video_call'
+    APPOINTMENT_TYPE_OFFICE_VISIT = 'office_visit'
     
     APPOINTMENT_TYPE_CHOICES = [
         (APPOINTMENT_TYPE_PROPERTY_VIEWING, 'معاينة عقار'),
         (APPOINTMENT_TYPE_PHONE_CALL, 'مكالمة هاتفية'),
         (APPOINTMENT_TYPE_MEETING, 'اجتماع'),
         (APPOINTMENT_TYPE_VIDEO_CALL, 'مكالمة فيديو'),
+        (APPOINTMENT_TYPE_OFFICE_VISIT, 'زيارة المكتب'),
     ]
     
     STATUS_PENDING = 'pending'
     STATUS_CONFIRMED = 'confirmed'
     STATUS_CANCELLED = 'cancelled'
     STATUS_COMPLETED = 'completed'
+    STATUS_NO_SHOW = 'no_show'
+    STATUS_RESCHEDULED = 'rescheduled'
     
     STATUS_CHOICES = [
         (STATUS_PENDING, 'قيد الانتظار'),
         (STATUS_CONFIRMED, 'مؤكد'),
         (STATUS_CANCELLED, 'ملغي'),
         (STATUS_COMPLETED, 'مكتمل'),
+        (STATUS_NO_SHOW, 'لم يحضر'),
+        (STATUS_RESCHEDULED, 'تم إعادة الجدولة'),
+    ]
+    
+    PRIORITY_LOW = 'low'
+    PRIORITY_MEDIUM = 'medium'
+    PRIORITY_HIGH = 'high'
+    PRIORITY_URGENT = 'urgent'
+    
+    PRIORITY_CHOICES = [
+        (PRIORITY_LOW, 'منخفض'),
+        (PRIORITY_MEDIUM, 'متوسط'),
+        (PRIORITY_HIGH, 'عالي'),
+        (PRIORITY_URGENT, 'عاجل'),
     ]
     
     user = models.ForeignKey(
@@ -9574,23 +9592,210 @@ class Appointment(models.Model):
         verbose_name='المستخدم'
     )
     
+    # يمكن أن يكون target_id لمستخدم آخر (دلال) أو لعقار
+    target_type = models.CharField(
+        max_length=20, 
+        choices=[('property', 'عقار'), ('broker', 'دلال'), ('user', 'مستخدم')],
+        default='property',
+        verbose_name='نوع الهدف'
+    )
+    target_id = models.IntegerField(verbose_name='معرف الهدف')
+    
     appointment_type = models.CharField(
         max_length=30, choices=APPOINTMENT_TYPE_CHOICES,
         verbose_name='نوع الموعد'
     )
     
-    target_id = models.IntegerField(verbose_name='معرف الهدف')
-    
     appointment_date = models.DateField(verbose_name='تاريخ الموعد')
     
     appointment_time = models.TimeField(verbose_name='وقت الموعد')
     
+    duration = models.IntegerField(default=30, verbose_name='المدة (دقائق)')
+    
+    location = models.CharField(max_length=200, blank=True, verbose_name='الموقع')
+    
+    address = models.TextField(blank=True, verbose_name='العنوان')
+    
     notes = models.TextField(blank=True, verbose_name='ملاحظات')
+    
+    internal_notes = models.TextField(blank=True, verbose_name='ملاحظات داخلية')
     
     status = models.CharField(
         max_length=20, choices=STATUS_CHOICES, default=STATUS_PENDING,
         verbose_name='الحالة'
     )
+    
+    priority = models.CharField(
+        max_length=20, choices=PRIORITY_CHOICES, default=PRIORITY_MEDIUM,
+        verbose_name='الأولوية'
+    )
+    
+    reminder_sent = models.BooleanField(default=False, verbose_name='تم إرسال التذكير')
+    
+    reminder_minutes_before = models.IntegerField(default=60, verbose_name='دقائق قبل التذكير')
+    
+    rescheduled_from = models.ForeignKey(
+        'self', on_delete=models.SET_NULL, null=True, blank=True,
+        related_name='rescheduled_to', verbose_name='تم إعادة الجدولة من'
+    )
+    
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name='تاريخ الإنشاء')
+    
+    updated_at = models.DateTimeField(auto_now=True, verbose_name='آخر تحديث')
+    
+    class Meta:
+        verbose_name = 'موعد'
+        verbose_name_plural = 'المواعيد'
+        ordering = ['-appointment_date', '-appointment_time']
+        indexes = [
+            models.Index(fields=['user', '-appointment_date']),
+            models.Index(fields=['status', 'appointment_date']),
+            models.Index(fields=['target_type', 'target_id']),
+            models.Index(fields=['priority', 'appointment_date']),
+        ]
+    
+    def __str__(self):
+        return f'{self.get_appointment_type_display()} - {self.appointment_date} {self.appointment_time}'
+    
+    def is_upcoming(self):
+        """فحص إذا كان الموعد قادماً"""
+        from django.utils import timezone
+        now = timezone.now()
+        appointment_datetime = timezone.make_aware(
+            timezone.datetime.combine(self.appointment_date, self.appointment_time)
+        )
+        return appointment_datetime > now and self.status == self.STATUS_PENDING
+    
+    def is_past(self):
+        """فحص إذا كان الموعد ماضياً"""
+        from django.utils import timezone
+        now = timezone.now()
+        appointment_datetime = timezone.make_aware(
+            timezone.datetime.combine(self.appointment_date, self.appointment_time)
+        )
+        return appointment_datetime < now
+    
+    def days_until(self):
+        """حساب الأيام المتبقية"""
+        from django.utils import timezone
+        today = timezone.now().date()
+        delta = self.appointment_date - today
+        return delta.days
+    
+    def mark_as_confirmed(self):
+        """تحويل الموعد إلى مؤكد"""
+        self.status = self.STATUS_CONFIRMED
+        self.save()
+    
+    def mark_as_cancelled(self):
+        """إلغاء الموعد"""
+        self.status = self.STATUS_CANCELLED
+        self.save()
+    
+    def mark_as_completed(self):
+        """إكمال الموعد"""
+        self.status = self.STATUS_COMPLETED
+        self.save()
+    
+    def mark_as_no_show(self):
+        """تسجيل عدم الحضور"""
+        self.status = self.STATUS_NO_SHOW
+        self.save()
+    
+    def reschedule(self, new_date, new_time):
+        """إعادة جدولة الموعد"""
+        old_appointment = Appointment.objects.create(
+            user=self.user,
+            target_type=self.target_type,
+            target_id=self.target_id,
+            appointment_type=self.appointment_type,
+            appointment_date=new_date,
+            appointment_time=new_time,
+            duration=self.duration,
+            location=self.location,
+            address=self.address,
+            notes=self.notes,
+            internal_notes=f'تم إعادة الجدولة من الموعد الأصلي: {self.appointment_date} {self.appointment_time}',
+            status=self.STATUS_PENDING,
+            priority=self.priority,
+            rescheduled_from=self
+        )
+        self.status = self.STATUS_RESCHEDULED
+        self.save()
+        return old_appointment
+
+
+class AppointmentSlot(models.Model):
+    """نموذج فترات التوافر للمواعيد"""
+    
+    DAY_CHOICES = [
+        ('monday', 'الاثنين'),
+        ('tuesday', 'الثلاثاء'),
+        ('wednesday', 'الأربعاء'),
+        ('thursday', 'الخميس'),
+        ('friday', 'الجمعة'),
+        ('saturday', 'السبت'),
+        ('sunday', 'الأحد'),
+    ]
+    
+    broker = models.ForeignKey(
+        'Broker', on_delete=models.CASCADE, related_name='appointment_slots',
+        verbose_name='الدلال'
+    )
+    
+    day_of_week = models.CharField(
+        max_length=10, choices=DAY_CHOICES,
+        verbose_name='يوم الأسبوع'
+    )
+    
+    start_time = models.TimeField(verbose_name='وقت البدء')
+    
+    end_time = models.TimeField(verbose_name='وقت الانتهاء')
+    
+    is_available = models.BooleanField(default=True, verbose_name='متاح')
+    
+    max_appointments = models.IntegerField(default=1, verbose_name='الحد الأقصى للمواعيد')
+    
+    notes = models.TextField(blank=True, verbose_name='ملاحظات')
+    
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name='تاريخ الإنشاء')
+    
+    updated_at = models.DateTimeField(auto_now=True, verbose_name='آخر تحديث')
+    
+    class Meta:
+        verbose_name = 'فترة توافر'
+        verbose_name_plural = 'فترات التوافر'
+        ordering = ['day_of_week', 'start_time']
+        unique_together = ['broker', 'day_of_week', 'start_time']
+        indexes = [
+            models.Index(fields=['broker', 'day_of_week']),
+            models.Index(fields=['is_available']),
+        ]
+    
+    def __str__(self):
+        return f'{self.get_day_of_week_display()} {self.start_time} - {self.end_time}'
+    
+    def is_available_now(self):
+        """فحص إذا كانت الفترة متاحة الآن"""
+        from django.utils import timezone
+        now = timezone.now()
+        if not self.is_available:
+            return False
+        
+        day_map = {
+            'monday': 0,
+            'tuesday': 1,
+            'wednesday': 2,
+            'thursday': 3,
+            'friday': 4,
+            'saturday': 5,
+            'sunday': 6
+        }
+        
+        if now.weekday() != day_map.get(self.day_of_week):
+            return False
+        current_time = now.time()
+        return self.start_time <= current_time <= self.end_time
 
 
 class BrokerAppointment(models.Model):
@@ -9663,6 +9868,27 @@ class BrokerAppointment(models.Model):
     
     reminder_sent = models.BooleanField(default=False, verbose_name='تم إرسال التذكير')
     
+    reminder_minutes_before = models.IntegerField(default=60, verbose_name='دقائق قبل التذكير')
+    
+    priority = models.CharField(
+        max_length=20, 
+        choices=[
+            ('low', 'منخفض'),
+            ('medium', 'متوسط'),
+            ('high', 'عالي'),
+            ('urgent', 'عاجل'),
+        ],
+        default='medium',
+        verbose_name='الأولوية'
+    )
+    
+    internal_notes = models.TextField(blank=True, verbose_name='ملاحظات داخلية')
+    
+    rescheduled_from = models.ForeignKey(
+        'self', on_delete=models.SET_NULL, null=True, blank=True,
+        related_name='rescheduled_to', verbose_name='تم إعادة الجدولة من'
+    )
+    
     created_at = models.DateTimeField(auto_now_add=True, verbose_name='تاريخ الحجز')
     
     updated_at = models.DateTimeField(auto_now=True, verbose_name='آخر تحديث')
@@ -9675,13 +9901,14 @@ class BrokerAppointment(models.Model):
             models.Index(fields=['broker', '-appointment_date']),
             models.Index(fields=['user', '-appointment_date']),
             models.Index(fields=['status', 'appointment_date']),
+            models.Index(fields=['priority', 'appointment_date']),
         ]
     
     def __str__(self):
         return f'موعد {self.user.username} مع {self.broker.display_name} - {self.appointment_date}'
     
     def is_upcoming(self):
-        """Check if appointment is upcoming"""
+        """فحص إذا كان الموعد قادماً"""
         from django.utils import timezone
         now = timezone.now()
         appointment_datetime = timezone.make_aware(
@@ -9689,24 +9916,25 @@ class BrokerAppointment(models.Model):
         )
         return appointment_datetime > now and self.status == self.STATUS_PENDING
     
-    created_at = models.DateTimeField(
-        auto_now_add=True, verbose_name='تاريخ الإنشاء'
-    )
+    def mark_as_confirmed(self):
+        """تحويل الموعد إلى مؤكد"""
+        self.status = self.STATUS_CONFIRMED
+        self.save()
     
-    updated_at = models.DateTimeField(
-        auto_now=True, verbose_name='تاريخ التحديث'
-    )
+    def mark_as_cancelled(self):
+        """إلغاء الموعد"""
+        self.status = self.STATUS_CANCELLED
+        self.save()
     
-    class Meta:
-        verbose_name = 'موعد'
-        verbose_name_plural = 'المواعيد'
-        indexes = [
-            models.Index(fields=['user', 'appointment_date', 'appointment_time']),
-            models.Index(fields=['status', 'appointment_date']),
-        ]
+    def mark_as_completed(self):
+        """إكمال الموعد"""
+        self.status = self.STATUS_COMPLETED
+        self.save()
     
-    def __str__(self):
-        return f'{self.get_appointment_type_display()} - {self.appointment_date}'
+    def mark_as_no_show(self):
+        """تسجيل عدم الحضور"""
+        self.status = self.STATUS_NO_SHOW
+        self.save()
 
 
 
@@ -16070,4 +16298,316 @@ class TravelPackageReview(models.Model):
     
     def __str__(self):
         return f'{self.user.username} - {self.package.title} ({self.overall_rating}/5)'
+
+
+class Customer(models.Model):
+    """نموذج إدارة العملاء"""
+    
+    CUSTOMER_TYPE_INDIVIDUAL = 'individual'
+    CUSTOMER_TYPE_COMPANY = 'company'
+    CUSTOMER_TYPE_INVESTOR = 'investor'
+    
+    CUSTOMER_TYPE_CHOICES = [
+        (CUSTOMER_TYPE_INDIVIDUAL, 'فرد'),
+        (CUSTOMER_TYPE_COMPANY, 'شركة'),
+        (CUSTOMER_TYPE_INVESTOR, 'مستثمر'),
+    ]
+    
+    STATUS_ACTIVE = 'active'
+    STATUS_INACTIVE = 'inactive'
+    STATUS_BLACKLISTED = 'blacklisted'
+    
+    STATUS_CHOICES = [
+        (STATUS_ACTIVE, 'نشط'),
+        (STATUS_INACTIVE, 'غير نشط'),
+        (STATUS_BLACKLISTED, 'محظور'),
+    ]
+    
+    PRIORITY_LOW = 'low'
+    PRIORITY_MEDIUM = 'medium'
+    PRIORITY_HIGH = 'high'
+    PRIORITY_VIP = 'vip'
+    
+    PRIORITY_CHOICES = [
+        (PRIORITY_LOW, 'منخفض'),
+        (PRIORITY_MEDIUM, 'متوسط'),
+        (PRIORITY_HIGH, 'عالي'),
+        (PRIORITY_VIP, 'VIP'),
+    ]
+    
+    # معلومات أساسية
+    user = models.OneToOneField(
+        'auth.User', on_delete=models.CASCADE, related_name='customer_profile',
+        null=True, blank=True, verbose_name='المستخدم'
+    )
+    
+    customer_type = models.CharField(
+        max_length=20, choices=CUSTOMER_TYPE_CHOICES, default=CUSTOMER_TYPE_INDIVIDUAL,
+        verbose_name='نوع العميل'
+    )
+    
+    # معلومات الشركة (للعملاء من نوع شركة)
+    company_name = models.CharField(max_length=200, blank=True, verbose_name='اسم الشركة')
+    company_registration = models.CharField(max_length=50, blank=True, verbose_name='رقم التسجيل')
+    tax_id = models.CharField(max_length=50, blank=True, verbose_name='الرقم الضريبي')
+    
+    # معلومات الاتصال
+    phone = models.CharField(max_length=20, verbose_name='الهاتف')
+    secondary_phone = models.CharField(max_length=20, blank=True, verbose_name='هاتف إضافي')
+    email = models.EmailField(blank=True, verbose_name='البريد الإلكتروني')
+    address = models.TextField(blank=True, verbose_name='العنوان')
+    city = models.CharField(max_length=100, blank=True, verbose_name='المدينة')
+    governorate = models.CharField(max_length=100, blank=True, verbose_name='المحافظة')
+    
+    # معلومات إضافية
+    preferred_contact_method = models.CharField(
+        max_length=20,
+        choices=[('phone', 'هاتف'), ('email', 'بريد إلكتروني'), ('whatsapp', 'واتساب')],
+        default='phone',
+        verbose_name='طريقة التواصل المفضلة'
+    )
+    
+    preferred_language = models.CharField(
+        max_length=10,
+        choices=[('ar', 'العربية'), ('en', 'English'), ('ku', 'کوردی')],
+        default='ar',
+        verbose_name='اللغة المفضلة'
+    )
+    
+    # الأهمية والحالة
+    priority = models.CharField(
+        max_length=20, choices=PRIORITY_CHOICES, default=PRIORITY_MEDIUM,
+        verbose_name='الأولوية'
+    )
+    
+    status = models.CharField(
+        max_length=20, choices=STATUS_CHOICES, default=STATUS_ACTIVE,
+        verbose_name='الحالة'
+    )
+    
+    # معلومات الأعمال
+    assigned_broker = models.ForeignKey(
+        'Broker', on_delete=models.SET_NULL, null=True, blank=True,
+        related_name='assigned_customers', verbose_name='الدلال المخصص'
+    )
+    
+    assigned_agent = models.ForeignKey(
+        'Agent', on_delete=models.SET_NULL, null=True, blank=True,
+        related_name='assigned_customers', verbose_name='الوكيل المخصص'
+    )
+    
+    # الملاحظات
+    notes = models.TextField(blank=True, verbose_name='ملاحظات')
+    internal_notes = models.TextField(blank=True, verbose_name='ملاحظات داخلية')
+    
+    # إحصائيات
+    total_properties_viewed = models.IntegerField(default=0, verbose_name='إجمالي العقارات المعروضة')
+    total_inquiries = models.IntegerField(default=0, verbose_name='إجمالي الاستفسارات')
+    total_purchases = models.IntegerField(default=0, verbose_name='إجمالي المشتريات')
+    total_spent = models.DecimalField(max_digits=15, decimal_places=0, default=0, verbose_name='إجمالي الإنفاق')
+    
+    # التواريخ
+    first_contact_date = models.DateField(null=True, blank=True, verbose_name='تاريخ أول تواصل')
+    last_contact_date = models.DateField(null=True, blank=True, verbose_name='تاريخ آخر تواصل')
+    last_purchase_date = models.DateField(null=True, blank=True, verbose_name='تاريخ آخر شراء')
+    
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name='تاريخ الإنشاء')
+    updated_at = models.DateTimeField(auto_now=True, verbose_name='آخر تحديث')
+    
+    class Meta:
+        verbose_name = 'عميل'
+        verbose_name_plural = 'العملاء'
+        ordering = ['-created_at']
+        indexes = [
+            models.Index(fields=['status', 'priority']),
+            models.Index(fields=['customer_type']),
+            models.Index(fields=['assigned_broker']),
+            models.Index(fields=['assigned_agent']),
+            models.Index(fields=['-created_at']),
+        ]
+    
+    def __str__(self):
+        if self.user:
+            return self.user.get_full_name() or self.user.username
+        elif self.company_name:
+            return self.company_name
+        else:
+            return f'عميل {self.id}'
+    
+    def get_full_name(self):
+        """الحصول على الاسم الكامل"""
+        if self.user:
+            return self.user.get_full_name() or self.user.username
+        return self.company_name or f'عميل {self.id}'
+    
+    def is_active_customer(self):
+        """فحص إذا كان العميل نشطاً"""
+        return self.status == self.STATUS_ACTIVE
+    
+    def days_since_last_contact(self):
+        """حساب الأيام منذ آخر تواصل"""
+        if not self.last_contact_date:
+            return None
+        from django.utils import timezone
+        delta = timezone.now().date() - self.last_contact_date
+        return delta.days
+    
+    def mark_as_contacted(self):
+        """تحديث تاريخ آخر تواصل"""
+        from django.utils import timezone
+        self.last_contact_date = timezone.now().date()
+        if not self.first_contact_date:
+            self.first_contact_date = timezone.now().date()
+        self.save()
+    
+    def add_inquiry(self):
+        """إضافة استفسار جديد"""
+        self.total_inquiries += 1
+        self.save()
+    
+    def add_purchase(self, amount):
+        """إضافة شراء جديد"""
+        self.total_purchases += 1
+        self.total_spent += amount
+        from django.utils import timezone
+        self.last_purchase_date = timezone.now().date()
+        self.save()
+
+
+class Agent(models.Model):
+    """نموذج إدارة الوكلاء"""
+    
+    AGENT_TYPE_INDEPENDENT = 'independent'
+    AGENT_TYPE_AGENCY = 'agency'
+    AGENT_TYPE_CONSULTANT = 'consultant'
+    
+    AGENT_TYPE_CHOICES = [
+        (AGENT_TYPE_INDEPENDENT, 'وكيل مستقل'),
+        (AGENT_TYPE_AGENCY, 'وكيل وكالة'),
+        (AGENT_TYPE_CONSULTANT, 'مستشار'),
+    ]
+    
+    STATUS_ACTIVE = 'active'
+    STATUS_INACTIVE = 'inactive'
+    STATUS_SUSPENDED = 'suspended'
+    
+    STATUS_CHOICES = [
+        (STATUS_ACTIVE, 'نشط'),
+        (STATUS_INACTIVE, 'غير نشط'),
+        (STATUS_SUSPENDED, 'موقوف'),
+    ]
+    
+    COMMISSION_TYPE_PERCENTAGE = 'percentage'
+    COMMISSION_TYPE_FIXED = 'fixed'
+    COMMISSION_TYPE_HYBRID = 'hybrid'
+    
+    COMMISSION_TYPE_CHOICES = [
+        (COMMISSION_TYPE_PERCENTAGE, 'نسبة مئوية'),
+        (COMMISSION_TYPE_FIXED, 'مبلغ ثابت'),
+        (COMMISSION_TYPE_HYBRID, 'مختلط'),
+    ]
+    
+    # معلومات أساسية
+    user = models.OneToOneField(
+        'auth.User', on_delete=models.CASCADE, related_name='agent_profile',
+        null=True, blank=True, verbose_name='المستخدم'
+    )
+    
+    agent_type = models.CharField(
+        max_length=20, choices=AGENT_TYPE_CHOICES, default=AGENT_TYPE_INDEPENDENT,
+        verbose_name='نوع الوكيل'
+    )
+    
+    # معلومات شخصية
+    full_name = models.CharField(max_length=200, verbose_name='الاسم الكامل')
+    phone = models.CharField(max_length=20, verbose_name='الهاتف')
+    email = models.EmailField(verbose_name='البريد الإلكتروني')
+    
+    # معلومات العمل
+    license_number = models.CharField(max_length=50, blank=True, verbose_name='رقم الرخصة')
+    license_expiry = models.DateField(null=True, blank=True, verbose_name='تاريخ انتهاء الرخصة')
+    
+    office_address = models.TextField(blank=True, verbose_name='عنوان المكتب')
+    city = models.CharField(max_length=100, blank=True, verbose_name='المدينة')
+    governorate = models.CharField(max_length=100, blank=True, verbose_name='المحافظة')
+    
+    # العمولة
+    commission_type = models.CharField(
+        max_length=20, choices=COMMISSION_TYPE_CHOICES, default=COMMISSION_TYPE_PERCENTAGE,
+        verbose_name='نوع العمولة'
+    )
+    commission_rate = models.DecimalField(
+        max_digits=5, decimal_places=2, default=0,
+        verbose_name='نسبة العمولة (%)'
+    )
+    fixed_commission = models.DecimalField(
+        max_digits=15, decimal_places=0, default=0,
+        verbose_name='العمولة الثابتة'
+    )
+    
+    # الحالة والأداء
+    status = models.CharField(
+        max_length=20, choices=STATUS_CHOICES, default=STATUS_ACTIVE,
+        verbose_name='الحالة'
+    )
+    
+    is_verified = models.BooleanField(default=False, verbose_name='موثق')
+    
+    # إحصائيات الأداء
+    total_customers = models.IntegerField(default=0, verbose_name='إجمالي العملاء')
+    total_sales = models.IntegerField(default=0, verbose_name='إجمالي المبيعات')
+    total_revenue = models.DecimalField(max_digits=15, decimal_places=0, default=0, verbose_name='إجمالي الإيرادات')
+    success_rate = models.DecimalField(max_digits=5, decimal_places=2, default=0, verbose_name='نسبة النجاح (%)')
+    
+    # الملاحظات
+    notes = models.TextField(blank=True, verbose_name='ملاحظات')
+    internal_notes = models.TextField(blank=True, verbose_name='ملاحظات داخلية')
+    
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name='تاريخ الإنشاء')
+    updated_at = models.DateTimeField(auto_now=True, verbose_name='آخر تحديث')
+    
+    class Meta:
+        verbose_name = 'وكيل'
+        verbose_name_plural = 'الوكلاء'
+        ordering = ['-created_at']
+        indexes = [
+            models.Index(fields=['status', 'is_verified']),
+            models.Index(fields=['agent_type']),
+            models.Index(fields=['city', 'governorate']),
+            models.Index(fields=['-created_at']),
+        ]
+    
+    def __str__(self):
+        return self.full_name
+    
+    def calculate_commission(self, sale_amount):
+        """حساب العمولة"""
+        if self.commission_type == self.COMMISSION_TYPE_PERCENTAGE:
+            return (sale_amount * self.commission_rate) / 100
+        elif self.commission_type == self.COMMISSION_TYPE_FIXED:
+            return self.fixed_commission
+        elif self.commission_type == self.COMMISSION_TYPE_HYBRID:
+            percentage = (sale_amount * self.commission_rate) / 100
+            return percentage + self.fixed_commission
+        return 0
+    
+    def is_license_valid(self):
+        """فحص صلاحية الرخصة"""
+        if not self.license_expiry:
+            return True
+        from django.utils import timezone
+        return self.license_expiry >= timezone.now().date()
+    
+    def add_sale(self, amount):
+        """إضافة عملية بيع جديدة"""
+        self.total_sales += 1
+        self.total_revenue += amount
+        self.total_customers += 1
+        self.save()
+    
+    def update_success_rate(self, success_count, total_count):
+        """تحديث نسبة النجاح"""
+        if total_count > 0:
+            self.success_rate = (success_count / total_count) * 100
+            self.save()
         self.save()

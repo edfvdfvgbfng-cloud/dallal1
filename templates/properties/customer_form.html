@@ -1,0 +1,261 @@
+{% extends 'properties/base.html' %}
+{% load static %}
+
+{% block title %}{{ title }}{% endblock %}
+
+{% block content %}
+<div class="customer-form-page">
+  <div class="page-header">
+    <h1>{{ title }}</h1>
+    <a href="{% url 'customers_management' %}" class="btn btn-secondary">
+      <span>←</span>
+      <span>عودة</span>
+    </a>
+  </div>
+
+  <div class="form-container">
+    <form method="POST" enctype="multipart/form-data">
+      {% csrf_token %}
+      
+      <div class="form-section">
+        <h3>معلومات أساسية</h3>
+        <div class="form-grid">
+          <div class="form-group">
+            <label>{{ form.customer_type.label }}</label>
+            {{ form.customer_type }}
+          </div>
+          <div class="form-group">
+            <label>{{ form.phone.label }}</label>
+            {{ form.phone }}
+          </div>
+          <div class="form-group">
+            <label>{{ form.secondary_phone.label }}</label>
+            {{ form.secondary_phone }}
+          </div>
+          <div class="form-group">
+            <label>{{ form.email.label }}</label>
+            {{ form.email }}
+          </div>
+        </div>
+      </div>
+
+      <div class="form-section">
+        <h3>معلومات الاتصال</h3>
+        <div class="form-group">
+          <label>{{ form.address.label }}</label>
+          {{ form.address }}
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>{{ form.city.label }}</label>
+            {{ form.city }}
+          </div>
+          <div class="form-group">
+            <label>{{ form.governorate.label }}</label>
+            {{ form.governorate }}
+          </div>
+        </div>
+      </div>
+
+      <div class="form-section">
+        <h3>التفضيلات</h3>
+        <div class="form-row">
+          <div class="form-group">
+            <label>{{ form.preferred_contact_method.label }}</label>
+            {{ form.preferred_contact_method }}
+          </div>
+          <div class="form-group">
+            <label>{{ form.preferred_language.label }}</label>
+            {{ form.preferred_language }}
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>{{ form.priority.label }}</label>
+            {{ form.priority }}
+          </div>
+          <div class="form-group">
+            <label>{{ form.status.label }}</label>
+            {{ form.status }}
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>{{ form.assigned_broker.label }}</label>
+            {{ form.assigned_broker }}
+          </div>
+          <div class="form-group">
+            <label>{{ form.assigned_agent.label }}</label>
+            {{ form.assigned_agent }}
+          </div>
+        </div>
+      </div>
+
+      <div class="form-section company-section" id="company-section">
+        <h3>معلومات الشركة</h3>
+        <div class="form-group">
+          <label>{{ form.company_name.label }}</label>
+          {{ form.company_name }}
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>{{ form.company_registration.label }}</label>
+            {{ form.company_registration }}
+          </div>
+          <div class="form-group">
+            <label>{{ form.tax_id.label }}</label>
+            {{ form.tax_id }}
+          </div>
+        </div>
+      </div>
+
+      <div class="form-section">
+        <h3>ملاحظات</h3>
+        <div class="form-group">
+          <label>{{ form.notes.label }}</label>
+          {{ form.notes }}
+        </div>
+      </div>
+
+      <div class="form-actions">
+        <a href="{% url 'customers_management' %}" class="btn btn-secondary">إلغاء</a>
+        <button type="submit" class="btn btn-primary">حفظ</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<style>
+.customer-form-page {
+  padding: 20px;
+  background: #f5f5f5;
+  min-height: 100vh;
+}
+
+.page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 30px;
+}
+
+.page-header h1 {
+  font-size: 2rem;
+  color: #333;
+  margin: 0;
+}
+
+.form-container {
+  background: white;
+  padding: 30px;
+  border-radius: 10px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+.form-section {
+  margin-bottom: 30px;
+}
+
+.form-section h3 {
+  margin-bottom: 20px;
+  color: #333;
+  border-bottom: 2px solid #667eea;
+  padding-bottom: 10px;
+}
+
+.form-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 20px;
+}
+
+.form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+}
+
+.form-group {
+  margin-bottom: 20px;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 8px;
+  font-weight: 600;
+  color: #333;
+}
+
+.form-group input,
+.form-group select,
+.form-group textarea {
+  width: 100%;
+  padding: 12px;
+  border: 1px solid #ddd;
+  border-radius: 5px;
+  font-size: 1rem;
+  font-family: inherit;
+}
+
+.form-group textarea {
+  min-height: 100px;
+  resize: vertical;
+}
+
+.company-section {
+  display: none;
+}
+
+.form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  padding-top: 20px;
+  border-top: 1px solid #eee;
+}
+
+.btn {
+  padding: 12px 24px;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 1rem;
+  transition: all 0.3s;
+  text-decoration: none;
+  display: inline-block;
+}
+
+.btn-primary {
+  background: #667eea;
+  color: white;
+}
+
+.btn-secondary {
+  background: #6c757d;
+  color: white;
+}
+</style>
+
+<script>
+// Show/hide company section based on customer type
+document.addEventListener('DOMContentLoaded', function() {
+  const customerType = document.getElementById('id_customer_type');
+  const companySection = document.getElementById('company-section');
+  
+  if (customerType) {
+    function toggleCompanySection() {
+      if (customerType.value === 'company') {
+        companySection.style.display = 'block';
+      } else {
+        companySection.style.display = 'none';
+      }
+    }
+    
+    customerType.addEventListener('change', toggleCompanySection);
+    toggleCompanySection();
+  }
+});
+</script>
+{% endblock %}
