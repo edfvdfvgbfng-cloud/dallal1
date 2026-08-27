@@ -7,7 +7,7 @@ on:
     branches: [ main ]
 
 env:
-  PYTHON_VERSION: '3.9'
+  PYTHON_VERSION: '3.11'
   DJANGO_SETTINGS_MODULE: dalal_project.settings
 
 jobs:
@@ -104,7 +104,7 @@ jobs:
         options: '-r . -f json -o bandit-report.json'
     
     - name: Upload security report
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: security-report
         path: bandit-report.json
@@ -204,7 +204,7 @@ jobs:
         pytest e2e_tests/ --driver=chromeheadless
     
     - name: Upload test results
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: e2e-test-results
         path: test-results/
