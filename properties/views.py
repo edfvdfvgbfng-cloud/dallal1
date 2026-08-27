@@ -21442,6 +21442,49 @@ def live_auctions_management(request):
 
 
 @login_required
+def real_estate_properties_api(request):
+    """API for real estate properties management"""
+    if not request.user.is_superuser:
+        return JsonResponse({'success': False, 'error': 'غير مصرح'}, status=403)
+
+    try:
+        if request.method == 'GET':
+            from .models import Property
+            properties = Property.objects.all().order_by('-created_at')
+
+            property_list = []
+            for prop in properties:
+                property_list.append({
+                    'id': prop.id,
+                    'title': prop.display_title,
+                    'type': prop.get_property_type_display(),
+                    'status': prop.get_status_display(),
+                    'price': prop.price_formatted,
+                    'district': prop.district,
+                    'is_featured': prop.is_featured,
+                    'views_count': prop.views_count,
+                    'created_at': prop.created_at.strftime('%Y-%m-%d %H:%M:%S') if prop.created_at else ''
+                })
+
+            # Calculate statistics
+            statistics = {
+                'total': properties.count(),
+                'available': properties.filter(status='available').count(),
+                'sold': properties.filter(status='sold').count(),
+                'total_value': sum(p.price for p in properties if p.price)
+            }
+
+            return JsonResponse({
+                'success': True,
+                'properties': property_list,
+                'statistics': statistics
+            })
+
+    except Exception as e:
+        return JsonResponse({'success': False, 'error': str(e)}, status=500)
+
+
+@login_required
 def schedules_management(request):
     """نظام إدارة الجولات والمواعيد"""
     if not request.user.is_superuser:
@@ -21461,21 +21504,35 @@ def schedules_management(request):
                     'status': appointment.get_status_display(),
                     'date': appointment.appointment_date.strftime('%Y-%m-%d') if appointment.appointment_date else '',
                     'time': appointment.appointment_time.strftime('%H:%M') if appointment.appointment_time else '',
-                    'location': 'Property Location',  # Can be enhanced based on property location
+                    'location': appointment.location or 'Property Location',
                     'user': appointment.user.username if appointment.user else 'Unknown',
                     'notes': appointment.notes or '',
-                    'created_at': appointment.created_at.strftime('%Y-%m-%d %H:%M:%S')
+                    'priority': appointment.get_priority_display(),
+                    'duration': appointment.duration,
+                    'created_at': appointment.created_at.strftime('%Y-%m-%d %H:%M:%S') if appointment.created_at else ''
                 })
-            
+
             # Calculate statistics
             today = timezone.now().date()
+            tomorrow = today + timedelta(days=1)
+            upcoming_cutoff = timezone.now() + timedelta(hours=24)
+
             statistics = {
                 'total': appointments.count(),
                 'scheduled': appointments.filter(status='pending').count(),
                 'confirmed': appointments.filter(status='confirmed').count(),
                 'completed': appointments.filter(status='completed').count(),
                 'cancelled': appointments.filter(status='cancelled').count(),
-                'today': appointments.filter(appointment_date=today).count()
+                'today': appointments.filter(appointment_date=today).count(),
+                'upcoming': appointments.filter(
+                    appointment_date__gte=today,
+                    appointment_date__lte=tomorrow,
+                    status='pending'
+                ).count(),
+                'overdue': appointments.filter(
+                    appointment_date__lt=today,
+                    status__in=['pending', 'confirmed']
+                ).count()
             }
             
             return JsonResponse({

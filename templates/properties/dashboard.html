@@ -1593,10 +1593,6 @@
       <span>العقود</span>
     </button>
 
-    <button type="button" class="tab-btn" data-tab="real-estate-properties">
-      <span class="tab-icon">🏠</span>
-      <span>العقارات</span>
-    </button>
     <button type="button" class="tab-btn" data-tab="real-estate-clients">
       <span class="tab-icon">👥</span>
       <span>العملاء</span>
@@ -1645,45 +1641,79 @@
         <span class="badge-icon">🏠</span>
         <span>العقارات</span>
       </div>
-      <h2>إدارة العقارات</h2>
+      <h2>نظام إدارة العقارات المتقدم</h2>
+      <div class="panel-actions">
+        <button class="btn btn-primary" onclick="showCreatePropertyModal()">
+          <span class="btn-icon">➕</span>
+          عقار جديد
+        </button>
+        <button class="btn btn-secondary" onclick="refreshProperties()">
+          <span class="btn-icon">🔄</span>
+          تحديث
+        </button>
+      </div>
     </div>
-    <div class="table-wrap">
-      <table class="data-table">
-        <thead>
-          <tr>
-            <th>العقار</th>
-            <th>الدلال</th>
-            <th>الحي</th>
-            <th>السعر</th>
-            <th>الحالة</th>
-            <th>مميز</th>
-            <th>مشاهدات</th>
-            <th>إجراءات</th>
-          </tr>
-        </thead>
-        <tbody>
-          {% for p in properties %}
-          <tr>
-            <td><a href="{{ p.get_absolute_url }}" target="_blank">{{ p.display_title|truncatechars:40 }}</a></td>
-            <td>{% if p.broker %}{{ p.broker.display_name }}{% else %}—{% endif %}</td>
-            <td>{{ p.district }}</td>
-            <td>{{ p.price_formatted }}</td>
-            <td>{{ p.get_status_display }}</td>
-            <td>{% if p.is_featured %}⭐{% else %}—{% endif %}</td>
-            <td>{{ p.views_count }}</td>
-            <td>
-              <a href="{% url 'edit_property' p.id %}" class="btn btn-sm btn-outline">تعديل</a>
-              <form method="post" action="{% url 'delete_property' p.id %}" style="display:inline" onsubmit="return confirm('حذف هذا العقار؟')">
-                {% csrf_token %}
-                <button type="submit" class="btn btn-sm btn-danger">حذف</button>
-              </form>
-            </td>
-          </tr>
-          {% empty %}
-          <tr><td colspan="8" style="text-align:center">لا توجد عقارات بعد</td></tr>
-          {% endfor %}
-        </tbody>
-      </table>
+
+    <!-- Property Statistics -->
+    <div class="dashboard-stats">
+      <div class="stat-card">
+        <div class="stat-icon">🏠</div>
+        <div class="stat-content">
+          <div class="stat-number" id="totalProperties">0</div>
+          <div class="stat-label">إجمالي العقارات</div>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon">✅</div>
+        <div class="stat-content">
+          <div class="stat-number" id="availableProperties">0</div>
+          <div class="stat-label">متاحة</div>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon">💰</div>
+        <div class="stat-content">
+          <div class="stat-number" id="soldProperties">0</div>
+          <div class="stat-label">تم البيع</div>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon">💵</div>
+        <div class="stat-content">
+          <div class="stat-number" id="totalPropertyValue">$0</div>
+          <div class="stat-label">القيمة الإجمالية</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Properties Filters -->
+    <div class="filters-container" style="margin-top: 20px;">
+      <div class="filter-group">
+        <select id="propertyTypeFilter" class="form-control" onchange="filterProperties()">
+          <option value="">جميع الأنواع</option>
+          <option value="apartment">شقة</option>
+          <option value="villa">فيلا</option>
+          <option value="land">أرض</option>
+          <option value="commercial">تجاري</option>
+        </select>
+      </div>
+      <div class="filter-group">
+        <select id="propertyStatusFilter" class="form-control" onchange="filterProperties()">
+          <option value="">جميع الحالات</option>
+          <option value="available">متاح</option>
+          <option value="sold">تم البيع</option>
+          <option value="rented">مؤجر</option>
+          <option value="reserved">محجوز</option>
+        </select>
+      </div>
+      <div class="filter-group">
+        <input type="text" id="propertySearchInput" class="form-control" placeholder="بحث..." onkeyup="filterProperties()">
+      </div>
+    </div>
+
+    <!-- Properties List -->
+    <div id="real-estate-properties-list" style="max-height: 400px; overflow-y: auto; margin-top: 20px;">
+      <div style="text-align: center; padding: 20px; color: #888;">جاري تحميل العقارات...</div>
     </div>
   </div>
 
@@ -3255,55 +3285,7 @@
 
 
 
-  <!-- Real Estate Properties Panel -->
-  {% if request.user.is_superuser %}
-  <div id="panel-real-estate-properties" class="panel">
-    <div class="panel-header">
-      <div class="panel-badge">
-        <span class="badge-icon">🏠</span>
-        <span>العقارات</span>
-      </div>
-      <h2>نظام إدارة العقارات المتقدم</h2>
-    </div>
-    
-    <!-- Property Statistics -->
-    <div class="dashboard-stats">
-      <div class="stat-card">
-        <div class="stat-icon">🏠</div>
-        <div class="stat-content">
-          <div class="stat-number" id="totalProperties">0</div>
-          <div class="stat-label">إجمالي العقارات</div>
-        </div>
-      </div>
-      <div class="stat-card">
-        <div class="stat-icon">✅</div>
-        <div class="stat-content">
-          <div class="stat-number" id="availableProperties">0</div>
-          <div class="stat-label">متاحة</div>
-        </div>
-      </div>
-      <div class="stat-card">
-        <div class="stat-icon">💰</div>
-        <div class="stat-content">
-          <div class="stat-number" id="soldProperties">0</div>
-          <div class="stat-label">تم البيع</div>
-        </div>
-      </div>
-      <div class="stat-card">
-        <div class="stat-icon">💵</div>
-        <div class="stat-content">
-          <div class="stat-number" id="totalPropertyValue">$0</div>
-          <div class="stat-label">القيمة الإجمالية</div>
-        </div>
-      </div>
-    </div>
-    
-    <!-- Properties List -->
-    <div id="real-estate-properties-list" style="max-height: 400px; overflow-y: auto; margin-top: 20px;">
-      <div style="text-align: center; padding: 20px; color: #888;">جاري تحميل العقارات...</div>
-    </div>
-  </div>
-  {% endif %}
+
 
   <!-- Real Estate Clients Panel -->
   {% if request.user.is_superuser %}
@@ -3415,11 +3397,19 @@
         <span class="badge-icon">📅</span>
         <span>المواعيد</span>
       </div>
-      <h2>نظام إدارة الجولات والمواعيد</h2>
+      <h2>نظام إدارة الجولات والمواعيد المتقدم</h2>
       <div class="panel-actions">
         <button class="btn btn-primary" onclick="showCreateAppointmentModal()">
           <span class="btn-icon">➕</span>
           موعد جديد
+        </button>
+        <button class="btn btn-info" onclick="showCalendarView()">
+          <span class="btn-icon">📆</span>
+          التقويم
+        </button>
+        <button class="btn btn-warning" onclick="showUpcomingReminders()">
+          <span class="btn-icon">🔔</span>
+          التذكيرات
         </button>
         <button class="btn btn-secondary" onclick="refreshSchedules()">
           <span class="btn-icon">🔄</span>
@@ -3427,7 +3417,27 @@
         </button>
       </div>
     </div>
-    
+
+    <!-- Quick Actions -->
+    <div class="quick-actions-bar" style="margin-top: 20px; display: flex; gap: 12px; flex-wrap: wrap;">
+      <button class="btn btn-sm btn-outline" onclick="showTodayAppointments()">
+        <span class="btn-icon">📅</span>
+        مواعيد اليوم
+      </button>
+      <button class="btn btn-sm btn-outline" onclick="showWeekAppointments()">
+        <span class="btn-icon">📆</span>
+        مواعيد الأسبوع
+      </button>
+      <button class="btn btn-sm btn-outline" onclick="showPendingAppointments()">
+        <span class="btn-icon">⏳</span>
+        قيد الانتظار
+      </button>
+      <button class="btn btn-sm btn-outline" onclick="exportAppointments()">
+        <span class="btn-icon">📊</span>
+        تصدير
+      </button>
+    </div>
+
     <!-- Schedules Statistics -->
     <div class="dashboard-stats">
       <div class="stat-card">
@@ -3458,8 +3468,22 @@
           <div class="stat-label">اليوم</div>
         </div>
       </div>
+      <div class="stat-card">
+        <div class="stat-icon">🔔</div>
+        <div class="stat-content">
+          <div class="stat-number" id="upcomingAppointments">0</div>
+          <div class="stat-label">قادمة</div>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon">⚠️</div>
+        <div class="stat-content">
+          <div class="stat-number" id="overdueAppointments">0</div>
+          <div class="stat-label">متأخرة</div>
+        </div>
+      </div>
     </div>
-    
+
     <!-- Schedules Filters -->
     <div class="filters-container" style="margin-top: 20px;">
       <div class="filter-group">
@@ -3484,13 +3508,34 @@
         </select>
       </div>
       <div class="filter-group">
+        <select id="appointmentPriorityFilter" class="form-control" onchange="filterSchedules()">
+          <option value="">جميع الأولويات</option>
+          <option value="low">منخفض</option>
+          <option value="medium">متوسط</option>
+          <option value="high">عالي</option>
+          <option value="urgent">عاجل</option>
+        </select>
+      </div>
+      <div class="filter-group">
         <input type="date" id="appointmentDateFilter" class="form-control" onchange="filterSchedules()">
       </div>
       <div class="filter-group">
         <input type="text" id="appointmentSearchInput" class="form-control" placeholder="بحث..." onkeyup="filterSchedules()">
       </div>
     </div>
-    
+
+    <!-- Upcoming Appointments Alert -->
+    <div id="upcoming-alert" style="display: none; margin-top: 20px; padding: 15px; background: #fff3cd; border: 2px solid #ffc107; border-radius: 8px;">
+      <div style="display: flex; align-items: center; gap: 10px;">
+        <span style="font-size: 24px;">🔔</span>
+        <div>
+          <strong>مواعيد قادمة:</strong>
+          <span id="upcoming-count">0</span> موعد في الـ 24 ساعة القادمة
+        </div>
+        <button class="btn btn-sm btn-warning" onclick="dismissUpcomingAlert()">إخفاء</button>
+      </div>
+    </div>
+
     <!-- Schedules List -->
     <div id="real-estate-schedules-list" style="max-height: 400px; overflow-y: auto; margin-top: 20px;">
       <div style="text-align: center; padding: 20px; color: #888;">جاري تحميل المواعيد...</div>
@@ -4965,6 +5010,9 @@ document.addEventListener('DOMContentLoaded', function() {
       }
       
       // Load data based on tab
+      if (tab === 'properties') {
+        loadProperties();
+      }
       if (tab === 'real-estate-schedules') {
         loadRealEstateSchedules();
       }
@@ -9294,6 +9342,29 @@ document.addEventListener('DOMContentLoaded', function() {
     document.getElementById('scheduledAppointments').textContent = stats.scheduled || 0;
     document.getElementById('completedAppointments').textContent = stats.completed || 0;
     document.getElementById('todayAppointments').textContent = stats.today || 0;
+
+    // Calculate upcoming appointments (next 24 hours)
+    const upcomingCount = stats.upcoming || 0;
+    const upcomingEl = document.getElementById('upcomingAppointments');
+    if (upcomingEl) {
+      upcomingEl.textContent = upcomingCount;
+    }
+
+    // Calculate overdue appointments
+    const overdueCount = stats.overdue || 0;
+    const overdueEl = document.getElementById('overdueAppointments');
+    if (overdueEl) {
+      overdueEl.textContent = overdueCount;
+    }
+
+    // Show upcoming alert if there are upcoming appointments
+    if (upcomingCount > 0) {
+      const alert = document.getElementById('upcoming-alert');
+      if (alert) {
+        alert.style.display = 'block';
+        document.getElementById('upcoming-count').textContent = upcomingCount;
+      }
+    }
   }
 
   function renderRealEstateSchedules(schedules) {
@@ -9645,6 +9716,75 @@ document.addEventListener('DOMContentLoaded', function() {
     }
   }
 
+  function dismissUpcomingAlert() {
+    const alert = document.getElementById('upcoming-alert');
+    if (alert) {
+      alert.style.display = 'none';
+    }
+  }
+
+  function showCalendarView() {
+    alert('ميزة التقويم قيد التطوير - ستظهر مواعيد الأسبوع الحالي بشكل مرئي');
+  }
+
+  function showUpcomingReminders() {
+    alert('ميزة التذكيرات قيد التطوير - ستظهر المواعيد التي تحتاج تذكير');
+  }
+
+  function showTodayAppointments() {
+    document.getElementById('appointmentDateFilter').value = new Date().toISOString().split('T')[0];
+    filterSchedules();
+  }
+
+  function showWeekAppointments() {
+    const today = new Date();
+    const nextWeek = new Date(today);
+    nextWeek.setDate(today.getDate() + 7);
+
+    // Show appointments for the next 7 days
+    fetch('/api/real-estate/schedules/')
+      .then(response => response.json())
+      .then(data => {
+        if (data.success) {
+          const weekAppointments = data.schedules.filter(s => {
+            const appointmentDate = new Date(s.date);
+            return appointmentDate >= today && appointmentDate <= nextWeek;
+          });
+          renderRealEstateSchedules(weekAppointments);
+        }
+      });
+  }
+
+  function showPendingAppointments() {
+    document.getElementById('appointmentStatusFilter').value = 'pending';
+    filterSchedules();
+  }
+
+  function exportAppointments() {
+    fetch('/api/real-estate/schedules/')
+      .then(response => response.json())
+      .then(data => {
+        if (data.success) {
+          // Create CSV content
+          let csv = 'التاريخ,الوقت,النوع,الحالة,المستخدم,الملاحظات\n';
+          data.schedules.forEach(s => {
+            csv += `${s.date},${s.time},${s.type},${s.status},${s.user},"${s.notes}"\n`;
+          });
+
+          // Download CSV file
+          const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+          const link = document.createElement('a');
+          const url = URL.createObjectURL(blob);
+          link.setAttribute('href', url);
+          link.setAttribute('download', 'appointments.csv');
+          link.style.visibility = 'hidden';
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+        }
+      });
+  }
+
   function loadUserOptions() {
     // Load users for the select dropdown
     fetch('/api/users/')
@@ -9680,6 +9820,112 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     } catch (error) {
       console.error('Error in loadRealEstateContracts:', error);
+    }
+  }
+
+  function loadProperties() {
+    try {
+      fetch('/api/real-estate/properties/')
+        .then(response => response.json())
+        .then(data => {
+          if (data.success) {
+            updatePropertyStatistics(data.statistics);
+            renderProperties(data.properties);
+          } else {
+            console.error('Error loading properties:', data.error);
+          }
+        });
+    } catch (error) {
+      console.error('Error loading properties:', error);
+    }
+  }
+
+  function updatePropertyStatistics(stats) {
+    document.getElementById('totalProperties').textContent = stats.total || 0;
+    document.getElementById('availableProperties').textContent = stats.available || 0;
+    document.getElementById('soldProperties').textContent = stats.sold || 0;
+    document.getElementById('totalPropertyValue').textContent = stats.total_value || '$0';
+  }
+
+  function renderProperties(properties) {
+    const container = document.getElementById('real-estate-properties-list');
+    if (!container) return;
+
+    if (properties.length === 0) {
+      container.innerHTML = '<div style="text-align: center; padding: 20px; color: #888;">لا توجد عقارات</div>';
+      return;
+    }
+
+    container.innerHTML = properties.map(property => `
+      <div class="property-item" style="padding: 15px; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 15px;">
+        <div style="flex: 1;">
+          <div style="font-weight: bold; color: var(--primary);">${property.title || 'عقار'}</div>
+          <div style="font-size: 0.9rem; color: var(--text-light); margin-top: 5px;">
+            ${property.type || 'غير محدد'} | ${property.status || 'غير محدد'}
+          </div>
+          <div style="font-size: 0.9rem; color: var(--text-light); margin-top: 5px;">
+            ${property.price || '$0'}
+          </div>
+        </div>
+        <div style="display: flex; gap: 8px;">
+          <button class="btn btn-sm btn-outline" onclick="viewProperty(${property.id})">عرض</button>
+          <button class="btn btn-sm btn-secondary" onclick="editProperty(${property.id})">تعديل</button>
+          <button class="btn btn-sm btn-danger" onclick="deleteProperty(${property.id})">حذف</button>
+        </div>
+      </div>
+    `).join('');
+  }
+
+  function filterProperties() {
+    const typeFilter = document.getElementById('propertyTypeFilter').value;
+    const statusFilter = document.getElementById('propertyStatusFilter').value;
+    const searchInput = document.getElementById('propertySearchInput').value.toLowerCase();
+
+    fetch('/api/real-estate/properties/')
+      .then(response => response.json())
+      .then(data => {
+        if (data.success) {
+          let filtered = data.properties;
+
+          if (typeFilter) {
+            filtered = filtered.filter(p => p.type === typeFilter);
+          }
+
+          if (statusFilter) {
+            filtered = filtered.filter(p => p.status === statusFilter);
+          }
+
+          if (searchInput) {
+            filtered = filtered.filter(p =>
+              (p.title && p.title.toLowerCase().includes(searchInput)) ||
+              (p.type && p.type.toLowerCase().includes(searchInput))
+            );
+          }
+
+          renderProperties(filtered);
+        }
+      });
+  }
+
+  function refreshProperties() {
+    loadProperties();
+  }
+
+  function showCreatePropertyModal() {
+    alert('ميزة إنشاء عقار قيد التطوير');
+  }
+
+  function viewProperty(id) {
+    alert(`عرض العقار ${id}`);
+  }
+
+  function editProperty(id) {
+    alert(`تعديل العقار ${id}`);
+  }
+
+  function deleteProperty(id) {
+    if (confirm('هل أنت متأكد من حذف هذا العقار؟')) {
+      alert(`حذف العقار ${id}`);
     }
   }
 

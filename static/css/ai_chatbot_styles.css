@@ -131,10 +131,11 @@
 /* Search Results Styles */
 .search-results {
   margin: 15px 0;
-  background: #f8f9fa;
+  background: #000000;
   border-radius: 8px;
   padding: 15px;
-  border: 1px solid #e9ecef;
+  border: 1px solid #333333;
+  color: #ffffff;
 }
 
 .results-header {

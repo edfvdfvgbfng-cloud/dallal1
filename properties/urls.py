@@ -662,7 +662,7 @@ urlpatterns = [
     path('api/events/management/', views.event_management, name='event_management'),
 
     # Real Estate Specific routes
-    path('api/real-estate/properties/', views.property_management_advanced, name='property_management_advanced'),
+    path('api/real-estate/properties/', views.real_estate_properties_api, name='real_estate_properties_api'),
     path('api/real-estate/clients/', views.clients_management, name='clients_management'),
     path('api/real-estate/offers/', views.offers_management, name='offers_management'),
     path('api/real-estate/auctions/', views.live_auctions_management, name='live_auctions_management'),
