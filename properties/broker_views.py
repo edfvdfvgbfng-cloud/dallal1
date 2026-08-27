@@ -449,13 +449,15 @@ def broker_list(request):
     else:
         brokers = brokers.order_by('-created_at')
 
+    # Calculate stats before pagination
+    total_brokers_count = brokers.count()
+    verified_brokers_count = brokers.filter(is_verified=True).count()
+    active_brokers_count = brokers.filter(is_active=True).count()
+
     # Pagination
     paginator = Paginator(brokers, 20)
     page_number = request.GET.get('page', 1)
     brokers_page = paginator.get_page(page_number)
-    
-    # Keep original queryset for stats calculation
-    brokers_queryset = brokers
     
     broker_data = []
     for b in brokers_page:
@@ -525,19 +527,19 @@ def broker_list(request):
         broker_data.sort(key=lambda x: x['broker'].created_at, reverse=True)
     
     # Calculate stats
-    total_brokers = len(broker_data)
-    verified_brokers = sum(1 for item in broker_data if item['broker'].is_verified)
+    total_brokers = total_brokers_count
+    verified_brokers = verified_brokers_count
+    active_brokers = active_brokers_count
     total_properties = sum(item['property_count'] for item in broker_data)
-    active_brokers = sum(1 for item in broker_data if item['broker'].is_active)
     
     # Calculate additional stats
     from datetime import datetime, timedelta
     from django.utils import timezone
     
     one_month_ago = timezone.now() - timedelta(days=30)
-    monthly_new_brokers = brokers_queryset.filter(created_at__gte=one_month_ago).count()
+    monthly_new_brokers = brokers.filter(created_at__gte=one_month_ago).count()
     monthly_properties = Property.objects.filter(
-        Q(owner__in=[b.user for b in brokers_queryset]) | Q(broker__in=brokers_queryset),
+        Q(owner__in=[b.user for b in brokers_page]) | Q(broker__in=[b for b in brokers_page]),
         created_at__gte=one_month_ago
     ).count()
     
@@ -545,7 +547,7 @@ def broker_list(request):
     active_percentage = (active_brokers / total_brokers * 100) if total_brokers > 0 else 0
     
     # Calculate expired subscriptions
-    expired_subscriptions = brokers_queryset.filter(
+    expired_subscriptions = brokers.filter(
         subscription_end_date__lt=timezone.now().date(),
         is_active=True
     ).count()
