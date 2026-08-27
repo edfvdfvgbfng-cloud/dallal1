@@ -1544,10 +1544,6 @@
       <span class="tab-icon">🔐</span>
       <span>الصلاحيات</span>
     </button>
-    <button type="button" class="tab-btn" data-tab="system-settings">
-      <span class="tab-icon">⚙️</span>
-      <span>إعدادات النظام</span>
-    </button>
     {% if request.user.is_superuser %}
     <button type="button" class="tab-btn" data-tab="quick-stats">
       <span class="tab-icon">📊</span>
@@ -1556,10 +1552,6 @@
     <button type="button" class="tab-btn" data-tab="notifications-panel">
       <span class="tab-icon">🔔</span>
       <span>الإشعارات</span>
-    </button>
-    <button type="button" class="tab-btn" data-tab="performance">
-      <span class="tab-icon">📈</span>
-      <span>الأداء</span>
     </button>
     <button type="button" class="tab-btn" data-tab="advanced-search">
       <span class="tab-icon">🔍</span>
@@ -2657,64 +2649,6 @@
     <!-- Notifications List -->
     <div id="notifications-list" style="max-height: 500px; overflow-y: auto;">
       <div style="text-align: center; padding: 20px; color: #888;">جاري تحميل الإشعارات...</div>
-    </div>
-  </div>
-  {% endif %}
-
-  <!-- Performance Panel -->
-  {% if request.user.is_superuser %}
-  <div id="panel-performance" class="panel">
-    <div class="panel-header">
-      <div class="panel-badge">
-        <span class="badge-icon">📈</span>
-        <span>الأداء</span>
-      </div>
-      <h2>مراقبة الأداء الحية</h2>
-    </div>
-    
-    <!-- Performance Metrics -->
-    <div class="dashboard-stats">
-      <div class="stat-card">
-        <div class="stat-icon">💻</div>
-        <div class="stat-content">
-          <div class="stat-number" id="cpuUsage">0%</div>
-          <div class="stat-label">المعالج</div>
-        </div>
-      </div>
-      <div class="stat-card">
-        <div class="stat-icon">🧠</div>
-        <div class="stat-content">
-          <div class="stat-number" id="memoryUsage">0%</div>
-          <div class="stat-label">الذاكرة</div>
-        </div>
-      </div>
-      <div class="stat-card">
-        <div class="stat-icon">💾</div>
-        <div class="stat-content">
-          <div class="stat-number" id="diskUsage">0%</div>
-          <div class="stat-label">القرص</div>
-        </div>
-      </div>
-      <div class="stat-card">
-        <div class="stat-icon">🌐</div>
-        <div class="stat-content">
-          <div class="stat-number" id="networkSpeed">0 MB/s</div>
-          <div class="stat-label">الشبكة</div>
-        </div>
-      </div>
-    </div>
-    
-    <!-- Top Processes -->
-    <div class="form-card" style="margin-top: 20px;">
-      <h3>أهم العمليات</h3>
-      <div id="top-processes" style="max-height: 300px; overflow-y: auto;">
-        <div style="text-align: center; padding: 20px; color: #888;">جاري تحميل البيانات...</div>
-      </div>
-    </div>
-    
-    <div style="margin-top: 20px;">
-      <button class="btn btn-primary" onclick="refreshPerformance()">تحديث البيانات</button>
-      <button class="btn btn-warning" onclick="runDiagnostics()">تشخيص النظام</button>
     </div>
   </div>
   {% endif %}
@@ -6438,59 +6372,6 @@ document.addEventListener('DOMContentLoaded', function() {
       badge.textContent = count;
       badge.style.display = count > 0 ? 'inline-block' : 'none';
     }
-  }
-
-  // Performance Monitoring Functions
-  function loadPerformanceData() {
-    try {
-      fetch('/api/performance/monitoring/')
-        .then(response => response.json())
-        .then(data => {
-          if (data.success) {
-            updatePerformanceMetrics(data.performance);
-            renderTopProcesses(data.performance.top_processes);
-          } else {
-            console.error('Error loading performance data:', data.error);
-          }
-        }).catch(error => {
-          console.error('Error fetching performance data:', error);
-        });
-    } catch (error) {
-      console.error('Error in loadPerformanceData:', error);
-    }
-  }
-
-  function updatePerformanceMetrics(performance) {
-    document.getElementById('cpuUsage').textContent = performance.cpu.percent + '%';
-    document.getElementById('memoryUsage').textContent = performance.memory.percent + '%';
-    document.getElementById('diskUsage').textContent = performance.disk.percent + '%';
-    
-    // Calculate network speed (bytes to MB/s)
-    const networkSpeed = (performance.network.bytes_sent + performance.network.bytes_recv) / 1024 / 1024;
-    document.getElementById('networkSpeed').textContent = networkSpeed.toFixed(2) + ' MB/s';
-  }
-
-  function renderTopProcesses(processes) {
-    const container = document.getElementById('top-processes');
-    if (!container) return;
-    
-    container.innerHTML = '';
-    
-    processes.forEach(proc => {
-      const item = document.createElement('div');
-      item.className = 'activity-item';
-      item.innerHTML = `
-        <div style="flex: 1;"><strong>${proc.name}</strong></div>
-        <div style="flex: 1;">CPU: ${proc.cpu}%</div>
-        <div style="flex: 1;">Memory: ${proc.memory}%</div>
-        <div style="flex: 1;">PID: ${proc.pid}</div>
-      `;
-      container.appendChild(item);
-    });
-  }
-
-  function refreshPerformance() {
-    loadPerformanceData();
   }
 
   // Financial Reports Functions
@@ -10957,13 +10838,6 @@ function initAdvancedCharts() {
     // Load notifications
     if (document.getElementById('notifications-list')) {
       loadNotifications();
-    }
-    
-    // Load performance data
-    if (document.getElementById('cpuUsage')) {
-      loadPerformanceData();
-      // Refresh performance every 5 seconds
-      setInterval(loadPerformanceData, 5000);
     }
     
     // Load financial reports
