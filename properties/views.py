@@ -21456,21 +21456,21 @@ def real_estate_properties_api(request):
             for prop in properties:
                 property_list.append({
                     'id': prop.id,
-                    'title': prop.display_title,
-                    'type': prop.get_property_type_display(),
-                    'status': prop.get_status_display(),
-                    'price': prop.price_formatted,
-                    'district': prop.district,
-                    'is_featured': prop.is_featured,
-                    'views_count': prop.views_count,
+                    'title': prop.display_title if hasattr(prop, 'display_title') else prop.title,
+                    'type': prop.get_property_type_display() if hasattr(prop, 'get_property_type_display') else 'غير محدد',
+                    'status': prop.get_status_display() if hasattr(prop, 'get_status_display') else 'غير محدد',
+                    'price': prop.price_formatted if hasattr(prop, 'price_formatted') else str(prop.price) if prop.price else '0',
+                    'district': prop.district if hasattr(prop, 'district') else 'غير محدد',
+                    'is_featured': prop.is_featured if hasattr(prop, 'is_featured') else False,
+                    'views_count': prop.views_count if hasattr(prop, 'views_count') else 0,
                     'created_at': prop.created_at.strftime('%Y-%m-%d %H:%M:%S') if prop.created_at else ''
                 })
 
             # Calculate statistics
             statistics = {
                 'total': properties.count(),
-                'available': properties.filter(status='available').count(),
-                'sold': properties.filter(status='sold').count(),
+                'available': properties.filter(status='available').count() if hasattr(Property, 'status') else 0,
+                'sold': properties.filter(status='sold').count() if hasattr(Property, 'status') else 0,
                 'total_value': sum(p.price for p in properties if p.price)
             }
 
@@ -21481,6 +21481,8 @@ def real_estate_properties_api(request):
             })
 
     except Exception as e:
+        import traceback
+        traceback.print_exc()
         return JsonResponse({'success': False, 'error': str(e)}, status=500)
 
 
@@ -23183,15 +23185,15 @@ def broker_appointment_booking(request, broker_id):
     """حجز موعد مع دلال"""
     from django.utils import timezone
     from datetime import timedelta
-    
+
     broker = get_object_or_404(Broker, id=broker_id)
-    
+
     # Get broker's properties for the dropdown
     broker_properties = Property.objects.filter(broker=broker, status='active')
-    
+
     # Set minimum date to today
     min_date = timezone.now().date()
-    
+
     if request.method == 'POST':
         try:
             appointment_type = request.POST.get('appointment_type')
@@ -23201,7 +23203,7 @@ def broker_appointment_booking(request, broker_id):
             duration = request.POST.get('duration', 30)
             location = request.POST.get('location', '')
             notes = request.POST.get('notes', '')
-            
+
             # Validate required fields
             if not all([appointment_type, appointment_date, appointment_time]):
                 messages.error(request, 'يرجى ملء جميع الحقول المطلوبة')
@@ -23210,7 +23212,7 @@ def broker_appointment_booking(request, broker_id):
                     'broker_properties': broker_properties,
                     'min_date': min_date,
                 })
-            
+
             # Create appointment
             from .models import BrokerAppointment
             appointment = BrokerAppointment.objects.create(
@@ -23225,10 +23227,10 @@ def broker_appointment_booking(request, broker_id):
                 notes=notes,
                 status='pending'
             )
-            
+
             messages.success(request, 'تم حجز الموعد بنجاح! سيتم التواصل معك للتأكيد.')
             return redirect('broker_profile', broker_id=broker.id)
-            
+
         except Exception as e:
             messages.error(request, f'حدث خطأ: {str(e)}')
             return render(request, 'properties/broker_appointment_booking.html', {
@@ -23236,10 +23238,78 @@ def broker_appointment_booking(request, broker_id):
                 'broker_properties': broker_properties,
                 'min_date': min_date,
             })
-    
+
     return render(request, 'properties/broker_appointment_booking.html', {
         'broker': broker,
         'broker_properties': broker_properties,
+        'min_date': min_date,
+    })
+
+
+@login_required
+def appointment_booking_landing(request):
+    """صفحة هبوط لحجز المواعيد - اختيار بين دلال أو إدارة"""
+    from django.utils import timezone
+
+    # Get active brokers for the dropdown
+    active_brokers = Broker.objects.filter(is_active=True, is_approved=True)[:10]
+
+    return render(request, 'properties/appointment_booking_landing.html', {
+        'active_brokers': active_brokers,
+    })
+
+
+@login_required
+def admin_appointment_booking(request):
+    """حجز موعد مع الإدارة"""
+    from django.utils import timezone
+
+    # Set minimum date to today
+    min_date = timezone.now().date()
+
+    if request.method == 'POST':
+        try:
+            appointment_type = request.POST.get('appointment_type')
+            appointment_date = request.POST.get('appointment_date')
+            appointment_time = request.POST.get('appointment_time')
+            duration = request.POST.get('duration', 30)
+            location = request.POST.get('location', 'المكتب الرئيسي')
+            notes = request.POST.get('notes', '')
+            priority = request.POST.get('priority', 'medium')
+
+            # Validate required fields
+            if not all([appointment_type, appointment_date, appointment_time]):
+                messages.error(request, 'يرجى ملء جميع الحقول المطلوبة')
+                return render(request, 'properties/admin_appointment_booking.html', {
+                    'min_date': min_date,
+                })
+
+            # Create appointment with admin
+            from .models import Appointment
+            appointment = Appointment.objects.create(
+                user=request.user,
+                appointment_type=appointment_type,
+                appointment_date=appointment_date,
+                appointment_time=appointment_time,
+                duration=int(duration),
+                location=location,
+                notes=notes,
+                priority=priority,
+                status='pending',
+                target_type='admin',
+                target_id=1  # Admin user ID
+            )
+
+            messages.success(request, 'تم حجز الموعد مع الإدارة بنجاح! سيتم التواصل معك للتأكيد.')
+            return redirect('dashboard')
+
+        except Exception as e:
+            messages.error(request, f'حدث خطأ: {str(e)}')
+            return render(request, 'properties/admin_appointment_booking.html', {
+                'min_date': min_date,
+            })
+
+    return render(request, 'properties/admin_appointment_booking.html', {
         'min_date': min_date,
     })
 

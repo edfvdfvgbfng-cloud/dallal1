@@ -1036,10 +1036,10 @@
             <li><a href="{% url 'channels_list' %}">📺 قنوات الدلالين</a></li>
             {% if request.user.is_authenticated %}
             <li><a href="{% url 'broker_conversation_list' %}">💬 مراسلة الدلالين</a></li>
-            <li><a href="{% url 'public_broker_search' %}">📅 حجز موعد مع دلال</a></li>
+            <li><a href="{% url 'appointment_booking_landing' %}">📅 حجز موعد</a></li>
             {% else %}
             <li><a href="/login/?next={% url 'broker_conversation_list' %}">💬 مراسلة الدلالين</a></li>
-            <li><a href="/login/?next={% url 'public_broker_search' %}">📅 حجز موعد مع دلال</a></li>
+            <li><a href="/login/?next={% url 'appointment_booking_landing' %}">📅 حجز موعد</a></li>
             {% endif %}
           </ul>
         </div>

@@ -4973,6 +4973,19 @@ document.addEventListener('DOMContentLoaded', function() {
   // Update badge every 30 seconds
   setInterval(updateDashboardNotificationBadge, 30000);
 
+  // Load initial data for active tab
+  const initialActiveTab = document.querySelector('.tab-btn.active');
+  if (initialActiveTab) {
+    const initialTab = initialActiveTab.dataset.tab;
+    if (initialTab === 'properties') {
+      loadProperties();
+    } else if (initialTab === 'real-estate-schedules') {
+      loadRealEstateSchedules();
+    } else if (initialTab === 'real-estate-contracts') {
+      loadRealEstateContracts();
+    }
+  }
+
   // Tab switching
   const tabBtns = document.querySelectorAll('.tab-btn');
   const panels = document.querySelectorAll('.panel');
@@ -9824,6 +9837,11 @@ document.addEventListener('DOMContentLoaded', function() {
   }
 
   function loadProperties() {
+    const container = document.getElementById('real-estate-properties-list');
+    if (container) {
+      container.innerHTML = '<div style="text-align: center; padding: 20px; color: #888;">جاري تحميل العقارات...</div>';
+    }
+
     try {
       fetch('/api/real-estate/properties/')
         .then(response => response.json())
@@ -9833,41 +9851,63 @@ document.addEventListener('DOMContentLoaded', function() {
             renderProperties(data.properties);
           } else {
             console.error('Error loading properties:', data.error);
+            if (container) {
+              container.innerHTML = '<div style="text-align: center; padding: 20px; color: #ff6b6b;">خطأ في تحميل العقارات: ' + (data.error || 'غير معروف') + '</div>';
+            }
+          }
+        })
+        .catch(error => {
+          console.error('Error fetching properties:', error);
+          if (container) {
+            container.innerHTML = '<div style="text-align: center; padding: 20px; color: #ff6b6b;">خطأ في الاتصال بالخادم</div>';
           }
         });
     } catch (error) {
       console.error('Error loading properties:', error);
+      if (container) {
+        container.innerHTML = '<div style="text-align: center; padding: 20px; color: #ff6b6b;">خطأ: ' + error.message + '</div>';
+      }
     }
   }
 
   function updatePropertyStatistics(stats) {
-    document.getElementById('totalProperties').textContent = stats.total || 0;
-    document.getElementById('availableProperties').textContent = stats.available || 0;
-    document.getElementById('soldProperties').textContent = stats.sold || 0;
-    document.getElementById('totalPropertyValue').textContent = stats.total_value || '$0';
+    const totalEl = document.getElementById('totalProperties');
+    const availableEl = document.getElementById('availableProperties');
+    const soldEl = document.getElementById('soldProperties');
+    const valueEl = document.getElementById('totalPropertyValue');
+
+    if (totalEl) totalEl.textContent = stats.total || 0;
+    if (availableEl) availableEl.textContent = stats.available || 0;
+    if (soldEl) soldEl.textContent = stats.sold || 0;
+    if (valueEl) valueEl.textContent = '$' + (stats.total_value || 0).toLocaleString();
   }
 
   function renderProperties(properties) {
     const container = document.getElementById('real-estate-properties-list');
     if (!container) return;
 
-    if (properties.length === 0) {
+    if (!properties || properties.length === 0) {
       container.innerHTML = '<div style="text-align: center; padding: 20px; color: #888;">لا توجد عقارات</div>';
       return;
     }
 
     container.innerHTML = properties.map(property => `
-      <div class="property-item" style="padding: 15px; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 15px;">
+      <div class="property-item" style="padding: 15px; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 15px; background: var(--bg);">
         <div style="flex: 1;">
-          <div style="font-weight: bold; color: var(--primary);">${property.title || 'عقار'}</div>
-          <div style="font-size: 0.9rem; color: var(--text-light); margin-top: 5px;">
-            ${property.type || 'غير محدد'} | ${property.status || 'غير محدد'}
+          <div style="font-weight: bold; color: var(--primary); font-size: 1rem;">${property.title || 'عقار بدون عنوان'}</div>
+          <div style="font-size: 0.85rem; color: var(--text-light); margin-top: 5px;">
+            <span style="margin-left: 10px;">📍 ${property.district || 'غير محدد'}</span>
+            <span style="margin-left: 10px;">🏢 ${property.type || 'غير محدد'}</span>
+            <span style="margin-left: 10px;">📊 ${property.status || 'غير محدد'}</span>
           </div>
-          <div style="font-size: 0.9rem; color: var(--text-light); margin-top: 5px;">
+          <div style="font-size: 0.9rem; color: var(--primary); font-weight: bold; margin-top: 5px;">
             ${property.price || '$0'}
           </div>
+          <div style="font-size: 0.8rem; color: var(--text-light); margin-top: 5px;">
+            👁️ ${property.views_count || 0} مشاهدة ${property.is_featured ? ' ⭐ مميز' : ''}
+          </div>
         </div>
-        <div style="display: flex; gap: 8px;">
+        <div style="display: flex; gap: 8px; flex-wrap: wrap;">
           <button class="btn btn-sm btn-outline" onclick="viewProperty(${property.id})">عرض</button>
           <button class="btn btn-sm btn-secondary" onclick="editProperty(${property.id})">تعديل</button>
           <button class="btn btn-sm btn-danger" onclick="deleteProperty(${property.id})">حذف</button>
@@ -9877,9 +9917,14 @@ document.addEventListener('DOMContentLoaded', function() {
   }
 
   function filterProperties() {
-    const typeFilter = document.getElementById('propertyTypeFilter').value;
-    const statusFilter = document.getElementById('propertyStatusFilter').value;
-    const searchInput = document.getElementById('propertySearchInput').value.toLowerCase();
+    const typeFilter = document.getElementById('propertyTypeFilter')?.value || '';
+    const statusFilter = document.getElementById('propertyStatusFilter')?.value || '';
+    const searchInput = document.getElementById('propertySearchInput')?.value?.toLowerCase() || '';
+
+    const container = document.getElementById('real-estate-properties-list');
+    if (container) {
+      container.innerHTML = '<div style="text-align: center; padding: 20px; color: #888;">جاري التصفية...</div>';
+    }
 
     fetch('/api/real-estate/properties/')
       .then(response => response.json())
@@ -9898,7 +9943,8 @@ document.addEventListener('DOMContentLoaded', function() {
           if (searchInput) {
             filtered = filtered.filter(p =>
               (p.title && p.title.toLowerCase().includes(searchInput)) ||
-              (p.type && p.type.toLowerCase().includes(searchInput))
+              (p.type && p.type.toLowerCase().includes(searchInput)) ||
+              (p.district && p.district.toLowerCase().includes(searchInput))
             );
           }
 
@@ -9916,16 +9962,17 @@ document.addEventListener('DOMContentLoaded', function() {
   }
 
   function viewProperty(id) {
-    alert(`عرض العقار ${id}`);
+    window.open(`/property/${id}/`, '_blank');
   }
 
   function editProperty(id) {
-    alert(`تعديل العقار ${id}`);
+    window.open(`/dashboard/properties/${id}/edit/`, '_blank');
   }
 
   function deleteProperty(id) {
     if (confirm('هل أنت متأكد من حذف هذا العقار؟')) {
-      alert(`حذف العقار ${id}`);
+      // This would need to be implemented with a proper API call
+      alert(`حذف العقار ${id} - قيد التطوير`);
     }
   }
 

@@ -783,6 +783,10 @@ urlpatterns = [
     path('broker/<int:broker_id>/appointment/book/', views.broker_appointment_booking, name='broker_appointment_booking'),
     path('broker/appointments/', views.broker_appointments_list, name='broker_appointments_list'),
     path('broker/appointments/<int:appointment_id>/', views.broker_appointment_detail, name='broker_appointment_detail'),
+
+    # Appointment booking landing page
+    path('appointments/book/', views.appointment_booking_landing, name='appointment_booking_landing'),
+    path('appointments/book/admin/', views.admin_appointment_booking, name='admin_appointment_booking'),
     
     # Advanced appointments management
     path('dashboard/appointments/', views.appointments_management, name='appointments_management'),
