@@ -3286,7 +3286,8 @@ svg {
   .nav-container {
     gap: 8px;
     padding: 8px 12px;
-    height: 55px;
+    height: auto;
+    min-height: 55px;
   }
 
   .logo {
@@ -3300,7 +3301,7 @@ svg {
   }
 
   .logo span {
-    font-size: 0.95rem;
+    display: none;
   }
 
   .nav-links {
@@ -3343,7 +3344,8 @@ svg {
 @media (max-width: 360px) {
   .nav-container {
     padding: 6px 10px;
-    height: 52px;
+    height: auto;
+    min-height: 52px;
   }
 
   .logo {
@@ -3357,7 +3359,7 @@ svg {
   }
 
   .logo span {
-    font-size: 0.9rem;
+    display: none;
   }
 
   .nav-links {
@@ -3388,7 +3390,8 @@ svg {
 @media (max-width: 320px) {
   .nav-container {
     padding: 4px 8px;
-    height: 48px;
+    height: auto;
+    min-height: 48px;
   }
 
   .logo {
@@ -3402,7 +3405,7 @@ svg {
   }
 
   .logo span {
-    font-size: 0.8rem;
+    display: none;
   }
 
   .nav-links {
@@ -3444,7 +3447,7 @@ svg {
   }
 
   .logo span {
-    font-size: 0.75rem;
+    display: none;
   }
 
   .nav-links {
