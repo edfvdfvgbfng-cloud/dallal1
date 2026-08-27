@@ -711,9 +711,9 @@ tr:hover td { background: rgba(255, 122, 0, 0.04); }
   border-color: var(--primary);
 }
 
-/* Sidebar toggle mobile */
+/* Sidebar toggle - always visible */
 .sidebar-toggle {
-  display: none;
+  display: inline-flex;
   background: var(--card-bg);
   border: 1px solid var(--border-strong);
   color: var(--primary);
@@ -738,8 +738,6 @@ tr:hover td { background: rgba(255, 122, 0, 0.04); }
   }
 
   .dashboard-sidebar.open { right: 0; }
-
-  .sidebar-toggle { display: inline-flex; }
 
   .sidebar-overlay {
     display: none;
