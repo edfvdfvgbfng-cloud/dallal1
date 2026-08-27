@@ -3766,9 +3766,17 @@
       </div>
     </div>
     
+    <!-- Quick Actions -->
+    <div class="quick-actions" style="margin-top: 20px;">
+      <button class="btn btn-primary" onclick="generateQuickReport('daily')">📊 تقرير يومي</button>
+      <button class="btn btn-success" onclick="generateQuickReport('weekly')">📈 تقرير أسبوعي</button>
+      <button class="btn btn-info" onclick="generateQuickReport('monthly')">📅 تقرير شهري</button>
+      <button class="btn btn-warning" onclick="exportAllReports()">📥 تصدير الكل</button>
+    </div>
+    
     <!-- Report Type Selector -->
     <div class="form-card" style="margin-top: 20px;">
-      <h3>توليد تقرير جديد</h3>
+      <h3>توليد تقرير مخصص</h3>
       <div class="form-row">
         <div class="form-group">
           <label>نوع التقرير</label>
@@ -3778,6 +3786,8 @@
             <option value="clients">تقرير العملاء</option>
             <option value="financial">تقرير مالي</option>
             <option value="performance">تقرير الأداء</option>
+            <option value="traffic">تقرير الزيارات</option>
+            <option value="brokers">تقرير الدلالين</option>
           </select>
         </div>
         <div class="form-group">
@@ -3788,6 +3798,7 @@
             <option value="monthly" selected>شهري</option>
             <option value="quarterly">ربع سنوي</option>
             <option value="yearly">سنوي</option>
+            <option value="custom">مخصص</option>
           </select>
         </div>
         <div class="form-group">
@@ -3802,6 +3813,48 @@
         <div class="form-group">
           <label>&nbsp;</label>
           <button class="btn btn-primary" onclick="generateReport()">توليد</button>
+        </div>
+      </div>
+      
+      <!-- Custom Date Range -->
+      <div class="form-row" id="customDateRange" style="display: none; margin-top: 15px;">
+        <div class="form-group">
+          <label>من تاريخ</label>
+          <input type="date" class="form-control" id="reportFromDate">
+        </div>
+        <div class="form-group">
+          <label>إلى تاريخ</label>
+          <input type="date" class="form-control" id="reportToDate">
+        </div>
+      </div>
+    </div>
+    
+    <!-- Search and Filter -->
+    <div class="form-card" style="margin-top: 20px;">
+      <div class="form-row">
+        <div class="form-group">
+          <label>بحث</label>
+          <input type="text" class="form-control" id="reportSearch" placeholder="ابحث في التقارير..." onkeyup="filterReports()">
+        </div>
+        <div class="form-group">
+          <label>الحالة</label>
+          <select class="form-control" id="reportStatusFilter" onchange="filterReports()">
+            <option value="">الكل</option>
+            <option value="completed">مكتمل</option>
+            <option value="pending">قيد المعالجة</option>
+            <option value="failed">فشل</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>النوع</label>
+          <select class="form-control" id="reportTypeFilter" onchange="filterReports()">
+            <option value="">الكل</option>
+            <option value="sales">المبيعات</option>
+            <option value="properties">العقارات</option>
+            <option value="clients">العملاء</option>
+            <option value="financial">المالي</option>
+            <option value="performance">الأداء</option>
+          </select>
         </div>
       </div>
     </div>
@@ -10755,6 +10808,20 @@ document.addEventListener('DOMContentLoaded', function() {
     const period = document.getElementById('reportPeriod').value;
     const format = document.getElementById('reportFormat').value;
     
+    // Show custom date range if custom period selected
+    if (period === 'custom') {
+      document.getElementById('customDateRange').style.display = 'flex';
+      const fromDate = document.getElementById('reportFromDate').value;
+      const toDate = document.getElementById('reportToDate').value;
+      
+      if (!fromDate || !toDate) {
+        alert('يرجى تحديد تاريخ البداية والنهاية');
+        return;
+      }
+    } else {
+      document.getElementById('customDateRange').style.display = 'none';
+    }
+
     fetch('/api/advanced/reports/', {
       method: 'POST',
       headers: {
@@ -10764,7 +10831,9 @@ document.addEventListener('DOMContentLoaded', function() {
       body: JSON.stringify({
         type: type,
         period: period,
-        format: format
+        format: format,
+        from_date: period === 'custom' ? document.getElementById('reportFromDate').value : null,
+        to_date: period === 'custom' ? document.getElementById('reportToDate').value : null
       })
     })
     .then(response => response.json())
@@ -10777,6 +10846,80 @@ document.addEventListener('DOMContentLoaded', function() {
       }
     });
   }
+
+  function generateQuickReport(period) {
+    fetch('/api/advanced/reports/quick/', {
+      method: 'POST',
+      headers: {
+        'X-CSRFToken': getCSRFToken(),
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        period: period
+      })
+    })
+    .then(response => response.json())
+    .then(data => {
+      if (data.success) {
+        alert('تم توليد التقرير ' + period + ' بنجاح');
+        loadAdvancedReports();
+      } else {
+        alert('حدث خطأ: ' + data.error);
+      }
+    });
+  }
+
+  function exportAllReports() {
+    if (confirm('هل تريد تصدير جميع التقارير؟')) {
+      fetch('/api/advanced/reports/export/', {
+        method: 'GET',
+        headers: {
+          'X-CSRFToken': getCSRFToken()
+        }
+      })
+      .then(response => response.blob())
+      .then(blob => {
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'all_reports.zip';
+        document.body.appendChild(a);
+        a.click();
+        window.URL.revokeObjectURL(url);
+        document.body.removeChild(a);
+      });
+    }
+  }
+
+  function filterReports() {
+    const search = document.getElementById('reportSearch').value.toLowerCase();
+    const status = document.getElementById('reportStatusFilter').value;
+    const type = document.getElementById('reportTypeFilter').value;
+    
+    const items = document.querySelectorAll('#advanced-reports-list .activity-item');
+    items.forEach(item => {
+      const text = item.textContent.toLowerCase();
+      const matchesSearch = text.includes(search);
+      const matchesStatus = !status || text.includes(status);
+      const matchesType = !type || text.includes(type);
+      
+      item.style.display = matchesSearch && matchesStatus && matchesType ? 'flex' : 'none';
+    });
+  }
+
+  // Toggle custom date range visibility
+  document.addEventListener('DOMContentLoaded', function() {
+    const periodSelect = document.getElementById('reportPeriod');
+    if (periodSelect) {
+      periodSelect.addEventListener('change', function() {
+        if (this.value === 'custom') {
+          document.getElementById('customDateRange').style.display = 'flex';
+        } else {
+          document.getElementById('customDateRange').style.display = 'none';
+        }
+      });
+    }
+  });
 
   // Support Panel Functions
   function switchSupportTab(tab) {

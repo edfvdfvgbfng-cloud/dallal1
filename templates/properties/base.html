@@ -972,13 +972,6 @@
         <span>{% if site_settings %}{{ site_settings.site_name }}{% else %}دلال{% endif %}</span>
       </a>
       <ul class="nav-links">
-        {% if request.user.is_authenticated %}
-        <li><a href="/dashboard/" data-nav="dashboard">لوحة التحكم</a></li>
-        <li><a href="{% url 'logout' %}">خروج</a></li>
-        {% else %}
-        <li><a href="{% url 'broker_join' %}" class="btn btn-outline btn-sm">انضم كدلال</a></li>
-        <li><a href="{% url 'login' %}" class="btn btn-primary btn-sm">تسجيل الدخول</a></li>
-        {% endif %}
       </ul>
     </div>
   </nav>
@@ -1033,6 +1026,7 @@
             {% else %}
             <li><a href="/login/?next={% url 'broker_conversation_list' %}">💬 مراسلة الدلالين</a></li>
             <li><a href="/login/?next={% url 'appointment_booking_landing' %}">📅 حجز موعد</a></li>
+            <li><a href="{% url 'broker_join' %}">👤 انضم كدلال</a></li>
             {% endif %}
           </ul>
         </div>
@@ -1086,6 +1080,10 @@
     <a href="{% url 'user_settings' %}" class="bottom-nav-item" data-nav="settings">
       <span class="bottom-nav-icon">⚙️</span>
       <span class="bottom-nav-label">الإعدادات</span>
+    </a>
+    <a href="{% url 'logout' %}" class="bottom-nav-item" data-nav="logout">
+      <span class="bottom-nav-icon">🚪</span>
+      <span class="bottom-nav-label">خروج</span>
     </a>
     {% else %}
     <a href="{% url 'login' %}" class="bottom-nav-item" data-nav="login">
