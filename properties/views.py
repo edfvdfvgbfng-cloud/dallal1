@@ -10132,6 +10132,34 @@ def api_media_delete(request):
         return JsonResponse({'error': str(e)}, status=500)
 
 
+@login_required
+def api_brokers_list(request):
+    """API endpoint to get list of brokers"""
+    if request.method != 'GET':
+        return JsonResponse({'error': 'Method not allowed'}, status=405)
+
+    try:
+        from .models import Broker
+
+        brokers = Broker.objects.filter(is_active=True)
+        brokers_data = []
+
+        for broker in brokers:
+            brokers_data.append({
+                'id': broker.id,
+                'display_name': broker.display_name,
+                'phone': broker.phone,
+                'is_verified': broker.is_verified,
+            })
+
+        return JsonResponse({
+            'success': True,
+            'brokers': brokers_data
+        })
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)
+
+
 def calculate_average_rating(rating_type, target_id):
     """Calculate average rating for a target"""
     from .models import Rating

@@ -137,6 +137,7 @@ urlpatterns = [
     path('api/appointments/<int:appointment_id>/reschedule/', views.api_appointment_reschedule, name='api_appointment_reschedule'),
     path('api/appointments/<int:appointment_id>/delete/', views.api_appointment_delete, name='api_appointment_delete'),
     path('api/users/', views.api_users_list, name='api_users_list'),
+    path('api/brokers/list/', views.api_brokers_list, name='api_brokers_list'),
     path('api/media/upload/', views.api_media_upload, name='api_media_upload'),
     path('api/media/delete/', views.api_media_delete, name='api_media_delete'),
     path('admin-panel/bulk-messaging/', views.admin_bulk_messaging, name='admin_bulk_messaging'),

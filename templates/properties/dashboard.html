@@ -4868,6 +4868,37 @@
   min-width: 150px;
   justify-content: center;
 }
+
+.filters-container {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  padding: 15px;
+  background: var(--bg-alt);
+  border-radius: var(--radius-md);
+  border: 2px solid var(--border);
+}
+
+.filter-group {
+  flex: 1;
+  min-width: 200px;
+}
+
+.filter-group .form-control {
+  width: 100%;
+  padding: 10px 12px;
+  border: 2px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--bg);
+  color: var(--text);
+  font-size: 0.9rem;
+}
+
+.filter-group .form-control:focus {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(255, 107, 53, 0.1);
+}
 </style>
 {% endblock %}
 
@@ -4936,6 +4967,9 @@ document.addEventListener('DOMContentLoaded', function() {
       // Load data based on tab
       if (tab === 'real-estate-schedules') {
         loadRealEstateSchedules();
+      }
+      if (tab === 'real-estate-contracts') {
+        loadRealEstateContracts();
       }
     });
   });
@@ -10073,6 +10107,91 @@ document.addEventListener('DOMContentLoaded', function() {
 
   function loadBrokerOptions() {
     // Load brokers into select
+    fetch('/api/brokers/list/')
+      .then(response => response.json())
+      .then(data => {
+        if (data.success && data.brokers) {
+          const select = document.querySelector('select[name="broker"]');
+          if (select) {
+            data.brokers.forEach(broker => {
+              const option = document.createElement('option');
+              option.value = broker.id;
+              option.textContent = broker.display_name;
+              select.appendChild(option);
+            });
+          }
+        }
+      });
+  }
+
+  function loadClientOptions() {
+    // Load users/clients into select
+    fetch('/api/users/')
+      .then(response => response.json())
+      .then(data => {
+        if (data.success && data.users) {
+          const select = document.querySelector('select[name="client"]');
+          if (select) {
+            data.users.forEach(user => {
+              const option = document.createElement('option');
+              option.value = user.id;
+              option.textContent = user.username;
+              select.appendChild(option);
+            });
+          }
+        }
+      });
+  }
+
+  function editContract(contractId) {
+    alert('ميزة تعديل العقد قيد التطوير');
+  }
+
+  function deleteContract(contractId) {
+    if (confirm('هل أنت متأكد من حذف هذا العقد؟')) {
+      fetch(`/api/real-estate/contracts/${contractId}/delete/`, {
+        method: 'POST',
+        headers: {
+          'X-CSRFToken': getCsrfToken(),
+        }
+      })
+      .then(response => response.json())
+      .then(data => {
+        if (data.success) {
+          alert('تم حذف العقد بنجاح!');
+          refreshContracts();
+        } else {
+          alert('خطأ: ' + data.error);
+        }
+      })
+      .catch(error => {
+        console.error('Error deleting contract:', error);
+        alert('حدث خطأ أثناء حذف العقد');
+      });
+    }
+  }
+
+  function approveContract(contractId) {
+    fetch(`/api/real-estate/contracts/${contractId}/approve/`, {
+      method: 'POST',
+      headers: {
+        'X-CSRFToken': getCsrfToken(),
+      }
+    })
+    .then(response => response.json())
+    .then(data => {
+      if (data.success) {
+        alert('تم تفعيل العقد بنجاح!');
+        refreshContracts();
+      } else {
+        alert('خطأ: ' + data.error);
+      }
+    })
+    .catch(error => {
+      console.error('Error approving contract:', error);
+      alert('حدث خطأ أثناء تفعيل العقد');
+    });
+  }
     fetch('/api/real-estate/clients/')
       .then(response => response.json())
       .then(data => {
