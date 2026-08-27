@@ -3636,10 +3636,47 @@
       </div>
       <h2>نظام إدارة العقود والاتفاقيات</h2>
       <div class="panel-actions">
-        <button class="btn btn-primary" onclick="showCreateContractModal()">
-          <span class="btn-icon">➕</span>
-          عقد جديد
-        </button>
+        <div class="dropdown">
+          <button class="btn btn-primary dropdown-toggle" onclick="toggleContractDropdown(event)">
+            <span class="btn-icon">➕</span>
+            عقد جديد
+            <span class="dropdown-arrow">▼</span>
+          </button>
+          <div class="dropdown-menu" id="contractDropdown">
+            <button class="dropdown-item" onclick="showCreateContractModal('sale'); event.stopPropagation();">
+              <span class="dropdown-icon">🏠</span>
+              عقد بيع
+            </button>
+            <button class="dropdown-item" onclick="showCreateContractModal('rent'); event.stopPropagation();">
+              <span class="dropdown-icon">🔑</span>
+              عقد إيجار
+            </button>
+            <button class="dropdown-item" onclick="showCreateContractModal('agency'); event.stopPropagation();">
+              <span class="dropdown-icon">🤝</span>
+              عقد وساطة
+            </button>
+            <button class="dropdown-item" onclick="showCreateContractModal('management'); event.stopPropagation();">
+              <span class="dropdown-icon">🏢</span>
+              عقد إدارة
+            </button>
+            <button class="dropdown-item" onclick="showCreateContractModal('lease'); event.stopPropagation();">
+              <span class="dropdown-icon">📋</span>
+              عقد تأجير
+            </button>
+            <button class="dropdown-item" onclick="showCreateContractModal('partnership'); event.stopPropagation();">
+              <span class="dropdown-icon">🤝</span>
+              عقد شراكة
+            </button>
+            <button class="dropdown-item" onclick="showCreateContractModal('maintenance'); event.stopPropagation();">
+              <span class="dropdown-icon">🔧</span>
+              عقد صيانة
+            </button>
+            <button class="dropdown-item" onclick="showCreateContractModal('other'); event.stopPropagation();">
+              <span class="dropdown-icon">📄</span>
+              عقد آخر
+            </button>
+          </div>
+        </div>
         <button class="btn btn-success" onclick="exportContracts()">
           <span class="btn-icon">📥</span>
           تصدير
@@ -3647,6 +3684,10 @@
         <button class="btn btn-secondary" onclick="refreshContracts()">
           <span class="btn-icon">🔄</span>
           تحديث
+        </button>
+        <button class="btn btn-warning" onclick="showExpiringAlerts()">
+          <span class="btn-icon">⚠️</span>
+          تنبيهات
         </button>
       </div>
     </div>
@@ -3695,14 +3736,6 @@
           <div class="stat-label">قاربة الانتهاء</div>
         </div>
       </div>
-    </div>
-    
-    <!-- Quick Actions -->
-    <div class="quick-actions" style="margin-top: 20px;">
-      <button class="btn btn-primary" onclick="showCreateContractModal('sale')">🏠 عقد بيع</button>
-      <button class="btn btn-success" onclick="showCreateContractModal('rent')">🔑 عقد إيجار</button>
-      <button class="btn btn-info" onclick="showCreateContractModal('agency')">🤝 عقد وساطة</button>
-      <button class="btn btn-warning" onclick="showExpiringAlerts()">⚠️ العقود القاربة للانتهاء</button>
     </div>
     
     <!-- Contracts Filters -->
@@ -10271,6 +10304,22 @@ document.addEventListener('DOMContentLoaded', function() {
   function refreshContracts() {
     loadRealEstateContracts();
   }
+
+  function toggleContractDropdown(event) {
+    event.stopPropagation();
+    const dropdown = event.target.closest('.dropdown');
+    dropdown.classList.toggle('active');
+  }
+
+  // Close dropdown when clicking outside
+  document.addEventListener('click', function(event) {
+    const dropdowns = document.querySelectorAll('.dropdown');
+    dropdowns.forEach(dropdown => {
+      if (!dropdown.contains(event.target)) {
+        dropdown.classList.remove('active');
+      }
+    });
+  });
 
   function exportContracts() {
     if (confirm('هل تريد تصدير جميع العقود؟')) {
