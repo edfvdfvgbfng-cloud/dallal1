@@ -1,7 +1,7 @@
 """
 Django settings for dalal_project — production-ready configuration.
 Supports SQLite (dev) and PostgreSQL (production) via environment variables.
-Updated: 2026-08-25-05-10 - Fix session persistence with workers=2
+Updated: 2026-08-26-21-41 - Clean CSRF_TRUSTED_ORIGINS and fix OAuth
 """
 
 import os
