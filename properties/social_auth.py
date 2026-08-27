@@ -21,20 +21,27 @@ def save_profile_picture(strategy, details, response, user, *args, **kwargs):
     if not user:
         return
 
+    # Check if response exists and has data
+    if not response:
+        logger.debug("No response from social auth, skipping profile picture save")
+        return
+
     # Get profile picture URL from response
     picture_url = None
-    if 'picture' in response:
-        picture_url = response.get('picture')
-    elif 'picture' in response.get('data', {}):
-        picture_url = response['data']['picture'].get('data', {}).get('url')
-    elif 'graphObject' in response:
-        # Facebook specific
-        try:
+    try:
+        if 'picture' in response:
+            picture_url = response.get('picture')
+        elif 'picture' in response.get('data', {}):
+            picture_url = response['data']['picture'].get('data', {}).get('url')
+        elif 'graphObject' in response:
+            # Facebook specific
             picture_url = response['graphObject'].get('picture', {}).get('data', {}).get('url')
-        except (KeyError, AttributeError):
-            pass
+    except (KeyError, AttributeError, TypeError) as e:
+        logger.debug(f"Could not extract picture URL from response: {e}")
+        return
 
     if not picture_url:
+        logger.debug("No picture URL found in response")
         return
 
     try:
@@ -46,36 +53,36 @@ def save_profile_picture(strategy, details, response, user, *args, **kwargs):
 
         # Open and process the image
         img = Image.open(BytesIO(img_response.content))
-        
+
         # Convert to RGB if necessary
         if img.mode != 'RGB':
             img = img.convert('RGB')
-        
+
         # Resize to reasonable size (max 300x300)
         img.thumbnail((300, 300), Image.Resampling.LANCZOS)
-        
+
         # Save to BytesIO
         img_io = BytesIO()
         img.save(img_io, 'JPEG', quality=85)
         img_io.seek(0)
-        
+
         # Create SimpleUploadedFile
         image_file = SimpleUploadedFile(
             f"{user.username}_profile.jpg",
             img_io.read(),
             content_type='image/jpeg'
         )
-        
+
         # Get or create user profile
         from .models import UserProfile
         profile, created = UserProfile.objects.get_or_create(user=user)
-        
+
         # Save the image
         profile.profile_picture = image_file
         profile.save()
-        
+
         logger.info(f"Profile picture saved for user {user.username}")
-        
+
     except Exception as e:
         # Log error but don't break authentication
         logger.error(f"Error saving profile picture for user {user.username}: {e}")

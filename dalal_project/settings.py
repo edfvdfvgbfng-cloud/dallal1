@@ -88,58 +88,13 @@ logger.info(f"CUSTOM_DOMAIN={custom_domain}")
 # CSRF_TRUSTED_ORIGINS
 if DEBUG:
     railway_domain = os.getenv('RAILWAY_PUBLIC_DOMAIN', '')
-    # In debug mode, accept all localhost and 127.0.0.1 origins to handle dynamic ports
     CSRF_TRUSTED_ORIGINS = [
         'http://localhost',
         'http://127.0.0.1',
-        'http://127.0.0.1:54800',
-        'http://127.0.0.1:49356',
-        'http://127.0.0.1:64376',
-        'http://127.0.0.1:50579',
-        'http://127.0.0.1:62832',
-        'http://127.0.0.1:50927',
-        'http://127.0.0.1:50900',
-        'http://127.0.0.1:59122',
-        'http://127.0.0.1:64477',
-        'http://127.0.0.1:53538',
-        'http://127.0.0.1:59579',
-        'http://127.0.0.1:59522',
-        'http://127.0.1:56107',
-        'http://127.0.0.1:59256',
-        'http://127.0.1:64164',
-        'http://127.0.1:64464',
-        'http://127.0.0.1:49456',
-        'http://127.0.0.1:49459',
-        'http://127.0.0.1:49477',
-        'http://127.0.0.1:49495',
-        'http://127.0.0.1:49507',
-        'http://127.0.0.1:49522',
-        'http://127.0.0.1:49529',
-        'http://127.0.0.1:49546',
-        'http://127.0.0.1:49552',
-        'http://127.0.0.1:49564',
-        'http://127.0.0.1:55238',
-        'http://127.0.0.1:55249',
-        'http://127.0.0.1:55258',
-        'http://127.0.0.1:55266',
-        'http://127.0.0.1:55274',
-        'http://127.0.0.1:55281',
-        'http://127.0.0.1:55290',
-        'http://127.0.0.1:55296',
-        'http://127.0.0.1:55306',
-        'http://127.0.1:55315',
-        'http://127.0.1:55322',
-        'http://127.0.1:55331',
-        'http://127.0.0.1:55340',
-        'http://127.0.0.1:58699',
-        'http://127.0.0.1:59257',
-        'http://127.0.0.1:61200',
-        'http://127.0.0.1:64508',
-        'http://127.0.0.1:64170',
-        railway_domain and f'https://{railway_domain}',
         'https://mup.up.railway.app',
         'https://muq.up.railway.app',
         'https://muqq.up.railway.app',
+        railway_domain and f'https://{railway_domain}',
     ]
     # Filter out None values
     CSRF_TRUSTED_ORIGINS = [origin for origin in CSRF_TRUSTED_ORIGINS if origin]
@@ -147,95 +102,9 @@ if DEBUG:
     SESSION_COOKIE_SECURE = False
 else:
     CSRF_TRUSTED_ORIGINS = _unique([
+        'https://muqq.up.railway.app',
         'https://mup.up.railway.app',
         'https://muq.up.railway.app',
-        'https://muqq.up.railway.app',
-        'http://127.0.0.1:55190',
-        'http://127.0.0.1:8000',
-        'http://127.0.0.1:59122',
-        'http://127.0.0.1:64477',
-        'http://127.0.0.1:53538',
-        'http://127.0.0.1:59579',
-        'http://127.0.0.1:59522',
-        'http://127.0.0.1:56107',
-        'http://127.0.1:59256',
-        'http://127.0.1:64164',
-        'http://127.0.1:64464',
-        'http://127.0.0.1:49456',
-        'http://127.0.0.1:49459',
-        'http://127.0.0.1:49477',
-        'http://127.0.0.1:49495',
-        'http://127.0.0.1:49507',
-        'http://127.0.0.1:49522',
-        'http://127.0.0.1:49529',
-        'http://127.0.0.1:49546',
-        'http://127.0.0.1:49552',
-        'http://127.0.0.1:49564',
-        'http://127.0.0.1:55238',
-        'http://127.0.1:55249',
-        'http://127.0.1:55258',
-        'http://127.0.1:55266',
-        'http://127.0.1:55274',
-        'http://127.0.1:55281',
-        'http://127.0.1:55290',
-        'http://127.0.1:55296',
-        'http://127.0.0.1:55306',
-        'http://127.0.0.1:55315',
-        'http://127.0.1:55322',
-        'http://127.0.1:55331',
-        'http://127.0.1:55340',
-        'http://127.0.1:58699',
-        'http://127.0.1:59257',
-        'http://127.0.1:59284',
-        'http://127.0.1:61200',
-        'http://127.0.0.1:64508',
-        'http://127.0.0.1:64170',
-        'http://localhost:8000',
-        'http://localhost:59122',
-        'http://localhost:64477',
-        'http://localhost:53538',
-        'http://localhost:59579',
-        'http://localhost:59522',
-        'http://localhost:56107',
-        'http://localhost:59256',
-        'http://localhost:64164',
-        'http://localhost:64464',
-        'http://localhost:49456',
-        'http://localhost:49459',
-        'http://localhost:49477',
-        'http://localhost:49495',
-        'http://localhost:49507',
-        'http://localhost:49522',
-        'http://localhost:49529',
-        'http://localhost:49546',
-        'http://localhost:49552',
-        'http://localhost:49564',
-        'http://localhost:55238',
-        'http://localhost:55249',
-        'http://localhost:55258',
-        'http://localhost:55266',
-        'http://localhost:55274',
-        'http://localhost:55281',
-        'http://localhost:55290',
-        'http://localhost:55296',
-        'http://localhost:55306',
-        'http://localhost:55315',
-        'http://localhost:55322',
-        'http://localhost:55331',
-        'http://localhost:55340',
-        'http://localhost:58699',
-        'http://localhost:59257',
-        'http://localhost:61200',
-        'http://localhost:64508',
-        'http://localhost:64170',
-        'http://127.0.0.1:60850',
-        'http://127.0.0.1:49782',
-        'http://127.0.0.1:51705',
-        'http://127.0.1:61456',
-        'http://127.0.0.1:49633',
-        'http://127.0.0.1:60289',
-        'http://127.0.1:49663',
-        'http://127.0.1:57964',
     ] + _parse_csv_env('CSRF_TRUSTED_ORIGINS'))
 
 print(f"CSRF_TRUSTED_ORIGINS: {CSRF_TRUSTED_ORIGINS}")
@@ -554,10 +423,9 @@ SITE_NAME = os.getenv('SITE_NAME', 'دلال')
 # --- Social Authentication ---
 AUTHENTICATION_BACKENDS = [
     'django.contrib.auth.backends.ModelBackend',
-    'social_core.backends.google.GoogleOAuth2',
-    'social_core.backends.facebook.FacebookOAuth2',
 ]
 
+# Add OAuth backends only if keys are available
 SOCIAL_AUTH_GOOGLE_OAUTH2_KEY = os.getenv('SOCIAL_AUTH_GOOGLE_OAUTH2_KEY', '').strip()
 SOCIAL_AUTH_GOOGLE_OAUTH2_SECRET = os.getenv('SOCIAL_AUTH_GOOGLE_OAUTH2_SECRET', '').strip()
 SOCIAL_AUTH_FACEBOOK_KEY = os.getenv('SOCIAL_AUTH_FACEBOOK_KEY', '').strip()
@@ -566,6 +434,18 @@ SOCIAL_AUTH_FACEBOOK_SECRET = os.getenv('SOCIAL_AUTH_FACEBOOK_SECRET', '').strip
 # تحديد ما إذا كانت مصادقة Google متاحة
 GOOGLE_AUTH_AVAILABLE = bool(SOCIAL_AUTH_GOOGLE_OAUTH2_KEY and SOCIAL_AUTH_GOOGLE_OAUTH2_SECRET)
 FACEBOOK_AUTH_AVAILABLE = bool(SOCIAL_AUTH_FACEBOOK_KEY and SOCIAL_AUTH_FACEBOOK_SECRET)
+
+# Add backends conditionally
+if GOOGLE_AUTH_AVAILABLE:
+    AUTHENTICATION_BACKENDS.append('social_core.backends.google.GoogleOAuth2')
+    logger.info("Google OAuth authentication enabled")
+
+if FACEBOOK_AUTH_AVAILABLE:
+    AUTHENTICATION_BACKENDS.append('social_core.backends.facebook.FacebookOAuth2')
+    logger.info("Facebook OAuth authentication enabled")
+
+if not GOOGLE_AUTH_AVAILABLE and not FACEBOOK_AUTH_AVAILABLE:
+    logger.info("No OAuth providers configured - using only ModelBackend")
 
 RAILWAY_PUBLIC_DOMAIN = os.getenv('RAILWAY_PUBLIC_DOMAIN', '')
 # Also check for alternative Railway domains from ALLOWED_HOSTS
