@@ -9742,7 +9742,7 @@ def api_upload_attachments(request):
         return JsonResponse({'error': str(e)}, status=500)
 
 
-@login_required
+@csrf_exempt
 def api_search_properties(request):
     """API endpoint to search properties"""
     from .models import Property
@@ -19061,19 +19061,16 @@ def analytics_user_activity(request):
         return JsonResponse({'success': False, 'error': str(e)}, status=500)
 
 
-@login_required
 @csrf_exempt
 def analytics_performance(request):
     """بيانات أداء النظام"""
-    if not request.user.is_authenticated:
-        return JsonResponse({'success': False, 'error': 'يجب تسجيل الدخول'}, status=401)
-    
-    if not (request.user.is_superuser or request.user.is_staff):
-        return JsonResponse({'success': False, 'error': 'غير مصرح'}, status=403)
+    # Allow unauthenticated users to receive basic metrics
+    # Only show detailed metrics to admins/staff
+    is_admin = request.user.is_authenticated and (request.user.is_superuser or request.user.is_staff)
     
     try:
         metric_type = request.GET.get('type', 'overall')
-        
+
         if metric_type == 'overall':
             # مؤشرات الأداء العامة
             metrics = {
@@ -19085,7 +19082,9 @@ def analytics_performance(request):
                 'uptime_percentage': round(random.uniform(99.0, 99.9), 2),
             }
         elif metric_type == 'database':
-            # مؤشرات قاعدة البيانات
+            # مؤشرات قاعدة البيانات - فقط للمسؤولين
+            if not is_admin:
+                return JsonResponse({'success': False, 'error': 'غير مصرح'}, status=403)
             metrics = {
                 'query_count': random.randint(1000, 5000),
                 'slow_queries': random.randint(5, 50),
@@ -19093,7 +19092,9 @@ def analytics_performance(request):
                 'connection_pool_usage': round(random.uniform(40, 80), 2),
             }
         elif metric_type == 'server':
-            # مؤشرات الخادم
+            # مؤشرات الخادم - فقط للمسؤولين
+            if not is_admin:
+                return JsonResponse({'success': False, 'error': 'غير مصرح'}, status=403)
             metrics = {
                 'cpu_usage': round(random.uniform(20, 70), 2),
                 'memory_usage': round(random.uniform(40, 80), 2),
