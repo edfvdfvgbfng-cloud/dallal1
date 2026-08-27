@@ -976,10 +976,8 @@
         {% if request.user.is_authenticated %}
         <li><a href="/dashboard/" data-nav="dashboard">لوحة التحكم</a></li>
         <li><a href="/settings/" data-nav="settings">الإعدادات</a></li>
-        <li><a href="{% url 'contact' %}" data-nav="contact">اتصل بنا</a></li>
         <li><a href="{% url 'logout' %}">خروج</a></li>
         {% else %}
-        <li><a href="{% url 'contact' %}" data-nav="contact">اتصل بنا</a></li>
         <li><a href="{% url 'broker_join' %}" class="btn btn-outline btn-sm">انضم كدلال</a></li>
         <li><a href="{% url 'login' %}" class="btn btn-primary btn-sm">تسجيل الدخول</a></li>
         {% endif %}
