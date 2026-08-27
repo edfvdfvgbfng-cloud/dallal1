@@ -9833,41 +9833,301 @@ def api_submit_rating(request):
 def api_create_appointment(request):
     """API endpoint to create appointment"""
     from .models import Appointment
-    
+
     if request.method != 'POST':
         return JsonResponse({'error': 'Method not allowed'}, status=405)
-    
+
     try:
         if request.content_type == 'application/json':
             data = json.loads(request.body)
         else:
             data = request.POST
-        
+
         appointment_type = data.get('appointment_type')  # 'property_viewing', 'phone_call', 'meeting'
-        target_id = data.get('target_id')
+        user_id = data.get('user')
         appointment_date = data.get('appointment_date')
         appointment_time = data.get('appointment_time')
+        duration = data.get('duration', 30)
+        location = data.get('location', '')
+        address = data.get('address', '')
         notes = data.get('notes', '')
-        
-        if not appointment_type or not target_id or not appointment_date or not appointment_time:
+        priority = data.get('priority', 'medium')
+
+        if not appointment_type or not user_id or not appointment_date or not appointment_time:
             return JsonResponse({'error': 'Missing required fields'}, status=400)
-        
+
         # Create appointment
         appointment = Appointment.objects.create(
-            user=request.user,
+            user_id=user_id,
             appointment_type=appointment_type,
-            target_id=target_id,
+            target_type='user',
+            target_id=user_id,
             appointment_date=appointment_date,
             appointment_time=appointment_time,
+            duration=duration,
+            location=location,
+            address=address,
             notes=notes,
+            priority=priority,
             status='pending'
         )
-        
+
         return JsonResponse({
             'success': True,
             'appointment_id': appointment.id,
             'status': appointment.status
         })
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)
+
+
+@login_required
+def api_appointment_detail(request, appointment_id):
+    """API endpoint to get appointment details"""
+    from .models import Appointment
+
+    if request.method != 'GET':
+        return JsonResponse({'error': 'Method not allowed'}, status=405)
+
+    try:
+        appointment = Appointment.objects.get(id=appointment_id)
+
+        return JsonResponse({
+            'success': True,
+            'appointment': {
+                'id': appointment.id,
+                'appointment_type': appointment.appointment_type,
+                'appointment_type_display': appointment.get_appointment_type_display(),
+                'status': appointment.status,
+                'status_display': appointment.get_status_display(),
+                'appointment_date': appointment.appointment_date.strftime('%Y-%m-%d') if appointment.appointment_date else '',
+                'appointment_time': appointment.appointment_time.strftime('%H:%M') if appointment.appointment_time else '',
+                'duration': appointment.duration,
+                'location': appointment.location,
+                'address': appointment.address,
+                'notes': appointment.notes,
+                'priority': appointment.priority,
+                'priority_display': appointment.get_priority_display(),
+                'user_username': appointment.user.username if appointment.user else '',
+                'created_at': appointment.created_at.strftime('%Y-%m-%d %H:%M:%S') if appointment.created_at else ''
+            }
+        })
+    except Appointment.DoesNotExist:
+        return JsonResponse({'error': 'Appointment not found'}, status=404)
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)
+
+
+@login_required
+def api_appointment_confirm(request, appointment_id):
+    """API endpoint to confirm appointment"""
+    from .models import Appointment
+
+    if request.method != 'POST':
+        return JsonResponse({'error': 'Method not allowed'}, status=405)
+
+    try:
+        appointment = Appointment.objects.get(id=appointment_id)
+        appointment.status = 'confirmed'
+        appointment.save()
+
+        return JsonResponse({
+            'success': True,
+            'status': appointment.status
+        })
+    except Appointment.DoesNotExist:
+        return JsonResponse({'error': 'Appointment not found'}, status=404)
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)
+
+
+@login_required
+def api_appointment_cancel(request, appointment_id):
+    """API endpoint to cancel appointment"""
+    from .models import Appointment
+
+    if request.method != 'POST':
+        return JsonResponse({'error': 'Method not allowed'}, status=405)
+
+    try:
+        appointment = Appointment.objects.get(id=appointment_id)
+        appointment.status = 'cancelled'
+        appointment.save()
+
+        return JsonResponse({
+            'success': True,
+            'status': appointment.status
+        })
+    except Appointment.DoesNotExist:
+        return JsonResponse({'error': 'Appointment not found'}, status=404)
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)
+
+
+@login_required
+def api_appointment_reschedule(request, appointment_id):
+    """API endpoint to reschedule appointment"""
+    from .models import Appointment
+
+    if request.method != 'POST':
+        return JsonResponse({'error': 'Method not allowed'}, status=405)
+
+    try:
+        data = json.loads(request.body)
+        new_date = data.get('appointment_date')
+        new_time = data.get('appointment_time')
+
+        if not new_date or not new_time:
+            return JsonResponse({'error': 'Missing required fields'}, status=400)
+
+        appointment = Appointment.objects.get(id=appointment_id)
+
+        # Create new appointment
+        new_appointment = Appointment.objects.create(
+            user=appointment.user,
+            appointment_type=appointment.appointment_type,
+            target_type=appointment.target_type,
+            target_id=appointment.target_id,
+            appointment_date=new_date,
+            appointment_time=new_time,
+            duration=appointment.duration,
+            location=appointment.location,
+            address=appointment.address,
+            notes=f'تم إعادة الجدولة من الموعد الأصلي: {appointment.appointment_date} {appointment.appointment_time}',
+            status=appointment.status,
+            priority=appointment.priority,
+            rescheduled_from=appointment
+        )
+
+        # Mark old appointment as rescheduled
+        appointment.status = 'rescheduled'
+        appointment.save()
+
+        return JsonResponse({
+            'success': True,
+            'new_appointment_id': new_appointment.id
+        })
+    except Appointment.DoesNotExist:
+        return JsonResponse({'error': 'Appointment not found'}, status=404)
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)
+
+
+@login_required
+def api_appointment_delete(request, appointment_id):
+    """API endpoint to delete appointment"""
+    from .models import Appointment
+
+    if request.method != 'POST':
+        return JsonResponse({'error': 'Method not allowed'}, status=405)
+
+    try:
+        appointment = Appointment.objects.get(id=appointment_id)
+        appointment.delete()
+
+        return JsonResponse({
+            'success': True
+        })
+    except Appointment.DoesNotExist:
+        return JsonResponse({'error': 'Appointment not found'}, status=404)
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)
+
+
+@login_required
+def api_users_list(request):
+    """API endpoint to get list of users"""
+    if request.method != 'GET':
+        return JsonResponse({'error': 'Method not allowed'}, status=405)
+
+    try:
+        users = User.objects.filter(is_active=True)
+        users_data = []
+
+        for user in users:
+            users_data.append({
+                'id': user.id,
+                'username': user.username,
+                'email': user.email,
+                'first_name': user.first_name,
+                'last_name': user.last_name,
+            })
+
+        return JsonResponse({
+            'success': True,
+            'users': users_data
+        })
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)
+
+
+@login_required
+def api_media_upload(request):
+    """API endpoint to upload media files"""
+    if request.method != 'POST':
+        return JsonResponse({'error': 'Method not allowed'}, status=405)
+
+    try:
+        import os
+        from django.conf import settings
+
+        media_type = request.POST.get('media_type', 'image')
+        file = request.FILES.get('file')
+
+        if not file:
+            return JsonResponse({'error': 'No file provided'}, status=400)
+
+        # Determine target directory
+        media_dirs = {
+            'image': 'assets/images',
+            'video': 'assets/video',
+            'audio': 'assets/audio',
+            'document': 'assets/documents'
+        }
+
+        target_dir = media_dirs.get(media_type, 'assets/images')
+
+        # Create directory if it doesn't exist
+        os.makedirs(target_dir, exist_ok=True)
+
+        # Save file
+        file_path = os.path.join(target_dir, file.name)
+        with open(file_path, 'wb+') as destination:
+            for chunk in file.chunks():
+                destination.write(chunk)
+
+        return JsonResponse({
+            'success': True,
+            'message': 'File uploaded successfully',
+            'path': file_path
+        })
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)
+
+
+@login_required
+def api_media_delete(request):
+    """API endpoint to delete media files"""
+    if request.method != 'POST':
+        return JsonResponse({'error': 'Method not allowed'}, status=405)
+
+    try:
+        import os
+
+        data = json.loads(request.body)
+        file_path = data.get('path')
+
+        if not file_path:
+            return JsonResponse({'error': 'No file path provided'}, status=400)
+
+        if os.path.exists(file_path):
+            os.remove(file_path)
+            return JsonResponse({
+                'success': True,
+                'message': 'File deleted successfully'
+            })
+        else:
+            return JsonResponse({'error': 'File not found'}, status=404)
     except Exception as e:
         return JsonResponse({'error': str(e)}, status=500)
 

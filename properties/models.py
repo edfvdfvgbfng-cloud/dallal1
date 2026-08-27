@@ -3,6 +3,7 @@ import uuid
 
 from django.conf import settings
 from django.contrib.auth.models import User
+from django.utils import timezone
 from django.db import models
 from django.db.models import Max, Q, Avg
 from django.db.models.signals import post_save, post_delete
@@ -9639,7 +9640,7 @@ class Appointment(models.Model):
         related_name='rescheduled_to', verbose_name='تم إعادة الجدولة من'
     )
     
-    created_at = models.DateTimeField(auto_now_add=True, verbose_name='تاريخ الإنشاء')
+    created_at = models.DateTimeField(default=timezone.now, verbose_name='تاريخ الإنشاء')
     
     updated_at = models.DateTimeField(auto_now=True, verbose_name='آخر تحديث')
     

@@ -2822,8 +2822,18 @@
         <span>إدارة الوسائط</span>
       </div>
       <h2>نظام إدارة الوسائط المتقدم</h2>
+      <div class="panel-actions">
+        <button class="btn btn-primary" onclick="showUploadMediaModal()">
+          <span class="btn-icon">➕</span>
+          رفع وسائط
+        </button>
+        <button class="btn btn-secondary" onclick="refreshMedia()">
+          <span class="btn-icon">🔄</span>
+          تحديث
+        </button>
+      </div>
     </div>
-    
+
     <!-- Media Statistics -->
     <div class="dashboard-stats">
       <div class="stat-card">
@@ -2855,16 +2865,23 @@
         </div>
       </div>
     </div>
-    
-    <!-- Media Actions -->
-    <div class="form-card" style="margin-top: 20px;">
-      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px;">
-        <button class="btn btn-primary" onclick="uploadMedia()">رفع وسائط</button>
-        <button class="btn btn-secondary" onclick="organizeMedia()">تنظيم الوسائط</button>
-        <button class="btn btn-warning" onclick="compressMedia()">ضغط الوسائط</button>
+
+    <!-- Media Filters -->
+    <div class="filters-container" style="margin-top: 20px;">
+      <div class="filter-group">
+        <select id="mediaTypeFilter" class="form-control" onchange="filterMedia()">
+          <option value="">جميع الأنواع</option>
+          <option value="image">صور</option>
+          <option value="video">فيديوهات</option>
+          <option value="audio">صوتيات</option>
+          <option value="document">مستندات</option>
+        </select>
+      </div>
+      <div class="filter-group">
+        <input type="text" id="mediaSearchInput" class="form-control" placeholder="بحث..." onkeyup="filterMedia()">
       </div>
     </div>
-    
+
     <!-- Media Grid -->
     <div id="media-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 15px; margin-top: 20px;">
       <div style="text-align: center; padding: 20px; color: #888;">جاري تحميل الوسائط...</div>
@@ -3158,8 +3175,18 @@
         <span>العقود</span>
       </div>
       <h2>نظام إدارة العقود المتقدم</h2>
+      <div class="panel-actions">
+        <button class="btn btn-primary" onclick="showCreateGeneralContractModal()">
+          <span class="btn-icon">➕</span>
+          عقد جديد
+        </button>
+        <button class="btn btn-secondary" onclick="refreshGeneralContracts()">
+          <span class="btn-icon">🔄</span>
+          تحديث
+        </button>
+      </div>
     </div>
-    
+
     <!-- Contract Statistics -->
     <div class="dashboard-stats">
       <div class="stat-card">
@@ -3191,35 +3218,34 @@
         </div>
       </div>
     </div>
-    
-    <!-- Create Contract -->
-    <div class="form-card" style="margin-top: 20px;">
-      <h3>إنشاء عقد جديد</h3>
-      <div class="form-row">
-        <div class="form-group">
-          <label>العنوان</label>
-          <input type="text" class="form-control" id="contractTitle" placeholder="عنوان العقد...">
-        </div>
-        <div class="form-group">
-          <label>النوع</label>
-          <select class="form-control" id="contractType">
-            <option value="employment">توظيف</option>
-            <option value="service">خدمة</option>
-            <option value="lease">إيجار</option>
-            <option value="purchase">شراء</option>
-          </select>
-        </div>
-        <div class="form-group">
-          <label>القيمة</label>
-          <input type="number" class="form-control" id="contractValue" placeholder="القيمة...">
-        </div>
-        <div class="form-group">
-          <label>&nbsp;</label>
-          <button class="btn btn-primary" onclick="createContract()">إنشاء</button>
-        </div>
+
+    <!-- Contracts Filters -->
+    <div class="filters-container" style="margin-top: 20px;">
+      <div class="filter-group">
+        <select id="generalContractTypeFilter" class="form-control" onchange="filterGeneralContracts()">
+          <option value="">جميع الأنواع</option>
+          <option value="employment">توظيف</option>
+          <option value="service">خدمة</option>
+          <option value="lease">إيجار</option>
+          <option value="purchase">شراء</option>
+          <option value="partnership">شراكة</option>
+        </select>
+      </div>
+      <div class="filter-group">
+        <select id="generalContractStatusFilter" class="form-control" onchange="filterGeneralContracts()">
+          <option value="">جميع الحالات</option>
+          <option value="draft">مسودة</option>
+          <option value="active">نشط</option>
+          <option value="expired">منتهي</option>
+          <option value="terminated">منهي</option>
+          <option value="renewed">مجدد</option>
+        </select>
+      </div>
+      <div class="filter-group">
+        <input type="text" id="generalContractSearchInput" class="form-control" placeholder="بحث..." onkeyup="filterGeneralContracts()">
       </div>
     </div>
-    
+
     <!-- Contracts List -->
     <div id="contracts-list" style="max-height: 400px; overflow-y: auto; margin-top: 20px;">
       <div style="text-align: center; padding: 20px; color: #888;">جاري تحميل العقود...</div>
@@ -3390,6 +3416,16 @@
         <span>المواعيد</span>
       </div>
       <h2>نظام إدارة الجولات والمواعيد</h2>
+      <div class="panel-actions">
+        <button class="btn btn-primary" onclick="showCreateAppointmentModal()">
+          <span class="btn-icon">➕</span>
+          موعد جديد
+        </button>
+        <button class="btn btn-secondary" onclick="refreshSchedules()">
+          <span class="btn-icon">🔄</span>
+          تحديث
+        </button>
+      </div>
     </div>
     
     <!-- Schedules Statistics -->
@@ -3421,6 +3457,37 @@
           <div class="stat-number" id="todayAppointments">0</div>
           <div class="stat-label">اليوم</div>
         </div>
+      </div>
+    </div>
+    
+    <!-- Schedules Filters -->
+    <div class="filters-container" style="margin-top: 20px;">
+      <div class="filter-group">
+        <select id="appointmentTypeFilter" class="form-control" onchange="filterSchedules()">
+          <option value="">جميع الأنواع</option>
+          <option value="property_viewing">معاينة عقار</option>
+          <option value="phone_call">مكالمة هاتفية</option>
+          <option value="meeting">اجتماع</option>
+          <option value="video_call">مكالمة فيديو</option>
+          <option value="office_visit">زيارة المكتب</option>
+        </select>
+      </div>
+      <div class="filter-group">
+        <select id="appointmentStatusFilter" class="form-control" onchange="filterSchedules()">
+          <option value="">جميع الحالات</option>
+          <option value="pending">قيد الانتظار</option>
+          <option value="confirmed">مؤكد</option>
+          <option value="completed">مكتمل</option>
+          <option value="cancelled">ملغي</option>
+          <option value="no_show">لم يحضر</option>
+          <option value="rescheduled">تم إعادة الجدولة</option>
+        </select>
+      </div>
+      <div class="filter-group">
+        <input type="date" id="appointmentDateFilter" class="form-control" onchange="filterSchedules()">
+      </div>
+      <div class="filter-group">
+        <input type="text" id="appointmentSearchInput" class="form-control" placeholder="بحث..." onkeyup="filterSchedules()">
       </div>
     </div>
     
@@ -7450,36 +7517,172 @@ document.addEventListener('DOMContentLoaded', function() {
   function renderMediaGrid(mediaItems) {
     const container = document.getElementById('media-grid');
     if (!container) return;
-    
+
     container.innerHTML = '';
-    
+
+    if (mediaItems.length === 0) {
+      container.innerHTML = '<div style="text-align: center; padding: 20px; color: #888; grid-column: 1/-1;">لا توجد وسائط حالياً</div>';
+      return;
+    }
+
     mediaItems.forEach(item => {
       const div = document.createElement('div');
       div.className = 'media-item';
-      div.style.cssText = 'border: 1px solid #ddd; border-radius: 8px; padding: 10px; text-align: center;';
-      
+      div.style.cssText = 'border: 1px solid #ddd; border-radius: 8px; padding: 10px; text-align: center; position: relative;';
+
+      let preview = '';
       if (item.type === 'image') {
-        div.innerHTML = `
+        preview = `
           <img src="${item.url}" alt="${item.name}" style="width: 100%; height: 100px; object-fit: cover; border-radius: 4px;">
-          <div style="margin-top: 5px; font-size: 12px;">${item.name}</div>
-          <div style="font-size: 10px; color: #888;">${(item.size / 1024).toFixed(2)} KB</div>
         `;
       } else {
-        div.innerHTML = `
+        preview = `
           <div style="width: 100%; height: 100px; background: #f5f5f5; display: flex; align-items: center; justify-content: center; border-radius: 4px;">
             <span style="font-size: 40px;">${item.type === 'video' ? '🎥' : item.type === 'audio' ? '🎵' : '📄'}</span>
           </div>
-          <div style="margin-top: 5px; font-size: 12px;">${item.name}</div>
-          <div style="font-size: 10px; color: #888;">${(item.size / 1024).toFixed(2)} KB</div>
         `;
       }
-      
+
+      div.innerHTML = `
+        ${preview}
+        <div style="margin-top: 5px; font-size: 12px; word-break: break-all;">${item.name}</div>
+        <div style="font-size: 10px; color: #888;">${(item.size / 1024).toFixed(2)} KB</div>
+        <div style="margin-top: 5px; display: flex; gap: 5px; justify-content: center;">
+          <button class="btn btn-sm btn-primary" onclick="viewMedia('${item.url}')">عرض</button>
+          <button class="btn btn-sm btn-danger" onclick="deleteMedia('${item.path}')">حذف</button>
+        </div>
+      `;
+
       container.appendChild(div);
     });
   }
 
+  function filterMedia() {
+    const typeFilter = document.getElementById('mediaTypeFilter').value;
+    const searchInput = document.getElementById('mediaSearchInput').value.toLowerCase();
+
+    fetch('/api/media/management/')
+      .then(response => response.json())
+      .then(data => {
+        if (data.success) {
+          let filteredMedia = data.media_items;
+
+          if (typeFilter) {
+            filteredMedia = filteredMedia.filter(m => m.type === typeFilter);
+          }
+
+          if (searchInput) {
+            filteredMedia = filteredMedia.filter(m =>
+              m.name.toLowerCase().includes(searchInput)
+            );
+          }
+
+          renderMediaGrid(filteredMedia);
+        }
+      });
+  }
+
+  function refreshMedia() {
+    loadMedia();
+  }
+
+  function showUploadMediaModal() {
+    const modal = document.createElement('div');
+    modal.className = 'modal';
+    modal.style.cssText = 'position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); display: flex; justify-content: center; align-items: center; z-index: 1000;';
+
+    modal.innerHTML = `
+      <div style="background: white; padding: 20px; border-radius: 8px; max-width: 500px; width: 90%;">
+        <h3>رفع وسائط جديدة</h3>
+        <form id="uploadMediaForm" onsubmit="handleMediaUpload(event)">
+          <div class="form-group">
+            <label>نوع الوسائط</label>
+            <select name="media_type" class="form-control" required>
+              <option value="image">صورة</option>
+              <option value="video">فيديو</option>
+              <option value="audio">صوت</option>
+              <option value="document">مستند</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>الملف</label>
+            <input type="file" name="file" class="form-control" required>
+          </div>
+          <div class="form-group">
+            <label>الوصف (اختياري)</label>
+            <textarea name="description" class="form-control" rows="2"></textarea>
+          </div>
+          <div style="display: flex; gap: 10px; justify-content: flex-end; margin-top: 20px;">
+            <button type="button" class="btn btn-secondary" onclick="closeModal()">إلغاء</button>
+            <button type="submit" class="btn btn-primary">رفع</button>
+          </div>
+        </form>
+      </div>
+    `;
+
+    document.body.appendChild(modal);
+  }
+
+  function handleMediaUpload(event) {
+    event.preventDefault();
+    const form = event.target;
+    const formData = new FormData(form);
+
+    fetch('/api/media/upload/', {
+      method: 'POST',
+      headers: {
+        'X-CSRFToken': getCsrfToken(),
+      },
+      body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+      if (data.success) {
+        alert('تم رفع الوسائط بنجاح!');
+        closeModal();
+        refreshMedia();
+      } else {
+        alert('خطأ: ' + data.error);
+      }
+    })
+    .catch(error => {
+      console.error('Error uploading media:', error);
+      alert('حدث خطأ أثناء رفع الوسائط');
+    });
+  }
+
+  function viewMedia(url) {
+    window.open(url, '_blank');
+  }
+
+  function deleteMedia(path) {
+    if (confirm('هل أنت متأكد من حذف هذا الملف؟')) {
+      fetch('/api/media/delete/', {
+        method: 'POST',
+        headers: {
+          'X-CSRFToken': getCsrfToken(),
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ path: path })
+      })
+      .then(response => response.json())
+      .then(data => {
+        if (data.success) {
+          alert('تم حذف الملف بنجاح!');
+          refreshMedia();
+        } else {
+          alert('خطأ: ' + data.error);
+        }
+      })
+      .catch(error => {
+        console.error('Error deleting media:', error);
+        alert('حدث خطأ أثناء حذف الملف');
+      });
+    }
+  }
+
   function uploadMedia() {
-    alert('ميزة رفع الوسائط قيد التطوير');
+    showUploadMediaModal();
   }
 
   function organizeMedia() {
@@ -8470,33 +8673,199 @@ document.addEventListener('DOMContentLoaded', function() {
   function renderContracts(contracts) {
     const container = document.getElementById('contracts-list');
     if (!container) return;
-    
+
     container.innerHTML = '';
-    
+
+    if (contracts.length === 0) {
+      container.innerHTML = '<div style="text-align: center; padding: 20px; color: #888;">لا توجد عقود حالياً</div>';
+      return;
+    }
+
     contracts.forEach(contract => {
       const item = document.createElement('div');
       item.className = 'activity-item';
+      item.style.cssText = 'display: flex; gap: 10px; padding: 15px; border-bottom: 1px solid #eee; align-items: center; cursor: pointer;';
+      item.onclick = () => showGeneralContractDetail(contract.id);
+
+      const statusColors = {
+        'مسودة': '#9e9e9e',
+        'نشط': '#4caf50',
+        'منتهي': '#795548',
+        'منهي': '#f44336',
+        'مجدد': '#2196f3'
+      };
+
+      const statusColor = statusColors[contract.status] || '#666';
+
       item.innerHTML = `
-        <div style="flex: 1;"><strong>${contract.contract_number}</strong></div>
-        <div style="flex: 1;">${contract.title}</div>
-        <div style="flex: 1;">${contract.type}</div>
-        <div style="flex: 1;">${contract.status}</div>
-        <div style="flex: 1;">$${contract.value.toLocaleString()}</div>
+        <div style="flex: 0 0 120px;"><strong>${contract.contract_number}</strong></div>
+        <div style="flex: 0 0 150px;">${contract.title}</div>
+        <div style="flex: 0 0 100px;">${contract.type}</div>
+        <div style="flex: 0 0 100px; color: ${statusColor}; font-weight: bold;">${contract.status}</div>
+        <div style="flex: 0 0 100px;">$${contract.value.toLocaleString()}</div>
+        <div style="flex: 0 0 100px;">${contract.start_date}</div>
+        <div style="flex: 0 0 100px; text-align: left;">
+          <button class="btn btn-sm btn-primary" onclick="event.stopPropagation(); showGeneralContractDetail(${contract.id})">عرض</button>
+          <button class="btn btn-sm btn-secondary" onclick="event.stopPropagation(); editGeneralContract(${contract.id})">تعديل</button>
+          <button class="btn btn-sm btn-danger" onclick="event.stopPropagation(); deleteGeneralContract(${contract.id})">حذف</button>
+        </div>
       `;
       container.appendChild(item);
     });
+  }
+
+  function filterGeneralContracts() {
+    const typeFilter = document.getElementById('generalContractTypeFilter').value;
+    const statusFilter = document.getElementById('generalContractStatusFilter').value;
+    const searchInput = document.getElementById('generalContractSearchInput').value.toLowerCase();
+
+    fetch('/api/contracts/management/')
+      .then(response => response.json())
+      .then(data => {
+        if (data.success) {
+          let filteredContracts = data.contracts;
+
+          if (typeFilter) {
+            filteredContracts = filteredContracts.filter(c => c.type === typeFilter);
+          }
+
+          if (statusFilter) {
+            filteredContracts = filteredContracts.filter(c => c.status === statusFilter);
+          }
+
+          if (searchInput) {
+            filteredContracts = filteredContracts.filter(c =>
+              c.contract_number.toLowerCase().includes(searchInput) ||
+              c.title.toLowerCase().includes(searchInput) ||
+              c.party_a.toLowerCase().includes(searchInput) ||
+              c.party_b.toLowerCase().includes(searchInput)
+            );
+          }
+
+          renderContracts(filteredContracts);
+        }
+      });
+  }
+
+  function refreshGeneralContracts() {
+    loadContracts();
+  }
+
+  function showCreateGeneralContractModal() {
+    const modal = document.createElement('div');
+    modal.className = 'modal';
+    modal.style.cssText = 'position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); display: flex; justify-content: center; align-items: center; z-index: 1000;';
+
+    modal.innerHTML = `
+      <div style="background: white; padding: 20px; border-radius: 8px; max-width: 600px; width: 90%; max-height: 90vh; overflow-y: auto;">
+        <h3>إنشاء عقد جديد</h3>
+        <form id="createGeneralContractForm" onsubmit="createGeneralContract(event)">
+          <div class="form-group">
+            <label>عنوان العقد</label>
+            <input type="text" name="title" class="form-control" required>
+          </div>
+          <div class="form-group">
+            <label>نوع العقد</label>
+            <select name="type" class="form-control" required>
+              <option value="employment">توظيف</option>
+              <option value="service">خدمة</option>
+              <option value="lease">إيجار</option>
+              <option value="purchase">شراء</option>
+              <option value="partnership">شراكة</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>الطرف الأول</label>
+            <input type="text" name="party_a" class="form-control" required>
+          </div>
+          <div class="form-group">
+            <label>الطرف الثاني</label>
+            <input type="text" name="party_b" class="form-control" required>
+          </div>
+          <div class="form-group">
+            <label>القيمة</label>
+            <input type="number" name="value" class="form-control" required>
+          </div>
+          <div class="form-group">
+            <label>تاريخ البدء</label>
+            <input type="date" name="start_date" class="form-control" required>
+          </div>
+          <div class="form-group">
+            <label>تاريخ الانتهاء</label>
+            <input type="date" name="end_date" class="form-control">
+          </div>
+          <div style="display: flex; gap: 10px; justify-content: flex-end; margin-top: 20px;">
+            <button type="button" class="btn btn-secondary" onclick="closeModal()">إلغاء</button>
+            <button type="submit" class="btn btn-primary">إنشاء العقد</button>
+          </div>
+        </form>
+      </div>
+    `;
+
+    document.body.appendChild(modal);
+  }
+
+  function createGeneralContract(event) {
+    event.preventDefault();
+    const form = event.target;
+    const formData = new FormData(form);
+
+    fetch('/api/contracts/management/', {
+      method: 'POST',
+      headers: {
+        'X-CSRFToken': getCsrfToken(),
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        title: formData.get('title'),
+        type: formData.get('type'),
+        party_a: formData.get('party_a'),
+        party_b: formData.get('party_b'),
+        value: parseInt(formData.get('value')),
+        start_date: formData.get('start_date'),
+        end_date: formData.get('end_date')
+      })
+    })
+    .then(response => response.json())
+    .then(data => {
+      if (data.success) {
+        alert('تم إنشاء العقد بنجاح!');
+        closeModal();
+        refreshGeneralContracts();
+      } else {
+        alert('خطأ: ' + data.error);
+      }
+    })
+    .catch(error => {
+      console.error('Error creating contract:', error);
+      alert('حدث خطأ أثناء إنشاء العقد');
+    });
+  }
+
+  function showGeneralContractDetail(contractId) {
+    alert('ميزة عرض التفاصيل قيد التطوير');
+  }
+
+  function editGeneralContract(contractId) {
+    alert('ميزة التعديل قيد التطوير');
+  }
+
+  function deleteGeneralContract(contractId) {
+    if (confirm('هل أنت متأكد من حذف هذا العقد؟')) {
+      alert('ميزة الحذف قيد التطوير');
+    }
   }
 
   function createContract() {
     const title = document.getElementById('contractTitle').value;
     const type = document.getElementById('contractType').value;
     const value = document.getElementById('contractValue').value;
-    
+
     if (!title || !value) {
       alert('يرجى إدخال العنوان والقيمة');
       return;
     }
-    
+
     fetch('/api/contracts/management/', {
       method: 'POST',
       headers: {
@@ -8896,37 +9265,369 @@ document.addEventListener('DOMContentLoaded', function() {
   function renderRealEstateSchedules(schedules) {
     const container = document.getElementById('real-estate-schedules-list');
     if (!container) return;
-    
+
     container.innerHTML = '';
-    
+
     if (schedules.length === 0) {
       container.innerHTML = '<div style="text-align: center; padding: 20px; color: #888;">لا توجد مواعيد حالياً</div>';
       return;
     }
-    
+
     schedules.forEach(schedule => {
       const item = document.createElement('div');
       item.className = 'activity-item';
-      item.style.cssText = 'display: flex; gap: 10px; padding: 10px; border-bottom: 1px solid #eee; align-items: center;';
-      
+      item.style.cssText = 'display: flex; gap: 10px; padding: 15px; border-bottom: 1px solid #eee; align-items: center; cursor: pointer;';
+      item.onclick = () => showAppointmentDetail(schedule.id);
+
       const statusColors = {
         'قيد الانتظار': '#ff9800',
         'مؤكد': '#4caf50',
         'مكتمل': '#2196f3',
-        'ملغي': '#f44336'
+        'ملغي': '#f44336',
+        'لم يحضر': '#9e9e9e',
+        'تم إعادة الجدولة': '#9c27b0'
       };
-      
+
       const statusColor = statusColors[schedule.status] || '#666';
-      
+
       item.innerHTML = `
-        <div style="flex: 1;"><strong>${schedule.type}</strong></div>
-        <div style="flex: 1; color: ${statusColor};">${schedule.status}</div>
-        <div style="flex: 1;">${schedule.date}</div>
-        <div style="flex: 1;">${schedule.time}</div>
-        <div style="flex: 1;">${schedule.user}</div>
+        <div style="flex: 0 0 120px;"><strong>${schedule.type}</strong></div>
+        <div style="flex: 0 0 100px; color: ${statusColor}; font-weight: bold;">${schedule.status}</div>
+        <div style="flex: 0 0 100px;">${schedule.date}</div>
+        <div style="flex: 0 0 80px;">${schedule.time}</div>
+        <div style="flex: 0 0 150px;">${schedule.user}</div>
+        <div style="flex: 0 0 100px;">${schedule.duration} دقيقة</div>
+        <div style="flex: 0 0 100px; text-align: left;">
+          <button class="btn btn-sm btn-primary" onclick="event.stopPropagation(); showAppointmentDetail(${schedule.id})">عرض</button>
+          <button class="btn btn-sm btn-secondary" onclick="event.stopPropagation(); editAppointment(${schedule.id})">تعديل</button>
+          <button class="btn btn-sm btn-danger" onclick="event.stopPropagation(); deleteAppointment(${schedule.id})">حذف</button>
+        </div>
       `;
       container.appendChild(item);
     });
+  }
+
+  function filterSchedules() {
+    const typeFilter = document.getElementById('appointmentTypeFilter').value;
+    const statusFilter = document.getElementById('appointmentStatusFilter').value;
+    const dateFilter = document.getElementById('appointmentDateFilter').value;
+    const searchInput = document.getElementById('appointmentSearchInput').value.toLowerCase();
+
+    fetch('/api/real-estate/schedules/')
+      .then(response => response.json())
+      .then(data => {
+        if (data.success) {
+          let filteredSchedules = data.schedules;
+
+          if (typeFilter) {
+            filteredSchedules = filteredSchedules.filter(s => s.appointment_type === typeFilter);
+          }
+
+          if (statusFilter) {
+            filteredSchedules = filteredSchedules.filter(s => s.status === statusFilter);
+          }
+
+          if (dateFilter) {
+            filteredSchedules = filteredSchedules.filter(s => s.appointment_date === dateFilter);
+          }
+
+          if (searchInput) {
+            filteredSchedules = filteredSchedules.filter(s =>
+              s.user.toLowerCase().includes(searchInput) ||
+              s.notes.toLowerCase().includes(searchInput)
+            );
+          }
+
+          renderRealEstateSchedules(filteredSchedules);
+        }
+      });
+  }
+
+  function refreshSchedules() {
+    loadRealEstateSchedules();
+  }
+
+  function showCreateAppointmentModal() {
+    const modal = document.createElement('div');
+    modal.className = 'modal';
+    modal.style.cssText = 'position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); display: flex; justify-content: center; align-items: center; z-index: 1000;';
+
+    modal.innerHTML = `
+      <div style="background: white; padding: 20px; border-radius: 8px; max-width: 600px; width: 90%; max-height: 90vh; overflow-y: auto;">
+        <h3>إنشاء موعد جديد</h3>
+        <form id="createAppointmentForm" onsubmit="createAppointment(event)">
+          <div class="form-group">
+            <label>نوع الموعد</label>
+            <select name="appointment_type" class="form-control" required>
+              <option value="property_viewing">معاينة عقار</option>
+              <option value="phone_call">مكالمة هاتفية</option>
+              <option value="meeting">اجتماع</option>
+              <option value="video_call">مكالمة فيديو</option>
+              <option value="office_visit">زيارة المكتب</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>المستخدم</label>
+            <select name="user" class="form-control" required>
+              <option value="">اختر المستخدم</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>تاريخ الموعد</label>
+            <input type="date" name="appointment_date" class="form-control" required>
+          </div>
+          <div class="form-group">
+            <label>وقت الموعد</label>
+            <input type="time" name="appointment_time" class="form-control" required>
+          </div>
+          <div class="form-group">
+            <label>المدة (دقائق)</label>
+            <input type="number" name="duration" class="form-control" value="30" required>
+          </div>
+          <div class="form-group">
+            <label>الموقع</label>
+            <input type="text" name="location" class="form-control" placeholder="الموقع">
+          </div>
+          <div class="form-group">
+            <label>العنوان</label>
+            <textarea name="address" class="form-control" rows="2"></textarea>
+          </div>
+          <div class="form-group">
+            <label>ملاحظات</label>
+            <textarea name="notes" class="form-control" rows="2"></textarea>
+          </div>
+          <div class="form-group">
+            <label>الأولوية</label>
+            <select name="priority" class="form-control">
+              <option value="low">منخفض</option>
+              <option value="medium" selected>متوسط</option>
+              <option value="high">عالي</option>
+              <option value="urgent">عاجل</option>
+            </select>
+          </div>
+          <div style="display: flex; gap: 10px; justify-content: flex-end; margin-top: 20px;">
+            <button type="button" class="btn btn-secondary" onclick="closeModal()">إلغاء</button>
+            <button type="submit" class="btn btn-primary">إنشاء الموعد</button>
+          </div>
+        </form>
+      </div>
+    `;
+
+    document.body.appendChild(modal);
+    loadUserOptions();
+  }
+
+  function createAppointment(event) {
+    event.preventDefault();
+    const form = event.target;
+    const formData = new FormData(form);
+
+    fetch('/api/appointments/create/', {
+      method: 'POST',
+      headers: {
+        'X-CSRFToken': getCsrfToken(),
+        'Content-Type': 'application/x-www-form-urlencoded',
+      },
+      body: new URLSearchParams(formData)
+    })
+    .then(response => response.json())
+    .then(data => {
+      if (data.success) {
+        alert('تم إنشاء الموعد بنجاح!');
+        closeModal();
+        refreshSchedules();
+      } else {
+        alert('خطأ: ' + data.error);
+      }
+    })
+    .catch(error => {
+      console.error('Error creating appointment:', error);
+      alert('حدث خطأ أثناء إنشاء الموعد');
+    });
+  }
+
+  function showAppointmentDetail(appointmentId) {
+    fetch(`/api/appointments/${appointmentId}/`)
+      .then(response => response.json())
+      .then(data => {
+        if (data.success) {
+          displayAppointmentDetail(data.appointment);
+        } else {
+          alert('خطأ: ' + data.error);
+        }
+      })
+      .catch(error => {
+        console.error('Error loading appointment detail:', error);
+        alert('حدث خطأ أثناء تحميل تفاصيل الموعد');
+      });
+  }
+
+  function displayAppointmentDetail(appointment) {
+    const modal = document.createElement('div');
+    modal.className = 'modal';
+    modal.style.cssText = 'position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); display: flex; justify-content: center; align-items: center; z-index: 1000;';
+
+    const statusColors = {
+      'قيد الانتظار': '#ff9800',
+      'مؤكد': '#4caf50',
+      'مكتمل': '#2196f3',
+      'ملغي': '#f44336',
+      'لم يحضر': '#9e9e9e',
+      'تم إعادة الجدولة': '#9c27b0'
+    };
+
+    const statusColor = statusColors[appointment.status_display] || '#666';
+
+    modal.innerHTML = `
+      <div style="background: white; padding: 20px; border-radius: 8px; max-width: 600px; width: 90%; max-height: 90vh; overflow-y: auto;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+          <h3>تفاصيل الموعد</h3>
+          <button class="btn btn-secondary" onclick="closeModal()">إغلاق</button>
+        </div>
+
+        <div style="background: #f5f5f5; padding: 15px; border-radius: 8px; margin-bottom: 15px;">
+          <p><strong>النوع:</strong> ${appointment.appointment_type_display}</p>
+          <p><strong>الحالة:</strong> <span style="color: ${statusColor}; font-weight: bold;">${appointment.status_display}</span></p>
+          <p><strong>التاريخ:</strong> ${appointment.appointment_date}</p>
+          <p><strong>الوقت:</strong> ${appointment.appointment_time}</p>
+          <p><strong>المدة:</strong> ${appointment.duration} دقيقة</p>
+          <p><strong>الأولوية:</strong> ${appointment.priority_display}</p>
+        </div>
+
+        <div style="background: #f5f5f5; padding: 15px; border-radius: 8px; margin-bottom: 15px;">
+          <p><strong>المستخدم:</strong> ${appointment.user_username}</p>
+          <p><strong>الموقع:</strong> ${appointment.location || 'غير محدد'}</p>
+          <p><strong>العنوان:</strong> ${appointment.address || 'غير محدد'}</p>
+        </div>
+
+        <div style="background: #f5f5f5; padding: 15px; border-radius: 8px; margin-bottom: 15px;">
+          <p><strong>ملاحظات:</strong></p>
+          <p>${appointment.notes || 'لا توجد ملاحظات'}</p>
+        </div>
+
+        <div style="display: flex; gap: 10px; justify-content: flex-end;">
+          <button class="btn btn-primary" onclick="confirmAppointment(${appointment.id})">تأكيد</button>
+          <button class="btn btn-warning" onclick="rescheduleAppointment(${appointment.id})">إعادة جدولة</button>
+          <button class="btn btn-danger" onclick="cancelAppointment(${appointment.id})">إلغاء</button>
+        </div>
+      </div>
+    `;
+
+    document.body.appendChild(modal);
+  }
+
+  function confirmAppointment(appointmentId) {
+    fetch(`/api/appointments/${appointmentId}/confirm/`, {
+      method: 'POST',
+      headers: {
+        'X-CSRFToken': getCsrfToken(),
+      }
+    })
+    .then(response => response.json())
+    .then(data => {
+      if (data.success) {
+        alert('تم تأكيد الموعد بنجاح!');
+        closeModal();
+        refreshSchedules();
+      } else {
+        alert('خطأ: ' + data.error);
+      }
+    });
+  }
+
+  function cancelAppointment(appointmentId) {
+    if (confirm('هل أنت متأكد من إلغاء هذا الموعد؟')) {
+      fetch(`/api/appointments/${appointmentId}/cancel/`, {
+        method: 'POST',
+        headers: {
+          'X-CSRFToken': getCsrfToken(),
+        }
+      })
+      .then(response => response.json())
+      .then(data => {
+        if (data.success) {
+          alert('تم إلغاء الموعد بنجاح!');
+          closeModal();
+          refreshSchedules();
+        } else {
+          alert('خطأ: ' + data.error);
+        }
+      });
+    }
+  }
+
+  function rescheduleAppointment(appointmentId) {
+    const newDate = prompt('أدخل التاريخ الجديد (YYYY-MM-DD):');
+    if (newDate) {
+      const newTime = prompt('أدخل الوقت الجديد (HH:MM):');
+      if (newTime) {
+        fetch(`/api/appointments/${appointmentId}/reschedule/`, {
+          method: 'POST',
+          headers: {
+            'X-CSRFToken': getCsrfToken(),
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            appointment_date: newDate,
+            appointment_time: newTime
+          })
+        })
+        .then(response => response.json())
+        .then(data => {
+          if (data.success) {
+            alert('تم إعادة جدولة الموعد بنجاح!');
+            closeModal();
+            refreshSchedules();
+          } else {
+            alert('خطأ: ' + data.error);
+          }
+        });
+      }
+    }
+  }
+
+  function editAppointment(appointmentId) {
+    // Similar to create but with pre-filled data
+    alert('ميزة التعديل قيد التطوير');
+  }
+
+  function deleteAppointment(appointmentId) {
+    if (confirm('هل أنت متأكد من حذف هذا الموعد؟')) {
+      fetch(`/api/appointments/${appointmentId}/delete/`, {
+        method: 'POST',
+        headers: {
+          'X-CSRFToken': getCsrfToken(),
+        }
+      })
+      .then(response => response.json())
+      .then(data => {
+        if (data.success) {
+          alert('تم حذف الموعد بنجاح!');
+          refreshSchedules();
+        } else {
+          alert('خطأ: ' + data.error);
+        }
+      });
+    }
+  }
+
+  function loadUserOptions() {
+    // Load users for the select dropdown
+    fetch('/api/users/')
+      .then(response => response.json())
+      .then(data => {
+        if (data.success) {
+          const select = document.querySelector('select[name="user"]');
+          if (select) {
+            data.users.forEach(user => {
+              const option = document.createElement('option');
+              option.value = user.id;
+              option.textContent = user.username;
+              select.appendChild(option);
+            });
+          }
+        }
+      });
   }
 
   function loadRealEstateContracts() {
