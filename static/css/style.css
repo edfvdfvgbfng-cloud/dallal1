@@ -360,11 +360,19 @@ svg {
     gap: var(--spacing-sm);
     display: flex;
     align-items: center;
+    flex-wrap: nowrap;
   }
 
   .nav-links a {
     font-size: 0.85rem;
     padding: 6px 10px;
+    white-space: nowrap;
+  }
+
+  .nav-links .btn {
+    display: inline-flex !important;
+    font-size: 0.75rem !important;
+    padding: 6px 12px !important;
   }
 }
   bottom: -4px;
@@ -1312,6 +1320,10 @@ svg {
   padding: 8px 16px;
   font-size: 0.9rem;
   min-height: 36px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  white-space: nowrap;
 }
 
 .btn-lg {
@@ -3111,11 +3123,19 @@ svg {
     display: flex;
     align-items: center;
     gap: 6px;
+    flex-wrap: nowrap;
   }
 
   .nav-links a {
     font-size: 0.75rem;
     padding: 5px 8px;
+    white-space: nowrap;
+  }
+
+  .nav-links .btn {
+    display: inline-flex !important;
+    font-size: 0.7rem !important;
+    padding: 5px 10px !important;
   }
 
   .nav-container {
@@ -3286,11 +3306,19 @@ svg {
     display: flex;
     align-items: center;
     gap: 5px;
+    flex-wrap: nowrap;
   }
 
   .nav-links a {
     font-size: 0.7rem;
     padding: 4px 6px;
+    white-space: nowrap;
+  }
+
+  .nav-links .btn {
+    display: inline-flex !important;
+    font-size: 0.65rem !important;
+    padding: 4px 8px !important;
   }
 
   .hero h1 {
@@ -3341,11 +3369,19 @@ svg {
     display: flex;
     align-items: center;
     gap: 4px;
+    flex-wrap: nowrap;
   }
 
   .nav-links a {
     font-size: 0.65rem;
     padding: 3px 5px;
+    white-space: nowrap;
+  }
+
+  .nav-links .btn {
+    display: inline-flex !important;
+    font-size: 0.6rem !important;
+    padding: 3px 6px !important;
   }
 
   .navbar {
@@ -3378,11 +3414,61 @@ svg {
     display: flex;
     align-items: center;
     gap: 3px;
+    flex-wrap: nowrap;
   }
 
   .nav-links a {
     font-size: 0.6rem;
     padding: 3px 4px;
+    white-space: nowrap;
+  }
+
+  .nav-links .btn {
+    display: inline-flex !important;
+    font-size: 0.55rem !important;
+    padding: 2px 5px !important;
+  }
+}
+
+/* Very small screens - ensure buttons visible */
+@media (max-width: 280px) {
+  .nav-container {
+    padding: 3px 6px;
+    height: 45px;
+  }
+
+  .logo {
+    font-size: 0.8rem;
+    flex-shrink: 0;
+  }
+
+  .logo img {
+    height: 26px !important;
+    width: auto !important;
+  }
+
+  .logo span {
+    font-size: 0.75rem;
+  }
+
+  .nav-links {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+    flex-wrap: nowrap;
+  }
+
+  .nav-links a {
+    font-size: 0.55rem;
+    padding: 2px 4px;
+    white-space: nowrap;
+  }
+
+  .nav-links .btn {
+    display: inline-flex !important;
+    font-size: 0.5rem !important;
+    padding: 2px 4px !important;
+    min-width: auto !important;
   }
 }
 
@@ -3870,7 +3956,8 @@ svg {
 
   .btn-sm {
     min-height: 36px;
-    padding: 8px 16px;
+    padding: 6px 12px;
+    font-size: 0.8rem;
   }
 
   .btn-lg {
@@ -4079,6 +4166,8 @@ svg {
   .btn-sm {
     min-height: 36px;
     min-width: 36px;
+    padding: 6px 12px;
+    font-size: 0.8rem;
   }
 
   input, select, textarea {
