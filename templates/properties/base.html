@@ -972,7 +972,6 @@
         <span>{% if site_settings %}{{ site_settings.site_name }}{% else %}دلال{% endif %}</span>
       </a>
       <ul class="nav-links">
-        <li><a href="{% url 'home' %}" data-nav="home">الرئيسية</a></li>
         {% if request.user.is_authenticated %}
         <li><a href="/dashboard/" data-nav="dashboard">لوحة التحكم</a></li>
         <li><a href="{% url 'logout' %}">خروج</a></li>
