@@ -16,6 +16,93 @@
 <a href="{% url 'dashboard' %}" class="btn btn-outline btn-sm">← لوحة التحكم</a>
 {% endblock %}
 
+{% block dashboard_content %}
+<!-- Quick Category Actions -->
+<div class="category-buttons" style="margin-bottom: 2rem;">
+  <a href="/add/dynamic/" class="category-btn" style="text-decoration: none;">
+    <span class="btn-icon">🏠</span>
+    <span class="btn-text">عقارات داخل العراق</span>
+  </a>
+  <a href="/properties-outside-iraq/add/" class="category-btn" style="text-decoration: none;">
+    <span class="btn-icon">🌍</span>
+    <span class="btn-text">عقارات خارج العراق</span>
+  </a>
+  <a href="/hotels/create/inside-iraq/" class="category-btn" style="text-decoration: none;">
+    <span class="btn-icon">🏨🇮🇶</span>
+    <span class="btn-text">فنادق داخل العراق</span>
+  </a>
+  <a href="/hotels/create/outside-iraq/" class="category-btn" style="text-decoration: none;">
+    <span class="btn-icon">🏨🌍</span>
+    <span class="btn-text">فنادق خارج العراق</span>
+  </a>
+  <a href="/resorts-inside-iraq/create/" class="category-btn" style="text-decoration: none;">
+    <span class="btn-icon">🏝️🇮🇶</span>
+    <span class="btn-text">منتجعات داخل العراق</span>
+  </a>
+  <a href="/resorts-outside-iraq/create/" class="category-btn" style="text-decoration: none;">
+    <span class="btn-icon">🏝️🌍</span>
+    <span class="btn-text">منتجعات خارج العراق</span>
+  </a>
+  <a href="/dashboard/dallal/travel-companies/create/" class="category-btn" style="text-decoration: none;">
+    <span class="btn-icon">✈️</span>
+    <span class="btn-text">نشر شركة سفر</span>
+  </a>
+  <a href="/jobs/create/" class="category-btn" style="text-decoration: none;">
+    <span class="btn-icon">➕</span>
+    <span class="btn-text">نشر وظيفة</span>
+  </a>
+  <a href="/service-provider/advertisement/create/" class="category-btn" style="text-decoration: none;">
+    <span class="btn-icon">🔧</span>
+    <span class="btn-text">نشر خدمة</span>
+  </a>
+  <a href="/broker/auctions/create/" class="category-btn" style="text-decoration: none;">
+    <span class="btn-icon">🔨</span>
+    <span class="btn-text">نشر مزاد</span>
+  </a>
+</div>
+
+<style>
+.category-buttons {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 15px;
+}
+
+.category-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  padding: 20px 15px;
+  background: var(--card-bg, #161616);
+  border: 2px solid var(--border-primary, rgba(255, 122, 0, 0.15));
+  border-radius: 12px;
+  color: var(--text-primary, #FFFFFF);
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.category-btn:hover {
+  background: rgba(255, 122, 0, 0.1);
+  border-color: var(--primary, #ff6b35);
+  transform: translateY(-3px);
+  box-shadow: 0 8px 20px rgba(255, 122, 0, 0.2);
+}
+
+.category-btn .btn-icon {
+  font-size: 2rem;
+}
+
+.category-btn .btn-text {
+  font-weight: 600;
+  text-align: center;
+}
+</style>
+
+<div class="my-posts-container">
+{% endblock %}
+
 {% block extra_css %}
 <style>
   .my-posts-container {
@@ -384,7 +471,6 @@
 {% endblock %}
 
 {% block content %}
-<div class="my-posts-container">
   <!-- Stats Cards -->
   <div class="stats-cards">
     <div class="stat-card">

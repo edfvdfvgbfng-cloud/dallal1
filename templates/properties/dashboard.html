@@ -2912,6 +2912,89 @@
       </div>
     </div>
 
+    <!-- Quick Category Actions -->
+    <div class="category-buttons" style="margin-top: 20px;">
+      <a href="/add/dynamic/" class="category-btn" style="text-decoration: none;">
+        <span class="btn-icon">🏠</span>
+        <span class="btn-text">عقارات داخل العراق</span>
+      </a>
+      <a href="/properties-outside-iraq/add/" class="category-btn" style="text-decoration: none;">
+        <span class="btn-icon">🌍</span>
+        <span class="btn-text">عقارات خارج العراق</span>
+      </a>
+      <a href="/hotels/create/inside-iraq/" class="category-btn" style="text-decoration: none;">
+        <span class="btn-icon">🏨🇮🇶</span>
+        <span class="btn-text">فنادق داخل العراق</span>
+      </a>
+      <a href="/hotels/create/outside-iraq/" class="category-btn" style="text-decoration: none;">
+        <span class="btn-icon">🏨🌍</span>
+        <span class="btn-text">فنادق خارج العراق</span>
+      </a>
+      <a href="/resorts-inside-iraq/create/" class="category-btn" style="text-decoration: none;">
+        <span class="btn-icon">🏝️🇮🇶</span>
+        <span class="btn-text">منتجعات داخل العراق</span>
+      </a>
+      <a href="/resorts-outside-iraq/create/" class="category-btn" style="text-decoration: none;">
+        <span class="btn-icon">🏝️🌍</span>
+        <span class="btn-text">منتجعات خارج العراق</span>
+      </a>
+      <a href="/dashboard/dallal/travel-companies/create/" class="category-btn" style="text-decoration: none;">
+        <span class="btn-icon">✈️</span>
+        <span class="btn-text">نشر شركة سفر</span>
+      </a>
+      <a href="/jobs/create/" class="category-btn" style="text-decoration: none;">
+        <span class="btn-icon">➕</span>
+        <span class="btn-text">نشر وظيفة</span>
+      </a>
+      <a href="/service-provider/advertisement/create/" class="category-btn" style="text-decoration: none;">
+        <span class="btn-icon">🔧</span>
+        <span class="btn-text">نشر خدمة</span>
+      </a>
+      <a href="/broker/auctions/create/" class="category-btn" style="text-decoration: none;">
+        <span class="btn-icon">🔨</span>
+        <span class="btn-text">نشر مزاد</span>
+      </a>
+    </div>
+
+    <style>
+    .category-buttons {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      gap: 10px;
+    }
+
+    .category-btn {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+      padding: 15px 10px;
+      background: var(--bg-alt);
+      border: 2px solid var(--border);
+      border-radius: 10px;
+      color: var(--text);
+      font-size: 0.85rem;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+
+    .category-btn:hover {
+      background: rgba(255, 122, 0, 0.1);
+      border-color: var(--primary);
+      transform: translateY(-2px);
+      box-shadow: 0 4px 15px rgba(255, 122, 0, 0.2);
+    }
+
+    .category-btn .btn-icon {
+      font-size: 1.5rem;
+    }
+
+    .category-btn .btn-text {
+      font-weight: 600;
+      text-align: center;
+    }
+    </style>
+
     <!-- Media Grid -->
     <div id="media-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 15px; margin-top: 20px;">
       <div style="text-align: center; padding: 20px; color: #888;">جاري تحميل الوسائط...</div>
@@ -4983,6 +5066,8 @@ document.addEventListener('DOMContentLoaded', function() {
       loadRealEstateSchedules();
     } else if (initialTab === 'real-estate-contracts') {
       loadRealEstateContracts();
+    } else if (initialTab === 'media-manager') {
+      loadMedia();
     }
   }
 
@@ -5031,6 +5116,9 @@ document.addEventListener('DOMContentLoaded', function() {
       }
       if (tab === 'real-estate-contracts') {
         loadRealEstateContracts();
+      }
+      if (tab === 'media-manager') {
+        loadMedia();
       }
     });
   });
