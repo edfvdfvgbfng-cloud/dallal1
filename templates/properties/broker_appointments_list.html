@@ -51,7 +51,7 @@
                 {% endif %}
               </td>
               <td style="padding: 15px; color: var(--text);">
-                {{ appointment.get_appointment_type_display }}
+                {{ appointment.appointment_type }}
                 {% if appointment.property %}
                 <br><small style="color: var(--text-light);">{{ appointment.property.display_title }}</small>
                 {% endif %}
@@ -60,7 +60,13 @@
               <td style="padding: 15px; color: var(--text);">{{ appointment.appointment_time }}</td>
               <td style="padding: 15px;">
                 <span class="status-badge status-{{ appointment.status }}" style="padding: 4px 12px; border-radius: 20px; font-size: 0.85rem; font-weight: 600;">
-                  {{ appointment.get_status_display }}
+                  {% if appointment.status == 'pending' %}قيد الانتظار
+                  {% elif appointment.status == 'confirmed' %}مؤكد
+                  {% elif appointment.status == 'completed' %}مكتمل
+                  {% elif appointment.status == 'cancelled' %}ملغي
+                  {% elif appointment.status == 'no_show' %}لم يحضر
+                  {% else %}{{ appointment.status }}
+                  {% endif %}
                 </span>
               </td>
               <td style="padding: 15px;">

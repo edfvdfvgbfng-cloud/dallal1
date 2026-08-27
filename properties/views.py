@@ -22905,20 +22905,62 @@ def broker_appointments_list(request):
     
     broker = request.user.broker_profile
     
-    # Get appointments for this broker
-    from .models import BrokerAppointment
-    appointments = BrokerAppointment.objects.filter(
+    # Get appointments for this broker (BrokerAppointment and Appointment)
+    from .models import BrokerAppointment, Appointment
+    
+    # Get BrokerAppointment records
+    broker_appointments = BrokerAppointment.objects.filter(
         broker=broker
     ).select_related('user', 'property').order_by('-appointment_date', '-appointment_time')
+    
+    # Get Appointment records where target is this broker
+    appointments = Appointment.objects.filter(
+        target_type='broker',
+        target_id=broker.id
+    ).select_related('user').order_by('-appointment_date', '-appointment_time')
+    
+    # Combine both types
+    all_appointments = []
+    
+    for ba in broker_appointments:
+        all_appointments.append({
+            'type': 'broker_appointment',
+            'id': ba.id,
+            'user': ba.user,
+            'appointment_type': ba.get_appointment_type_display(),
+            'appointment_date': ba.appointment_date,
+            'appointment_time': ba.appointment_time,
+            'status': ba.status,
+            'property': ba.property,
+            'notes': ba.notes,
+            'created_at': ba.created_at,
+        })
+    
+    for apt in appointments:
+        all_appointments.append({
+            'type': 'appointment',
+            'id': apt.id,
+            'user': apt.user,
+            'appointment_type': apt.get_appointment_type_display(),
+            'appointment_date': apt.appointment_date,
+            'appointment_time': apt.appointment_time,
+            'status': apt.status,
+            'property': None,
+            'notes': apt.notes,
+            'created_at': apt.created_at,
+        })
+    
+    # Sort by date and time
+    all_appointments.sort(key=lambda x: (x['appointment_date'], x['appointment_time']), reverse=True)
     
     # Filter by status if provided
     status_filter = request.GET.get('status')
     if status_filter:
-        appointments = appointments.filter(status=status_filter)
+        all_appointments = [a for a in all_appointments if a['status'] == status_filter]
     
     # Pagination
     from django.core.paginator import Paginator
-    paginator = Paginator(appointments, 20)
+    paginator = Paginator(all_appointments, 20)
     page_number = request.GET.get('page')
     appointments_page = paginator.get_page(page_number)
     
