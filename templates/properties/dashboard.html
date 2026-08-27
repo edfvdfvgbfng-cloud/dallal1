@@ -3640,6 +3640,10 @@
           <span class="btn-icon">➕</span>
           عقد جديد
         </button>
+        <button class="btn btn-success" onclick="exportContracts()">
+          <span class="btn-icon">📥</span>
+          تصدير
+        </button>
         <button class="btn btn-secondary" onclick="refreshContracts()">
           <span class="btn-icon">🔄</span>
           تحديث
@@ -3677,6 +3681,28 @@
           <div class="stat-label">القيمة الإجمالية</div>
         </div>
       </div>
+      <div class="stat-card">
+        <div class="stat-icon">⏰</div>
+        <div class="stat-content">
+          <div class="stat-number" id="pendingContracts">0</div>
+          <div class="stat-label">قيد الانتظار</div>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon">📅</div>
+        <div class="stat-content">
+          <div class="stat-number" id="expiringContracts">0</div>
+          <div class="stat-label">قاربة الانتهاء</div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Quick Actions -->
+    <div class="quick-actions" style="margin-top: 20px;">
+      <button class="btn btn-primary" onclick="showCreateContractModal('sale')">🏠 عقد بيع</button>
+      <button class="btn btn-success" onclick="showCreateContractModal('rent')">🔑 عقد إيجار</button>
+      <button class="btn btn-info" onclick="showCreateContractModal('agency')">🤝 عقد وساطة</button>
+      <button class="btn btn-warning" onclick="showExpiringAlerts()">⚠️ العقود القاربة للانتهاء</button>
     </div>
     
     <!-- Contracts Filters -->
@@ -3704,6 +3730,16 @@
           <option value="terminated">منهي</option>
           <option value="expired">منتهي</option>
           <option value="cancelled">ملغي</option>
+        </select>
+      </div>
+      <div class="filter-group">
+        <select id="contractDateFilter" class="form-control" onchange="filterContracts()">
+          <option value="">جميع التواريخ</option>
+          <option value="today">اليوم</option>
+          <option value="week">هذا الأسبوع</option>
+          <option value="month">هذا الشهر</option>
+          <option value="quarter">هذا الربع</option>
+          <option value="year">هذا العام</option>
         </select>
       </div>
       <div class="filter-group">
@@ -10122,6 +10158,8 @@ document.addEventListener('DOMContentLoaded', function() {
     document.getElementById('activeContracts').textContent = stats.active;
     document.getElementById('completedContracts').textContent = stats.completed;
     document.getElementById('totalContractValue').textContent = '$' + stats.total_value.toLocaleString();
+    document.getElementById('pendingContracts').textContent = stats.pending;
+    document.getElementById('expiringContracts').textContent = stats.expiring;
   }
 
   function renderRealEstateContracts(contracts) {
@@ -10174,6 +10212,7 @@ document.addEventListener('DOMContentLoaded', function() {
   function filterContracts() {
     const typeFilter = document.getElementById('contractTypeFilter').value;
     const statusFilter = document.getElementById('contractStatusFilter').value;
+    const dateFilter = document.getElementById('contractDateFilter').value;
     const searchInput = document.getElementById('contractSearchInput').value.toLowerCase();
     
     fetch('/api/real-estate/contracts/')
@@ -10188,6 +10227,31 @@ document.addEventListener('DOMContentLoaded', function() {
           
           if (statusFilter) {
             filteredContracts = filteredContracts.filter(c => c.status === statusFilter);
+          }
+          
+          if (dateFilter) {
+            const today = new Date();
+            filteredContracts = filteredContracts.filter(c => {
+              const contractDate = new Date(c.created_at);
+              switch(dateFilter) {
+                case 'today':
+                  return contractDate.toDateString() === today.toDateString();
+                case 'week':
+                  const weekAgo = new Date(today.getTime() - 7 * 24 * 60 * 60 * 1000);
+                  return contractDate >= weekAgo;
+                case 'month':
+                  const monthAgo = new Date(today.getTime() - 30 * 24 * 60 * 60 * 1000);
+                  return contractDate >= monthAgo;
+                case 'quarter':
+                  const quarterAgo = new Date(today.getTime() - 90 * 24 * 60 * 60 * 1000);
+                  return contractDate >= quarterAgo;
+                case 'year':
+                  const yearAgo = new Date(today.getTime() - 365 * 24 * 60 * 60 * 1000);
+                  return contractDate >= yearAgo;
+                default:
+                  return true;
+              }
+            });
           }
           
           if (searchInput) {
@@ -10208,7 +10272,45 @@ document.addEventListener('DOMContentLoaded', function() {
     loadRealEstateContracts();
   }
 
-  function showCreateContractModal() {
+  function exportContracts() {
+    if (confirm('هل تريد تصدير جميع العقود؟')) {
+      fetch('/api/real-estate/contracts/export/', {
+        method: 'GET',
+        headers: {
+          'X-CSRFToken': getCSRFToken()
+        }
+      })
+      .then(response => response.blob())
+      .then(blob => {
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'contracts.zip';
+        document.body.appendChild(a);
+        a.click();
+        window.URL.revokeObjectURL(url);
+        document.body.removeChild(a);
+      });
+    }
+  }
+
+  function showExpiringAlerts() {
+    fetch('/api/real-estate/contracts/expiring/')
+      .then(response => response.json())
+      .then(data => {
+        if (data.success && data.contracts.length > 0) {
+          let message = 'العقود القاربة للانتهاء:\n\n';
+          data.contracts.forEach(contract => {
+            message += `- ${contract.contract_number}: ${contract.property_title} (ينتهي في ${contract.days_until_expiry} يوم)\n`;
+          });
+          alert(message);
+        } else {
+          alert('لا توجد عقود قاربة للانتهاء');
+        }
+      });
+  }
+
+  function showCreateContractModal(type = null) {
     // Create a modal for creating a new contract
     const modal = document.createElement('div');
     modal.className = 'modal';
@@ -10221,14 +10323,15 @@ document.addEventListener('DOMContentLoaded', function() {
           <div class="form-group">
             <label>نوع العقد</label>
             <select name="contract_type" class="form-control" required>
-              <option value="sale">عقد بيع</option>
-              <option value="rent">عقد إيجار</option>
-              <option value="lease">عقد تأجير</option>
-              <option value="agency">عقد وساطة</option>
-              <option value="management">عقد إدارة</option>
-              <option value="partnership">عقد شراكة</option>
-              <option value="maintenance">عقد صيانة</option>
-              <option value="other">عقد آخر</option>
+              <option value="">اختر نوع العقد</option>
+              <option value="sale" ${type === 'sale' ? 'selected' : ''}>عقد بيع</option>
+              <option value="rent" ${type === 'rent' ? 'selected' : ''}>عقد إيجار</option>
+              <option value="lease" ${type === 'lease' ? 'selected' : ''}>عقد تأجير</option>
+              <option value="agency" ${type === 'agency' ? 'selected' : ''}>عقد وساطة</option>
+              <option value="management" ${type === 'management' ? 'selected' : ''}>عقد إدارة</option>
+              <option value="partnership" ${type === 'partnership' ? 'selected' : ''}>عقد شراكة</option>
+              <option value="maintenance" ${type === 'maintenance' ? 'selected' : ''}>عقد صيانة</option>
+              <option value="other" ${type === 'other' ? 'selected' : ''}>عقد آخر</option>
             </select>
           </div>
           <div class="form-group">
