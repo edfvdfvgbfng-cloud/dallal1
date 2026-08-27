@@ -971,9 +971,6 @@
         <img src="{% static 'images/logo.jpg' %}" alt="{% if site_settings %}{{ site_settings.site_name }}{% else %}دلال{% endif %}" class="logo-mark" style="height: 40px; width: auto;">
         <span>{% if site_settings %}{{ site_settings.site_name }}{% else %}دلال{% endif %}</span>
       </a>
-      <button class="hamburger" type="button" aria-label="فتح القائمة" aria-expanded="false">
-        <span></span><span></span><span></span>
-      </button>
       <ul class="nav-links">
         <li><a href="{% url 'home' %}" data-nav="home">الرئيسية</a></li>
         {% if request.user.is_authenticated %}
@@ -988,7 +985,6 @@
         {% endif %}
       </ul>
     </div>
-    <div class="nav-overlay"></div>
   </nav>
 
   {% if messages %}
