@@ -64,9 +64,11 @@ ALLOWED_HOSTS = _unique(ALLOWED_HOSTS + [
     'mup.up.railway.app',
     'muq.up.railway.app',
     'muqq.up.railway.app',
-    'localhost',
-    '127.0.0.1',
 ])
+
+# Add localhost only in DEBUG mode
+if DEBUG:
+    ALLOWED_HOSTS = _unique(ALLOWED_HOSTS + ['localhost', '127.0.0.1', '[::1]'])
 
 if custom_domain:
     ALLOWED_HOSTS = _unique(ALLOWED_HOSTS + [custom_domain, f'www.{custom_domain}'])
@@ -74,9 +76,6 @@ if custom_domain:
 railway_public_domain = os.getenv('RAILWAY_PUBLIC_DOMAIN')
 if railway_public_domain:
     ALLOWED_HOSTS = _unique(ALLOWED_HOSTS + [railway_public_domain])
-
-if DEBUG:
-    ALLOWED_HOSTS = _unique(ALLOWED_HOSTS + ['localhost', '127.0.0.1', '[::1]'])
 
 # Log ALLOWED_HOSTS for debugging
 import logging
@@ -87,36 +86,33 @@ logger.info(f"CUSTOM_DOMAIN={custom_domain}")
 
 # CSRF_TRUSTED_ORIGINS
 if DEBUG:
-    railway_domain = os.getenv('RAILWAY_PUBLIC_DOMAIN', '')
+    # In DEBUG mode, allow localhost for development
     CSRF_TRUSTED_ORIGINS = [
         'http://localhost',
         'http://127.0.0.1',
-        'https://mup.up.railway.app',
-        'https://muq.up.railway.app',
-        'https://muqq.up.railway.app',
-        railway_domain and f'https://{railway_domain}',
+        'http://localhost:8000',
+        'http://127.0.0.1:8000',
     ]
-    # Filter out None values
-    CSRF_TRUSTED_ORIGINS = [origin for origin in CSRF_TRUSTED_ORIGINS if origin]
     CSRF_COOKIE_SECURE = False
     SESSION_COOKIE_SECURE = False
 else:
+    # In production, only allow Railway domains
     CSRF_TRUSTED_ORIGINS = _unique([
         'https://muqq.up.railway.app',
-        'https://mup.up.railway.app',
-        'https://muq.up.railway.app',
     ] + _parse_csv_env('CSRF_TRUSTED_ORIGINS'))
 
 print(f"CSRF_TRUSTED_ORIGINS: {CSRF_TRUSTED_ORIGINS}")
 
-if railway_public_domain:
-    CSRF_TRUSTED_ORIGINS = _unique(CSRF_TRUSTED_ORIGINS + [f'https://{railway_public_domain}'])
+# Add dynamic domains to CSRF_TRUSTED_ORIGINS
+if not DEBUG:
+    if railway_public_domain:
+        CSRF_TRUSTED_ORIGINS = _unique(CSRF_TRUSTED_ORIGINS + [f'https://{railway_public_domain}'])
 
-if custom_domain:
-    CSRF_TRUSTED_ORIGINS = _unique(CSRF_TRUSTED_ORIGINS + [
-        f'https://{custom_domain}',
-        f'https://www.{custom_domain}',
-    ])
+    if custom_domain:
+        CSRF_TRUSTED_ORIGINS = _unique(CSRF_TRUSTED_ORIGINS + [
+            f'https://{custom_domain}',
+            f'https://www.{custom_domain}',
+        ])
 
 SILENCED_SYSTEM_CHECKS = ['security.W004', '4_0.E001']
 
