@@ -74,10 +74,14 @@ body {
 }
 
 body.dashboard-page .footer,
-body.dashboard-page .mobile-bottom-nav,
 body.dashboard-page .fab-whatsapp,
 body.dashboard-page .compare-bar {
   display: none !important;
+}
+
+/* Show mobile bottom nav on dashboard pages */
+body.dashboard-page .mobile-bottom-nav {
+  display: flex !important;
 }
 
 body.dashboard-page .main-content {
