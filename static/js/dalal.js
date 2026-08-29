@@ -47,13 +47,37 @@
 
   // Dashboard tabs
   document.querySelectorAll('[data-tab]').forEach((btn) => {
-    btn.addEventListener('click', () => {
+    btn.addEventListener('click', (e) => {
+      // Prevent default behavior for anchor tags
+      if (btn.tagName === 'A') {
+        e.preventDefault();
+      }
+
       const tab = btn.dataset.tab;
+      console.log('Tab clicked:', tab);
+
+      // Remove active class from all tab buttons
       document.querySelectorAll('[data-tab]').forEach((b) => b.classList.remove('active'));
+
+      // Remove active class from all panels
       document.querySelectorAll('.panel').forEach((p) => p.classList.remove('active'));
+
+      // Add active class to clicked button
       btn.classList.add('active');
+
+      // Find and activate the corresponding panel
       const panel = document.getElementById('panel-' + tab);
-      if (panel) panel.classList.add('active');
+      if (panel) {
+        panel.classList.add('active');
+        console.log('Panel activated:', 'panel-' + tab);
+      } else {
+        console.warn('Panel not found:', 'panel-' + tab);
+        // If panel doesn't exist, keep the properties panel active as fallback
+        const propertiesPanel = document.getElementById('panel-properties');
+        if (propertiesPanel) {
+          propertiesPanel.classList.add('active');
+        }
+      }
     });
   });
 
