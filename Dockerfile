@@ -1,4 +1,5 @@
 # Production-ready Dockerfile for Dalal Platform
+# Force rebuild - 2026-08-28-19-15
 FROM python:3.11-slim-bullseye
 
 ENV PYTHONUNBUFFERED=1 \
