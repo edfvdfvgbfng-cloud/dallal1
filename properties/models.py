@@ -11,6 +11,7 @@ from django.dispatch import receiver
 from django.utils.text import slugify
 from django.utils import timezone
 from django.core.validators import MinValueValidator, MaxValueValidator
+from django.urls import reverse
 
 from .constants import (
     IRAQ_GOVERNORATES,
@@ -1395,7 +1396,6 @@ class Backup(models.Model):
         return f'{self.name} - {self.get_backup_type_display()}'
     
     def get_absolute_url(self):
-        from django.urls import reverse
         return reverse('backup_detail', kwargs={'pk': self.pk})
     
     def is_restorable(self):
@@ -3077,6 +3077,8 @@ class Property(models.Model):
             self.slug = slug
 
     def get_absolute_url(self):
+        if not self.slug:
+            return '/#'
         return reverse('property_detail', kwargs={'slug': self.slug})
 
     def get_all_images(self):
