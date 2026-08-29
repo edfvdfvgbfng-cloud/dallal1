@@ -2,6 +2,7 @@ import json
 import os
 
 from django.conf import settings
+from django.urls import reverse
 from .constants import GOVERNORATE_CITIES, IRAQ_GOVERNORATES
 from .models import SiteSettings
 from .permissions import can_access_dashboard, can_access_admin_panel, can_manage_brokers, get_broker
@@ -28,6 +29,7 @@ def site_context(request):
         'site_settings': settings,
         'governorates': IRAQ_GOVERNORATES,
         'governorate_cities_json': json.dumps(GOVERNORATE_CITIES, ensure_ascii=False),
+        'reverse': reverse,  # Add reverse to context for use in templates
     }
     try:
         if request.user.is_authenticated:

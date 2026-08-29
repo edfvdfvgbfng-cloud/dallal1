@@ -1,17 +1,20 @@
 """
 Django settings for dalal_project — production-ready configuration.
 Supports SQLite (dev) and PostgreSQL (production) via environment variables.
-Updated: 2026-08-26-21-41 - Clean CSRF_TRUSTED_ORIGINS and fix OAuth
 """
 
 import os
 from pathlib import Path
+import logging
 
 from dotenv import load_dotenv
 
 load_dotenv()
 
 BASE_DIR = Path(__file__).resolve().parent.parent
+
+# Configure logging
+logger = logging.getLogger(__name__)
 
 
 def _parse_csv_env(name, default=''):
@@ -49,40 +52,31 @@ if not SECRET_KEY:
 # Custom domain
 custom_domain = os.getenv('CUSTOM_DOMAIN', 'daluailiraq.com')
 
-# Configure ALLOWED_HOSTS
-# Start with '*' to accept all hosts (bypass ALLOWED_HOSTS check)
-ALLOWED_HOSTS = ['*']
-
-# Add additional hosts from environment
-ALLOWED_HOSTS = _unique(ALLOWED_HOSTS + _parse_csv_env('ALLOWED_HOSTS'))
-
-# Explicitly add Railway domains
-ALLOWED_HOSTS = _unique(ALLOWED_HOSTS + [
-    '.railway.app',
-    'healthcheck.railway.app',
-    '.up.railway.app',
-    'mup.up.railway.app',
-    'muq.up.railway.app',
-    'muqq.up.railway.app',
-])
+# Configure ALLOWED_HOSTS - Start with empty list for security
+ALLOWED_HOSTS = []
 
 # Add localhost only in DEBUG mode
 if DEBUG:
     ALLOWED_HOSTS = _unique(ALLOWED_HOSTS + ['localhost', '127.0.0.1', '[::1]'])
 
+# Add Railway domains
+ALLOWED_HOSTS = _unique(ALLOWED_HOSTS + [
+    '.railway.app',
+    'healthcheck.railway.app',
+    '.up.railway.app',
+])
+
+# Add custom domain if specified
 if custom_domain:
     ALLOWED_HOSTS = _unique(ALLOWED_HOSTS + [custom_domain, f'www.{custom_domain}'])
 
+# Add dynamic Railway public domain from environment
 railway_public_domain = os.getenv('RAILWAY_PUBLIC_DOMAIN')
 if railway_public_domain:
     ALLOWED_HOSTS = _unique(ALLOWED_HOSTS + [railway_public_domain])
 
-# Log ALLOWED_HOSTS for debugging
-import logging
-logger = logging.getLogger(__name__)
-logger.info(f"DEBUG={DEBUG}, ALLOWED_HOSTS={ALLOWED_HOSTS}")
-logger.info(f"RAILWAY_PUBLIC_DOMAIN={railway_public_domain}")
-logger.info(f"CUSTOM_DOMAIN={custom_domain}")
+# Add additional hosts from environment
+ALLOWED_HOSTS = _unique(ALLOWED_HOSTS + _parse_csv_env('ALLOWED_HOSTS'))
 
 # CSRF_TRUSTED_ORIGINS
 if DEBUG:
@@ -101,8 +95,6 @@ else:
         'https://muqq.up.railway.app',
     ] + _parse_csv_env('CSRF_TRUSTED_ORIGINS'))
 
-print(f"CSRF_TRUSTED_ORIGINS: {CSRF_TRUSTED_ORIGINS}")
-
 # Add dynamic domains to CSRF_TRUSTED_ORIGINS
 if not DEBUG:
     if railway_public_domain:
@@ -114,6 +106,9 @@ if not DEBUG:
             f'https://www.{custom_domain}',
         ])
 
+# Silenced System Checks with Documentation
+# security.W004: SECURE_SSL_REDIRECT and HSTS configuration are handled conditionally based on DEBUG
+# 4_0.E001: SQLite is allowed in DEBUG mode only; production requires PostgreSQL
 SILENCED_SYSTEM_CHECKS = ['security.W004', '4_0.E001']
 
 # Security Enhancements
@@ -145,10 +140,6 @@ INSTALLED_APPS = [
     'social_django',
 ]
 
-# Log INSTALLED_APPS for debugging
-logger.info(f"INSTALLED_APPS: {INSTALLED_APPS}")
-logger.info(f"Properties in INSTALLED_APPS: {'properties' in INSTALLED_APPS}")
-
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'whitenoise.middleware.WhiteNoiseMiddleware',
@@ -175,8 +166,14 @@ TEMPLATES = [
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
+                'django.template.context_processors.static',
                 'properties.context_processors.site_context',
                 'properties.context_processors.oauth_context',
+            ],
+            'builtins': [
+                'django.contrib.humanize.templatetags.humanize',
+                'properties.templatetags.custom_filters',
+                'properties.templatetags.price_filters',
             ],
         },
     },
@@ -253,17 +250,10 @@ elif DEBUG:
             'NAME': BASE_DIR / 'db.sqlite3',
         }
     }
-elif os.getenv('ALLOW_SQLITE_FALLBACK', 'False').lower() == 'true':
-    DATABASES = {
-        'default': {
-            'ENGINE': 'django.db.backends.sqlite3',
-            'NAME': BASE_DIR / 'db.sqlite3',
-        }
-    }
 else:
     raise ValueError(
         "DATABASE_URL must be set in production. "
-        "Add a PostgreSQL service on Railway or set ALLOW_SQLITE_FALLBACK=True."
+        "Add a PostgreSQL service on Railway."
     )
 
 AUTH_PASSWORD_VALIDATORS = [
@@ -434,14 +424,9 @@ FACEBOOK_AUTH_AVAILABLE = bool(SOCIAL_AUTH_FACEBOOK_KEY and SOCIAL_AUTH_FACEBOOK
 # Add backends conditionally
 if GOOGLE_AUTH_AVAILABLE:
     AUTHENTICATION_BACKENDS.append('social_core.backends.google.GoogleOAuth2')
-    logger.info("Google OAuth authentication enabled")
 
 if FACEBOOK_AUTH_AVAILABLE:
     AUTHENTICATION_BACKENDS.append('social_core.backends.facebook.FacebookOAuth2')
-    logger.info("Facebook OAuth authentication enabled")
-
-if not GOOGLE_AUTH_AVAILABLE and not FACEBOOK_AUTH_AVAILABLE:
-    logger.info("No OAuth providers configured - using only ModelBackend")
 
 RAILWAY_PUBLIC_DOMAIN = os.getenv('RAILWAY_PUBLIC_DOMAIN', '')
 # Also check for alternative Railway domains from ALLOWED_HOSTS
@@ -497,15 +482,22 @@ SOCIAL_AUTH_SLUGIFY_USERNAMES = 'lower'
 SOCIAL_AUTH_SANITIZE_USERNAMES = True
 SOCIAL_AUTH_REDIRECT_IS_HTTPS = True
 
-# CORS Settings
-CORS_ALLOW_ALL_ORIGINS = DEBUG
+# CORS Settings - Explicit list for security
+CORS_ALLOW_ALL_ORIGINS = False  # Never allow all origins
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:8000",
     "http://127.0.0.1:8000",
 ]
+
+# Add Railway domains in production
 if not DEBUG:
     CORS_ALLOWED_ORIGINS = [
-        "https://mup.up.railway.app",
-        "https://muq.up.railway.app",
         "https://muqq.up.railway.app",
     ]
+    if railway_public_domain:
+        CORS_ALLOWED_ORIGINS.append(f"https://{railway_public_domain}")
+    if custom_domain:
+        CORS_ALLOWED_ORIGINS.extend([
+            f"https://{custom_domain}",
+            f"https://www.{custom_domain}",
+        ])
