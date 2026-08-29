@@ -5,7 +5,7 @@ from django.shortcuts import render
 from django.conf import settings
 from pathlib import Path
 
-from . import views, api, broker_views, dallal_views, otp_views, channel_views, ai_chatbot_views, ai_admin_views, api_views, ai_gateway_api
+from . import views, api, broker_views, dallal_views, otp_views, channel_views, ai_chatbot_views, ai_admin_views, api_views, ai_gateway_api, contract_views, contract_api_views
 try:
     from . import api_views_enterprise as api_enterprise
 except ImportError:
@@ -91,6 +91,8 @@ urlpatterns = [
     path('otp/verify/', otp_views.verify_otp_view, name='verify_otp'),
     path('otp/verification/', otp_views.otp_verification_page, name='otp_verification'),
     path('otp/resend/', otp_views.resend_otp_view, name='resend_otp'),
+    # Smart Assistant
+    path('smart-assistant/', views.smart_assistant_view, name='smart_assistant'),
     # Admin Panel
     path('admin-panel/', views.admin_panel_enhanced, name='admin_panel'),
     path('admin-panel/legacy/', views.admin_panel, name='admin_panel_legacy'),
@@ -311,6 +313,8 @@ urlpatterns = [
     path('dashboard/edit/<int:property_id>/', views.edit_property, name='edit_property'),
     path('dashboard/delete/<int:property_id>/', views.delete_property, name='delete_property'),
     path('dashboard/statistics/', views.property_statistics, name='property_statistics'),
+    path('dashboard/verification/', views.property_verification_admin, name='property_verification_admin'),
+    path('dashboard/verification/<int:property_id>/', views.property_verify, name='property_verify'),
     path('dashboard/image/delete/<int:image_id>/', views.delete_property_image, name='delete_property_image'),
     path('dashboard/message/<int:message_id>/read/', views.mark_legacy_message_read, name='mark_message_read_legacy'),
     # Sub-broker routes
@@ -451,8 +455,10 @@ urlpatterns = [
     path('api/chart/broker-performance/', views.chart_broker_performance, name='chart_broker_performance'),
     path('api/chart/revenue/', views.chart_revenue, name='chart_revenue'),
     path('api/chart/geographic/', views.chart_geographic, name='chart_geographic'),
-    path('api/chart/user-activity/', views.chart_user_activity, name='chart_user_activity'),
     path('api/users/all/', views.all_users_api, name='all_users_api'),
+    path('api/messenger/poll/', views.api_messenger_poll, name='api_messenger_poll'),
+    path('api/messenger/send/', views.api_messenger_send, name='api_messenger_send'),
+    path('api/messenger/properties/', views.api_messenger_properties, name='api_messenger_properties'),
     path('api/conversations/check/', views.api_check_conversation, name='api_check_conversation'),
     path('api/conversations/create/', views.api_create_conversation, name='api_create_conversation'),
     path('api/notifications/unread/', views.api_notifications_unread, name='api_notifications_unread'),
@@ -643,10 +649,13 @@ urlpatterns = [
 
     # New advanced features routes (round 2)
     path('api/media/management/', views.media_management, name='media_management'),
+    path('dashboard/media/', views.media_dashboard, name='media_dashboard'),
     path('api/messaging/advanced/', views.advanced_messaging, name='advanced_messaging'),
     path('api/email/management/', views.email_management, name='email_management'),
     path('api/access/control/', views.access_control, name='access_control'),
     path('api/crm/management/', views.crm_management, name='crm_management'),
+    path('dashboard/crm/', views.crm_dashboard, name='crm_dashboard'),
+    path('dashboard/crm/contact/<int:contact_id>/', views.crm_contact_detail, name='crm_contact_detail'),
     path('api/automation/management/', views.automation_management, name='automation_management'),
     path('api/integrations/management/', views.integrations_management, name='integrations_management'),
     path('api/performance/reports/', views.performance_reports, name='performance_reports'),
@@ -810,6 +819,32 @@ urlpatterns = [
     
     # Broker profile (must be last as it's a catch-all)
     path('broker/<str:username>/', views.broker_profile, name='broker_profile'),
+    
+    # Real Estate Contracts
+    path('contracts/', contract_views.contract_list, name='contract_list'),
+    path('contracts/create/', contract_views.contract_create, name='contract_create'),
+    path('contracts/<int:contract_id>/', contract_views.contract_detail, name='contract_detail'),
+    path('contracts/<int:contract_id>/edit/', contract_views.contract_edit, name='contract_edit'),
+    path('contracts/<int:contract_id>/archive/', contract_views.contract_archive, name='contract_archive'),
+    path('contracts/<int:contract_id>/restore/', contract_views.contract_restore, name='contract_restore'),
+    path('contracts/<int:contract_id>/delete/', contract_views.contract_delete, name='contract_delete'),
+    path('contracts/<int:contract_id>/status/<str:new_status>/', contract_views.contract_status_change, name='contract_status_change'),
+    path('contracts/<int:contract_id>/document/add/', contract_views.contract_document_add, name='contract_document_add'),
+    path('contracts/<int:contract_id>/document/<int:document_id>/delete/', contract_views.contract_document_delete, name='contract_document_delete'),
+    path('contracts/<int:contract_id>/document/<int:document_id>/view/', contract_views.contract_document_view, name='contract_document_view'),
+    path('contracts/<int:contract_id>/party/add/', contract_views.contract_party_add, name='contract_party_add'),
+    path('contracts/statistics/', contract_views.contract_statistics, name='contract_statistics'),
+    path('property/<int:property_id>/contracts/', contract_views.property_contracts, name='property_contracts'),
+    
+    # Contract API
+    path('api/contracts/', contract_api_views.api_contracts_list, name='api_contracts_list'),
+    path('api/contracts/<int:contract_id>/', contract_api_views.api_contract_detail, name='api_contract_detail'),
+    path('api/contracts/create/', contract_api_views.api_contract_create, name='api_contract_create'),
+    path('api/contracts/<int:contract_id>/update/', contract_api_views.api_contract_update, name='api_contract_update'),
+    path('api/contracts/<int:contract_id>/archive/', contract_api_views.api_contract_archive, name='api_contract_archive'),
+    path('api/contracts/<int:contract_id>/restore/', contract_api_views.api_contract_restore, name='api_contract_restore'),
+    path('api/contracts/statistics/', contract_api_views.api_contract_statistics, name='api_contract_statistics'),
+    path('api/contracts/expiring/', contract_api_views.api_expiring_contracts, name='api_expiring_contracts'),
 ]
 
 # Enterprise API endpoints (only if available)

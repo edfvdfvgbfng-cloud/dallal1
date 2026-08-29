@@ -6,7 +6,7 @@ from django.contrib.auth.models import User
 from django.utils import timezone
 
 from .constants import COMMON_NASIRIYAH_DISTRICTS, IRAQ_GOVERNORATES
-from .models import Property, Message, SiteSettings, PropertyImage, PropertyVideo, PropertyNote, VirtualTour360, Auction, Bid, FinancialTransaction, Expense, Payment, Report, Profit, SubscriptionPlan, UserSettings, BlockedUser, SavedSearch, OfficePresence, PresenceNotification, BrokerSubscription, BrokerNotificationSettings, AutoBid, AuctionRating, AuctionLiveStream, AuctionAdvertisement, Hotel, Resort, PaymentMethod, PropertyPayment, PropertyNotification, SubscriptionRequest, BrokerChannel, ChannelRating, ChannelReview, ChannelReviewReply, ChannelMilestone, OutsideProperty, PropertyHotel, PropertyResort, PropertyDocument, PropertyMediaStats, WhatsAppMessage, TelegramMessage, AppointmentBooking, PropertyInquiry, LiveStream, LiveStreamComment, UserProfile, ServiceProvider, ServiceAdvertisement, HotelPage, HotelPost, HotelRoom, HotelOffer, HotelBooking, ServiceProviderCategory, ServiceProviderPage, ServiceProviderWork, ServiceProviderService, ServiceProviderGallery, ServiceProviderVideo, ServiceProvider360, ServiceProviderFollower, ServiceProviderRating, ServiceProviderContact, ServiceProviderQuote, Job, JobCategory, JobImage, JobVideo, BuildingAdvertisement, AdResponse, AdNotificationSettings, ChannelSubscription, ChannelContent, ChannelBroadcast, ChannelCollaboration, ChannelAdvertisement, SupportMessage, Notification, NotificationRecipient, Broker, BrokerConversation, BrokerMessage, RealEstateContract, ContractPayment, ContractDocument, ContractReminder, TravelPackage, TravelPackageImage, TravelPackageBooking, TravelPackageReview, Customer, Agent
+from .models import Property, PropertyVerification, Message, SiteSettings, PropertyImage, PropertyVideo, PropertyNote, VirtualTour360, Auction, Bid, FinancialTransaction, Expense, Payment, Report, Profit, SubscriptionPlan, UserSettings, BlockedUser, SavedSearch, OfficePresence, PresenceNotification, BrokerSubscription, BrokerNotificationSettings, AutoBid, AuctionRating, AuctionLiveStream, AuctionAdvertisement, Hotel, Resort, PaymentMethod, PropertyPayment, PropertyNotification, SubscriptionRequest, BrokerChannel, ChannelRating, ChannelReview, ChannelReviewReply, ChannelMilestone, OutsideProperty, PropertyHotel, PropertyResort, PropertyDocument, PropertyMediaStats, WhatsAppMessage, TelegramMessage, AppointmentBooking, PropertyInquiry, LiveStream, LiveStreamComment, UserProfile, ServiceProvider, ServiceAdvertisement, HotelPage, HotelPost, HotelRoom, HotelOffer, HotelBooking, ServiceProviderCategory, ServiceProviderPage, ServiceProviderWork, ServiceProviderService, ServiceProviderGallery, ServiceProviderVideo, ServiceProvider360, ServiceProviderFollower, ServiceProviderRating, ServiceProviderContact, ServiceProviderQuote, Job, JobCategory, JobImage, JobVideo, BuildingAdvertisement, AdResponse, AdNotificationSettings, ChannelSubscription, ChannelContent, ChannelBroadcast, ChannelCollaboration, ChannelAdvertisement, SupportMessage, Notification, NotificationRecipient, Broker, BrokerConversation, BrokerMessage, RealEstateContract, ContractPayment, ContractDocument, ContractReminder, ContractParty, ContractAuditLog, TravelPackage, TravelPackageImage, TravelPackageBooking, TravelPackageReview, Customer, Agent
 
 
 def _fc(placeholder=''):
@@ -87,7 +87,145 @@ class PropertyForm(forms.ModelForm):
             'district': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'الحي'}),
             'location': forms.Textarea(attrs={'class': 'form-control', 'rows': 2, 'placeholder': 'العنوان التفصيلي'}),
             'phone': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'رقم التواصل'}),
+            # New broker/office fields
+            'office_name': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'اسم المكتب العقاري'}),
+            'license_number': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'رقم الرخصة'}),
+            'additional_phone': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'رقم هاتف إضافي'}),
+            'preferred_contact_method': forms.Select(attrs={'class': 'form-control'}),
+            # New ownership fields
+            'deed_type': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'نوع سند الملكية'}),
+            'deed_number': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'رقم السند'}),
+            'deed_issuing_authority': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'جهة الإصدار'}),
+            'land_registration_status': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'حالة التسجيل العقاري'}),
+            'legal_issues_description': forms.Textarea(attrs={'class': 'form-control', 'rows': 2, 'placeholder': 'وصف المشاكل القانونية'}),
+            'permit_type': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'نوع الإجازة'}),
+            # New location fields
+            'complex_name': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'اسم المجمع السكني'}),
+            'building_number': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'رقم البناية'}),
+            'unit_number': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'رقم الوحدة'}),
+            'sector_direction': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'الجهة/القطاع'}),
+            'approximate_location': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'الموقع التقريبي'}),
+            'distance_to_main_road': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'مسافة عن الشارع الرئيسي'}),
+            # Service proximity fields
+            'distance_to_school': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'مسافة عن المدرسة'}),
+            'distance_to_hospital': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'مسافة عن المستشفى'}),
+            'distance_to_market': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'مسافة عن السوق'}),
+            'distance_to_mosque': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'مسافة عن المسجد'}),
+            'distance_to_university': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'مسافة عن الجامعة'}),
+            'distance_to_gas_station': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'مسافة عن محطة الوقود'}),
+            # New pricing fields
+            'total_price': forms.NumberInput(attrs={'class': 'form-control', 'min': 0}),
+            'price_per_square_meter': forms.NumberInput(attrs={'class': 'form-control', 'min': 0}),
+            'down_payment_amount': forms.NumberInput(attrs={'class': 'form-control', 'min': 0}),
+            'number_of_installments': forms.NumberInput(attrs={'class': 'form-control', 'min': 0}),
+            'installment_amount': forms.NumberInput(attrs={'class': 'form-control', 'min': 0}),
+            'installment_duration': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'مدة التقسيط'}),
+            'payment_method': forms.Select(attrs={'class': 'form-control'}),
+            'rental_deposit': forms.NumberInput(attrs={'class': 'form-control', 'min': 0}),
+            'monthly_rent': forms.NumberInput(attrs={'class': 'form-control', 'min': 0}),
+            'annual_rent': forms.NumberInput(attrs={'class': 'form-control', 'min': 0}),
+            # New rental fields
+            'minimum_rental_period': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'أقل مدة للإيجار'}),
+            'rental_commission': forms.NumberInput(attrs={'class': 'form-control', 'min': 0}),
+            'furnishing_status': forms.Select(attrs={'class': 'form-control'}),
+            # New property condition fields
+            'property_age': forms.NumberInput(attrs={'class': 'form-control', 'min': 0}),
+            'number_of_facades': forms.NumberInput(attrs={'class': 'form-control', 'min': 0}),
+            'facade_type': forms.Select(attrs={'class': 'form-control'}),
+            'street_width': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'عرض الشارع'}),
+            'view_type': forms.Select(attrs={'class': 'form-control'}),
+            'distance_from_main_road': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'قرب العقار من الشارع العام'}),
+            'furniture_condition': forms.Select(attrs={'class': 'form-control'}),
+            'completion_percentage': forms.NumberInput(attrs={'class': 'form-control', 'min': 0, 'max': 100}),
         }
+    
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # Set field labels and help text in Arabic
+        self.fields['office_name'].label = 'اسم المكتب العقاري'
+        self.fields['license_number'].label = 'رقم رخصة المكتب أو الدلال'
+        self.fields['additional_phone'].label = 'رقم هاتف إضافي'
+        self.fields['preferred_contact_method'].label = 'طريقة التواصل المفضلة'
+        
+        self.fields['deed_type'].label = 'نوع سند الملكية بالتفصيل'
+        self.fields['deed_number'].label = 'رقم السند'
+        self.fields['deed_issuing_authority'].label = 'جهة إصدار السند'
+        self.fields['land_registration_status'].label = 'حالة التسجيل العقاري'
+        self.fields['is_mortgaged'].label = 'هل العقار مرهون؟'
+        self.fields['has_legal_issues'].label = 'هل توجد مشاكل قانونية؟'
+        self.fields['legal_issues_description'].label = 'وصف المشاكل القانونية'
+        self.fields['permit_type'].label = 'نوع الإجازة/الموافقة'
+        self.fields['ownership_transfer_possible'].label = 'إمكانية نقل الملكية'
+        
+        self.fields['complex_name'].label = 'اسم المجمع السكني'
+        self.fields['building_number'].label = 'رقم البناية'
+        self.fields['unit_number'].label = 'رقم الوحدة'
+        self.fields['floor_in_building'].label = 'الطابق داخل البناية'
+        self.fields['sector_direction'].label = 'الجهة/القطاع'
+        self.fields['approximate_location'].label = 'الموقع التقريبي'
+        self.fields['distance_to_main_road'].label = 'مسافة العقار عن أقرب شارع رئيسي'
+        
+        self.fields['distance_to_school'].label = 'مسافة عن المدرسة'
+        self.fields['distance_to_hospital'].label = 'مسافة عن المستشفى'
+        self.fields['distance_to_market'].label = 'مسافة عن السوق'
+        self.fields['distance_to_mosque'].label = 'مسافة عن المسجد'
+        self.fields['distance_to_university'].label = 'مسافة عن الجامعة'
+        self.fields['distance_to_gas_station'].label = 'مسافة عن محطة الوقود'
+        
+        self.fields['total_price'].label = 'السعر الإجمالي'
+        self.fields['price_per_square_meter'].label = 'سعر المتر المربع'
+        self.fields['down_payment_amount'].label = 'قيمة العربون'
+        self.fields['number_of_installments'].label = 'عدد الأقساط'
+        self.fields['installment_amount'].label = 'قيمة القسط'
+        self.fields['installment_duration'].label = 'مدة التقسيط'
+        self.fields['payment_method'].label = 'طريقة الدفع'
+        self.fields['rental_deposit'].label = 'تأمين/عربون الإيجار'
+        self.fields['monthly_rent'].label = 'قيمة الإيجار الشهري'
+        self.fields['annual_rent'].label = 'قيمة الإيجار السنوي'
+        
+        self.fields['minimum_rental_period'].label = 'أقل مدة للإيجار'
+        self.fields['rental_commission'].label = 'العمولة'
+        self.fields['allows_pets'].label = 'هل يسمح بالحيوانات؟'
+        self.fields['allows_families'].label = 'هل يسمح للعوائل؟'
+        self.fields['allows_students'].label = 'هل يسمح للطلاب؟'
+        self.fields['allows_companies'].label = 'هل يسمح للشركات؟'
+        self.fields['furnishing_status'].label = 'حالة التأثيث'
+        self.fields['includes_electricity'].label = 'شامل الكهرباء؟'
+        self.fields['includes_water'].label = 'شامل الماء؟'
+        self.fields['includes_internet'].label = 'شامل الإنترنت؟'
+        self.fields['includes_generator'].label = 'شامل المولدة؟'
+        
+        self.fields['number_of_elevators'].label = 'عدد المصاعد'
+        self.fields['has_closed_garage'].label = 'كراج مغلق'
+        self.fields['has_security_gate'].label = 'بوابة أمنية'
+        self.fields['has_security_guard'].label = 'حراسة'
+        self.fields['has_cctv_cameras'].label = 'كاميرات مراقبة'
+        self.fields['has_private_generator'].label = 'مولدة خاصة'
+        self.fields['generator_amperage'].label = 'أمبير المولدة'
+        self.fields['has_national_electricity_line'].label = 'خط كهرباء وطني'
+        self.fields['has_24_hour_electricity'].label = 'خط سريع/24 ساعة'
+        self.fields['has_sewerage_system'].label = 'صرف صحي'
+        self.fields['has_gas_supply'].label = 'غاز'
+        self.fields['has_central_heating'].label = 'تدفئة'
+        self.fields['has_central_cooling'].label = 'تبريد'
+        self.fields['has_central_ac'].label = 'تكييف مركزي'
+        self.fields['has_air_conditioners'].label = 'مكيفات'
+        self.fields['has_furniture'].label = 'أثاث'
+        self.fields['has_equipped_kitchen'].label = 'مطبخ مجهز'
+        self.fields['has_satellite'].label = 'ستلايت'
+        self.fields['has_fiber_internet'].label = 'إنترنت فايبر'
+        
+        self.fields['property_age'].label = 'عمر العقار'
+        self.fields['number_of_facades'].label = 'عدد واجهات العقار'
+        self.fields['facade_type'].label = 'نوع الواجهة'
+        self.fields['street_width'].label = 'عرض الشارع'
+        self.fields['view_type'].label = 'نوع الإطلالة'
+        self.fields['is_corner_property'].label = 'عقار زاوية'
+        self.fields['is_corner_lot'].label = 'ناصية'
+        self.fields['distance_from_main_road'].label = 'قرب العقار من الشارع العام'
+        self.fields['furniture_condition'].label = 'حالة الأثاث'
+        self.fields['needs_renovation'].label = 'هل يحتاج ترميم؟'
+        self.fields['completion_percentage'].label = 'نسبة الإنجاز إذا قيد الإنشاء'
 
 
 class PropertySearchForm(forms.Form):
@@ -99,6 +237,11 @@ class PropertySearchForm(forms.Form):
     street = forms.CharField(required=False, label='الشارع', widget=forms.TextInput(attrs=_fc('الشارع')))
     type = forms.ChoiceField(required=False, label='نوع العقار', choices=[('', 'كل الأنواع')])
     status = forms.ChoiceField(required=False, label='الحالة', choices=[('', 'كل الحالات')])
+    purpose = forms.ChoiceField(required=False, label='الغرض', choices=[
+        ('', 'كل الأغراض'),
+        ('sale', 'بيع'),
+        ('rent', 'إيجار')
+    ])
     price_min = forms.IntegerField(required=False, label='السعر من', validators=[MinValueValidator(0)])
     price_max = forms.IntegerField(required=False, label='السعر إلى', validators=[MinValueValidator(0)])
     currency = forms.ChoiceField(required=False, label='العملة', choices=[('', 'كل العملات'), ('IQD', 'دينار عراقي'), ('USD', 'دولار أمريكي')])
@@ -109,6 +252,18 @@ class PropertySearchForm(forms.Form):
     floors = forms.IntegerField(required=False, label='الطوابق', validators=[MinValueValidator(0)])
     year_built = forms.IntegerField(required=False, label='سنة البناء', validators=[MinValueValidator(0)])
     property_condition = forms.ChoiceField(required=False, label='حالة العقار', choices=[('', 'كل الحالات'), ('new', 'جديد'), ('used', 'مستعمل'), ('under_construction', 'قيد البناء')])
+    verification_status = forms.ChoiceField(required=False, label='حالة التحقق', choices=[
+        ('', 'كل'),
+        ('verified', 'موثق'),
+        ('under_review', 'قيد المراجعة'),
+        ('unverified', 'غير متحقق')
+    ])
+    furnishing_status = forms.ChoiceField(required=False, label='التأثيث', choices=[
+        ('', 'كل'),
+        ('furnished', 'مفروش'),
+        ('semi_furnished', 'شبه مفروش'),
+        ('unfurnished', 'غير مفروش')
+    ])
     category = forms.ChoiceField(required=False, label='القسم', choices=[
         ('', 'كل الأقسام'),
         ('property_iraq', 'عقار داخل العراق'),
@@ -123,6 +278,29 @@ class PropertySearchForm(forms.Form):
     featured_only = forms.BooleanField(required=False, label='المميزة فقط')
     verified_only = forms.BooleanField(required=False, label='الموثقة فقط')
     new_only = forms.BooleanField(required=False, label='الجديدة فقط')
+    
+    # مرشحات الخدمات
+    has_elevator = forms.BooleanField(required=False, label='مصعد')
+    has_garage = forms.BooleanField(required=False, label='كراج')
+    has_security_system = forms.BooleanField(required=False, label='نظام أمني')
+    has_generator = forms.BooleanField(required=False, label='مولدة')
+    
+    # مرشحات الإيجار
+    allows_pets = forms.BooleanField(required=False, label='يسمح بالحيوانات')
+    allows_families = forms.BooleanField(required=False, label='يسمح بالعوائل')
+    allows_students = forms.BooleanField(required=False, label='يسمح للطلاب')
+    allows_companies = forms.BooleanField(required=False, label='يسمح للشركات')
+    
+    # مرشحات السعر الإيجاري
+    monthly_rent_min = forms.IntegerField(required=False, label='الإيجار الشهري من', validators=[MinValueValidator(0)])
+    monthly_rent_max = forms.IntegerField(required=False, label='الإيجار الشهري إلى', validators=[MinValueValidator(0)])
+    
+    # مرشحات الموقع
+    complex_name = forms.CharField(required=False, label='المجمع السكني', widget=forms.TextInput(attrs=_fc('المجمع السكني')))
+    
+    # مرشحات المالك/الدلال
+    broker_id = forms.IntegerField(required=False, label='الدلال', validators=[MinValueValidator(0)])
+    office_id = forms.IntegerField(required=False, label='المكتب', validators=[MinValueValidator(0)])
 
 
 class SiteSettingsForm(forms.ModelForm):
@@ -408,6 +586,41 @@ class ServiceProviderContactForm(forms.ModelForm):
         model = ServiceProviderContact
         fields = '__all__'
 
+
+class PropertyVerificationForm(forms.ModelForm):
+    """Form for property verification (admin use)"""
+    
+    class Meta:
+        model = PropertyVerification
+        fields = ['verification_status', 'identity_verified', 'ownership_verified', 
+                  'location_verified', 'images_verified', 'price_verified',
+                  'verification_notes', 'rejection_reason', 'identity_document', 'ownership_document']
+        widgets = {
+            'verification_status': forms.Select(attrs={'class': 'form-control'}),
+            'verification_notes': forms.Textarea(attrs={'class': 'form-control', 'rows': 3, 'placeholder': 'ملاحظات التحقق'}),
+            'rejection_reason': forms.Textarea(attrs={'class': 'form-control', 'rows': 3, 'placeholder': 'سبب الرفض'}),
+            'identity_document': forms.FileInput(attrs={'class': 'form-control'}),
+            'ownership_document': forms.FileInput(attrs={'class': 'form-control'}),
+        }
+        labels = {
+            'verification_status': 'حالة التحقق',
+            'identity_verified': 'تم التحقق من هوية المعلن',
+            'ownership_verified': 'تم التحقق من الملكية',
+            'location_verified': 'تم التحقق من الموقع',
+            'images_verified': 'تم التحقق من الصور',
+            'price_verified': 'تم التحقق من السعر',
+            'verification_notes': 'ملاحظات التحقق',
+            'rejection_reason': 'سبب الرفض',
+            'identity_document': 'وثيقة الهوية',
+            'ownership_document': 'وثيقة الملكية',
+        }
+    
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # Add checkboxes for verification fields
+        for field in ['identity_verified', 'ownership_verified', 'location_verified', 
+                     'images_verified', 'price_verified']:
+            self.fields[field].widget.attrs.update({'class': 'form-check-input'})
 
 class ServiceProviderQuoteForm(forms.ModelForm):
     class Meta:
@@ -1205,22 +1418,30 @@ class BrokerConversationForm(forms.ModelForm):
 
 
 class RealEstateContractForm(forms.ModelForm):
-    """نموذج إنشاء وتعديل العقود العقارية"""
+    """نموذج إنشاء وتعديل العقود العقارية المحسّن"""
+    
+    contract_images = forms.FileField(
+        required=False,
+        widget=forms.FileInput(attrs={'class': 'form-control', 'accept': 'image/*,.pdf'}),
+        label='صور العقد'
+    )
     
     class Meta:
         model = RealEstateContract
         fields = [
-            'contract_type', 'property', 'broker', 'client',
+            'contract_title', 'contract_type', 'duration_type', 'property', 'broker', 'client',
             'second_party_name', 'second_party_phone', 'second_party_email',
-            'amount', 'deposit', 'commission_rate', 'commission_amount',
+            'amount', 'currency', 'deposit', 'commission_rate', 'commission_amount',
             'start_date', 'end_date', 'signing_date',
             'payment_frequency', 'payment_terms',
             'terms_and_conditions', 'special_clauses', 'renewal_clause', 'termination_clause',
             'notes'
         ]
-        exclude = ['contract_number']
+        exclude = ['contract_number', 'is_archived', 'archived_at', 'archived_by', 'archived_reason']
         widgets = {
+            'contract_title': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'عنوان العقد'}),
             'contract_type': forms.Select(attrs={'class': 'form-control'}),
+            'duration_type': forms.Select(attrs={'class': 'form-control'}),
             'property': forms.Select(attrs={'class': 'form-control'}),
             'broker': forms.Select(attrs={'class': 'form-control'}),
             'client': forms.Select(attrs={'class': 'form-control'}),
@@ -1228,6 +1449,7 @@ class RealEstateContractForm(forms.ModelForm):
             'second_party_phone': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'رقم الهاتف'}),
             'second_party_email': forms.EmailInput(attrs={'class': 'form-control', 'placeholder': 'البريد الإلكتروني'}),
             'amount': forms.NumberInput(attrs={'class': 'form-control', 'placeholder': 'قيمة العقد'}),
+            'currency': forms.Select(attrs={'class': 'form-control'}),
             'deposit': forms.NumberInput(attrs={'class': 'form-control', 'placeholder': 'العربون'}),
             'commission_rate': forms.NumberInput(attrs={'class': 'form-control', 'placeholder': 'نسبة العمولة (%)'}),
             'commission_amount': forms.NumberInput(attrs={'class': 'form-control', 'placeholder': 'قيمة العمولة'}),
@@ -1243,7 +1465,9 @@ class RealEstateContractForm(forms.ModelForm):
             'notes': forms.Textarea(attrs={'class': 'form-control', 'rows': 3, 'placeholder': 'ملاحظات'}),
         }
         labels = {
+            'contract_title': 'عنوان العقد',
             'contract_type': 'نوع العقد',
+            'duration_type': 'مدة العقد',
             'property': 'العقار',
             'broker': 'الدلال',
             'client': 'العميل',
@@ -1251,6 +1475,7 @@ class RealEstateContractForm(forms.ModelForm):
             'second_party_phone': 'هاتف الطرف الثاني',
             'second_party_email': 'بريد الطرف الثاني',
             'amount': 'قيمة العقد',
+            'currency': 'العملة',
             'deposit': 'العربون',
             'commission_rate': 'نسبة العمولة (%)',
             'commission_amount': 'قيمة العمولة',
@@ -1360,6 +1585,97 @@ class ContractReminderForm(forms.ModelForm):
             'reminder_date': 'تاريخ التذكير',
             'reminder_days_before': 'أيام قبل التذكير',
         }
+
+
+class ContractPartyForm(forms.ModelForm):
+    """نموذج إدارة أطراف العقد"""
+    
+    class Meta:
+        model = ContractParty
+        fields = ['party_type', 'party_role', 'user', 'full_name', 'phone', 'national_id', 'email', 'address', 'governorate', 'city', 'notes']
+        widgets = {
+            'party_type': forms.Select(attrs={'class': 'form-control'}),
+            'party_role': forms.Select(attrs={'class': 'form-control'}),
+            'user': forms.Select(attrs={'class': 'form-control'}),
+            'full_name': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'الاسم الكامل'}),
+            'phone': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'رقم الهاتف'}),
+            'national_id': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'رقم الهوية'}),
+            'email': forms.EmailInput(attrs={'class': 'form-control', 'placeholder': 'البريد الإلكتروني'}),
+            'address': forms.Textarea(attrs={'class': 'form-control', 'rows': 2, 'placeholder': 'العنوان'}),
+            'governorate': forms.Select(attrs={'class': 'form-control'}),
+            'city': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'المدينة'}),
+            'notes': forms.Textarea(attrs={'class': 'form-control', 'rows': 2, 'placeholder': 'ملاحظات'}),
+        }
+        labels = {
+            'party_type': 'نوع الطرف',
+            'party_role': 'دور الطرف',
+            'user': 'المستخدم المرتبط',
+            'full_name': 'الاسم الكامل',
+            'phone': 'رقم الهاتف',
+            'national_id': 'رقم الهوية',
+            'email': 'البريد الإلكتروني',
+            'address': 'العنوان',
+            'governorate': 'المحافظة',
+            'city': 'المدينة',
+            'notes': 'ملاحظات',
+        }
+
+
+class ContractSearchForm(forms.Form):
+    """نموذج البحث في العقود"""
+    
+    q = forms.CharField(required=False, label='بحث', widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'رقم العقد، اسم الطرف، رقم الهاتف...'}))
+    contract_type = forms.ChoiceField(required=False, label='نوع العقد', choices=[('', 'الكل')] + RealEstateContract.CONTRACT_TYPE_CHOICES, widget=forms.Select(attrs={'class': 'form-control'}))
+    duration_type = forms.ChoiceField(required=False, label='مدة العقد', choices=[('', 'الكل')] + RealEstateContract.DURATION_TYPE_CHOICES, widget=forms.Select(attrs={'class': 'form-control'}))
+    status = forms.ChoiceField(required=False, label='الحالة', choices=[('', 'الكل')] + RealEstateContract.STATUS_CHOICES, widget=forms.Select(attrs={'class': 'form-control'}))
+    currency = forms.ChoiceField(required=False, label='العملة', choices=[('', 'الكل')] + RealEstateContract.CURRENCY_CHOICES, widget=forms.Select(attrs={'class': 'form-control'}))
+    governorate = forms.ChoiceField(required=False, label='المحافظة', choices=[('', 'الكل')] + IRAQ_GOVERNORATES, widget=forms.Select(attrs={'class': 'form-control'}))
+    start_date_from = forms.DateField(required=False, label='من تاريخ البدء', widget=forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}))
+    start_date_to = forms.DateField(required=False, label='إلى تاريخ البدء', widget=forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}))
+    end_date_from = forms.DateField(required=False, label='من تاريخ الانتهاء', widget=forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}))
+    end_date_to = forms.DateField(required=False, label='إلى تاريخ الانتهاء', widget=forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}))
+    amount_min = forms.DecimalField(required=False, label='الحد الأدنى للقيمة', widget=forms.NumberInput(attrs={'class': 'form-control', 'placeholder': 'الحد الأدنى'}))
+    amount_max = forms.DecimalField(required=False, label='الحد الأقصى للقيمة', widget=forms.NumberInput(attrs={'class': 'form-control', 'placeholder': 'الحد الأقصى'}))
+    is_archived = forms.BooleanField(required=False, label='العقود المؤرشفة فقط', widget=forms.CheckboxInput(attrs={'class': 'form-check-input'}))
+
+
+class ContractDocumentForm(forms.ModelForm):
+    """نموذج إدارة وثائق العقود المحسّن"""
+    
+    class Meta:
+        model = ContractDocument
+        fields = ['document_type', 'title', 'description', 'file', 'page_number']
+        widgets = {
+            'document_type': forms.Select(attrs={'class': 'form-control'}),
+            'title': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'عنوان الوثيقة'}),
+            'description': forms.Textarea(attrs={'class': 'form-control', 'rows': 3, 'placeholder': 'الوصف'}),
+            'file': forms.FileInput(attrs={'class': 'form-control', 'accept': '.jpg,.jpeg,.png,.pdf'}),
+            'page_number': forms.NumberInput(attrs={'class': 'form-control', 'placeholder': 'رقم الصفحة'}),
+        }
+        labels = {
+            'document_type': 'نوع الوثيقة',
+            'title': 'عنوان الوثيقة',
+            'description': 'الوصف',
+            'file': 'الملف',
+            'page_number': 'رقم الصفحة',
+        }
+    
+    def clean_file(self):
+        file = self.cleaned_data.get('file')
+        if file:
+            # تحقق من حجم الملف (الحد الأقصى 10MB)
+            max_size = 10 * 1024 * 1024  # 10MB
+            if file.size > max_size:
+                raise forms.ValidationError('حجم الملف يجب أن لا يتجاوز 10MB')
+            
+            # تحقق من نوع الملف
+            allowed_extensions = ['.jpg', '.jpeg', '.png', '.pdf']
+            import os
+            ext = os.path.splitext(file.name)[1].lower()
+            if ext not in allowed_extensions:
+                raise forms.ValidationError('نوع الملف غير مسموح. يسمح فقط بـ JPG, JPEG, PNG, PDF')
+        
+        return file
 
 
 class TravelPackageForm(forms.ModelForm):

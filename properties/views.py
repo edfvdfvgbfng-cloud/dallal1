@@ -14,7 +14,7 @@ from django.core.paginator import Paginator
 from django.db.models import Q, Count, Sum, Avg
 from .utils import match_advertisement_with_targets
 from .channel_views import ChannelListView, ChannelDetailView
-from .models import Property, Job, Backup, Hotel, Resort, ServiceProvider, ServiceAdvertisement, Auction, UserProfile, Conversation, RealEstateContract, Customer, Agent
+from .models import Property, PropertyVerification, Job, Backup, Hotel, Resort, ServiceProvider, ServiceAdvertisement, Auction, UserProfile, Conversation, RealEstateContract, Customer, Agent
 from django.http import JsonResponse, HttpResponse
 from django.urls import reverse
 from django.shortcuts import get_object_or_404, redirect, render
@@ -952,8 +952,9 @@ def broker_standalone_page(request, slug):
     """Display broker's standalone page with their properties only."""
     broker = get_object_or_404(Broker, slug=slug)
     
-    # Check if broker has standalone page enabled
-    if broker.page_display_mode not in ['standalone_only', 'both']:
+    # Check if broker has standalone page enabled (allow owner to preview regardless)
+    is_owner = request.user.is_authenticated and request.user == broker.user
+    if not is_owner and broker.page_display_mode not in ['standalone_only', 'both']:
         # If not, show a message or redirect
         from django.contrib import messages
         messages.warning(request, 'هذا الدلال لم يفعّل الصفحة المستقلة بعد')
@@ -1131,7 +1132,7 @@ def broker_standalone_settings(request):
         
         messages.success(request, 'تم حفظ الإعدادات بنجاح')
         
-        return redirect('broker_panel')
+        return redirect('broker_standalone_settings')
     
     # Generate auto slug for display
     import re
@@ -1644,7 +1645,7 @@ def dashboard(request):
                 'admin': Broker.objects.filter(role='admin').count()
             }
         } if can_manage_brokers(request.user) else {},
-        'total_properties_count': sum(b.property_count for b in get_managed_brokers(request.user)) if can_manage_brokers(request.user) else 0,
+        'total_properties_count': sum(b.user.owned_properties.count() for b in get_managed_brokers(request.user)) if can_manage_brokers(request.user) else 0,
         'all_conversations': all_conversations,
         'all_reports': all_reports,
         'all_users': all_users,
@@ -1939,20 +1940,101 @@ def settings_general(request):
     if not can_manage_site_settings(request.user):
         messages.error(request, 'ليس لديك صلاحية تعديل إعدادات الموقع')
         return redirect('dashboard')
+    
     settings = SiteSettings.get_solo()
+    
     if request.method == 'POST':
-        settings.site_name = request.POST.get('site_name', 'دلال')
-        settings.tagline = request.POST.get('tagline', '')
-        settings.site_description = request.POST.get('site_description', '')
-        settings.default_language = request.POST.get('default_language', 'ar')
-        settings.timezone = request.POST.get('timezone', 'Asia/Baghdad')
-        settings.date_format = request.POST.get('date_format', 'Y-m-d')
-        settings.time_format = request.POST.get('time_format', 'H:i')
-        if 'favicon' in request.FILES:
-            settings.favicon = request.FILES['favicon']
-        settings.save()
-        messages.success(request, 'تم تحديث الإعدادات العامة بنجاح')
-        return redirect('settings_general')
+        try:
+            # Basic site information
+            settings.site_name = request.POST.get('site_name', 'دلال')
+            settings.tagline = request.POST.get('tagline', '')
+            settings.site_description = request.POST.get('site_description', '')
+            
+            # File uploads with validation
+            if 'favicon' in request.FILES:
+                favicon = request.FILES['favicon']
+                if favicon.size > 1024 * 1024:  # 1MB limit
+                    messages.error(request, 'حجم الأيقونة يجب أن يكون أقل من 1MB')
+                else:
+                    settings.favicon = favicon
+            
+            if 'logo' in request.FILES:
+                logo = request.FILES['logo']
+                if logo.size > 5 * 1024 * 1024:  # 5MB limit
+                    messages.error(request, 'حجم الشعار يجب أن يكون أقل من 5MB')
+                else:
+                    settings.logo = logo
+            
+            # Contact information with validation
+            contact_email = request.POST.get('contact_email', '').strip()
+            if contact_email:
+                from django.core.validators import validate_email
+                try:
+                    validate_email(contact_email)
+                    settings.contact_email = contact_email
+                except:
+                    messages.error(request, 'البريد الإلكتروني غير صالح')
+            else:
+                settings.contact_email = ''
+            
+            settings.contact_phone = request.POST.get('contact_phone', '').strip()
+            settings.contact_address = request.POST.get('contact_address', '').strip()
+            settings.contact_city = request.POST.get('contact_city', '').strip()
+            settings.contact_country = request.POST.get('contact_country', '').strip()
+            
+            # Social media with URL validation
+            social_fields = {
+                'facebook_url': request.POST.get('facebook_url', ''),
+                'twitter_url': request.POST.get('twitter_url', ''),
+                'instagram_url': request.POST.get('instagram_url', ''),
+                'linkedin_url': request.POST.get('linkedin_url', ''),
+                'telegram_url': request.POST.get('telegram_url', ''),
+                'tiktok_url': request.POST.get('tiktok_url', ''),
+                'youtube_url': request.POST.get('youtube_url', ''),
+                'snapchat_url': request.POST.get('snapchat_url', '')
+            }
+            
+            from django.core.validators import URLValidator
+            url_validator = URLValidator()
+            
+            for field, value in social_fields.items():
+                if value.strip():
+                    try:
+                        url_validator(value.strip())
+                        setattr(settings, field, value.strip())
+                    except:
+                        messages.warning(request, f'رابط {field} غير صالح، تم تجاهله')
+                        setattr(settings, field, '')
+                else:
+                    setattr(settings, field, '')
+            
+            # Locale settings
+            settings.default_language = request.POST.get('default_language', 'ar')
+            settings.timezone = request.POST.get('timezone', 'Asia/Baghdad')
+            settings.date_format = request.POST.get('date_format', 'Y-m-d')
+            settings.time_format = request.POST.get('time_format', 'H:i')
+            
+            # Advanced settings
+            settings.maintenance_mode = request.POST.get('maintenance_mode') == 'on'
+            settings.maintenance_message = request.POST.get('maintenance_message', '')
+            settings.allow_registration = request.POST.get('allow_registration') == 'on'
+            settings.require_email_verification = request.POST.get('require_email_verification') == 'on'
+            
+            settings.save()
+            
+            # Log the action
+            from .models import ActivityLog
+            ActivityLog.objects.create(
+                user=request.user,
+                action='تحديث الإعدادات العامة',
+                details=f'تم تحديث إعدادات الموقع بواسطة {request.user.username}'
+            )
+            
+            messages.success(request, 'تم تحديث الإعدادات العامة بنجاح')
+            return redirect('settings_general')
+            
+        except Exception as e:
+            messages.error(request, f'حدث خطأ أثناء حفظ الإعدادات: {str(e)}')
     
     return render(request, 'properties/settings_general.html', {'settings': settings, 'section': 'general'})
 
@@ -3625,6 +3707,21 @@ def unified_search_view(request):
         if status:
             property_queryset = [p for p in property_queryset if p.status == status]
         
+        purpose = request.GET.get('purpose')
+        if purpose:
+            property_queryset = [p for p in property_queryset if p.purpose == purpose]
+        
+        verification_status = request.GET.get('verification_status')
+        if verification_status:
+            property_queryset = [
+                p for p in property_queryset
+                if hasattr(p, 'verification') and p.verification and p.verification.verification_status == verification_status
+            ]
+        
+        furnishing_status = request.GET.get('furnishing_status')
+        if furnishing_status:
+            property_queryset = [p for p in property_queryset if p.furnishing_status == furnishing_status]
+        
         price_min = request.GET.get('price_min')
         if price_min:
             property_queryset = [p for p in property_queryset if p.price >= int(price_min)]
@@ -3679,6 +3776,63 @@ def unified_search_view(request):
         rating_min = request.GET.get('rating_min')
         if rating_min:
             property_queryset = [p for p in property_queryset if hasattr(p, 'average_rating') and p.average_rating >= int(rating_min)]
+        
+        # New filters for amenities
+        has_elevator = request.GET.get('has_elevator')
+        if has_elevator:
+            property_queryset = [p for p in property_queryset if p.has_elevator]
+        
+        has_garage = request.GET.get('has_garage')
+        if has_garage:
+            property_queryset = [p for p in property_queryset if p.has_garage]
+        
+        has_security_system = request.GET.get('has_security_system')
+        if has_security_system:
+            property_queryset = [p for p in property_queryset if p.has_security_system]
+        
+        has_generator = request.GET.get('has_generator')
+        if has_generator:
+            property_queryset = [p for p in property_queryset if p.has_private_generator]
+        
+        # Rental filters
+        allows_pets = request.GET.get('allows_pets')
+        if allows_pets:
+            property_queryset = [p for p in property_queryset if p.allows_pets]
+        
+        allows_families = request.GET.get('allows_families')
+        if allows_families:
+            property_queryset = [p for p in property_queryset if p.allows_families]
+        
+        allows_students = request.GET.get('allows_students')
+        if allows_students:
+            property_queryset = [p for p in property_queryset if p.allows_students]
+        
+        allows_companies = request.GET.get('allows_companies')
+        if allows_companies:
+            property_queryset = [p for p in property_queryset if p.allows_companies]
+        
+        # Monthly rent filters
+        monthly_rent_min = request.GET.get('monthly_rent_min')
+        if monthly_rent_min:
+            property_queryset = [p for p in property_queryset if p.monthly_rent and p.monthly_rent >= int(monthly_rent_min)]
+        
+        monthly_rent_max = request.GET.get('monthly_rent_max')
+        if monthly_rent_max:
+            property_queryset = [p for p in property_queryset if p.monthly_rent and p.monthly_rent <= int(monthly_rent_max)]
+        
+        # Complex name filter
+        complex_name = request.GET.get('complex_name')
+        if complex_name:
+            property_queryset = [p for p in property_queryset if p.complex_name and complex_name.lower() in p.complex_name.lower()]
+        
+        # Broker and office filters
+        broker_id = request.GET.get('broker_id')
+        if broker_id:
+            property_queryset = [p for p in property_queryset if p.broker and p.broker.id == int(broker_id)]
+        
+        office_id = request.GET.get('office_id')
+        if office_id:
+            property_queryset = [p for p in property_queryset if p.office and p.office.id == int(office_id)]
         
         # Apply sorting
         sort = request.GET.get('sort')
@@ -4974,6 +5128,118 @@ def edit_property(request, property_id):
 
 @login_required
 @staff_required
+def property_verification_admin(request):
+    """لوحة تحكم احترافية للتحقق من العقارات"""
+    from django.db.models import Count
+    
+    try:
+        # جلب جميع العقارات مع بيانات التحقق
+        properties_with_verification = Property.objects.select_related(
+            'owner', 'broker', 'office'
+        ).prefetch_related('verification').all()
+        
+        # إحصائيات التحقق
+        total_properties = properties_with_verification.count()
+        verified_count = properties_with_verification.filter(
+            verification__verification_status='verified'
+        ).count()
+        pending_review_count = properties_with_verification.filter(
+            verification__verification_status='under_review'
+        ).count()
+        rejected_count = properties_with_verification.filter(
+            verification__verification_status='rejected'
+        ).count()
+        unverified_count = total_properties - verified_count - pending_review_count - rejected_count
+        
+        # العقارات حسب نوع التحقق
+        verification_stats = {
+            'identity_verified': properties_with_verification.filter(
+                verification__identity_verified=True
+            ).count(),
+            'ownership_verified': properties_with_verification.filter(
+                verification__ownership_verified=True
+            ).count(),
+            'location_verified': properties_with_verification.filter(
+                verification__location_verified=True
+            ).count(),
+            'images_verified': properties_with_verification.filter(
+                verification__images_verified=True
+            ).count(),
+            'price_verified': properties_with_verification.filter(
+                verification__price_verified=True
+            ).count(),
+        }
+        
+        # العقارات حسب الحالة
+        status_distribution = properties_with_verification.values('status').annotate(
+            count=Count('id')
+        ).order_by('-count')
+        
+        context = {
+            'properties': properties_with_verification,
+            'statistics': {
+                'total': total_properties,
+                'verified': verified_count,
+                'pending_review': pending_review_count,
+                'rejected': rejected_count,
+                'unverified': unverified_count,
+                'verification_rate': round((verified_count / total_properties * 100) if total_properties > 0 else 0, 1),
+                'verification_stats': verification_stats,
+            },
+            'status_distribution': list(status_distribution),
+        }
+        
+        return render(request, 'properties/property_verification_admin.html', context)
+    
+    except Exception as e:
+        messages.error(request, f'حدث خطأ: {str(e)}')
+        return redirect('dashboard')
+
+
+@login_required
+@staff_required
+def property_verify(request, property_id):
+    """واجهة التحقق من عقار معين"""
+    from .forms import PropertyVerificationForm
+    from .models import Notification
+    
+    property_obj = get_object_or_404(Property, id=property_id)
+    
+    if request.method == 'POST':
+        form = PropertyVerificationForm(request.POST, request.FILES)
+        if form.is_valid():
+            verification = form.save(commit=False)
+            verification.property = property_obj
+            verification.verified_by = request.user
+            verification.save()
+            
+            # إرسال إشعار عند التحقق من العقار
+            if verification.verification_status == 'verified' and property_obj.owner:
+                Notification.create_property_verified(property_obj, property_obj.owner)
+                messages.success(request, 'تم حفظ التحقق وإرسال إشعار للمالك')
+            else:
+                messages.success(request, 'تم حفظ التحقق بنجاح')
+            
+            return redirect('property_verification_admin')
+    else:
+        # إنشاء أو جلب سجل التحقق الموجود
+        verification, created = PropertyVerification.objects.get_or_create(
+            property=property_obj,
+            defaults={'verified_by': request.user}
+        )
+        form = PropertyVerificationForm(instance=verification)
+    
+    context = {
+        'property': property_obj,
+        'form': form,
+        'verification_history': property_obj.verification.all() if hasattr(property_obj, 'verification') else [],
+    }
+    
+    return render(request, 'properties/property_verify.html', context)
+
+
+@login_required
+@staff_required
 def property_statistics(request):
     """إحصائيات متقدمة وتقارير العقارات"""
     from django.db.models import Count, Q, Avg, Sum, Min, Max
@@ -4985,9 +5251,23 @@ def property_statistics(request):
     
     # General stats
     total_properties = properties.count()
-    active_properties = properties.filter(status='active').count()
+    active_properties = properties.filter(status='published').count()
     sold_properties = properties.filter(status='sold').count()
-    pending_properties = properties.filter(status='pending').count()
+    pending_properties = properties.filter(status='pending_approval').count()
+    rented_properties = properties.filter(status='rented').count()
+    
+    # Verification statistics
+    verified_properties = properties.filter(
+        verification__verification_status='verified'
+    ).count()
+    pending_verification = properties.filter(
+        verification__verification_status='under_review'
+    ).count()
+    verification_rate = round((verified_properties / total_properties * 100) if total_properties > 0 else 0, 1)
+    
+    # Purpose statistics (sale vs rent)
+    sale_properties = properties.filter(purpose='sale').count()
+    rent_properties = properties.filter(purpose='rent').count()
     
     # Property type stats
     type_stats = properties.values('type').annotate(
@@ -4999,12 +5279,24 @@ def property_statistics(request):
         count=Count('id')
     ).order_by('-count')
     
+    # City stats
+    city_stats = properties.values('city').annotate(
+        count=Count('id')
+    ).order_by('-count')[:20]
+    
     # Price statistics
     price_stats = properties.aggregate(
         avg_price=Avg('price'),
         min_price=Min('price'),
         max_price=Max('price'),
         total_value=Sum('price')
+    )
+    
+    # Rental price statistics
+    rental_stats = properties.filter(purpose='rent').aggregate(
+        avg_monthly_rent=Avg('monthly_rent'),
+        min_monthly_rent=Min('monthly_rent'),
+        max_monthly_rent=Max('monthly_rent')
     )
     
     # Monthly property additions
@@ -5029,17 +5321,51 @@ def property_statistics(request):
         count=Count('id')
     ).order_by('-count')
     
+    # Broker performance
+    broker_stats = properties.values('broker__display_name').annotate(
+        property_count=Count('id'),
+        avg_price=Avg('price')
+    ).order_by('-property_count')[:10]
+    
+    # Office performance
+    office_stats = properties.values('office__name').annotate(
+        property_count=Count('id'),
+        avg_price=Avg('price')
+    ).order_by('-property_count')[:10]
+    
+    # Furnishing status stats
+    furnishing_stats = properties.values('furnishing_status').annotate(
+        count=Count('id')
+    ).order_by('-count')
+    
+    # Property condition stats
+    condition_stats = properties.values('property_condition').annotate(
+        count=Count('id')
+    ).order_by('-count')
+    
     return render(request, 'properties/property_statistics.html', {
         'total_properties': total_properties,
         'active_properties': active_properties,
         'sold_properties': sold_properties,
         'pending_properties': pending_properties,
+        'rented_properties': rented_properties,
+        'verified_properties': verified_properties,
+        'pending_verification': pending_verification,
+        'verification_rate': verification_rate,
+        'sale_properties': sale_properties,
+        'rent_properties': rent_properties,
         'type_stats': type_stats,
         'governorate_stats': governorate_stats,
+        'city_stats': city_stats,
         'price_stats': price_stats,
+        'rental_stats': rental_stats,
         'monthly_properties': monthly_properties,
         'top_viewed': top_viewed,
         'activity_stats': activity_stats,
+        'broker_stats': broker_stats,
+        'office_stats': office_stats,
+        'furnishing_stats': furnishing_stats,
+        'condition_stats': condition_stats,
     })
 
 
@@ -7499,7 +7825,7 @@ def settings_hub(request):
 @login_required
 def activity_page(request):
     """Display user activity."""
-    from .models import PropertySave, ChatMessage, PropertyView
+    from .models import PropertySave, ChatMessage, PropertyViewStats
     
     # Get user's recent activities
     saved_properties = PropertySave.objects.filter(user=request.user).select_related('property').order_by('-created_at')[:10]
@@ -9093,6 +9419,65 @@ def admin_contact_view(request):
     return render(request, 'properties/admin_contact.html', context)
 
 
+@login_required
+def create_admin_conversation(request):
+    """API endpoint to create a conversation with admin"""
+    from django.contrib.auth.models import User
+    from .models import Conversation, Message
+    import json
+    
+    if request.method != 'POST':
+        return JsonResponse({'success': False, 'error': 'Method not allowed'})
+    
+    try:
+        data = json.loads(request.body)
+        message_text = data.get('message', '').strip()
+        
+        if not message_text:
+            return JsonResponse({'success': False, 'error': 'الرسالة مطلوبة'})
+        
+        # Get admin users
+        admin_users = User.objects.filter(is_superuser=True).first()
+        
+        if not admin_users:
+            return JsonResponse({'success': False, 'error': 'لا يوجد مسؤول متاح'})
+        
+        # Check if conversation already exists
+        existing_conversation = Conversation.objects.filter(
+            participants=request.user
+        ).filter(participants=admin_users).first()
+        
+        if existing_conversation:
+            # Add message to existing conversation
+            message = Message.objects.create(
+                conversation=existing_conversation,
+                sender=request.user,
+                recipient=admin_users,
+                content=message_text,
+                is_read=False
+            )
+            existing_conversation.updated_at = timezone.now()
+            existing_conversation.save()
+        else:
+            # Create new conversation
+            conversation = Conversation.objects.create()
+            conversation.participants.add(request.user, admin_users)
+            
+            # Add initial message
+            message = Message.objects.create(
+                conversation=conversation,
+                sender=request.user,
+                recipient=admin_users,
+                content=message_text,
+                is_read=False
+            )
+        
+        return JsonResponse({'success': True, 'conversation_id': existing_conversation.id if existing_conversation else conversation.id})
+        
+    except Exception as e:
+        return JsonResponse({'success': False, 'error': str(e)})
+
+
 # ==================== Messaging System Views ====================
 
 @login_required
@@ -10070,6 +10455,7 @@ def api_media_upload(request):
     try:
         import os
         from django.conf import settings
+        from django.core.files.storage import FileSystemStorage
 
         media_type = request.POST.get('media_type', 'image')
         file = request.FILES.get('file')
@@ -10077,29 +10463,18 @@ def api_media_upload(request):
         if not file:
             return JsonResponse({'error': 'No file provided'}, status=400)
 
-        # Determine target directory
-        media_dirs = {
-            'image': 'assets/images',
-            'video': 'assets/video',
-            'audio': 'assets/audio',
-            'document': 'assets/documents'
-        }
-
-        target_dir = media_dirs.get(media_type, 'assets/images')
-
-        # Create directory if it doesn't exist
-        os.makedirs(target_dir, exist_ok=True)
-
-        # Save file
-        file_path = os.path.join(target_dir, file.name)
-        with open(file_path, 'wb+') as destination:
-            for chunk in file.chunks():
-                destination.write(chunk)
+        fs = FileSystemStorage(location=os.path.join(settings.MEDIA_ROOT, 'advanced_media', media_type))
+        filename = fs.save(file.name, file)
+        file_path = os.path.join(settings.MEDIA_ROOT, 'advanced_media', media_type, filename)
+        file_url = fs.url(filename)
+        
+        file_url = f"{settings.MEDIA_URL}advanced_media/{media_type}/{filename}"
 
         return JsonResponse({
             'success': True,
             'message': 'File uploaded successfully',
-            'path': file_path
+            'path': file_path,
+            'url': file_url
         })
     except Exception as e:
         return JsonResponse({'error': str(e)}, status=500)
@@ -10113,6 +10488,7 @@ def api_media_delete(request):
 
     try:
         import os
+        import json
 
         data = json.loads(request.body)
         file_path = data.get('path')
@@ -10544,8 +10920,8 @@ def admin_notifications_advanced(request):
     
     # Statistics
     total_notifications = Notification.objects.count()
-    sent_notifications = Notification.objects.filter(is_sent=True).count()
-    pending_notifications = Notification.objects.filter(is_sent=False).count()
+    sent_notifications = Notification.objects.filter(sent_at__isnull=False).count()
+    pending_notifications = Notification.objects.filter(sent_at__isnull=True).count()
     
     context = {
         'notifications': notifications_page,
@@ -10826,8 +11202,8 @@ def conversation_detail(request, conversation_id):
 
 @login_required
 def start_conversation(request, user_id):
-    """بدء محادثة جديدة مع مستخدم"""
-    from .models import Conversation, Message
+    """بدء محادثة جديدة مع مستخدم - مع التكامل مع CRM"""
+    from .models import Conversation, Message, CRMContact
     from .permissions import can_send_message_to_user
     
     other_user = get_object_or_404(User, pk=user_id)
@@ -10853,13 +11229,49 @@ def start_conversation(request, user_id):
     )
     conversation.participants.add(request.user, other_user)
     
+    # إنشاء أو تحديث جهة اتصال CRM للطرف الآخر
+    try:
+        crm_contact, created = CRMContact.objects.get_or_create(
+            user=other_user,
+            defaults={
+                'name': other_user.get_full_name() or other_user.username,
+                'email': other_user.email,
+                'stage': 'lead',
+                'priority': 'warm',
+                'source': 'message',
+                'created_by': request.user,
+                'assigned_to': request.user,
+            }
+        )
+        
+        # ربط المحادثة بجهة الاتصال
+        crm_contact.conversation = conversation
+        crm_contact.save(update_fields=['conversation'])
+        
+        # تحديث أو إنشاء جهة اتصال للمستخدم الحالي
+        if request.user.email:
+            crm_contact_sender, created = CRMContact.objects.get_or_create(
+                user=request.user,
+                defaults={
+                    'name': request.user.get_full_name() or request.user.username,
+                    'email': request.user.email,
+                    'stage': 'customer',
+                    'priority': 'warm',
+                    'source': 'message',
+                    'created_by': request.user,
+                }
+            )
+    except Exception as e:
+        # لا نوقف العملية إذا فشل تحديث CRM
+        pass
+    
     return redirect('conversation_detail', conversation_id=conversation.conversation_id)
 
 
 @login_required
 def send_message(request):
-    """إرسال رسالة جديدة"""
-    from .models import Conversation, Message
+    """إرسال رسالة جديدة مع التكامل مع CRM"""
+    from .models import Conversation, Message, CRMContact
     
     if request.method != 'POST':
         return JsonResponse({'error': 'Invalid request method'}, status=405)
@@ -10896,6 +11308,20 @@ def send_message(request):
     # تحديث آخر رسالة في المحادثة
     conversation.last_message_at = message.created_at
     conversation.save(update_fields=['last_message_at'])
+    
+    # تحديث جهات اتصال CRM المرتبطة بالمحادثة
+    try:
+        crm_contacts = CRMContact.objects.filter(conversation=conversation)
+        for crm_contact in crm_contacts:
+            crm_contact.update_interaction_count()
+            
+            # إذا كان المرسل هو المسؤول عن جهة الاتصال، تحديث آخر اتصال
+            if crm_contact.assigned_to == request.user:
+                crm_contact.last_contact = timezone.now()
+                crm_contact.save(update_fields=['last_contact'])
+    except Exception as e:
+        # لا نوقف العملية إذا فشل تحديث CRM
+        pass
     
     return JsonResponse({
         'success': True,
@@ -10945,7 +11371,8 @@ def conversation_delete(request, conversation_id):
 @login_required
 def admin_users_list(request):
     """Advanced user management panel"""
-    from .models import UserProfile, Broker, Subscription
+    from .models import UserProfile, Broker
+    from django.contrib.auth.models import User
     
     if not request.user.is_staff:
         return redirect('dashboard')
@@ -13815,43 +14242,312 @@ def chart_revenue(request):
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def all_users_api(request):
-    """API لجلب جميع المستخدمين مع دورهم"""
-    search = request.GET.get('search', '')
-    role_filter = request.GET.get('role', '')
+    """API لجلب جميع المستخدمين مع دورهم مع فلترة وبحث متقدم"""
+    from .models import Broker, UserProfile
     
-    users = User.objects.filter(is_active=True)
+    search = request.GET.get('search', '').strip()
+    role_filter = request.GET.get('role', '').strip()
     
-    if search:
-        users = users.filter(username__icontains=search)
+    users = User.objects.filter(is_active=True).exclude(id=request.user.id)
     
     if role_filter:
-        if role_filter == 'broker':
-            users = users.filter(broker_profile__isnull=False)
+        if role_filter == 'broker' or role_filter == 'brokers':
+            users = users.filter(Q(broker__isnull=False) | Q(broker_profile__isnull=False))
         elif role_filter == 'admin':
-            users = users.filter(is_staff=True)
-        elif role_filter == 'user':
-            users = users.filter(is_staff=False, broker_profile__isnull=True)
+            users = users.filter(Q(is_staff=True) | Q(is_superuser=True))
+        elif role_filter == 'user' or role_filter == 'users':
+            users = users.filter(is_staff=False, is_superuser=False).exclude(Q(broker__isnull=False) | Q(broker_profile__isnull=False))
+    
+    if search:
+        users = users.filter(
+            Q(username__icontains=search) |
+            Q(first_name__icontains=search) |
+            Q(last_name__icontains=search) |
+            Q(email__icontains=search) |
+            Q(broker__office_name__icontains=search) |
+            Q(broker__site_name__icontains=search) |
+            Q(broker__phone__icontains=search)
+        ).distinct()
     
     users_data = []
-    for user in users:
+    for user in users[:50]:
         user_role = 'مستخدم'
+        is_broker = False
+        broker_title = ''
+        is_verified = False
+        phone = ''
+        
         if user.is_superuser:
             user_role = 'مدير النظام'
         elif user.is_staff:
-            user_role = 'إدارة'
-        elif hasattr(user, 'broker_profile'):
-            user_role = 'دلال'
+            user_role = 'فريق الإدارة'
+        
+        broker_obj = getattr(user, 'broker', None) or Broker.objects.filter(user=user).first()
+        if broker_obj:
+            user_role = 'دلال معتمد' if broker_obj.is_verified else 'دلال'
+            is_broker = True
+            broker_title = broker_obj.office_name or broker_obj.site_name or broker_obj.job_title or 'دلال عقاري'
+            is_verified = broker_obj.is_verified
+            phone = broker_obj.phone or ''
+        
+        avatar_url = None
+        profile = getattr(user, 'user_profile', None) or UserProfile.objects.filter(user=user).first()
+        if profile and profile.avatar:
+            avatar_url = profile.avatar.url
+        elif broker_obj and broker_obj.profile_image:
+            avatar_url = broker_obj.profile_image.url
+        
+        display_name = user.get_full_name() or user.username
+        if broker_obj and broker_obj.office_name:
+            display_name = f"{display_name} ({broker_obj.office_name})"
         
         users_data.append({
             'id': user.id,
             'username': user.username,
+            'display_name': display_name,
             'email': user.email,
+            'phone': phone,
             'role': user_role,
-            'profile_image': user.user_profile.profile_image.url if hasattr(user, 'user_profile') and user.user_profile.profile_image else None
+            'is_broker': is_broker,
+            'broker_title': broker_title,
+            'is_verified': is_verified,
+            'is_online': getattr(user, 'is_online', True),
+            'profile_image': avatar_url
+        })
+    
+    return JsonResponse({'users': users_data})
+
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def api_messenger_poll(request):
+    """API لجلب الرسائل الجديدة لحظياً لمحادثة معينة عبر AJAX"""
+    conversation_id = request.GET.get('conversation_id')
+    last_message_id = request.GET.get('last_id')
+    
+    if not conversation_id:
+        return Response({'error': 'conversation_id is required'}, status=400)
+    
+    try:
+        conversation = Conversation.objects.get(
+            conversation_id=conversation_id,
+            participants=request.user
+        )
+    except Conversation.DoesNotExist:
+        return Response({'error': 'Conversation not found'}, status=404)
+    
+    # Mark incoming unread messages as read
+    conversation.messages.filter(
+        is_read=False
+    ).exclude(sender=request.user).update(is_read=True)
+    
+    messages_qs = conversation.messages.all()
+    if last_message_id and str(last_message_id).isdigit():
+        messages_qs = messages_qs.filter(id__gt=int(last_message_id))
+    
+    messages_qs = messages_qs.order_by('created_at')
+    
+    messages_data = []
+    for msg in messages_qs:
+        sender_name = msg.sender.get_full_name() or msg.sender.username
+        sender_avatar = None
+        if hasattr(msg.sender, 'user_profile') and msg.sender.user_profile.avatar:
+            sender_avatar = msg.sender.user_profile.avatar.url
+        
+        messages_data.append({
+            'id': msg.id,
+            'sender_id': msg.sender.id,
+            'sender_name': sender_name,
+            'sender_avatar': sender_avatar,
+            'is_from_me': msg.sender.id == request.user.id,
+            'content': msg.content,
+            'message_type': msg.message_type,
+            'file_url': msg.file.url if msg.file else None,
+            'file_name': msg.file_name,
+            'file_size': msg.file_size,
+            'time': msg.created_at.strftime('%H:%M'),
+            'date': msg.created_at.strftime('%Y-%m-%d'),
+            'is_read': msg.is_read,
+            'link_url': msg.link_url,
+            'link_title': msg.link_title,
+            'link_description': msg.link_description,
+            'link_image': msg.link_image,
+            'latitude': msg.latitude,
+            'longitude': msg.longitude,
+            'location_name': msg.location_name,
         })
     
     return Response({
-        'users': users_data
+        'success': True,
+        'messages': messages_data,
+        'count': len(messages_data)
+    })
+
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def api_messenger_send(request):
+    """API لإرسال رسالة فورية عبر AJAX (نص، ملف، بطاقة عقار، تسجيل صوتي، موقع)"""
+    conversation_id = request.data.get('conversation_id')
+    content = request.data.get('content', '').strip()
+    message_type = request.data.get('message_type', 'text')
+    property_id = request.data.get('property_id')
+    uploaded_file = request.FILES.get('file')
+    
+    if not conversation_id:
+        return Response({'error': 'conversation_id is required'}, status=400)
+    
+    if not content and not uploaded_file and not property_id:
+        return Response({'error': 'محتوى الرسالة أو المرفق مطلوب'}, status=400)
+    
+    try:
+        conversation = Conversation.objects.get(
+            conversation_id=conversation_id,
+            participants=request.user
+        )
+    except Conversation.DoesNotExist:
+        return Response({'error': 'المحادثة غير موجودة'}, status=404)
+    
+    other_user = conversation.participants.exclude(id=request.user.id).first()
+    if not other_user:
+        return Response({'error': 'الطرف الآخر غير موجود'}, status=400)
+    
+    # Check if sharing a property
+    link_url = None
+    link_title = None
+    link_description = None
+    link_image = None
+    
+    if property_id:
+        try:
+            prop = Property.objects.get(id=property_id)
+            message_type = 'property'
+            link_url = f'/property/{prop.id}/'
+            link_title = prop.title
+            link_desc_parts = []
+            if prop.price:
+                link_desc_parts.append(f"{int(prop.price):,} د.ع")
+            if prop.city or prop.governorate:
+                link_desc_parts.append(f"{prop.city or ''} {prop.governorate or ''}".strip())
+            link_description = " - ".join(link_desc_parts)
+            link_image = prop.cover_image.url if prop.cover_image else None
+            if not content:
+                content = f"🏠 مشاركة عقار: {prop.title}"
+        except Property.DoesNotExist:
+            pass
+    
+    # If file uploaded, detect type
+    if uploaded_file:
+        ext = uploaded_file.name.split('.')[-1].lower()
+        if ext in ['jpg', 'jpeg', 'png', 'gif', 'webp']:
+            message_type = 'image'
+        elif ext in ['mp3', 'wav', 'ogg', 'm4a', 'webm', 'opus']:
+            message_type = 'audio'
+        elif ext in ['mp4', 'mov']:
+            message_type = 'video'
+        else:
+            message_type = 'file'
+    
+    # Create Message
+    msg = Message.objects.create(
+        conversation=conversation,
+        sender=request.user,
+        recipient=other_user,
+        content=content,
+        message_type=message_type,
+        file=uploaded_file,
+        file_name=uploaded_file.name if uploaded_file else '',
+        file_size=uploaded_file.size if uploaded_file else None,
+        link_url=link_url,
+        link_title=link_title,
+        link_description=link_description,
+        link_image=link_image,
+        latitude=request.data.get('latitude'),
+        longitude=request.data.get('longitude'),
+        location_name=request.data.get('location_name', '')
+    )
+    
+    # Update conversation timestamp
+    conversation.updated_at = timezone.now()
+    conversation.save(update_fields=['updated_at'])
+    
+    # Trigger notification
+    try:
+        from .models import Notification
+        Notification.objects.create(
+            user=other_user,
+            title='رسالة جديدة',
+            description=f'رسالة جديدة من {request.user.get_full_name() or request.user.username}',
+            notification_type='message',
+            action_url=f'/dashboard/messages/?conversation_id={conversation_id}',
+            metadata={
+                'conversation_id': str(conversation_id),
+                'sender_id': request.user.id,
+                'message_id': msg.id
+            }
+        )
+    except Exception:
+        pass
+    
+    return Response({
+        'success': True,
+        'message': {
+            'id': msg.id,
+            'sender_id': request.user.id,
+            'sender_name': request.user.get_full_name() or request.user.username,
+            'is_from_me': True,
+            'content': msg.content,
+            'message_type': msg.message_type,
+            'file_url': msg.file.url if msg.file else None,
+            'file_name': msg.file_name,
+            'time': msg.created_at.strftime('%H:%M'),
+            'date': msg.created_at.strftime('%Y-%m-%d'),
+            'is_read': False,
+            'link_url': msg.link_url,
+            'link_title': msg.link_title,
+            'link_description': msg.link_description,
+            'link_image': msg.link_image,
+        }
+    })
+
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def api_messenger_properties(request):
+    """API لجلب قائمة العقارات لاختيارها ومشاركتها في المحادثة"""
+    search = request.GET.get('search', '').strip()
+    props = Property.objects.filter(is_frozen=False).exclude(status='rejected')
+    
+    broker_obj = getattr(request.user, 'broker', None)
+    if broker_obj:
+        broker_props = props.filter(broker=broker_obj)
+        if broker_props.exists():
+            props = broker_props
+    
+    if search:
+        users = props.filter(
+            Q(title__icontains=search) |
+            Q(description__icontains=search) |
+            Q(city__icontains=search) |
+            Q(governorate__icontains=search)
+        )
+    
+    props_data = []
+    for p in props.order_by('-created_at')[:30]:
+        loc_str = f"{p.city or ''} {p.governorate or ''}".strip()
+        img_url = p.cover_image.url if p.cover_image else None
+        props_data.append({
+            'id': p.id,
+            'title': p.title or 'عقار بدون عنوان',
+            'price': f"{int(p.price):,} د.ع" if p.price else 'السعر عند الاتصال',
+            'location': loc_str or 'العراق',
+            'property_type': str(p.type or p.category or 'عقار'),
+            'image': img_url,
+            'url': f'/property/{p.id}/'
+        })
+    
+    return Response({
+        'properties': props_data
     })
 
 
@@ -20199,44 +20895,166 @@ def data_analytics(request):
 
 @login_required
 def media_management(request):
-    """نظام إدارة الوسائط"""
-    if not request.user.is_superuser:
+    """نظام إدارة الوسائط المحسّن - يعمل مع قاعدة البيانات"""
+    if not request.user.is_superuser and not request.user.is_staff:
         return JsonResponse({'success': False, 'error': 'غير مصرح'}, status=403)
     
     try:
-        import os
-        from django.conf import settings
+        from .models import PropertyImage, PropertyVideo, PropertyDocument
+        from django.db.models import Count, Sum, Q
+        from django.utils import timezone
+        from datetime import timedelta
         
         if request.method == 'GET':
-            # محاكاة بيانات الوسائط
+            # جمع بيانات الوسائط من قاعدة البيانات
+            media_type = request.GET.get('type', 'all')
+            property_id = request.GET.get('property_id')
+            uploaded_by = request.GET.get('uploaded_by')
+            
+            # فلاتر
+            images_qs = PropertyImage.objects.select_related('property', 'uploaded_by').all()
+            videos_qs = PropertyVideo.objects.select_related('property', 'uploaded_by').all()
+            documents_qs = PropertyDocument.objects.select_related('property', 'uploaded_by').all()
+            
+            if media_type != 'all':
+                if media_type == 'image':
+                    videos_qs = videos_qs.none()
+                    documents_qs = documents_qs.none()
+                elif media_type == 'video':
+                    images_qs = images_qs.none()
+                    documents_qs = documents_qs.none()
+                elif media_type == 'document':
+                    images_qs = images_qs.none()
+                    videos_qs = videos_qs.none()
+            
+            if property_id:
+                images_qs = images_qs.filter(property_id=property_id)
+                videos_qs = videos_qs.filter(property_id=property_id)
+                documents_qs = documents_qs.filter(property_id=property_id)
+            
+            if uploaded_by:
+                images_qs = images_qs.filter(uploaded_by_id=uploaded_by)
+                videos_qs = videos_qs.filter(uploaded_by_id=uploaded_by)
+                documents_qs = documents_qs.filter(uploaded_by_id=uploaded_by)
+            
+            # تجميع البيانات
             media_items = []
-            media_types = ['image', 'video', 'audio', 'document']
             
-            media_dirs = {
-                'image': 'assets/images',
-                'video': 'assets/video',
-                'audio': 'assets/audio',
-                'document': 'assets/documents'
-            }
+            for img in images_qs:
+                media_items.append({
+                    'id': img.id,
+                    'type': 'image',
+                    'name': img.image.name if img.image else img.caption or 'بدون اسم',
+                    'property_id': img.property_id,
+                    'property_title': img.property.display_title if img.property else None,
+                    'property_slug': img.property.slug if img.property else None,
+                    'caption': img.caption or '',
+                    'image_type': img.image_type,
+                    'is_primary': img.is_primary,
+                    'is_360': img.is_360,
+                    'sort_order': img.sort_order,
+                    'file_size': img.file_size,
+                    'file_size_display': img.get_file_size_display(),
+                    'width': img.width,
+                    'height': img.alt_text,
+                    'is_published': img.is_published,
+                    'view_count': img.view_count,
+                    'uploaded_by': img.uploaded_by.username if img.uploaded_by else None,
+                    'created_at': img.created_at.strftime('%Y-%m-%d %H:%M:%S'),
+                    'url': img.image.url if img.image else None,
+                })
             
-            for media_type in media_types:
-                media_dir = media_dirs.get(media_type, '')
-                if media_dir and os.path.exists(media_dir):
-                    for filename in os.listdir(media_dir)[:5]:
-                        filepath = os.path.join(media_dir, filename)
-                        if os.path.isfile(filepath):
-                            media_items.append({
-                                'id': len(media_items) + 1,
-                                'name': filename,
-                                'type': media_type,
-                                'path': filepath,
-                                'size': os.path.getsize(filepath),
-                                'url': f'/media/{media_type}/{filename}',
-                                'created_at': os.path.getctime(filepath),
-                                'modified_at': os.path.getmtime(filepath)
-                            })
+            for video in videos_qs:
+                media_items.append({
+                    'id': video.id,
+                    'type': 'video',
+                    'name': video.video.name if video.video else video.caption or 'بدون اسم',
+                    'property_id': video.property_id,
+                    'property_title': video.property.display_title if video.property else None,
+                    'property_slug': video.property.slug if video.property else None,
+                    'caption': video.caption or '',
+                    'video_type': video.video_type,
+                    'duration': video.duration,
+                    'duration_display': video.get_duration_display(),
+                    'sort_order': video.sort_order,
+                    'file_size': video.file_size,
+                    'file_size_display': video.get_file_size_display(),
+                    'resolution': video.resolution,
+                    'is_published': video.is_published,
+                    'is_featured': video.is_featured,
+                    'view_count': video.view_count,
+                    'processing_status': video.processing_status,
+                    'uploaded_by': video.uploaded_by.username if video.uploaded_by else None,
+                    'created_at': video.created_at.strftime('%Y-%m-%d %H:%M:%S'),
+                    'url': video.video.url if video.video else None,
+                    'thumbnail': video.thumbnail.url if video.thumbnail else None,
+                })
             
-            total_size = sum(item['size'] for item in media_items)
+            for doc in documents_qs:
+                media_items.append({
+                    'id': doc.id,
+                    'type': 'document',
+                    'name': doc.file.name if doc.file else doc.title or 'بدون اسم',
+                    'property_id': doc.property_id,
+                    'property_title': doc.property.display_title if doc.property else None,
+                    'property_slug': doc.property.slug if doc.property else None,
+                    'document_type': doc.document_type,
+                    'title': doc.title,
+                    'description': doc.description or '',
+                    'file_size': doc.file_size,
+                    'file_size_display': doc.get_file_size_display(),
+                    'file_hash': doc.file_hash,
+                    'visibility': doc.visibility,
+                    'download_count': doc.download_count,
+                    'is_verified': doc.is_verified,
+                    'verified_by': doc.verified_by.username if doc.verified_by else None,
+                    'uploaded_by': doc.uploaded_by.username if doc.uploaded_by else None,
+                    'created_at': doc.created_at.strftime('%Y-%m-%d %H:%M:%S'),
+                    'url': doc.file.url if doc.file else None,
+                    'expiry_date': doc.expiry_date.strftime('%Y-%m-%d') if doc.expiry_date else None,
+                    'is_expired': doc.is_expired(),
+                })
+            
+            media_items.sort(key=lambda x: x['created_at'], reverse=True)
+            
+            # إحصائيات متقدمة
+            total_size = sum(item['file_size'] for item in media_items)
+            
+            # إحصائيات حسب النوع
+            image_stats = images_qs.aggregate(
+                total=Count('id'),
+                total_size=Sum('file_size'),
+                total_views=Sum('view_count')
+            )
+            
+            video_stats = videos_qs.aggregate(
+                total=Count('id'),
+                total_size=Sum('file_size'),
+                total_views=Sum('view_count')
+            )
+            
+            document_stats = documents_qs.aggregate(
+                total=Count('id'),
+                total_size=Sum('file_size'),
+                total_downloads=Sum('download_count')
+            )
+            
+            # الوسائط خلال الأسبوع الماضي
+            week_ago = timezone.now() - timedelta(days=7)
+            recent_images = images_qs.filter(created_at__gte=week_ago).count()
+            recent_videos = videos_qs.filter(created_at__gte=week_ago).count()
+            recent_documents = documents_qs.filter(created_at__gte=week_ago).count()
+            
+            # الوسائط غير المنشورة
+            unpublished_images = images_qs.filter(is_published=False).count()
+            unpublished_videos = videos_qs.filter(is_published=False).count()
+            
+            # الفيديوهات قيد المعالجة
+            processing_videos = videos_qs.filter(processing_status='processing').count()
+            failed_videos = videos_qs.filter(status='failed').count()
+            
+            # المستندات منتهية الصلاحية
+            expired_documents = documents_qs.filter(expiry_date__lt=timezone.now().date()).count()
             
             return JsonResponse({
                 'success': True,
@@ -20244,37 +21062,284 @@ def media_management(request):
                 'statistics': {
                     'total_items': len(media_items),
                     'total_size': total_size,
-                    'images': sum(1 for m in media_items if m['type'] == 'image'),
-                    'videos': sum(1 for m in media_items if m['type'] == 'video'),
-                    'audio': sum(1 for m in media_items if m['type'] == 'audio'),
-                    'documents': sum(1 for m in media_items if m['type'] == 'document')
+                    'total_size_display': format_file_size(total_size),
+                    'images': image_stats['total'],
+                    'videos': video_stats['total'],
+                    'documents': document_stats['total'],
+                    'image_stats': {
+                        'total_size': image_stats['total_size'] or 0,
+                        'total_views': image_stats['total_views'] or 0,
+                    },
+                    'video_stats': {
+                        'total_size': video_stats['total_size'] or 0,
+                        'total_views': video_stats['total_views'] or 0,
+                    },
+                    'document_stats': {
+                        'total_size': document_stats['total_size'] or 0,
+                        'total_downloads': document_stats['total_downloads'] or 0,
+                    },
+                    'recent_week': {
+                        'images': recent_images,
+                        'videos': recent_videos,
+                        'documents': recent_documents,
+                    },
+                    'unpublished': {
+                        'images': unpublished_images,
+                        'videos': unpublished_videos,
+                    },
+                    'processing': {
+                        'videos_processing': processing_videos,
+                        'videos_failed': failed_videos,
+                    },
+                    'expired': {
+                        'documents': expired_documents,
+                    },
                 }
             })
         
         elif request.method == 'POST':
-            action = request.GET.get('action', '')
+            # رفع ملف جديد
+            media_type = request.POST.get('media_type', 'image')
+            property_id = request.POST.get('property_id')
+            file = request.FILES.get('file')
             
-            if action == 'upload':
-                # محاكاة رفع الملفات
-                return JsonResponse({
-                    'success': True,
-                    'message': 'تم رفع الملف بنجاح'
-                })
-            elif action == 'delete':
-                media_id = request.GET.get('id')
-                return JsonResponse({
-                    'success': True,
-                    'message': f'تم حذف الوسائط #{media_id} بنجاح'
-                })
-            elif action == 'organize':
-                # محاكاة تنظيم الوسائط
-                return JsonResponse({
-                    'success': True,
-                    'message': 'تم تنظيم الوسائط بنجاح'
-                })
-    
+            if not file:
+                return JsonResponse({'success': False, 'error': 'لم يتم رفع ملف'}, status=400)
+            
+            if not property_id:
+                return JsonResponse({'success': False, 'error': 'لم يتم تحديد العقار'}, status=400)
+            
+            property_obj = get_object_or_404(Property, id=property_id)
+            
+            if media_type == 'image':
+                media_item = PropertyImage.objects.create(
+                    property=property_obj,
+                    image=file,
+                    caption=request.POST.get('caption', ''),
+                    image_type=request.POST.get('image_type', 'photo'),
+                    is_primary=request.POST.get('is_primary', False) == 'true',
+                    is_360=request.POST.get('is_360', False) == 'true',
+                    uploaded_by=request.user,
+                    file_size=file.size,
+                )
+                
+                # ضبط حجم الصورة
+                try:
+                    from PIL import Image
+                    img = Image.open(file)
+                    media_item.width = img.width
+                    media_item.height = img.height
+                    media_item.save(update_fields=['width', 'height'])
+                except:
+                    pass
+                
+            elif media_type == 'video':
+                media_item = PropertyVideo.objects.create(
+                    property=property_obj,
+                    video=file,
+                    caption=request.POST.get('caption', ''),
+                    video_type=request.POST.get('video_type', 'regular'),
+                    duration=int(request.POST.get('duration', 0)) if request.POST.get('duration') else None,
+                    uploaded_by=request.user,
+                    file_size=file.size,
+                    processing_status='pending',
+                )
+                
+            elif media_type == 'document':
+                media_item = PropertyDocument.objects.create(
+                    property=property_obj,
+                    file=file,
+                    document_type=request.POST.get('document_type', 'other'),
+                    title=request.POST.get('title', file.name),
+                    description=request.POST.get('description', ''),
+                    uploaded_by=request.user,
+                    file_size=file.size,
+                    visibility=request.POST.get('visibility', 'private'),
+                )
+                
+                # توليد تجزئة الملف
+                media_item.generate_file_hash()
+            
+            return JsonResponse({
+                'success': True,
+                'message': 'تم رفع الملف بنجاح',
+                'media_item': {
+                    'id': media_item.id,
+                    'type': media_type,
+                    'name': file.name,
+                }
+            })
+        
+        elif request.method == 'PUT':
+            # تحديث عنصر الوسائط
+            media_id = request.POST.get('id')
+            media_type = request.POST.get('type')
+            
+            if media_type == 'image':
+                media_item = get_object_or_404(PropertyImage, id=media_id)
+                media_item.caption = request.POST.get('caption', media_item.caption)
+                media_item.is_primary = request.POST.get('is_primary', False) == 'true'
+                media_item.is_published = request.POST.get('is_published', True) == 'true'
+                media_item.save()
+                
+            elif media_type == 'video':
+                media_item = get_object_or_404(PropertyVideo, id=media_id)
+                media_item.caption = request.POST.get('caption', media_item.caption)
+                media_item.is_featured = request.POST.get('is_featured', False) == 'true'
+                media_item.is_published = request.POST.get('is_published', True) == 'true'
+                media_item.save()
+                
+            elif media_type == 'document':
+                media_item = get_object_or_404(PropertyDocument, id=media_id)
+                media_item.title = request.POST.get('title', media_item.title)
+                media_item.description = request.POST.get('description', media_item.description)
+                media_item.visibility = request.POST.get('visibility', media_item.visibility)
+                media_item.is_verified = request.POST.get('is_verified', False) == 'true'
+                media_item.verified_by = request.user
+                media_item.verified_at = timezone.now()
+                media_item.save()
+            
+            return JsonResponse({
+                'success': True,
+                'message': 'تم تحديث الملف بنجاح'
+            })
+        
+        elif request.method == 'DELETE':
+            # حذف ملف
+            media_id = request.POST.get('id')
+            media_type = request.POST.get('type')
+            
+            if media_type == 'image':
+                media_item = get_object_or_404(PropertyImage, id=media_id)
+                media_item.delete()
+            elif media_type == 'video':
+                media_item = get_object_or_404(PropertyVideo, id=media_id)
+                media_item.delete()
+            elif media_type == 'document':
+                media_item = get_object_or_404(PropertyDocument, id=media_id)
+                media_item.delete()
+            
+            return JsonResponse({
+                'success': True,
+                'message': 'تم حذف الملف بنجاح'
+            })
+            
     except Exception as e:
         return JsonResponse({'success': False, 'error': str(e)}, status=500)
+
+
+def format_file_size(size):
+    """تنسيق حجم الملف"""
+    for unit in ['B', 'KB', 'MB', 'GB']:
+        if size < 1024:
+            return f'{size:.1f} {unit}'
+        size /= 1024
+    return f'{size:.1f} TB'
+
+
+@login_required
+def media_dashboard(request):
+    """لوحة تحكم إدارة الوسائط"""
+    if not request.user.is_superuser and not request.user.is_staff:
+        return redirect('dashboard')
+    
+    from .models import PropertyImage, PropertyVideo, PropertyDocument
+    from django.db.models import Count, Sum, Q
+    from django.utils import timezone
+    from datetime import timedelta
+    
+    # إحصائيات عامة
+    total_images = PropertyImage.objects.count()
+    total_videos = PropertyVideo.objects.count()
+    total_documents = PropertyDocument.objects.count()
+    total_media = total_images + total_videos + total_documents
+    
+    # إحصائيات الحجم
+    total_image_size = PropertyImage.objects.aggregate(total=Sum('file_size'))['total'] or 0
+    total_video_size = PropertyVideo.objects.aggregate(total=Sum('file_size'))['total'] or 0
+    total_document_size = PropertyDocument.objects.aggregate(total=Sum('file_size'))['total'] or 0
+    total_size = total_image_size + total_video_size + total_document_size
+    
+    # إحصائيات المشاهدات
+    total_image_views = PropertyImage.objects.aggregate(total=Sum('view_count'))['total'] or 0
+    total_video_views = PropertyVideo.objects.aggregate(total=Sum('view_count'))['total'] or 0
+    total_document_downloads = PropertyDocument.objects.aggregate(total=Sum('download_count'))['total'] or 0
+    
+    # الوسائط الحديثة
+    recent_images = PropertyImage.objects.select_related('property', 'uploaded_by').order_by('-created_at')[:10]
+    recent_videos = PropertyVideo.objects.select_related('property', 'uploaded_by').order_by('-created_at')[:10]
+    recent_documents = PropertyDocument.objects.select_related('property', 'uploaded_by').order_by('-created_at')[:10]
+    
+    # الوسائط غير المنشورة
+    unpublished_images = PropertyImage.objects.filter(is_published=False).count()
+    unpublished_videos = PropertyVideo.objects.filter(is_published=False).count()
+    
+    # الفيديوهات قيد المعالجة
+    processing_videos = PropertyVideo.objects.filter(processing_status='processing').count()
+    failed_videos = PropertyVideo.objects.filter(processing_status='failed').count()
+    
+    # المستندات المنتهية
+    expired_documents = PropertyDocument.objects.filter(expiry_date__lt=timezone.now().date()).count()
+    
+    # الصور الرئيسية
+    primary_images = PropertyImage.objects.filter(is_primary=True).count()
+    
+    # صور 360°
+    images_360 = PropertyImage.objects.filter(is_360=True).count()
+    
+    # الفيديوهات المميزة
+    featured_videos = PropertyVideo.objects.filter(is_featured=True).count()
+    
+    # المستندات الموثقة
+    verified_documents = PropertyDocument.objects.filter(is_verified=True).count()
+    
+    # إحصائيات حسب النوع
+    image_type_stats = PropertyImage.objects.values('image_type').annotate(
+        count=Count('id')
+    ).order_by('-count')
+    
+    video_type_stats = PropertyVideo.objects.values('video_type').annotate(
+        count=Count('id')
+    ).order_by('-count')
+    
+    document_type_stats = PropertyDocument.objects.values('document_type').annotate(
+        count=Count('id')
+    ).order_by('-count')
+    
+    context = {
+        'total_media': total_media,
+        'total_images': total_images,
+        'total_videos': total_videos,
+        'total_documents': total_documents,
+        'total_size': total_size,
+        'total_size_display': format_file_size(total_size),
+        'total_image_size': total_image_size,
+        'total_image_size_display': format_file_size(total_image_size),
+        'total_video_size': total_video_size,
+        'total_video_size_display': format_file_size(total_video_size),
+        'total_document_size': total_document_size,
+        'total_document_size_display': format_file_size(total_document_size),
+        'total_image_views': total_image_views,
+        'total_video_views': total_video_views,
+        'total_document_downloads': total_document_downloads,
+        'recent_images': recent_images,
+        'recent_videos': recent_videos,
+        'recent_documents': recent_documents,
+        'unpublished_images': unpublished_images,
+        'unpublished_videos': unpublished_videos,
+        'processing_videos': processing_videos,
+        'failed_videos': failed_videos,
+        'expired_documents': expired_documents,
+        'primary_images': primary_images,
+        'images_360': images_360,
+        'featured_videos': featured_videos,
+        'verified_documents': verified_documents,
+        'image_type_stats': image_type_stats,
+        'video_type_stats': video_type_stats,
+        'document_type_stats': document_type_stats,
+    }
+    
+    return render(request, 'properties/media_dashboard.html', context)
 
 
 @login_required
@@ -20464,67 +21529,328 @@ def access_control(request):
 
 @login_required
 def crm_management(request):
-    """نظام إدارة العلاقات العامة CRM"""
-    if not request.user.is_superuser:
+    """نظام إدارة العلاقات العامة CRM - محسّن"""
+    if not request.user.is_superuser and not request.user.is_staff:
         return JsonResponse({'success': False, 'error': 'غير مصرح'}, status=403)
     
     try:
+        from .models import CRMContact
+        import json
+        from django.utils import timezone
+        from django.db.models import Count, Sum, Q
+        from datetime import timedelta
+        
         if request.method == 'GET':
-            # محاكاة بيانات CRM
-            contacts = []
-            stages = ['lead', 'prospect', 'customer', 'churned']
-            priorities = ['hot', 'warm', 'cold']
+            contacts_qs = CRMContact.objects.select_related('user', 'created_by', 'assigned_to').prefetch_related('properties_interested').all()
             
-            for i in range(20):
+            # تطبيق الفلاتر
+            stage_filter = request.GET.get('stage')
+            priority_filter = request.GET.get('priority')
+            source_filter = request.GET.get('source')
+            assigned_to_filter = request.GET.get('assigned_to')
+            
+            if stage_filter:
+                contacts_qs = contacts_qs.filter(stage=stage_filter)
+            if priority_filter:
+                contacts_qs = contacts_qs.filter(priority=priority_filter)
+            if source_filter:
+                contacts_qs = contacts_qs.filter(source=source_filter)
+            if assigned_to_filter:
+                contacts_qs = contacts_qs.filter(assigned_to_id=assigned_to_filter)
+            
+            contacts = []
+            
+            for c in contacts_qs:
                 contacts.append({
-                    'id': i + 1,
-                    'name': f'contact_{i + 1}',
-                    'email': f'contact{i + 1}@example.com',
-                    'phone': f'+1234567{i:04d}',
-                    'company': f'Company {i + 1}',
-                    'stage': random.choice(stages),
-                    'priority': random.choice(priorities),
-                    'value': random.randint(1000, 50000),
-                    'last_contact': timezone.now().strftime('%Y-%m-%d') if random.choice([True, False]) else None,
-                    'next_followup': (timezone.now() + timedelta(days=random.randint(1, 30))).strftime('%Y-%m-%d'),
-                    'notes': f'ملاحظات عن الاتصال {i + 1}',
-                    'created_at': timezone.now().strftime('%Y-%m-%d %H:%M:%S')
+                    'id': c.id,
+                    'name': c.name,
+                    'email': c.email,
+                    'phone': c.phone,
+                    'secondary_phone': c.secondary_phone or '',
+                    'company': c.company or '',
+                    'position': c.position or '',
+                    'stage': c.stage,
+                    'priority': c.priority,
+                    'source': c.source or '',
+                    'value': float(c.value),
+                    'converted_value': float(c.converted_value),
+                    'last_contact': c.last_contact.strftime('%Y-%m-%d %H:%M') if c.last_contact else None,
+                    'next_followup': c.next_followup.strftime('%Y-%m-%d %H:%M') if c.next_followup else None,
+                    'first_contact': c.first_contact.strftime('%Y-%m-%d') if c.first_contact else None,
+                    'notes': c.notes or '',
+                    'interaction_count': c.interaction_count,
+                    'is_active': c.is_active,
+                    'is_converted': c.is_converted,
+                    'governorate': c.governorate or '',
+                    'city': c.city or '',
+                    'user': c.user.username if c.user else None,
+                    'created_by': c.created_by.username if c.created_by else None,
+                    'assigned_to': c.assigned_to.username if c.assigned_to else None,
+                    'days_since_last_contact': c.get_days_since_last_contact(),
+                    'is_followup_due': c.is_followup_due(),
+                    'created_at': c.created_at.strftime('%Y-%m-%d %H:%M:%S'),
+                    'properties_count': c.properties_interested.count(),
                 })
+            
+            # إحصائيات متقدمة
+            total_value = sum(c['value'] for c in contacts)
+            total_converted_value = sum(c['converted_value'] for c in contacts)
+            conversion_rate = round((sum(1 for c in contacts if c['is_converted']) / len(contacts) * 100) if contacts else 0, 1)
+            
+            # إحصائيات حسب المرحلة
+            stage_stats = contacts_qs.values('stage').annotate(
+                count=Count('id'),
+                total_value=Sum('value')
+            ).order_by('-count')
+            
+            # إحصائيات حسب الأولوية
+            priority_stats = contacts_qs.values('priority').annotate(
+                count=Count('id')
+            ).order_by('-count')
+            
+            # إحصائيات حسب المصدر
+            source_stats = contacts_qs.values('source').annotate(
+                count=Count('id')
+            ).order_by('-count')
+            
+            # المتابعات المستحقة
+            followup_due_count = contacts_qs.filter(
+                next_followup__lte=timezone.now(),
+                is_active=True
+            ).count()
+            
+            # لم يتم التواصل معهم منذ أكثر من 30 يوم
+            thirty_days_ago = timezone.now() - timedelta(days=30)
+            stale_contacts_count = contacts_qs.filter(
+                last_contact__lt=thirty_days_ago,
+                is_active=True
+            ).count()
             
             return JsonResponse({
                 'success': True,
                 'contacts': contacts,
                 'statistics': {
                     'total': len(contacts),
+                    'active': sum(1 for c in contacts if c['is_active']),
+                    'converted': sum(1 for c in contacts if c['is_converted']),
                     'leads': sum(1 for c in contacts if c['stage'] == 'lead'),
                     'prospects': sum(1 for c in contacts if c['stage'] == 'prospect'),
                     'customers': sum(1 for c in contacts if c['stage'] == 'customer'),
-                    'total_value': sum(c['value'] for c in contacts)
+                    'churned': sum(1 for c in contacts if c['stage'] == 'churned'),
+                    'total_value': total_value,
+                    'total_converted_value': total_converted_value,
+                    'conversion_rate': conversion_rate,
+                    'followup_due': followup_due_count,
+                    'stale_contacts': stale_contacts_count,
+                    'stage_stats': list(stage_stats),
+                    'priority_stats': list(priority_stats),
+                    'source_stats': list(source_stats),
                 }
             })
         
         elif request.method == 'POST':
             data = json.loads(request.body)
-            new_contact = {
-                'id': 999,
-                'name': data.get('name', 'New Contact'),
-                'email': data.get('email'),
-                'phone': data.get('phone'),
-                'company': data.get('company'),
-                'stage': 'lead',
-                'priority': 'warm',
-                'value': data.get('value', 0),
-                'created_at': timezone.now().strftime('%Y-%m-%d %H:%M:%S')
-            }
+            
+            # إنشاء جهة اتصال جديدة
+            new_contact = CRMContact.objects.create(
+                name=data.get('name', 'جهة اتصال جديدة'),
+                email=data.get('email', ''),
+                phone=data.get('phone', ''),
+                secondary_phone=data.get('secondary_phone', ''),
+                company=data.get('company', ''),
+                position=data.get('position', ''),
+                stage=data.get('stage', 'lead'),
+                priority=data.get('priority', 'warm'),
+                source=data.get('source', ''),
+                value=data.get('value', 0),
+                notes=data.get('notes', ''),
+                governorate=data.get('governorate', ''),
+                city=data.get('city', ''),
+                created_by=request.user,
+                assigned_to_id=data.get('assigned_to'),
+            )
+            
+            # إضافة عقارات مهتم بها إذا وجدت
+            property_ids = data.get('property_ids', [])
+            if property_ids:
+                new_contact.properties_interested.set(property_ids)
+            
+            # إرسال إشعار للمسند إليه
+            if new_contact.assigned_to:
+                from .models import Notification
+                Notification.create(
+                    user=new_contact.assigned_to,
+                    notification_type='info',
+                    title='تم تعيين جهة اتصال جديدة',
+                    message=f'تم تعيين جهة الاتصال {new_contact.name} لك',
+                    link='/api/crm/management/',
+                    metadata={'contact_id': new_contact.id}
+                )
             
             return JsonResponse({
                 'success': True,
-                'contact': new_contact,
-                'message': 'تم إنشاء جهة الاتصال بنجاح'
+                'message': 'تم إضافة جهة الاتصال بنجاح',
+                'contact': {
+                    'id': new_contact.id,
+                    'name': new_contact.name,
+                    'email': new_contact.email,
+                    'phone': new_contact.phone,
+                    'company': new_contact.company,
+                    'stage': new_contact.stage,
+                    'priority': new_contact.priority,
+                    'value': float(new_contact.value),
+                }
             })
-    
+        
+        elif request.method == 'PUT':
+            # تحديث جهة اتصال موجودة
+            data = json.loads(request.body)
+            contact_id = data.get('id')
+            
+            contact = get_object_or_404(CRMContact, id=contact_id)
+            
+            # تحديث الحقول
+            contact.name = data.get('name', contact.name)
+            contact.email = data.get('email', contact.email)
+            contact.phone = data.get('phone', contact.phone)
+            contact.secondary_phone = data.get('secondary_phone', contact.secondary_phone)
+            contact.company = data.get('company', contact.company)
+            contact.position = data.get('position', contact.position)
+            contact.stage = data.get('stage', contact.stage)
+            contact.priority = data.get('priority', contact.priority)
+            contact.source = data.get('source', contact.source)
+            contact.value = data.get('value', contact.value)
+            contact.notes = data.get('notes', contact.notes)
+            contact.governorate = data.get('governorate', contact.governorate)
+            contact.city = data.get('city', contact.city)
+            contact.assigned_to_id = data.get('assigned_to')
+            
+            # تحديث التواريخ
+            if data.get('last_contact'):
+                contact.last_contact = timezone.now()
+                contact.update_interaction_count()
+            
+            if data.get('next_followup'):
+                contact.next_followup = timezone.strptime(data['next_followup'], '%Y-%m-%d')
+            
+            # تحويل إلى عميل
+            if data.get('convert_to_customer'):
+                contact.convert_to_customer()
+            
+            contact.save()
+            
+            # تحديث العقارات المهتم بها
+            property_ids = data.get('property_ids', [])
+            if property_ids is not None:
+                contact.properties_interested.set(property_ids)
+            
+            return JsonResponse({
+                'success': True,
+                'message': 'تم تحديث جهة الاتصال بنجاح',
+                'contact': {
+                    'id': contact.id,
+                    'name': contact.name,
+                    'stage': contact.stage,
+                    'priority': contact.priority,
+                }
+            })
+        
+        elif request.method == 'DELETE':
+            # حذف جهة اتصال
+            data = json.loads(request.body)
+            contact_id = data.get('id')
+            
+            contact = get_object_or_404(CRMContact, id=contact_id)
+            contact.delete()
+            
+            return JsonResponse({
+                'success': True,
+                'message': 'تم حذف جهة الاتصال بنجاح'
+            })
+            
     except Exception as e:
         return JsonResponse({'success': False, 'error': str(e)}, status=500)
+
+
+@login_required
+def crm_dashboard(request):
+    """لوحة تحكم CRM"""
+    if not request.user.is_superuser and not request.user.is_staff:
+        return redirect('dashboard')
+    
+    from .models import CRMContact
+    from django.db.models import Count, Sum, Q
+    from django.utils import timezone
+    from datetime import timedelta
+    
+    # إحصائيات عامة
+    total_contacts = CRMContact.objects.count()
+    active_contacts = CRMContact.objects.filter(is_active=True).count()
+    converted_contacts = CRMContact.objects.filter(is_converted=True).count()
+    
+    # إحصائيات حسب المرحلة
+    stage_stats = CRMContact.objects.values('stage').annotate(
+        count=Count('id')
+    ).order_by('-count')
+    
+    # إحصائيات حسب الأولوية
+    priority_stats = CRMContact.objects.values('priority').annotate(
+        count=Count('id')
+    ).order_by('-count')
+    
+    # المتابعات المستحقة
+    followup_due = CRMContact.objects.filter(
+        next_followup__lte=timezone.now(),
+        is_active=True
+    ).order_by('next_followup')[:10]
+    
+    # جهات الاتصال الجديدة
+    recent_contacts = CRMContact.objects.select_related('created_by', 'assigned_to').order_by('-created_at')[:10]
+    
+    # أفضل الوكلاء
+    top_agents = CRMContact.objects.values('assigned_to__username').annotate(
+        count=Count('id'),
+        total_value=Sum('value')
+    ).order_by('-count')[:10]
+    
+    # القيمة المتوقعة
+    total_value = CRMContact.objects.aggregate(total=Sum('value'))['total'] or 0
+    converted_value = CRMContact.objects.aggregate(total=Sum('converted_value'))['total'] or 0
+    
+    context = {
+        'total_contacts': total_contacts,
+        'active_contacts': active_contacts,
+        'converted_contacts': converted_contacts,
+        'conversion_rate': round((converted_contacts / total_contacts * 100) if total_contacts > 0 else 0, 1),
+        'total_value': total_value,
+        'converted_value': converted_value,
+        'stage_stats': stage_stats,
+        'priority_stats': priority_stats,
+        'followup_due': followup_due,
+        'recent_contacts': recent_contacts,
+        'top_agents': top_agents,
+    }
+    
+    return render(request, 'properties/crm_dashboard.html', context)
+
+
+@login_required
+def crm_contact_detail(request, contact_id):
+    """تفاصيل جهة اتصال CRM"""
+    if not request.user.is_superuser and not request.user.is_staff:
+        return redirect('dashboard')
+    
+    from .models import CRMContact
+    
+    contact = get_object_or_404(CRMContact, id=contact_id)
+    
+    context = {
+        'contact': contact,
+        'properties_interested': contact.properties_interested.all(),
+    }
+    
+    return render(request, 'properties/crm_contact_detail.html', context)
+
 
 
 @login_required
@@ -21257,49 +22583,117 @@ def event_management(request):
 # Real Estate Specific Functions
 @login_required
 def property_management_advanced(request):
-    """نظام إدارة العقارات المتقدم"""
-    if not request.user.is_superuser:
+    """نظام إدارة العقارات المتقدم - بيانات حقيقية من قاعدة البيانات"""
+    if not request.user.is_superuser and not request.user.is_staff:
         return JsonResponse({'success': False, 'error': 'غير مصرح'}, status=403)
     
     try:
         if request.method == 'GET':
-            # محاكاة بيانات العقارات المتقدمة
-            properties = []
-            property_types = ['apartment', 'villa', 'commercial', 'land', 'office']
-            statuses = ['available', 'reserved', 'sold', 'rented', 'under_contract']
-            price_ranges = ['low', 'medium', 'high', 'luxury']
+            # جلب البيانات الحقيقية من قاعدة البيانات
+            properties_list = Property.objects.select_related('owner', 'broker', 'office').prefetch_related('verification').all()
             
-            for i in range(25):
+            # تحويل البيانات إلى القوائم
+            properties = []
+            for prop in properties_list:
                 properties.append({
-                    'id': i + 1,
-                    'title': f'عقار {i + 1}',
-                    'type': random.choice(property_types),
-                    'status': random.choice(statuses),
-                    'price_range': random.choice(price_ranges),
-                    'price': random.randint(50000, 5000000),
-                    'area': random.randint(50, 500),
-                    'bedrooms': random.randint(1, 6),
-                    'bathrooms': random.randint(1, 5),
-                    'city': random.choice(['بغداد', 'البصرة', 'أربيل', 'النجف', 'الناصرية', 'كربلاء']),
-                    'neighborhood': f'حي {random.randint(1, 20)}',
-                    'year_built': random.randint(2000, 2026),
-                    'rating': round(random.uniform(3, 5), 1),
-                    'views_count': random.randint(0, 1000),
-                    'inquiries_count': random.randint(0, 50),
-                    'listed_date': timezone.now().strftime('%Y-%m-%d'),
-                    'featured': random.choice([True, False]),
-                    'verified': random.choice([True, False])
+                    'id': prop.id,
+                    'title': prop.title or prop.display_title,
+                    'type': prop.type,
+                    'status': prop.status,
+                    'price': prop.price,
+                    'area': prop.area,
+                    'bedrooms': prop.bedrooms,
+                    'bathrooms': prop.bathrooms,
+                    'city': prop.city,
+                    'district': prop.district,
+                    'governorate': prop.governorate,
+                    'year_built': prop.year_built,
+                    'views_count': prop.views_count,
+                    'is_featured': prop.is_featured,
+                    'is_promoted': prop.is_promoted,
+                    'created_at': prop.created_at.strftime('%Y-%m-%d') if prop.created_at else None,
+                    'owner': prop.owner.username if prop.owner else None,
+                    'broker': prop.broker.display_name if prop.broker else None,
+                    'office': prop.office.name if prop.office else None,
+                    'verification_status': prop.verification.verification_status if hasattr(prop, 'verification') and prop.verification else None,
+                    'verification_badge': prop.verification.get_verification_badge() if hasattr(prop, 'verification') and prop.verification else '',
+                    # الحقول الجديدة
+                    'office_name': prop.office_name,
+                    'license_number': prop.license_number,
+                    'deed_type': prop.deed_type,
+                    'deed_number': prop.deed_number,
+                    'land_registration_status': prop.land_registration_status,
+                    'is_mortgaged': prop.is_mortgaged,
+                    'complex_name': prop.complex_name,
+                    'building_number': prop.building_number,
+                    'unit_number': prop.unit_number,
+                    'total_price': prop.total_price,
+                    'monthly_rent': prop.monthly_rent,
+                    'furnishing_status': prop.furnishing_status,
+                    'has_elevator': prop.has_elevator,
+                    'has_garage': prop.has_garage,
+                    'has_security_system': prop.has_security_system,
+                    'property_age': prop.property_age,
+                    'property_condition': prop.property_condition,
                 })
+            
+            # حساب الإحصائيات الحقيقية
+            total_properties = properties_list.count()
+            active_properties = properties_list.filter(status='published').count()
+            sold_properties = properties_list.filter(status='sold').count()
+            pending_properties = properties_list.filter(status='pending_approval').count()
+            
+            # إحصائيات الأسعار
+            price_stats = properties_list.aggregate(
+                avg_price=Avg('price'),
+                min_price=Min('price'),
+                max_price=Max('price'),
+                total_value=Sum('price')
+            )
+            
+            # إحصائيات حسب النوع
+            type_stats = properties_list.values('type').annotate(
+                count=Count('id')
+            ).order_by('-count')
+            
+            # إحصائيات حسب المحافظة
+            governorate_stats = properties_list.values('governorate').annotate(
+                count=Count('id')
+            ).order_by('-count')
+            
+            # العقارات الأكثر مشاهدة
+            top_viewed = properties_list.order_by('-views_count')[:10]
+            
+            # العقارات الموثقة
+            verified_properties = properties_list.filter(
+                verification__verification_status='verified'
+            ).count()
             
             return JsonResponse({
                 'success': True,
                 'properties': properties,
                 'statistics': {
-                    'total': len(properties),
-                    'available': sum(1 for p in properties if p['status'] == 'available'),
-                    'sold': sum(1 for p in properties if p['status'] == 'sold'),
-                    'total_value': sum(p['price'] for p in properties),
-                    'avg_price': sum(p['price'] for p in properties) // len(properties)
+                    'total': total_properties,
+                    'active': active_properties,
+                    'sold': sold_properties,
+                    'pending': pending_properties,
+                    'verified': verified_properties,
+                    'price_stats': {
+                        'avg_price': int(price_stats['avg_price']) if price_stats['avg_price'] else 0,
+                        'min_price': int(price_stats['min_price']) if price_stats['min_price'] else 0,
+                        'max_price': int(price_stats['max_price']) if price_stats['max_price'] else 0,
+                        'total_value': int(price_stats['total_value']) if price_stats['total_value'] else 0,
+                    },
+                    'type_stats': list(type_stats),
+                    'governorate_stats': list(governorate_stats),
+                    'top_viewed': [
+                        {
+                            'id': prop.id,
+                            'title': prop.title or prop.display_title,
+                            'views_count': prop.views_count
+                        }
+                        for prop in top_viewed
+                    ]
                 }
             })
     
@@ -23252,7 +24646,7 @@ def appointment_booking_landing(request):
     from django.utils import timezone
 
     # Get active brokers for the dropdown
-    active_brokers = Broker.objects.filter(is_active=True, is_approved=True)[:10]
+    active_brokers = Broker.objects.filter(is_active=True, is_verified=True)[:10]
 
     return render(request, 'properties/appointment_booking_landing.html', {
         'active_brokers': active_brokers,
@@ -24601,3 +25995,9 @@ def platform_comprehensive_stats(request):
     }
 
     return render(request, 'properties/platform_stats.html', context)
+
+
+@login_required
+def smart_assistant_view(request):
+    """Smart AI Assistant View - Intelligent search and guidance"""
+    return render(request, 'properties/ai_smart_assistant.html')

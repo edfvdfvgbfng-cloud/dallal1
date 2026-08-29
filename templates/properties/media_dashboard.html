@@ -1,0 +1,461 @@
+{% extends 'properties/dashboard_base.html' %}
+
+{% block title %}لوحة تحكم الوسائط{% endblock %}
+
+{% block dashboard_title %}🖼️ إدارة الوسائط{% endblock %}
+
+{% block dashboard_subtitle %}
+<p>نظام متقدم لإدارة الصور والفيديوهات والمستندات</p>
+{% endblock %}
+
+{% block dashboard_actions %}
+<a href="{% url 'dashboard' %}" class="btn btn-outline">← لوحة التحكم</a>
+<a href="{% url 'api_media_management' %}" class="btn btn-primary">📊 API الوسائط</a>
+{% endblock %}
+
+{% block content %}
+<div class="dashboard-content">
+  <!-- Statistics Cards -->
+  <div class="stats-grid">
+    <div class="stats-card">
+      <h3>إجمالي الوسائط</h3>
+      <div class="stat-number">{{ total_media }}</div>
+    </div>
+    <div class="stats-card images">
+      <h3>الصور 📷</h3>
+      <div class="stat-number">{{ total_images }}</div>
+      <div class="stat-sub">{{ total_image_size_display }}</div>
+    </div>
+    <div class="stats-card videos">
+      <h3>الفيديوهات 🎥</h3>
+      <div class="stat-number">{{ total_videos }}</div>
+      <div class="stat-sub">{{ total_video_size_display }}</div>
+    </div>
+    <div class="stats-card documents">
+      <h3>المستندات 📄</h3>
+      <div class="stat-number">{{ total_documents }}</div>
+      <div class="stat-sub">{{ total_document_size_display }}</div>
+    </div>
+    <div class="stats-card">
+      <h3>إجمالي الحجم</h3>
+      <div class="stat-number">{{ total_size_display }}</div>
+    </div>
+  </div>
+
+  <!-- Engagement Statistics -->
+  <div class="stats-grid">
+    <div class="stats-card">
+      <h3>مشاهدات الصور</h3>
+      <div class="stat-number">{{ total_image_views }}</div>
+    </div>
+    <div class="stats-card">
+      <h3>مشاهدات الفيديو</h3>
+      <div class="stat-number">{{ total_video_views }}</div>
+    </div>
+    <div class="stats-card">
+      <h3>تحميلات المستندات</h3>
+      <div class="stat-number">{{ total_document_downloads }}</div>
+    </div>
+  </div>
+
+  <!-- Status Cards -->
+  <div class="stats-grid">
+    <div class="stats-card warning">
+      <h3>غير منشورة</h3>
+      <div class="stat-number">{{ unpublished_images + unpublished_videos }}</div>
+      <div class="stat-sub">صور: {{ unpublished_images }} | فيديو: {{ unpublished_videos }}</div>
+    </div>
+    <div class="stats-card processing">
+      <h3>قيد المعالجة</h3>
+      <div class="stat-number">{{ processing_videos }}</div>
+      <div class="stat-sub">فشل: {{ failed_videos }}</div>
+    </div>
+    <div class="stats-card expired">
+      <h3>منتهية الصلاحية</h3>
+      <div class="stat-number">{{ expired_documents }}</div>
+      <div class="stat-sub">مستندات</div>
+    </div>
+  </div>
+
+  <!-- Special Statistics -->
+  <div class="stats-grid">
+    <div class="stats-card primary">
+      <h3>صور رئيسية</h3>
+      <div class="stat-number">{{ primary_images }}</div>
+    </div>
+    <div class="stats-card special">
+      <h3>صور 360°</h3>
+      <div class="stat-number">{{ images_360 }}</div>
+    </div>
+    <div class="stats-card featured">
+      <h3>فيديوهات مميزة</h3>
+      <div class="stat-number">{{ featured_videos }}</div>
+    </div>
+    <div class="stats-card verified">
+      <h3>مستندات موثقة</h3>
+      <div class="stat-number">{{ verified_documents }}</div>
+    </div>
+  </div>
+
+  <!-- Type Statistics -->
+  <div class="stats-card full-width" style="margin-top: 2rem;">
+    <h3>إحصائيات أنواع الصور</h3>
+    <div class="stats-list">
+      {% for stat in image_type_stats %}
+      <div class="stat-item">
+        <span class="stat-label">{{ stat.get_image_type_display|default:stat.image_type }}</span>
+        <span class="stat-value">{{ stat.count }}</span>
+      </div>
+      {% empty %}
+      <p class="no-data">لا توجد بيانات</p>
+      {% endfor %}
+    </div>
+  </div>
+
+  <div class="stats-card" style="margin-top: 2rem;">
+    <h3>إحصائيات أنواع الفيديو</h3>
+    <div class="stats-list">
+      {% for stat in video_type_stats %}
+      <div class="stat-item">
+        <span class="stat-label">{{ stat.get_video_type_display|default:stat.video_type }}</span>
+        <span class="stat-value">{{ stat.count }}</span>
+      </div>
+      {% empty %}
+      <p class="no-data">لا توجد بيانات</p>
+      {% endfor %}
+    </div>
+  </div>
+
+  <div class="stats-card" style="margin-top: 2rem;">
+    <h3>إحصائيات أنواع المستندات</h3>
+    <div class="stats-list">
+      {% for stat in document_type_stats %}
+      <div class="stat-item">
+        <span class="stat-label">{{ stat.get_document_type_display|default:stat.document_type }}</span>
+        <span class="stat-value">{{ stat.count }}</span>
+      </div>
+      {% empty %}
+      <p class="no-data">لا توجد بيانات</p>
+      {% endfor %}
+    </div>
+  </div>
+
+  <!-- Recent Images -->
+  <div class="stats-card" style="margin-top: 2rem;">
+    <h3>الصور الحديثة 📷</h3>
+    <div class="media-list">
+      {% for image in recent_images %}
+      <div class="media-item">
+        <div class="media-thumbnail">
+          {% if image.image %}
+          <img src="{{ image.image.url }}" alt="{{ image.caption }}" class="thumbnail-img">
+          {% else %}
+          <div class="thumbnail-placeholder">📷</div>
+          {% endif %}
+        </div>
+        <div class="media-info">
+          <strong>{{ image.caption|default:'بدون تعليق' }}</strong>
+          <span class="media-property">{{ image.property.display_title }}</span>
+          <span class="media-meta">
+            <span class="type-badge">{{ image.get_image_type_display }}</span>
+            <span class="views-badge">👁 {{ image.view_count }}</span>
+          </span>
+        </div>
+        <div class="media-actions">
+          <span class="media-date">{{ image.created_at|date:"Y-m-d" }}</span>
+          {% if image.is_primary %}
+          <span class="primary-badge">⭐ رئيسية</span>
+          {% endif %}
+        </div>
+      </div>
+      {% empty %}
+      <p class="no-data">لا توجد صور</p>
+      {% endfor %}
+    </div>
+  </div>
+
+  <!-- Recent Videos -->
+  <div class="stats-card" style="margin-top: 2rem;">
+    <h3>الفيديوهات الحديثة 🎥</h3>
+    <div class="media-list">
+      {% for video in recent_videos %}
+      <div class="media-item">
+        <div class="media-thumbnail">
+          {% if video.thumbnail %}
+          <img src="{{ video.thumbnail.url }}" alt="{{ video.caption }}" class="thumbnail-img">
+          {% else %}
+          <div class="thumbnail-placeholder">🎥</div>
+          {% endif %}
+        </div>
+        <div class="media-info">
+          <strong>{{ video.caption|default:'بدون تعليق' }}</strong>
+          <span class="media-property">{{ video.property.display_title }}</span>
+          <span class="media-meta">
+            <span class="type-badge">{{ video.get_video_type_display }}</span>
+            <span class="duration-badge">⏱ {{ video.get_duration_display }}</span>
+            <span class="views-badge">👁 {{ video.view_count }}</span>
+          </span>
+        </div>
+        <div class="media-actions">
+          <span class="media-date">{{ video.created_at|date:"Y-m-d" }}</span>
+          <span class="status-badge status-{{ video.processing_status }}">{{ video.get_processing_status_display }}</span>
+          {% if video.is_featured %}
+          <span class="featured-badge">⭐ مميز</span>
+          {% endif %}
+        </div>
+      </div>
+      {% empty %}
+      <p class="no-data">لا توجد فيديوهات</p>
+      {% endfor %}
+    </div>
+  </div>
+
+  <!-- Recent Documents -->
+  <div class="stats-card" style="margin-top: 2rem;">
+    <h3>المستندات الحديثة 📄</h3>
+    <div class="media-list">
+      {% for document in recent_documents %}
+      <div class="media-item">
+        <div class="media-thumbnail">
+          <div class="thumbnail-placeholder">📄</div>
+        </div>
+        <div class="media-info">
+          <strong>{{ document.title }}</strong>
+          <span class="media-property">{{ document.property.display_title }}</span>
+          <span class="media-meta">
+            <span class="type-badge">{{ document.get_document_type_display }}</span>
+            <span class="size-badge">{{ document.get_file_size_display }}</span>
+            <span class="downloads-badge">⬇ {{ document.download_count }}</span>
+          </span>
+        </div>
+        <div class="media-actions">
+          <span class="media-date">{{ document.created_at|date:"Y-m-d" }}</span>
+          <span class="visibility-badge visibility-{{ document.visibility }}">{{ document.get_visibility_display }}</span>
+          {% if document.is_verified %}
+          <span class="verified-badge">✅ موثق</span>
+          {% endif %}
+          {% if document.is_expired %}
+          <span class="expired-badge">⚠️ منتهي</span>
+          {% endif %}
+        </div>
+      </div>
+      {% empty %}
+      <p class="no-data">لا توجد مستندات</p>
+      {% endfor %}
+    </div>
+  </div>
+</div>
+
+<style>
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+.stats-card {
+  background: var(--card-bg);
+  padding: 1.5rem;
+  border-radius: var(--radius-sm);
+  box-shadow: var(--shadow);
+  border: 1px solid var(--border);
+}
+
+.stats-card.full-width {
+  grid-column: 1 / -1;
+}
+
+.stats-card.images {
+  border-left: 4px solid #007bff;
+}
+
+.stats-card.videos {
+  border-left: 4px solid #28a745;
+}
+
+.stats-card.documents {
+  border-left: 4px solid #17a2b8;
+}
+
+.stats-card.warning {
+  border-left: 4px solid #ffc107;
+}
+
+.stats-card.processing {
+  border-left: 4px solid #6c757d;
+}
+
+.stats-card.expired {
+  border-left: 4px solid #dc3545;
+}
+
+.stats-card.primary {
+  border-left: 4px solid #fd7e14;
+}
+
+.stats-card.special {
+  border-left: 4px solid #20c997;
+}
+
+.stats-card.featured {
+  border-left: 4px solid #e83e8c;
+}
+
+.stats-card.verified {
+  border-left: 4px solid #28a745;
+}
+
+.stat-number {
+  font-size: 2.5rem;
+  font-weight: 700;
+  color: var(--primary);
+}
+
+.stat-sub {
+  font-size: 0.9rem;
+  color: var(--text-light);
+  margin-top: 0.5rem;
+}
+
+.stats-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.stat-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.75rem;
+  background: var(--bg-alt);
+  border-radius: var(--radius-sm);
+}
+
+.stat-label {
+  color: var(--text);
+  font-weight: 500;
+}
+
+.stat-value {
+  color: var(--primary);
+  font-weight: 600;
+}
+
+.media-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.media-item {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem;
+  background: var(--bg-alt);
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+}
+
+.media-thumbnail {
+  width: 60px;
+  height: 60px;
+  flex-shrink: 0;
+}
+
+.thumbnail-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: var(--radius-sm);
+}
+
+.thumbnail-placeholder {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--border);
+  border-radius: var(--radius-sm);
+  font-size: 1.5rem;
+}
+
+.media-info {
+  flex: 1;
+}
+
+.media-property {
+  display: block;
+  color: var(--text-light);
+  font-size: 0.9rem;
+  margin-top: 0.25rem;
+}
+
+.media-meta {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+  margin-top: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.type-badge,
+.views-badge,
+.duration-badge,
+.size-badge,
+.downloads-badge,
+.status-badge,
+.visibility-badge,
+.primary-badge,
+.featured-badge,
+.verified-badge,
+.expired-badge {
+  padding: 0.25rem 0.75rem;
+  border-radius: 20px;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.type-badge { background: #6c757d; color: white; }
+.views-badge { background: #17a2b8; color: white; }
+.duration-badge { background: #28a745; color: white; }
+.size-badge { background: #007bff; color: white; }
+.downloads-badge { background: #e83e8c; color: white; }
+
+.status-pending { background: #6c757d; color: white; }
+.status-processing { background: #ffc107; color: black; }
+.status-ready { background: #28a745; color: white; }
+.status-failed { background: #dc3545; color: white; }
+
+.visibility-public { background: #28a745; color: white; }
+.visibility-private { background: #dc3545; color: white; }
+.visibility-authenticated { background: #17a2b8; color: white; }
+
+.primary-badge { background: #fd7e14; color: white; }
+.featured-badge { background: #e83e8c; color: white; }
+.verified-badge { background: #28a745; color: white; }
+.expired-badge { background: #dc3545; color: white; }
+
+.media-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  align-items: flex-end;
+}
+
+.media-date {
+  color: var(--text-light);
+  font-size: 0.85rem;
+}
+
+.no-data {
+  text-align: center;
+  color: var(--text-light);
+  padding: 2rem;
+  font-style: italic;
+}
+</style>
+{% endblock %}

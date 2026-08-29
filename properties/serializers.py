@@ -1,7 +1,7 @@
 from rest_framework import serializers
 from django.contrib.auth.models import User
 from .models import (
-    Property, PropertyImage, Broker,
+    Property, PropertyVerification, PropertyImage, Broker,
     Conversation, ConversationParticipant, ChatMessage,
     MessageReadStatus, MessageAttachment, MessageReport,
     ChatSettings, BlockedUser
@@ -20,12 +20,39 @@ class BrokerSerializer(serializers.ModelSerializer):
         fields = ['id', 'office_name', 'phone', 'governorate', 'is_verified', 'is_active']
 
 
+class PropertyVerificationSerializer(serializers.ModelSerializer):
+    """Serializer for property verification"""
+    verification_status_display = serializers.CharField(source='get_verification_status_display', read_only=True)
+    is_verified = serializers.SerializerMethodField()
+    verification_badge = serializers.SerializerMethodField()
+    
+    class Meta:
+        model = PropertyVerification
+        fields = [
+            'id', 'property', 'verification_status', 'verification_status_display',
+            'verification_date', 'verified_by', 'identity_verified', 'ownership_verified',
+            'location_verified', 'images_verified', 'price_verified', 'verification_notes',
+            'rejection_reason', 'identity_document', 'ownership_document', 'is_verified',
+            'verification_badge', 'created_at', 'updated_at'
+        ]
+        read_only_fields = ['verification_date', 'created_at', 'updated_at']
+    
+    def get_is_verified(self, obj):
+        return obj.is_verified()
+    
+    def get_verification_badge(self, obj):
+        return obj.get_verification_badge()
+
+
 class PropertySerializer(serializers.ModelSerializer):
     images = PropertyImageSerializer(many=True, read_only=True)
     broker = BrokerSerializer(read_only=True)
+    verification = PropertyVerificationSerializer(read_only=True)
     property_type_display = serializers.CharField(source='get_type_display', read_only=True)
     status_display = serializers.CharField(source='get_status_display', read_only=True)
     days_since_creation = serializers.SerializerMethodField()
+    relevant_fields = serializers.SerializerMethodField()
+    required_fields = serializers.SerializerMethodField()
 
     class Meta:
         model = Property
@@ -36,13 +63,50 @@ class PropertySerializer(serializers.ModelSerializer):
             'bathrooms', 'floors', 'year_built', 'parking', 'furnished',
             'latitude', 'longitude', 'is_featured', 'is_promoted',
             'views_count', 'created_at', 'updated_at', 'images', 'broker',
-            'days_since_creation'
+            'days_since_creation', 'verification', 'relevant_fields', 'required_fields',
+            # New broker/office fields
+            'office_name', 'license_number', 'additional_phone', 'preferred_contact_method',
+            # New ownership fields
+            'deed_type', 'deed_number', 'deed_issuing_authority', 'land_registration_status',
+            'is_mortgaged', 'has_legal_issues', 'legal_issues_description', 'permit_type',
+            'ownership_transfer_possible',
+            # New location fields
+            'complex_name', 'building_number', 'unit_number', 'floor_in_building',
+            'sector_direction', 'approximate_location', 'distance_to_main_road',
+            # Service proximity fields
+            'distance_to_school', 'distance_to_hospital', 'distance_to_market',
+            'distance_to_mosque', 'distance_to_university', 'distance_to_gas_station',
+            # New pricing fields
+            'total_price', 'price_per_square_meter', 'down_payment_amount',
+            'number_of_installments', 'installment_amount', 'installment_duration',
+            'payment_method', 'rental_deposit', 'monthly_rent', 'annual_rent',
+            # New rental fields
+            'minimum_rental_period', 'rental_commission', 'allows_pets', 'allows_families',
+            'allows_students', 'allows_companies', 'furnishing_status',
+            'includes_electricity', 'includes_water', 'includes_internet', 'includes_generator',
+            # New amenities fields
+            'number_of_elevators', 'has_closed_garage', 'has_security_gate', 'has_security_guard',
+            'has_cctv_cameras', 'has_private_generator', 'generator_amperage',
+            'has_national_electricity_line', 'has_24_hour_electricity', 'has_sewerage_system',
+            'has_gas_supply', 'has_central_heating', 'has_central_cooling', 'has_central_ac',
+            'has_air_conditioners', 'has_furniture', 'has_equipped_kitchen', 'has_satellite',
+            'has_fiber_internet',
+            # New property condition fields
+            'property_age', 'number_of_facades', 'facade_type', 'street_width', 'view_type',
+            'is_corner_property', 'is_corner_lot', 'distance_from_main_road', 'furniture_condition',
+            'needs_renovation', 'completion_percentage',
         ]
 
     def get_days_since_creation(self, obj):
         from django.utils import timezone
         delta = timezone.now() - obj.created_at
         return delta.days
+    
+    def get_relevant_fields(self, obj):
+        return obj.get_relevant_fields()
+    
+    def get_required_fields(self, obj):
+        return obj.get_required_fields_for_type()
 
 
 class PropertyListSerializer(serializers.ModelSerializer):

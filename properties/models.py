@@ -1547,11 +1547,33 @@ class SiteSettings(models.Model):
     site_name = models.CharField(max_length=100, default='دلال', verbose_name='اسم الموقع')
     tagline = models.CharField(max_length=200, blank=True, verbose_name='الشعار')
     favicon = models.ImageField(upload_to='site/', blank=True, verbose_name='الأيقونة (Favicon)')
+    logo = models.ImageField(upload_to='site/', blank=True, verbose_name='الشعار (Logo)')
     site_description = models.TextField(blank=True, verbose_name='وصف الموقع')
     default_language = models.CharField(max_length=10, default='ar', verbose_name='اللغة الافتراضية')
     timezone = models.CharField(max_length=50, default='Asia/Baghdad', verbose_name='المنطقة الزمنية')
     date_format = models.CharField(max_length=20, default='Y-m-d', verbose_name='تنسيق التاريخ')
     time_format = models.CharField(max_length=20, default='H:i', verbose_name='تنسيق الوقت')
+    
+    # Contact Information
+    contact_email = models.EmailField(blank=True, verbose_name='البريد الإلكتروني')
+    contact_phone = models.CharField(max_length=20, blank=True, verbose_name='رقم الهاتف')
+    contact_address = models.TextField(blank=True, verbose_name='العنوان')
+    contact_city = models.CharField(max_length=100, blank=True, verbose_name='المدينة')
+    contact_country = models.CharField(max_length=100, blank=True, verbose_name='الدولة')
+    
+    # Social Media
+    facebook_url = models.URLField(blank=True, verbose_name='فيسبوك')
+    twitter_url = models.URLField(blank=True, verbose_name='تويتر')
+    instagram_url = models.URLField(blank=True, verbose_name='إنستغرام')
+    linkedin_url = models.URLField(blank=True, verbose_name='لينكد إن')
+    telegram_url = models.URLField(blank=True, verbose_name='تيليجرام')
+    tiktok_url = models.URLField(blank=True, verbose_name='تيك توك')
+    youtube_url = models.URLField(blank=True, verbose_name='يوتيوب')
+    snapchat_url = models.URLField(blank=True, verbose_name='سناب شات')
+    
+    # Maintenance Mode
+    maintenance_mode = models.BooleanField(default=False, verbose_name='وضع الصيانة')
+    maintenance_message = models.TextField(blank=True, verbose_name='رسالة الصيانة')
     
     # Theme Settings
     theme_mode = models.CharField(max_length=10, choices=[('light', 'فاتح'), ('dark', 'داكن')], default='light', verbose_name='الوضع')
@@ -2415,6 +2437,68 @@ class SiteSettings(models.Model):
         return obj
 
 
+class PropertyVerification(models.Model):
+    """Property verification system for admin use"""
+    
+    VERIFICATION_STATUS_CHOICES = [
+        ('unverified', 'غير متحقق'),
+        ('under_review', 'قيد المراجعة'),
+        ('verified', 'موثق'),
+        ('rejected', 'مرفوض'),
+    ]
+    
+    property = models.OneToOneField('Property', on_delete=models.CASCADE, related_name='verification', verbose_name='العقار')
+    
+    # Verification Status
+    verification_status = models.CharField(max_length=20, choices=VERIFICATION_STATUS_CHOICES, default='unverified', verbose_name='حالة التحقق')
+    verification_date = models.DateTimeField(null=True, blank=True, verbose_name='تاريخ التحقق')
+    verified_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='verified_property_verifications', verbose_name='الموظف الذي تحقق')
+    
+    # Verification Details
+    identity_verified = models.BooleanField(default=False, verbose_name='تم التحقق من هوية المعلن')
+    ownership_verified = models.BooleanField(default=False, verbose_name='تم التحقق من الملكية')
+    location_verified = models.BooleanField(default=False, verbose_name='تم التحقق من الموقع')
+    images_verified = models.BooleanField(default=False, verbose_name='تم التحقق من الصور')
+    price_verified = models.BooleanField(default=False, verbose_name='تم التحقق من السعر')
+    
+    # Verification Notes
+    verification_notes = models.TextField(blank=True, verbose_name='ملاحظات التحقق')
+    rejection_reason = models.TextField(blank=True, verbose_name='سبب الرفض')
+    
+    # Verification Documents
+    identity_document = models.FileField(upload_to='verification_documents/', null=True, blank=True, verbose_name='وثيقة الهوية')
+    ownership_document = models.FileField(upload_to='verification_documents/', null=True, blank=True, verbose_name='وثيقة الملكية')
+    
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name='تاريخ الإنشاء')
+    updated_at = models.DateTimeField(auto_now=True, verbose_name='تاريخ التحديث')
+    
+    class Meta:
+        verbose_name = 'تحقق عقار'
+        verbose_name_plural = 'تحققات العقارات'
+        indexes = [
+            models.Index(fields=['verification_status']),
+            models.Index(fields=['verified_by']),
+            models.Index(fields=['verification_date']),
+        ]
+    
+    def __str__(self):
+        return f'تحقق {self.property.display_title} - {self.get_verification_status_display()}'
+    
+    def is_verified(self):
+        """Check if property is fully verified"""
+        return self.verification_status == 'verified'
+    
+    def get_verification_badge(self):
+        """Get verification badge for display"""
+        if self.is_verified():
+            return '✅ عقار موثق'
+        elif self.verification_status == 'under_review':
+            return '⏳ قيد المراجعة'
+        elif self.verification_status == 'rejected':
+            return '❌ مرفوض'
+        return ''
+
+
 class Property(models.Model):
     # Flatten PROPERTY_TYPES dictionary for choices
     def get_property_type_choices():
@@ -2476,6 +2560,17 @@ class Property(models.Model):
     ]
     ownership_status = models.CharField(max_length=30, choices=OWNERSHIP_CHOICES, blank=True, null=True, verbose_name='حالة الملكية')
     
+    # Detailed Ownership and Document Information
+    deed_type = models.CharField(max_length=100, blank=True, verbose_name='نوع سند الملكية بالتفصيل')
+    deed_number = models.CharField(max_length=100, blank=True, verbose_name='رقم السند')
+    deed_issuing_authority = models.CharField(max_length=200, blank=True, verbose_name='جهة إصدار السند')
+    land_registration_status = models.CharField(max_length=100, blank=True, verbose_name='حالة التسجيل العقاري')
+    is_mortgaged = models.BooleanField(default=False, verbose_name='هل العقار مرهون؟')
+    has_legal_issues = models.BooleanField(default=False, verbose_name='هل توجد مشاكل قانونية؟')
+    legal_issues_description = models.TextField(blank=True, verbose_name='وصف المشاكل القانونية')
+    permit_type = models.CharField(max_length=100, blank=True, verbose_name='نوع الإجازة/الموافقة')
+    ownership_transfer_possible = models.BooleanField(default=True, verbose_name='إمكانية نقل الملكية')
+    
     # Property ID and Owner Information
     property_number = models.CharField(max_length=20, unique=True, blank=True, null=True, verbose_name='رقم الإعلان')
     owner_name = models.CharField(max_length=100, blank=True, null=True, verbose_name='اسم المالك (اختياري)')
@@ -2499,6 +2594,23 @@ class Property(models.Model):
     property_plot_number = models.CharField(max_length=50, blank=True, null=True, verbose_name='رقم العقار')
     landmark = models.CharField(max_length=200, blank=True, null=True, verbose_name='أقرب نقطة دالة')
     location = models.CharField(max_length=200, verbose_name='العنوان التفصيلي', help_text='العنوان الكامل')
+    
+    # Enhanced Location Details
+    complex_name = models.CharField(max_length=200, blank=True, verbose_name='اسم المجمع السكني')
+    building_number = models.CharField(max_length=50, blank=True, verbose_name='رقم البناية')
+    unit_number = models.CharField(max_length=50, blank=True, verbose_name='رقم الوحدة')
+    floor_in_building = models.PositiveSmallIntegerField(null=True, blank=True, verbose_name='الطابق داخل البناية')
+    sector_direction = models.CharField(max_length=50, blank=True, verbose_name='الجهة/القطاع')
+    approximate_location = models.CharField(max_length=200, blank=True, verbose_name='الموقع التقريبي')
+    distance_to_main_road = models.CharField(max_length=100, blank=True, verbose_name='مسافة العقار عن أقرب شارع رئيسي')
+    
+    # Service Proximity
+    distance_to_school = models.CharField(max_length=100, blank=True, verbose_name='مسافة عن المدرسة')
+    distance_to_hospital = models.CharField(max_length=100, blank=True, verbose_name='مسافة عن المستشفى')
+    distance_to_market = models.CharField(max_length=100, blank=True, verbose_name='مسافة عن السوق')
+    distance_to_mosque = models.CharField(max_length=100, blank=True, verbose_name='مسافة عن المسجد')
+    distance_to_university = models.CharField(max_length=100, blank=True, verbose_name='مسافة عن الجامعة')
+    distance_to_gas_station = models.CharField(max_length=100, blank=True, verbose_name='مسافة عن محطة الوقود')
     
     # Outside Iraq location fields
     country = models.ForeignKey('Country', on_delete=models.SET_NULL, null=True, blank=True, related_name='properties', verbose_name='الدولة')
@@ -2530,6 +2642,26 @@ class Property(models.Model):
     installments = models.TextField(blank=True, null=True, verbose_name='الأقساط (إن وجدت)')
     annual_maintenance_fee = models.BigIntegerField(null=True, blank=True, verbose_name='رسوم الصيانة السنوية')
     
+    # Comprehensive Pricing and Payment Fields
+    total_price = models.BigIntegerField(null=True, blank=True, verbose_name='السعر الإجمالي')
+    price_per_square_meter = models.BigIntegerField(null=True, blank=True, verbose_name='سعر المتر المربع')
+    down_payment_amount = models.BigIntegerField(null=True, blank=True, verbose_name='قيمة العربون')
+    number_of_installments = models.PositiveIntegerField(null=True, blank=True, verbose_name='عدد الأقساط')
+    installment_amount = models.BigIntegerField(null=True, blank=True, verbose_name='قيمة القسط')
+    installment_duration = models.CharField(max_length=50, blank=True, verbose_name='مدة التقسيط')
+    
+    PAYMENT_METHOD_CHOICES = [
+        ('cash', 'نقدًا'),
+        ('installments', 'أقساط'),
+        ('down_payment_installments', 'دفعة + أقساط'),
+    ]
+    payment_method = models.CharField(max_length=30, choices=PAYMENT_METHOD_CHOICES, blank=True, verbose_name='طريقة الدفع')
+    
+    # Rental Pricing
+    rental_deposit = models.BigIntegerField(null=True, blank=True, verbose_name='تأمين/عربون الإيجار')
+    monthly_rent = models.BigIntegerField(null=True, blank=True, verbose_name='قيمة الإيجار الشهري')
+    annual_rent = models.BigIntegerField(null=True, blank=True, verbose_name='قيمة الإيجار السنوي')
+    
     # Building Details
     facade = models.CharField(max_length=50, blank=True, null=True, verbose_name='الواجهة')
     direction = models.CharField(max_length=50, blank=True, null=True, verbose_name='الاتجاه')
@@ -2537,6 +2669,41 @@ class Property(models.Model):
     building_condition = models.CharField(max_length=50, blank=True, null=True, verbose_name='حالة البناء')
     total_floors = models.PositiveSmallIntegerField(null=True, blank=True, verbose_name='عدد الطوابق')
     floor_number = models.PositiveSmallIntegerField(null=True, blank=True, verbose_name='رقم الطابق')
+    
+    # Additional Property Condition and Features
+    property_age = models.PositiveSmallIntegerField(null=True, blank=True, verbose_name='عمر العقار')
+    number_of_facades = models.PositiveSmallIntegerField(null=True, blank=True, verbose_name='عدد واجهات العقار')
+    
+    FACADE_TYPE_CHOICES = [
+        ('main_road', 'شارع رئيسي'),
+        ('secondary_road', 'شارع فرعي'),
+        ('internal', 'داخلي'),
+    ]
+    facade_type = models.CharField(max_length=20, choices=FACADE_TYPE_CHOICES, blank=True, verbose_name='نوع الواجهة')
+    street_width = models.CharField(max_length=50, blank=True, verbose_name='عرض الشارع')
+    
+    VIEW_TYPE_CHOICES = [
+        ('street', 'شارع'),
+        ('garden', 'حديقة'),
+        ('open', 'منفتح'),
+        ('courtyard', 'ساحة'),
+        ('other', 'أخرى'),
+    ]
+    view_type = models.CharField(max_length=20, choices=VIEW_TYPE_CHOICES, blank=True, verbose_name='نوع الإطلالة')
+    is_corner_property = models.BooleanField(default=False, verbose_name='عقار زاوية')
+    is_corner_lot = models.BooleanField(default=False, verbose_name='ناصية')
+    distance_from_main_road = models.CharField(max_length=100, blank=True, verbose_name='قرب العقار من الشارع العام')
+    
+    FURNITURE_CONDITION_CHOICES = [
+        ('excellent', 'ممتاز'),
+        ('good', 'جيد'),
+        ('fair', 'متوسط'),
+        ('poor', 'سيء'),
+        ('none', 'بدون أثاث'),
+    ]
+    furniture_condition = models.CharField(max_length=20, choices=FURNITURE_CONDITION_CHOICES, blank=True, verbose_name='حالة الأثاث')
+    needs_renovation = models.BooleanField(default=False, verbose_name='هل يحتاج ترميم؟')
+    completion_percentage = models.PositiveSmallIntegerField(null=True, blank=True, verbose_name='نسبة الإنجاز إذا قيد الإنشاء')
     
     # Additional Building Details
     floor_type = models.CharField(max_length=50, blank=True, null=True, verbose_name='نوع الأرضية')
@@ -2570,6 +2737,27 @@ class Property(models.Model):
     has_heating = models.BooleanField(default=False, verbose_name='التدفئة')
     has_cooling = models.BooleanField(default=False, verbose_name='التبريد')
     has_solar_power = models.BooleanField(default=False, verbose_name='نظام الطاقة الشمسية')
+    
+    # Enhanced Services and Amenities
+    number_of_elevators = models.PositiveSmallIntegerField(null=True, blank=True, verbose_name='عدد المصاعد')
+    has_closed_garage = models.BooleanField(default=False, verbose_name='كراج مغلق')
+    has_security_gate = models.BooleanField(default=False, verbose_name='بوابة أمنية')
+    has_security_guard = models.BooleanField(default=False, verbose_name='حراسة')
+    has_cctv_cameras = models.BooleanField(default=False, verbose_name='كاميرات مراقبة')
+    has_private_generator = models.BooleanField(default=False, verbose_name='مولدة خاصة')
+    generator_amperage = models.CharField(max_length=50, blank=True, verbose_name='أمبير المولدة')
+    has_national_electricity_line = models.BooleanField(default=False, verbose_name='خط كهرباء وطني')
+    has_24_hour_electricity = models.BooleanField(default=False, verbose_name='خط سريع/24 ساعة')
+    has_sewerage_system = models.BooleanField(default=False, verbose_name='صرف صحي')
+    has_gas_supply = models.BooleanField(default=False, verbose_name='غاز')
+    has_central_heating = models.BooleanField(default=False, verbose_name='تدفئة')
+    has_central_cooling = models.BooleanField(default=False, verbose_name='تبريد')
+    has_central_ac = models.BooleanField(default=False, verbose_name='تكييف مركزي')
+    has_air_conditioners = models.BooleanField(default=False, verbose_name='مكيفات')
+    has_furniture = models.BooleanField(default=False, verbose_name='أثاث')
+    has_equipped_kitchen = models.BooleanField(default=False, verbose_name='مطبخ مجهز')
+    has_satellite = models.BooleanField(default=False, verbose_name='ستلايت')
+    has_fiber_internet = models.BooleanField(default=False, verbose_name='إنترنت فايبر')
     
     # Security
     has_security_system = models.BooleanField(default=False, verbose_name='نظام الأمان')
@@ -2678,6 +2866,26 @@ class Property(models.Model):
     lease_term = models.CharField(max_length=50, blank=True, verbose_name='مدة العقد')
     rent_increase_terms = models.TextField(blank=True, verbose_name='شروط زيادة الإيجار')
     
+    # Enhanced Rental Details
+    minimum_rental_period = models.CharField(max_length=50, blank=True, verbose_name='أقل مدة للإيجار')
+    rental_commission = models.BigIntegerField(null=True, blank=True, verbose_name='العمولة')
+    allows_pets = models.BooleanField(default=False, verbose_name='هل يسمح بالحيوانات؟')
+    allows_families = models.BooleanField(default=True, verbose_name='هل يسمح للعوائل؟')
+    allows_students = models.BooleanField(default=False, verbose_name='هل يسمح للطلاب؟')
+    allows_companies = models.BooleanField(default=False, verbose_name='هل يسمح للشركات؟')
+    
+    FURNISHING_CHOICES = [
+        ('unfurnished', 'غير مفروش'),
+        ('furnished', 'مفروش'),
+        ('semi_furnished', 'شبه مفروش'),
+    ]
+    furnishing_status = models.CharField(max_length=20, choices=FURNISHING_CHOICES, blank=True, verbose_name='حالة التأثيث')
+    
+    includes_electricity = models.BooleanField(default=False, verbose_name='شامل الكهرباء؟')
+    includes_water = models.BooleanField(default=False, verbose_name='شامل الماء؟')
+    includes_internet = models.BooleanField(default=False, verbose_name='شامل الإنترنت؟')
+    includes_generator = models.BooleanField(default=False, verbose_name='شامل المولدة؟')
+    
     # Viewing Information
     viewing_availability = models.JSONField(default=dict, blank=True, verbose_name='أوقات المعاينة')
     requires_appointment = models.BooleanField(default=False, verbose_name='يحتاج موعد')
@@ -2728,6 +2936,17 @@ class Property(models.Model):
     whatsapp = models.CharField(max_length=20, blank=True, verbose_name='واتساب')
     email = models.EmailField(blank=True, verbose_name='البريد الإلكتروني')
     social_media_links = models.JSONField(default=dict, blank=True, verbose_name='روابط التواصل الاجتماعي')
+    
+    # Real Estate Office/Broker Information
+    office_name = models.CharField(max_length=200, blank=True, verbose_name='اسم المكتب العقاري')
+    license_number = models.CharField(max_length=50, blank=True, verbose_name='رقم رخصة المكتب أو الدلال')
+    additional_phone = models.CharField(max_length=20, blank=True, verbose_name='رقم هاتف إضافي')
+    preferred_contact_method = models.CharField(
+        max_length=20,
+        choices=[('phone', 'اتصال'), ('whatsapp', 'واتساب'), ('message', 'رسائل')],
+        blank=True,
+        verbose_name='طريقة التواصل المفضلة'
+    )
     
     # SEO
     meta_title = models.CharField(max_length=70, blank=True, verbose_name='عنوان SEO')
@@ -2780,6 +2999,19 @@ class Property(models.Model):
             models.Index(fields=['price']),
             models.Index(fields=['-created_at']),
             models.Index(fields=['is_featured', 'is_promoted', 'is_pinned']),
+            # New indexes for improved performance
+            models.Index(fields=['governorate']),
+            models.Index(fields=['city']),
+            models.Index(fields=['purpose']),
+            models.Index(fields=['furnishing_status']),
+            models.Index(fields=['property_condition']),
+            models.Index(fields=['status', 'purpose']),
+            models.Index(fields=['owner']),
+            models.Index(fields=['broker']),
+            models.Index(fields=['office']),
+            models.Index(fields=['monthly_rent']),
+            models.Index(fields=['views_count']),
+            models.Index(fields=['complex_name']),
         ]
 
     def __str__(self):
@@ -2865,6 +3097,64 @@ class Property(models.Model):
     def get_main_image(self):
         imgs = self.get_all_images()
         return imgs[0] if imgs else None
+    
+    def get_relevant_fields(self):
+        """Get relevant fields based on property type for conditional display"""
+        relevant_fields = {
+            'basic': ['title', 'type', 'category', 'purpose', 'property_condition', 'description'],
+            'location': ['governorate', 'city', 'district', 'street', 'location'],
+            'pricing': ['price', 'negotiable', 'currency'],
+            'contact': ['phone', 'whatsapp', 'email'],
+        }
+        
+        # Type-specific fields
+        if self.type in ['apartment', 'villa', 'house', 'duplex']:
+            relevant_fields.update({
+                'building': ['floor_number', 'total_floors', 'bedrooms', 'bathrooms', 'living_rooms', 'kitchens'],
+                'features': ['has_elevator', 'parking_spaces', 'has_garden', 'balconies'],
+                'apartment_specific': ['floor_in_building', 'building_number', 'unit_number'],
+            })
+        elif self.type in ['land', 'agricultural_land']:
+            relevant_fields.update({
+                'land': ['total_area', 'plot_area', 'facade', 'street_width'],
+                'land_specific': ['has_water_well', 'has_electricity', 'soil_type', 'access_road'],
+            })
+        elif self.type in ['commercial', 'office', 'shop']:
+            relevant_fields.update({
+                'commercial': ['facade', 'street_width', 'building_condition'],
+                'commercial_specific': ['has_storage_room', 'has_garage', 'previous_activity'],
+            })
+        elif self.type in ['warehouse', 'factory']:
+            relevant_fields.update({
+                'industrial': ['total_area', 'building_area', 'has_electricity', 'has_water'],
+                'industrial_specific': ['ceiling_height', 'loading_dock', 'has_crane'],
+            })
+        
+        # Purpose-specific fields
+        if self.purpose == 'rent':
+            relevant_fields.update({
+                'rental': ['monthly_rent', 'rental_deposit', 'lease_term', 'furnishing_status'],
+                'rental_details': ['allows_pets', 'allows_families', 'includes_electricity', 'includes_water'],
+            })
+        elif self.purpose == 'sale':
+            relevant_fields.update({
+                'sale': ['total_price', 'down_payment_amount', 'payment_method', 'installments'],
+            })
+        
+        return relevant_fields
+    
+    def get_required_fields_for_type(self):
+        """Get required fields based on property type"""
+        required_fields = ['type', 'category', 'price', 'governorate', 'city', 'district', 'phone', 'description']
+        
+        if self.type in ['apartment', 'villa', 'house']:
+            required_fields.extend(['bedrooms', 'bathrooms', 'floor_number', 'total_area'])
+        elif self.type in ['land', 'agricultural_land']:
+            required_fields.extend(['total_area', 'facade'])
+        elif self.type in ['commercial', 'shop']:
+            required_fields.extend(['total_area', 'facade', 'street_width'])
+        
+        return required_fields
 
     def increment_views(self):
         Property.objects.filter(pk=self.pk).update(views_count=models.F('views_count') + 1)
@@ -3302,7 +3592,7 @@ class Property(models.Model):
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
-        related_name='verified_properties',
+        related_name='verified_property_records',
         verbose_name='تم التحقق بواسطة'
     )
     
@@ -3587,23 +3877,45 @@ class PropertyImage(models.Model):
         default='photo',
         verbose_name='نوع الصورة'
     )
+    # Enhanced fields
+    uploaded_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='uploaded_images', verbose_name='رفع بواسطة')
+    file_size = models.PositiveIntegerField(default=0, verbose_name='حجم الملف (بايت)')
+    width = models.PositiveIntegerField(null=True, blank=True, verbose_name='العرض (بكسل)')
+    height = models.PositiveIntegerField(null=True, blank=True, verbose_name='الارتفاع (بكسل)')
+    alt_text = models.CharField(max_length=200, blank=True, verbose_name='نص بديل')
+    is_published = models.BooleanField(default=True, verbose_name='منشورة')
+    view_count = models.PositiveIntegerField(default=0, verbose_name='عدد المشاهدات')
     created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
         verbose_name = 'صورة عقار'
         verbose_name_plural = 'صور العقارات'
         ordering = ['sort_order', 'id']
+        indexes = [
+            models.Index(fields=['property', 'sort_order']),
+            models.Index(fields=['is_primary']),
+            models.Index(fields=['image_type']),
+            models.Index(fields=['uploaded_by']),
+            models.Index(fields=['-created_at']),
+        ]
 
     def __str__(self):
         return f'صورة {self.property_id} #{self.pk}'
-
-    def save(self, *args, **kwargs):
-        super().save(*args, **kwargs)
-        # image field removed - column does not exist in database
-        # if self.is_primary and self.image:
-        #     prop = self.property
-        #     prop.image = self.image
-        #     prop.save(update_fields=['image'])
+    
+    def increment_view_count(self):
+        """زيادة عدد المشاهدات"""
+        self.view_count += 1
+        self.save(update_fields=['view_count'])
+    
+    def get_file_size_display(self):
+        """عرض حجم الملف بشكل مقروء"""
+        size = self.file_size
+        for unit in ['B', 'KB', 'MB', 'GB']:
+            if size < 1024:
+                return f'{size:.1f} {unit}'
+            size /= 1024
+        return f'{size:.1f} TB'
 
 
 class PropertyVideo(models.Model):
@@ -3625,19 +3937,75 @@ class PropertyVideo(models.Model):
         verbose_name='نوع الفيديو'
     )
     duration = models.PositiveIntegerField(null=True, blank=True, verbose_name='المدة (ثواني)')
+    # Enhanced fields
+    uploaded_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='uploaded_videos', verbose_name='رفع بواسطة')
+    file_size = models.PositiveIntegerField(default=0, verbose_name='حجم الملف (بايت)')
+    thumbnail = models.ImageField(upload_to='video_thumbnails/', blank=True, null=True, verbose_name='صورة مصغرة')
+    resolution = models.CharField(max_length=20, blank=True, verbose_name='الدقة (مثال 1920x1080)')
+    is_published = models.BooleanField(default=True, verbose_name='منشور')
+    view_count = models.PositiveIntegerField(default=0, verbose_name='عدد المشاهدات')
+    is_featured = models.BooleanField(default=False, verbose_name='مميز')
+    processing_status = models.CharField(
+        max_length=20,
+        choices=[
+            ('pending', 'قيد المعالجة'),
+            ('processing', 'جاري المعالجة'),
+            ('ready', 'جاهز'),
+            ('failed', 'فشل'),
+        ],
+        default='pending',
+        verbose_name='حالة المعالجة'
+    )
     created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
         verbose_name = 'فيديو عقار'
         verbose_name_plural = 'فيديوهات العقارات'
         ordering = ['sort_order', 'id']
+        indexes = [
+            models.Index(fields=['property', 'sort_order']),
+            models.Index(fields=['video_type']),
+            models.Index(fields=['uploaded_by']),
+            models.Index(fields=['is_featured']),
+            models.Index(fields=['processing_status']),
+            models.Index(fields=['-created_at']),
+        ]
 
     def __str__(self):
         return f'فيديو {self.property_id} #{self.pk}'
+    
+    def increment_view_count(self):
+        """زيادة عدد المشاهدات"""
+        self.view_count += 1
+        self.save(update_fields=['view_count'])
+    
+    def get_file_size_display(self):
+        """عرض حجم الملف بشكل مقروء"""
+        size = self.file_size
+        for unit in ['B', 'KB', 'MB', 'GB']:
+            if size < 1024:
+                return f'{size:.1f} {unit}'
+            size /= 1024
+        return f'{size:.1f} TB'
+    
+    def get_duration_display(self):
+        """عرض المدة بشكل مقروء"""
+        if not self.duration:
+            return 'غير محدد'
+        hours = self.duration // 3600
+        minutes = (self.duration % 3600) // 60
+        seconds = self.duration % 60
+        if hours > 0:
+            return f'{hours}:{minutes:02d}:{seconds:02d}'
+        elif minutes > 0:
+            return f'{minutes}:{seconds:02d}'
+        else:
+            return f'{seconds} ثانية'
 
 
 class PropertyDocument(models.Model):
-    """نموذج للمستندات والملفات"""
+    """نموذج للمستندات والملفات المحسّن"""
     
     DOCUMENT_TYPES = [
         ('pdf', 'ملف PDF'),
@@ -3648,6 +4016,12 @@ class PropertyDocument(models.Model):
         ('other', 'أخرى'),
     ]
     
+    VISIBILITY_CHOICES = [
+        ('public', 'عام'),
+        ('private', 'خاص'),
+        ('authenticated', 'للمسجلين فقط'),
+    ]
+    
     property = models.ForeignKey(
         Property, on_delete=models.CASCADE, related_name='documents',
         verbose_name='العقار'
@@ -3656,15 +4030,66 @@ class PropertyDocument(models.Model):
     title = models.CharField(max_length=200, verbose_name='عنوان المستند')
     file = models.FileField(upload_to='property_documents/', verbose_name='الملف')
     description = models.TextField(blank=True, verbose_name='الوصف')
+    # Enhanced fields
+    uploaded_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='uploaded_documents', verbose_name='رفع بواسطة')
+    file_size = models.PositiveIntegerField(default=0, verbose_name='حجم الملف (بايت)')
+    file_hash = models.CharField(max_length=64, blank=True, verbose_name='تجزئة الملف (SHA256)')
+    visibility = models.CharField(max_length=20, choices=VISIBILITY_CHOICES, default='private', verbose_name='الرؤية')
+    download_count = models.PositiveIntegerField(default=0, verbose_name='عدد التحميلات')
+    is_verified = models.BooleanField(default=False, verbose_name='موثق')
+    verified_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='verified_documents', verbose_name='وثق بواسطة')
+    verified_at = models.DateTimeField(null=True, blank=True, verbose_name='تاريخ التوثيق')
+    expiry_date = models.DateField(null=True, blank=True, verbose_name='تاريخ انتهاء الصلاحية')
+    tags = models.JSONField(default=list, blank=True, verbose_name='الوسوم')
     created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
     
     class Meta:
         verbose_name = 'مستند عقار'
         verbose_name_plural = 'مستندات العقارات'
         ordering = ['-created_at']
+        indexes = [
+            models.Index(fields=['property', 'document_type']),
+            models.Index(fields=['uploaded_by']),
+            models.Index(fields=['visibility']),
+            models.Index(fields=['is_verified']),
+            models.Index(fields=['expiry_date']),
+            models.Index(fields=['-created_at']),
+        ]
     
     def __str__(self):
         return f'{self.title} - {self.property.display_title}'
+    
+    def increment_download_count(self):
+        """زيادة عدد التحميلات"""
+        self.download_count += 1
+        self.save(update_fields=['download_count'])
+    
+    def get_file_size_display(self):
+        """عرض حجم الملف بشكل مقروء"""
+        size = self.file_size
+        for unit in ['B', 'KB', 'MB', 'GB']:
+            if size < 1024:
+                return f'{size:.1f} {unit}'
+            size /= 1024
+        return f'{size:.1f} TB'
+    
+    def generate_file_hash(self):
+        """توليد تجزئة الملف SHA256"""
+        import hashlib
+        from django.core.files.base import ContentFile
+        
+        if self.file:
+            file_content = self.file.read()
+            self.file_hash = hashlib.sha256(file_content).hexdigest()
+            self.save(update_fields=['file_hash'])
+    
+    def is_expired(self):
+        """التحقق من انتهاء صلاحية المستند"""
+        if not self.expiry_date:
+            return False
+        from django.utils import timezone
+        return timezone.now().date() > self.expiry_date
 
 
 class PropertyMediaStats(models.Model):
@@ -11492,6 +11917,9 @@ class Notification(models.Model):
         ('auction', 'مزاد'),
         ('building', 'بناء'),
         ('system', 'نظام'),
+        ('verification', 'تحقق'),
+        ('property_status', 'حالة عقار'),
+        ('inquiry', 'استفسار'),
     ]
     
     PRIORITY_CHOICES = [
@@ -11688,6 +12116,42 @@ class Notification(models.Model):
             for user in users
         ]
         return notification, recipients
+
+    @classmethod
+    def create_property_verified(cls, property_obj, user):
+        """إنشاء إشعار عند التحقق من عقار"""
+        return cls.create(
+            user=user,
+            notification_type='verification',
+            title='تم التحقق من عقارك',
+            message=f'تم التحقق من العقار: {property_obj.title}',
+            link=f'/property/{property_obj.slug}/',
+            metadata={'property_id': property_obj.id, 'property_title': property_obj.title}
+        )
+
+    @classmethod
+    def create_property_status_change(cls, property_obj, user, old_status, new_status):
+        """إنشاء إشعار عند تغيير حالة العقار"""
+        return cls.create(
+            user=user,
+            notification_type='property_status',
+            title='تغيير حالة العقار',
+            message=f'تم تغيير حالة العقار "{property_obj.title}" من {old_status} إلى {new_status}',
+            link=f'/property/{property_obj.slug}/',
+            metadata={'property_id': property_obj.id, 'old_status': old_status, 'new_status': new_status}
+        )
+
+    @classmethod
+    def create_property_inquiry(cls, property_obj, inquirer, owner):
+        """إنشاء إشعار عند استفسار عن عقار"""
+        return cls.create(
+            user=owner,
+            notification_type='inquiry',
+            title='استفسار جديد عن عقارك',
+            message=f'قام {inquirer.username} بالاستفسار عن عقارك: {property_obj.title}',
+            link=f'/property/{property_obj.slug}/',
+            metadata={'property_id': property_obj.id, 'inquirer_id': inquirer.id}
+        )
 
 
 class NotificationRecipient(models.Model):
@@ -15784,12 +16248,13 @@ class RealEstateContract(models.Model):
     CONTRACT_TYPE_CHOICES = [
         ('sale', 'عقد بيع'),
         ('rent', 'عقد إيجار'),
-        ('lease', 'عقد تأجير'),
-        ('agency', 'عقد وساطة'),
-        ('management', 'عقد إدارة'),
-        ('partnership', 'عقد شراكة'),
-        ('maintenance', 'عقد صيانة'),
-        ('other', 'عقد آخر'),
+        ('investment', 'عقد استثمار'),
+        ('other', 'تصنيف آخر'),
+    ]
+    
+    DURATION_TYPE_CHOICES = [
+        ('temporary', 'عقد مؤقت'),
+        ('permanent', 'عقد دائم'),
     ]
     
     STATUS_CHOICES = [
@@ -15810,9 +16275,19 @@ class RealEstateContract(models.Model):
         ('custom', 'مخصص'),
     ]
     
+    CURRENCY_CHOICES = [
+        ('IQD', 'دينار عراقي'),
+        ('USD', 'دولار أمريكي'),
+        ('EUR', 'يورو'),
+        ('SAR', 'ريال سعودي'),
+        ('AED', 'درهم إماراتي'),
+    ]
+    
     # معلومات العقد الأساسية
     contract_number = models.CharField(max_length=50, unique=True, verbose_name='رقم العقد')
+    contract_title = models.CharField(max_length=300, blank=True, verbose_name='عنوان العقد')
     contract_type = models.CharField(max_length=20, choices=CONTRACT_TYPE_CHOICES, verbose_name='نوع العقد')
+    duration_type = models.CharField(max_length=20, choices=DURATION_TYPE_CHOICES, default='temporary', verbose_name='مدة العقد')
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='draft', verbose_name='الحالة')
     
     # الأطراف المعنية
@@ -15827,6 +16302,7 @@ class RealEstateContract(models.Model):
     
     # المعلومات المالية
     amount = models.DecimalField(max_digits=15, decimal_places=0, verbose_name='قيمة العقد')
+    currency = models.CharField(max_length=3, choices=CURRENCY_CHOICES, default='IQD', verbose_name='العملة')
     deposit = models.DecimalField(max_digits=15, decimal_places=0, default=0, verbose_name='العربون')
     commission_rate = models.DecimalField(max_digits=5, decimal_places=2, default=0, verbose_name='نسبة العمولة (%)')
     commission_amount = models.DecimalField(max_digits=15, decimal_places=0, default=0, verbose_name='قيمة العمولة')
@@ -15850,6 +16326,12 @@ class RealEstateContract(models.Model):
     notes = models.TextField(blank=True, verbose_name='ملاحظات')
     attachments = models.JSONField(default=list, blank=True, verbose_name='المرفقات')
     
+    # نظام Soft Delete / Archive
+    is_archived = models.BooleanField(default=False, verbose_name='مؤرشف')
+    archived_at = models.DateTimeField(null=True, blank=True, verbose_name='تاريخ الأرشفة')
+    archived_by = models.ForeignKey('auth.User', on_delete=models.SET_NULL, null=True, blank=True, related_name='archived_contracts', verbose_name='أرشف بواسطة')
+    archived_reason = models.TextField(blank=True, verbose_name='سبب الأرشفة')
+    
     # معلومات النظام
     created_by = models.ForeignKey('auth.User', on_delete=models.SET_NULL, null=True, related_name='created_contracts', verbose_name='أنشأ بواسطة')
     approved_by = models.ForeignKey('auth.User', on_delete=models.SET_NULL, null=True, blank=True, related_name='approved_contracts', verbose_name='وافق عليه')
@@ -15868,6 +16350,7 @@ class RealEstateContract(models.Model):
             models.Index(fields=['contract_type']),
             models.Index(fields=['start_date', 'end_date']),
             models.Index(fields=['-created_at']),
+            models.Index(fields=['is_archived']),
         ]
     
     def __str__(self):
@@ -15883,6 +16366,8 @@ class RealEstateContract(models.Model):
         return f'CTR-RE-{year}-{count + 1:04d}'
     
     def save(self, *args, **kwargs):
+        is_new = not self.pk
+        
         if not self.contract_number:
             self.contract_number = self.generate_contract_number()
         
@@ -15891,6 +16376,15 @@ class RealEstateContract(models.Model):
             self.commission_amount = (self.amount * self.commission_rate) / 100
         
         super().save(*args, **kwargs)
+        
+        # تسجيل في Audit Log
+        if is_new:
+            ContractAuditLog.log_action(
+                contract=self,
+                action='created',
+                user=self.created_by,
+                description=f'إنشاء عقد جديد: {self.contract_number}'
+            )
     
     def is_active(self):
         """فحص إذا كان العقد نشطاً"""
@@ -15908,21 +16402,121 @@ class RealEstateContract(models.Model):
         remaining = (self.end_date - today).days
         return remaining if remaining > 0 else 0
     
-    def mark_as_active(self):
+    def expiry_status(self):
+        """حالة انتهاء العقد"""
+        remaining = self.days_remaining()
+        if remaining is None:
+            return 'unknown'
+        elif remaining <= 0:
+            return 'expired'
+        elif remaining <= 7:
+            return 'critical'
+        elif remaining <= 30:
+            return 'warning'
+        else:
+            return 'active'
+    
+    def mark_as_active(self, user=None):
         """تحويل العقد إلى نشط"""
+        old_status = self.status
         self.status = 'active'
         self.approved_at = timezone.now()
         self.save()
+        
+        ContractAuditLog.log_action(
+            contract=self,
+            action='status_changed',
+            user=user,
+            old_values={'status': old_status},
+            new_values={'status': 'active'},
+            description=f'تحويل العقد إلى نشط'
+        )
     
-    def mark_as_completed(self):
+    def mark_as_completed(self, user=None):
         """تحويل العقد إلى مكتمل"""
+        old_status = self.status
         self.status = 'completed'
         self.save()
+        
+        ContractAuditLog.log_action(
+            contract=self,
+            action='status_changed',
+            user=user,
+            old_values={'status': old_status},
+            new_values={'status': 'completed'},
+            description=f'تحويل العقد إلى مكتمل'
+        )
     
-    def mark_as_terminated(self):
+    def mark_as_terminated(self, user=None):
         """إنهاء العقد"""
+        old_status = self.status
         self.status = 'terminated'
         self.save()
+        
+        ContractAuditLog.log_action(
+            contract=self,
+            action='status_changed',
+            user=user,
+            old_values={'status': old_status},
+            new_values={'status': 'terminated'},
+            description=f'إنهاء العقد'
+        )
+    
+    def archive(self, user=None, reason=''):
+        """أرشفة العقد (Soft Delete)"""
+        self.is_archived = True
+        self.archived_at = timezone.now()
+        self.archived_by = user
+        self.archived_reason = reason
+        self.save()
+        
+        ContractAuditLog.log_action(
+            contract=self,
+            action='archived',
+            user=user,
+            description=f'أرشفة العقد: {reason}'
+        )
+    
+    def restore(self, user=None):
+        """استرجاع العقد من الأرشيف"""
+        self.is_archived = False
+        self.archived_at = None
+        self.archived_by = None
+        self.archived_reason = ''
+        self.save()
+        
+        ContractAuditLog.log_action(
+            contract=self,
+            action='restored',
+            user=user,
+            description='استرجاع العقد من الأرشيف'
+        )
+    
+    def can_view(self, user):
+        """فحص صلاحية العرض"""
+        if user.is_superuser:
+            return True
+        if self.created_by == user:
+            return True
+        if self.client == user:
+            return True
+        if self.broker and self.broker.user == user:
+            return True
+        return False
+    
+    def can_edit(self, user):
+        """فحص صلاحية التعديل"""
+        if user.is_superuser:
+            return True
+        if self.created_by == user:
+            return True
+        if self.broker and self.broker.user == user:
+            return True
+        return False
+    
+    def can_delete(self, user):
+        """فحص صلاحية الحذف"""
+        return user.is_superuser
 
 
 class ContractPayment(models.Model):
@@ -16018,6 +16612,8 @@ class ContractDocument(models.Model):
     
     file = models.FileField(upload_to='contract_documents/', verbose_name='الملف')
     file_size = models.BigIntegerField(default=0, verbose_name='حجم الملف (بايت)')
+    file_type = models.CharField(max_length=50, blank=True, verbose_name='نوع الملف')
+    page_number = models.IntegerField(default=1, verbose_name='رقم الصفحة')
     
     uploaded_by = models.ForeignKey('auth.User', on_delete=models.SET_NULL, null=True, verbose_name='رفع بواسطة')
     uploaded_at = models.DateTimeField(auto_now_add=True, verbose_name='تاريخ الرفع')
@@ -16025,19 +16621,52 @@ class ContractDocument(models.Model):
     class Meta:
         verbose_name = 'وثيقة عقد'
         verbose_name_plural = 'وثائق العقود'
-        ordering = ['-uploaded_at']
+        ordering = ['page_number', '-uploaded_at']
         indexes = [
             models.Index(fields=['contract', 'document_type']),
             models.Index(fields=['-uploaded_at']),
+            models.Index(fields=['page_number']),
         ]
     
     def __str__(self):
         return f'{self.title} - {self.contract.contract_number}'
     
     def save(self, *args, **kwargs):
+        is_new = not self.pk
+        
         if self.file:
             self.file_size = self.file.size
+            # استخراج نوع الملف
+            if hasattr(self.file, 'name'):
+                import os
+                self.file_type = os.path.splitext(self.file.name)[1].lower()
+        
         super().save(*args, **kwargs)
+        
+        # تسجيل في Audit Log
+        if is_new:
+            ContractAuditLog.log_action(
+                contract=self.contract,
+                action='document_added',
+                user=self.uploaded_by,
+                description=f'إضافة وثيقة: {self.title}'
+            )
+    
+    def can_view(self, user):
+        """فحص صلاحية عرض الملف"""
+        return self.contract.can_view(user)
+    
+    def can_download(self, user):
+        """فحص صلاحية تحميل الملف"""
+        return self.contract.can_view(user)
+    
+    def can_delete(self, user):
+        """فحص صلاحية حذف الملف"""
+        if user.is_superuser:
+            return True
+        if self.uploaded_by == user:
+            return True
+        return self.contract.can_edit(user)
 
 
 class ContractReminder(models.Model):
@@ -16087,6 +16716,138 @@ class ContractReminder(models.Model):
         """تحديد التذكير كمرسل"""
         self.is_sent = True
         self.sent_at = timezone.now()
+
+
+class ContractParty(models.Model):
+    """نظام إدارة أطراف العقد بشكل مفصل"""
+    
+    PARTY_TYPE_CHOICES = [
+        ('first_party', 'الطرف الأول'),
+        ('second_party', 'الطرف الثاني'),
+        ('third_party', 'طرف ثالث'),
+        ('witness', 'شاهد'),
+        ('guarantor', 'كفيل'),
+    ]
+    
+    PARTY_ROLE_CHOICES = [
+        ('buyer', 'مشتري'),
+        ('seller', 'بائع'),
+        ('landlord', 'مؤجر'),
+        ('tenant', 'مستأجر'),
+        ('agent', 'وسيط'),
+        ('broker', 'دلال'),
+        ('other', 'أخرى'),
+    ]
+    
+    contract = models.ForeignKey(RealEstateContract, on_delete=models.CASCADE, related_name='parties', verbose_name='العقد')
+    party_type = models.CharField(max_length=20, choices=PARTY_TYPE_CHOICES, verbose_name='نوع الطرف')
+    party_role = models.CharField(max_length=20, choices=PARTY_ROLE_CHOICES, verbose_name='دور الطرف')
+    
+    # معلومات الطرف
+    user = models.ForeignKey('auth.User', on_delete=models.SET_NULL, null=True, blank=True, related_name='contract_parties', verbose_name='المستخدم المرتبط')
+    full_name = models.CharField(max_length=200, verbose_name='الاسم الكامل')
+    phone = models.CharField(max_length=20, verbose_name='رقم الهاتف')
+    national_id = models.CharField(max_length=50, blank=True, verbose_name='رقم الهوية')
+    email = models.EmailField(blank=True, verbose_name='البريد الإلكتروني')
+    
+    # العنوان
+    address = models.TextField(blank=True, verbose_name='العنوان')
+    governorate = models.CharField(max_length=50, choices=IRAQ_GOVERNORATES, blank=True, verbose_name='المحافظة')
+    city = models.CharField(max_length=100, blank=True, verbose_name='المدينة')
+    
+    # معلومات إضافية
+    notes = models.TextField(blank=True, verbose_name='ملاحظات')
+    signature = models.ImageField(upload_to='contract_signatures/', null=True, blank=True, verbose_name='صورة التوقيع')
+    
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name='تاريخ الإنشاء')
+    updated_at = models.DateTimeField(auto_now=True, verbose_name='تاريخ التحديث')
+    
+    class Meta:
+        verbose_name = 'طرف عقد'
+        verbose_name_plural = 'أطراف العقود'
+        ordering = ['party_type']
+        indexes = [
+            models.Index(fields=['contract', 'party_type']),
+            models.Index(fields=['user']),
+            models.Index(fields=['phone']),
+        ]
+    
+    def __str__(self):
+        return f'{self.get_party_type_display()} - {self.full_name}'
+    
+    def display_name(self):
+        """الاسم المعروض للمستخدم"""
+        if self.user:
+            return self.user.username
+        return self.full_name
+
+
+class ContractAuditLog(models.Model):
+    """نظام سجل التدقيق للعقود"""
+    
+    ACTION_CHOICES = [
+        ('created', 'إنشاء'),
+        ('updated', 'تعديل'),
+        ('viewed', 'عرض'),
+        ('archived', 'أرشفة'),
+        ('restored', 'استرجاع'),
+        ('deleted', 'حذف نهائي'),
+        ('status_changed', 'تغيير الحالة'),
+        ('document_added', 'إضافة وثيقة'),
+        ('document_removed', 'حذف وثيقة'),
+        ('payment_added', 'إضافة دفعة'),
+        ('payment_updated', 'تعديل دفعة'),
+        ('reminder_added', 'إضافة تذكير'),
+        ('party_added', 'إضافة طرف'),
+        ('party_updated', 'تعديل طرف'),
+    ]
+    
+    contract = models.ForeignKey(RealEstateContract, on_delete=models.CASCADE, related_name='audit_logs', verbose_name='العقد')
+    action = models.CharField(max_length=30, choices=ACTION_CHOICES, verbose_name='العملية')
+    
+    performed_by = models.ForeignKey('auth.User', on_delete=models.SET_NULL, null=True, related_name='contract_audit_logs', verbose_name='نفذ بواسطة')
+    performed_at = models.DateTimeField(auto_now_add=True, verbose_name='وقت التنفيذ')
+    
+    # تفاصيل التغيير
+    changes = models.JSONField(default=dict, blank=True, verbose_name='التغييرات')
+    old_values = models.JSONField(default=dict, blank=True, verbose_name='القيم القديمة')
+    new_values = models.JSONField(default=dict, blank=True, verbose_name='القيم الجديدة')
+    
+    # معلومات إضافية
+    ip_address = models.GenericIPAddressField(null=True, blank=True, verbose_name='عنوان IP')
+    user_agent = models.TextField(blank=True, verbose_name='User Agent')
+    description = models.TextField(blank=True, verbose_name='الوصف')
+    
+    class Meta:
+        verbose_name = 'سجل تدقيق عقد'
+        verbose_name_plural = 'سجلات تدقيق العقود'
+        ordering = ['-performed_at']
+        indexes = [
+            models.Index(fields=['contract', '-performed_at']),
+            models.Index(fields=['performed_by']),
+            models.Index(fields=['action']),
+            models.Index(fields=['-performed_at']),
+        ]
+    
+    def __str__(self):
+        user_name = self.performed_by.username if self.performed_by else 'نظام'
+        return f'{self.get_action_display()} - {self.contract.contract_number} - {user_name}'
+    
+    @classmethod
+    def log_action(cls, contract, action, user=None, changes=None, old_values=None, new_values=None, description=''):
+        """تسجيل عملية جديدة"""
+        from django.utils import timezone
+        
+        log = cls.objects.create(
+            contract=contract,
+            action=action,
+            performed_by=user,
+            changes=changes or {},
+            old_values=old_values or {},
+            new_values=new_values or {},
+            description=description
+        )
+        return log
 
 
 class TravelPackage(models.Model):
@@ -16612,3 +17373,109 @@ class Agent(models.Model):
             self.success_rate = (success_count / total_count) * 100
             self.save()
         self.save()
+
+class CRMContact(models.Model):
+    STAGES = (
+        ('lead', 'عميل محتمل'),
+        ('prospect', 'مرشح'),
+        ('customer', 'عميل'),
+        ('churned', 'سابق'),
+    )
+    PRIORITIES = (
+        ('hot', 'عالية'),
+        ('warm', 'متوسطة'),
+        ('cold', 'منخفضة'),
+    )
+    SOURCES = (
+        ('website', 'الموقع'),
+        ('phone', 'الهاتف'),
+        ('referral', 'إحالة'),
+        ('social_media', 'وسائل التواصل'),
+        ('property_inquiry', 'استفسار عقار'),
+        ('walk_in', 'زيارة مباشرة'),
+        ('other', 'أخرى'),
+    )
+    
+    # Basic Info
+    name = models.CharField(max_length=255, verbose_name="الاسم")
+    email = models.EmailField(verbose_name="البريد الإلكتروني")
+    phone = models.CharField(max_length=20, blank=True, null=True, verbose_name="الهاتف")
+    secondary_phone = models.CharField(max_length=20, blank=True, null=True, verbose_name="هاتف ثانوي")
+    company = models.CharField(max_length=255, blank=True, null=True, verbose_name="الشركة")
+    position = models.CharField(max_length=100, blank=True, null=True, verbose_name="المسمى الوظيفي")
+    
+    # CRM Fields
+    stage = models.CharField(max_length=20, choices=STAGES, default='lead', verbose_name="المرحلة")
+    priority = models.CharField(max_length=20, choices=PRIORITIES, default='warm', verbose_name="الأولوية")
+    source = models.CharField(max_length=20, choices=SOURCES, blank=True, null=True, verbose_name="المصدر")
+    value = models.DecimalField(max_digits=10, decimal_places=2, default=0, verbose_name="القيمة المتوقعة")
+    converted_value = models.DecimalField(max_digits=10, decimal_places=2, default=0, verbose_name="القيمة المحولة")
+    
+    # Timeline
+    last_contact = models.DateTimeField(blank=True, null=True, verbose_name="آخر اتصال")
+    next_followup = models.DateTimeField(blank=True, null=True, verbose_name="المتابعة القادمة")
+    first_contact = models.DateTimeField(default=timezone.now, verbose_name="أول اتصال")
+    
+    # Notes and Activity
+    notes = models.TextField(blank=True, null=True, verbose_name="ملاحظات")
+    interaction_count = models.IntegerField(default=0, verbose_name="عدد التفاعلات")
+    
+    # Integration with other systems
+    user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='crm_contacts', verbose_name="المستخدم المرتبط")
+    conversation = models.ForeignKey('Conversation', on_delete=models.SET_NULL, null=True, blank=True, related_name='crm_contacts', verbose_name="المحادثة المرتبطة")
+    properties_interested = models.ManyToManyField(Property, blank=True, related_name='interested_contacts', verbose_name="العقارات المهتم بها")
+    
+    # Location info
+    governorate = models.CharField(max_length=100, blank=True, null=True, verbose_name="المحافظة")
+    city = models.CharField(max_length=100, blank=True, null=True, verbose_name="المدينة")
+    
+    # Status tracking
+    is_active = models.BooleanField(default=True, verbose_name="نشط")
+    is_converted = models.BooleanField(default=False, verbose_name="تم التحويل")
+    conversion_date = models.DateTimeField(null=True, blank=True, verbose_name="تاريخ التحويل")
+    
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name="تاريخ الإنشاء")
+    updated_at = models.DateTimeField(auto_now=True, verbose_name="تاريخ التحديث")
+    created_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='created_crm_contacts', verbose_name="أنشأ بواسطة")
+    assigned_to = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='assigned_crm_contacts', verbose_name="مسند إلى")
+
+    class Meta:
+        verbose_name = "جهة اتصال CRM"
+        verbose_name_plural = "جهات اتصال CRM"
+        ordering = ['-created_at']
+        indexes = [
+            models.Index(fields=['stage', 'priority']),
+            models.Index(fields=['created_by']),
+            models.Index(fields=['assigned_to']),
+            models.Index(fields=['next_followup']),
+            models.Index(fields=['stage', '-created_at']),
+            models.Index(fields=['source']),
+        ]
+
+    def __str__(self):
+        return self.name
+    
+    def update_interaction_count(self):
+        """تحديث عدد التفاعلات"""
+        self.interaction_count += 1
+        self.last_contact = timezone.now()
+        self.save(update_fields=['interaction_count', 'last_contact'])
+    
+    def convert_to_customer(self):
+        """تحويل إلى عميل"""
+        self.stage = 'customer'
+        self.is_converted = True
+        self.conversion_date = timezone.now()
+        self.save(update_fields=['stage', 'is_converted', 'conversion_date'])
+    
+    def get_days_since_last_contact(self):
+        """حساب الأيام منذ آخر اتصال"""
+        if not self.last_contact:
+            return None
+        return (timezone.now() - self.last_contact).days
+    
+    def is_followup_due(self):
+        """التحقق مما إذا كانت المتابعة مستحقة"""
+        if not self.next_followup:
+            return False
+        return timezone.now() >= self.next_followup

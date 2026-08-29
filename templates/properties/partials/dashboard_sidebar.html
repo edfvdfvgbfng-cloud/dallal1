@@ -28,6 +28,11 @@
       <li><a href="{% url 'auctions_list' %}">
         <span class="nav-icon">🔨</span> المزادات
       </a></li>
+      {% if request.user.is_staff %}
+      <li><a href="{% url 'property_verification_admin' %}" class="{% if request.resolver_match.url_name == 'property_verification_admin' or request.resolver_match.url_name == 'property_verify' %}active{% endif %}">
+        <span class="nav-icon">🔐</span> التحقق من العقارات
+      </a></li>
+      {% endif %}
 
 
       <li class="sidebar-section-title">المالية والرسائل</li>
@@ -68,6 +73,12 @@
 
       {% if can_access_admin_panel %}
       <li class="sidebar-section-title">إدارة النظام</li>
+      <li><a href="{% url 'crm_dashboard' %}" class="{% if request.resolver_match.url_name == 'crm_dashboard' or request.resolver_match.url_name == 'crm_contact_detail' %}active{% endif %}">
+        <span class="nav-icon">👥</span> إدارة العلاقات (CRM)
+      </a></li>
+      <li><a href="{% url 'media_dashboard' %}" class="{% if request.resolver_match.url_name == 'media_dashboard' %}active{% endif %}">
+        <span class="nav-icon">🖼️</span> إدارة الوسائط
+      </a></li>
       <li><a href="{% url 'dashboard' %}?tab=users" class="{% if request.resolver_match.url_name == 'admin_users_list' or request.resolver_match.url_name == 'admin_edit_user' or request.resolver_match.url_name == 'admin_create_user' %}active{% endif %}">
         <span class="nav-icon">👥</span> المستخدمين
       </a></li>

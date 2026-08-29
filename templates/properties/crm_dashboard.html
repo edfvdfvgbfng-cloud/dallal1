@@ -1,0 +1,302 @@
+{% extends 'properties/dashboard_base.html' %}
+
+{% block title %}لوحة تحكم CRM{% endblock %}
+
+{% block dashboard_title %}👥 إدارة علاقات العملاء (CRM){% endblock %}
+
+{% block dashboard_subtitle %}
+<p>نظام متقدم لإدارة علاقات العملاء والعملاء المحتملين</p>
+{% endblock %}
+
+{% block dashboard_actions %}
+<a href="{% url 'dashboard' %}" class="btn btn-outline">← لوحة التحكم</a>
+<a href="{% url 'api_crm_management' %}" class="btn btn-primary">📊 API CRM</a>
+{% endblock %}
+
+{% block content %}
+<div class="dashboard-content">
+  <!-- Statistics Cards -->
+  <div class="stats-grid">
+    <div class="stats-card">
+      <h3>إجمالي جهات الاتصال</h3>
+      <div class="stat-number">{{ total_contacts }}</div>
+    </div>
+    <div class="stats-card active">
+      <h3>جهات الاتصال النشطة</h3>
+      <div class="stat-number">{{ active_contacts }}</div>
+    </div>
+    <div class="stats-card converted">
+      <h3>تم التحويل ✅</h3>
+      <div class="stat-number">{{ converted_contacts }}</div>
+      <div class="stat-sub">{{ conversion_rate }}%</div>
+    </div>
+    <div class="stats-card">
+      <h3>القيمة المتوقعة</h3>
+      <div class="stat-number">{{ total_value|floatformat:0 }}</div>
+      <div class="stat-sub">د.ع</div>
+    </div>
+    <div class="stats-card">
+      <h3>القيمة المحولة</h3>
+      <div class="stat-number">{{ converted_value|floatformat:0 }}</div>
+      <div class="stat-sub">د.ع</div>
+    </div>
+  </div>
+
+  <!-- Stage Statistics -->
+  <div class="stats-card full-width" style="margin-top: 2rem;">
+    <h3>إحصائيات حسب المرحلة</h3>
+    <div class="stats-list">
+      {% for stat in stage_stats %}
+      <div class="stat-item">
+        <span class="stat-label">{{ stat.get_stage_display|default:stat.stage }}</span>
+        <span class="stat-value">{{ stat.count }}</span>
+      </div>
+      {% empty %}
+      <p class="no-data">لا توجد بيانات</p>
+      {% endfor %}
+    </div>
+  </div>
+
+  <!-- Priority Statistics -->
+  <div class="stats-card" style="margin-top: 2rem;">
+    <h3>إحصائيات حسب الأولوية</h3>
+    <div class="stats-list">
+      {% for stat in priority_stats %}
+      <div class="stat-item">
+        <span class="stat-label">{{ stat.get_priority_display|default:stat.priority }}</span>
+        <span class="stat-value">{{ stat.count }}</span>
+      </div>
+      {% empty %}
+      <p class="no-data">لا توجد بيانات</p>
+      {% endfor %}
+    </div>
+  </div>
+
+  <!-- Follow-ups Due -->
+  <div class="stats-card" style="margin-top: 2rem;">
+    <h3>المتابعات المستحقة ⏰</h3>
+    <div class="followup-list">
+      {% for contact in followup_due %}
+      <div class="followup-item">
+        <div class="followup-info">
+          <strong>{{ contact.name }}</strong>
+          <span class="followup-email">{{ contact.email }}</span>
+        </div>
+        <div class="followup-time">
+          <span class="priority-badge priority-{{ contact.priority }}">{{ contact.get_priority_display }}</span>
+          <span class="followup-date">{{ contact.next_followup|date:"Y-m-d H:i" }}</span>
+        </div>
+        <a href="{% url 'crm_contact_detail' contact.id %}" class="btn btn-sm btn-primary">عرض</a>
+      </div>
+      {% empty %}
+      <p class="no-data">لا توجد متابعات مستحقة</p>
+      {% endfor %}
+    </div>
+  </div>
+
+  <!-- Recent Contacts -->
+  <div class="stats-card" style="margin-top: 2rem;">
+    <h3>جهات الاتصال الجديدة 🆕</h3>
+    <div class="contacts-list">
+      {% for contact in recent_contacts %}
+      <div class="contact-item">
+        <div class="contact-info">
+          <strong>{{ contact.name }}</strong>
+          <span class="contact-email">{{ contact.email }}</span>
+          <span class="contact-company">{{ contact.company|default:"-" }}</span>
+        </div>
+        <div class="contact-meta">
+          <span class="stage-badge stage-{{ contact.stage }}">{{ contact.get_stage_display }}</span>
+          <span class="created-date">{{ contact.created_at|date:"Y-m-d" }}</span>
+        </div>
+        <a href="{% url 'crm_contact_detail' contact.id %}" class="btn btn-sm btn-outline">عرض</a>
+      </div>
+      {% empty %}
+      <p class="no-data">لا توجد جهات اتصال</p>
+      {% endfor %}
+    </div>
+  </div>
+
+  <!-- Top Agents -->
+  <div class="stats-card" style="margin-top: 2rem;">
+    <h3>أفضل الوكلاء 🏆</h3>
+    <div class="agents-list">
+      {% for agent in top_agents %}
+      <div class="agent-item">
+        <span class="agent-name">{{ agent.assigned_to__username|default:"غير مسند" }}</span>
+        <span class="agent-count">{{ agent.count }} جهة اتصال</span>
+        <span class="agent-value">{{ agent.total_value|floatformat:0 }} د.ع</span>
+      </div>
+      {% empty %}
+      <p class="no-data">لا توجد بيانات</p>
+      {% endfor %}
+    </div>
+  </div>
+</div>
+
+<style>
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+.stats-card {
+  background: var(--card-bg);
+  padding: 1.5rem;
+  border-radius: var(--radius-sm);
+  box-shadow: var(--shadow);
+  border: 1px solid var(--border);
+}
+
+.stats-card.full-width {
+  grid-column: 1 / -1;
+}
+
+.stats-card.active {
+  border-left: 4px solid #28a745;
+}
+
+.stats-card.converted {
+  border-left: 4px solid #007bff;
+}
+
+.stat-number {
+  font-size: 2.5rem;
+  font-weight: 700;
+  color: var(--primary);
+}
+
+.stat-sub {
+  font-size: 0.9rem;
+  color: var(--text-light);
+  margin-top: 0.5rem;
+}
+
+.stats-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.stat-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.75rem;
+  background: var(--bg-alt);
+  border-radius: var(--radius-sm);
+}
+
+.stat-label {
+  color: var(--text);
+  font-weight: 500;
+}
+
+.stat-value {
+  color: var(--primary);
+  font-weight: 600;
+}
+
+.followup-list,
+.contacts-list,
+.agents-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.followup-item,
+.contact-item,
+.agent-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem;
+  background: var(--bg-alt);
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+}
+
+.followup-info,
+.contact-info {
+  flex: 1;
+}
+
+.followup-email,
+.contact-email,
+.contact-company {
+  display: block;
+  color: var(--text-light);
+  font-size: 0.9rem;
+  margin-top: 0.25rem;
+}
+
+.followup-time,
+.contact-meta {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.priority-badge,
+.stage-badge {
+  padding: 0.25rem 0.75rem;
+  border-radius: 20px;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.priority-hot { background: #dc3545; color: white; }
+.priority-warm { background: #ffc107; color: black; }
+.priority-cold { background: #6c757d; color: white; }
+
+.stage-lead { background: #17a2b8; color: white; }
+.stage-prospect { background: #28a745; color: white; }
+.stage-customer { background: #007bff; color: white; }
+.stage-churned { background: #6c757d; color: white; }
+
+.followup-date,
+.created-date {
+  color: var(--text-light);
+  font-size: 0.85rem;
+}
+
+.agent-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.75rem;
+  background: var(--bg-alt);
+  border-radius: var(--radius-sm);
+}
+
+.agent-name {
+  color: var(--text);
+  font-weight: 500;
+}
+
+.agent-count {
+  color: var(--primary);
+  font-weight: 600;
+}
+
+.agent-value {
+  color: var(--primary);
+  font-weight: 600;
+}
+
+.no-data {
+  text-align: center;
+  color: var(--text-light);
+  padding: 2rem;
+  font-style: italic;
+}
+
+.btn-sm {
+  padding: 0.5rem 1rem;
+  font-size: 0.9rem;
+}
+</style>
+{% endblock %}
