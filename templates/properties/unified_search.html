@@ -58,13 +58,13 @@
   }
 
   .outside-iraq-btn {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: linear-gradient(135deg, #FF7A00 0%, #FF9500 100%);
     color: white;
-    border-color: #667eea;
+    border-color: #FF7A00;
   }
 
   .outside-iraq-btn:hover {
-    border-color: #764ba2;
+    border-color: #FF9500;
   }
 
   .iraq-btn {
@@ -128,13 +128,13 @@
   }
 
   .resort-world-btn {
-    background: linear-gradient(135deg, #9b59b6 0%, #8e44ad 100%);
+    background: linear-gradient(135deg, #FF7A00 0%, #FF9500 100%);
     color: white;
-    border-color: #9b59b6;
+    border-color: #FF7A00;
   }
 
   .resort-world-btn:hover {
-    border-color: #8e44ad;
+    border-color: #FF9500;
   }
 
   .travel-btn {
@@ -178,13 +178,13 @@
   }
 
   .auction-btn {
-    background: linear-gradient(135deg, #9b59b6 0%, #8e44ad 100%);
+    background: linear-gradient(135deg, #FF7A00 0%, #FF9500 100%);
     color: white;
-    border-color: #9b59b6;
+    border-color: #FF7A00;
   }
 
   .auction-btn:hover {
-    border-color: #8e44ad;
+    border-color: #FF9500;
   }
 
   .btn-icon {
@@ -738,6 +738,14 @@
             {% endfor %}
           </select>
         </div>
+        <div class="form-group">
+          <label for="purpose">الغرض</label>
+          <select name="purpose" id="purpose" class="form-control">
+            <option value="">كل الأغراض</option>
+            <option value="sale" {% if form.purpose.value == 'sale' %}selected{% endif %}>بيع</option>
+            <option value="rent" {% if form.purpose.value == 'rent' %}selected{% endif %}>إيجار</option>
+          </select>
+        </div>
       </div>
 
       <div class="form-row">
@@ -827,6 +835,86 @@
             <input type="checkbox" name="new_only" {% if form.new_only.value %}checked{% endif %}>
             الجديدة فقط
           </label>
+        </div>
+      </div>
+
+      <div class="filter-section">
+        <h3>الخدمات</h3>
+        <div class="checkbox-group">
+          <label class="checkbox-item">
+            <input type="checkbox" name="has_elevator" {% if form.has_elevator.value %}checked{% endif %}>
+            مصعد
+          </label>
+          <label class="checkbox-item">
+            <input type="checkbox" name="has_garage" {% if form.has_garage.value %}checked{% endif %}>
+            كراج
+          </label>
+          <label class="checkbox-item">
+            <input type="checkbox" name="has_security_system" {% if form.has_security_system.value %}checked{% endif %}>
+            نظام أمني
+          </label>
+          <label class="checkbox-item">
+            <input type="checkbox" name="has_generator" {% if form.has_generator.value %}checked{% endif %}>
+            مولدة
+          </label>
+        </div>
+      </div>
+
+      <div class="filter-section">
+        <h3>شروط الإيجار</h3>
+        <div class="checkbox-group">
+          <label class="checkbox-item">
+            <input type="checkbox" name="allows_pets" {% if form.allows_pets.value %}checked{% endif %}>
+            يسمح بالحيوانات
+          </label>
+          <label class="checkbox-item">
+            <input type="checkbox" name="allows_families" {% if form.allows_families.value %}checked{% endif %}>
+            يسمح بالعوائل
+          </label>
+          <label class="checkbox-item">
+            <input type="checkbox" name="allows_students" {% if form.allows_students.value %}checked{% endif %}>
+            يسمح للطلاب
+          </label>
+          <label class="checkbox-item">
+            <input type="checkbox" name="allows_companies" {% if form.allows_companies.value %}checked{% endif %}>
+            يسمح للشركات
+          </label>
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label for="verification_status">حالة التحقق</label>
+          <select name="verification_status" id="verification_status" class="form-control">
+            <option value="">الكل</option>
+            <option value="verified" {% if form.verification_status.value == 'verified' %}selected{% endif %}>موثق</option>
+            <option value="under_review" {% if form.verification_status.value == 'under_review' %}selected{% endif %}>قيد المراجعة</option>
+            <option value="unverified" {% if form.verification_status.value == 'unverified' %}selected{% endif %}>غير متحقق</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="furnishing_status">التأثيث</label>
+          <select name="furnishing_status" id="furnishing_status" class="form-control">
+            <option value="">الكل</option>
+            <option value="furnished" {% if form.furnishing_status.value == 'furnished' %}selected{% endif %}>مفروش</option>
+            <option value="semi_furnished" {% if form.furnishing_status.value == 'semi_furnished' %}selected{% endif %}>شبه مفروش</option>
+            <option value="unfurnished" {% if form.furnishing_status.value == 'unfurnished' %}selected{% endif %}>غير مفروش</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label for="monthly_rent_min">الإيجار الشهري من</label>
+          <input type="number" name="monthly_rent_min" id="monthly_rent_min" class="form-control" placeholder="الإيجار الشهري من" value="{{ form.monthly_rent_min.value }}">
+        </div>
+        <div class="form-group">
+          <label for="monthly_rent_max">الإيجار الشهري إلى</label>
+          <input type="number" name="monthly_rent_max" id="monthly_rent_max" class="form-control" placeholder="الإيجار الشهري إلى" value="{{ form.monthly_rent_max.value }}">
+        </div>
+        <div class="form-group">
+          <label for="complex_name">المجمع السكني</label>
+          <input type="text" name="complex_name" id="complex_name" class="form-control" placeholder="المجمع السكني" value="{{ form.complex_name.value }}">
         </div>
       </div>
 

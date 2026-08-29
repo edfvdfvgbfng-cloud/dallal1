@@ -35,6 +35,9 @@
 <a href="{% url 'admin_create_notification' %}" class="btn btn-primary btn-sm">📤 إرسال إشعار</a>
 <a href="{% url 'platform_comprehensive_stats' %}" class="btn btn-primary btn-sm">📊 إحصائيات شاملة</a>
 {% endif %}
+{% if request.user.is_staff %}
+<a href="{% url 'property_verification_admin' %}" class="btn btn-warning btn-sm">🔐 التحقق من العقارات</a>
+{% endif %}
 {% if broker and broker.role == 'main' %}
 <a href="{% url 'main_broker_panel' %}" class="btn btn-outline btn-sm">لوحة الدلال الرئيسي</a>
 {% endif %}
@@ -1428,14 +1431,14 @@
     {% endif %}
   </div>
   {% else %}
-  <div class="subscription-timer-card" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 16px; padding: 25px; margin-bottom: 25px; color: white; box-shadow: 0 10px 30px rgba(102, 126, 234, 0.3);">
+  <div class="subscription-timer-card" style="background: linear-gradient(135deg, #FF7A00 0%, #FF9500 100%); border-radius: 16px; padding: 25px; margin-bottom: 25px; color: white; box-shadow: 0 10px 30px rgba(102, 126, 234, 0.3);">
     <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 20px;">
       <div style="flex: 1; min-width: 250px;">
         <h3 style="margin: 0 0 15px 0; font-size: 1.3rem; font-weight: 700;">⚠️ لا يوجد اشتراك نشط</h3>
         <p style="margin: 0; opacity: 0.9; font-size: 1rem;">للاستفادة من جميع الميزات، يرجى الاشتراك في أحد الباقات المتاحة</p>
       </div>
       <div style="text-align: center; flex: 1; min-width: 250px;">
-        <a href="{% url 'subscription_plans' %}" style="display: inline-block; background: white; color: #667eea; padding: 12px 25px; border-radius: 8px; text-decoration: none; font-weight: 700; font-size: 1.1rem; transition: all 0.3s ease;">
+        <a href="{% url 'subscription_plans' %}" style="display: inline-block; background: white; color: #FF7A00; padding: 12px 25px; border-radius: 8px; text-decoration: none; font-weight: 700; font-size: 1.1rem; transition: all 0.3s ease;">
           📦 عرض الباقات
         </a>
       </div>
@@ -1446,7 +1449,12 @@
   <!-- Advanced Analytics Charts -->
 
   <div class="dashboard-tabs">
-    <button type="button" class="tab-btn active" data-tab="properties">
+    
+      <button type="button" class="tab-btn" data-tab="quick-actions">
+        <span class="tab-icon">⚡</span>
+        <span class="tab-text">إجراءات سريعة</span>
+      </button>
+<button type="button" class="tab-btn active" data-tab="properties">
       <span class="tab-icon">🏠</span>
       <span>العقارات</span>
     </button>
@@ -1574,10 +1582,6 @@
       <span class="tab-icon">💬</span>
       <span>الرسائل المتقدمة</span>
     </button>
-    <button type="button" class="tab-btn" data-tab="access-control">
-      <span class="tab-icon">🔐</span>
-      <span>التحكم في الوصول</span>
-    </button>
     <button type="button" class="tab-btn" data-tab="crm">
       <span class="tab-icon">👥</span>
       <span>إدارة العلاقات</span>
@@ -1586,11 +1590,6 @@
     <button type="button" class="tab-btn" data-tab="performance-reports">
       <span class="tab-icon">📊</span>
       <span>تقارير الأداء</span>
-    </button>
-
-    <button type="button" class="tab-btn" data-tab="contracts">
-      <span class="tab-icon">📄</span>
-      <span>العقود</span>
     </button>
 
     <button type="button" class="tab-btn" data-tab="real-estate-clients">
@@ -1635,7 +1634,101 @@
     {% endif %}
   </div>
 
-  <div id="panel-properties" class="panel active">
+  
+  <div id="panel-quick-actions" class="panel">
+    <div class="panel-header">
+      <div class="panel-badge">
+        <span class="badge-icon">⚡</span>
+        <span>إجراءات سريعة</span>
+      </div>
+      <h2>إضافة محتوى سريع</h2>
+    </div>
+<!-- Quick Category Actions -->
+    <div class="category-buttons" style="margin-top: 20px;">
+      <a href="/add/dynamic/" class="category-btn" style="text-decoration: none;">
+        <span class="btn-icon">🏠</span>
+        <span class="btn-text">عقارات داخل العراق</span>
+      </a>
+      <a href="/properties-outside-iraq/add/" class="category-btn" style="text-decoration: none;">
+        <span class="btn-icon">🌍</span>
+        <span class="btn-text">عقارات خارج العراق</span>
+      </a>
+      <a href="/hotels/create/inside-iraq/" class="category-btn" style="text-decoration: none;">
+        <span class="btn-icon">🏨🇮🇶</span>
+        <span class="btn-text">فنادق داخل العراق</span>
+      </a>
+      <a href="/hotels/create/outside-iraq/" class="category-btn" style="text-decoration: none;">
+        <span class="btn-icon">🏨🌍</span>
+        <span class="btn-text">فنادق خارج العراق</span>
+      </a>
+      <a href="/resorts-inside-iraq/create/" class="category-btn" style="text-decoration: none;">
+        <span class="btn-icon">🏝️🇮🇶</span>
+        <span class="btn-text">منتجعات داخل العراق</span>
+      </a>
+      <a href="/resorts-outside-iraq/create/" class="category-btn" style="text-decoration: none;">
+        <span class="btn-icon">🏝️🌍</span>
+        <span class="btn-text">منتجعات خارج العراق</span>
+      </a>
+      <a href="/dashboard/dallal/travel-companies/create/" class="category-btn" style="text-decoration: none;">
+        <span class="btn-icon">✈️</span>
+        <span class="btn-text">نشر شركة سفر</span>
+      </a>
+      <a href="/jobs/create/" class="category-btn" style="text-decoration: none;">
+        <span class="btn-icon">➕</span>
+        <span class="btn-text">نشر وظيفة</span>
+      </a>
+      <a href="/service-provider/advertisement/create/" class="category-btn" style="text-decoration: none;">
+        <span class="btn-icon">🔧</span>
+        <span class="btn-text">نشر خدمة</span>
+      </a>
+      <a href="/broker/auctions/create/" class="category-btn" style="text-decoration: none;">
+        <span class="btn-icon">🔨</span>
+        <span class="btn-text">نشر مزاد</span>
+      </a>
+    </div>
+
+    <style>
+    .category-buttons {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      gap: 10px;
+    }
+
+    .category-btn {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+      padding: 15px 10px;
+      background: var(--bg-alt);
+      border: 2px solid var(--border);
+      border-radius: 10px;
+      color: var(--text);
+      font-size: 0.85rem;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+
+    .category-btn:hover {
+      background: rgba(255, 122, 0, 0.1);
+      border-color: var(--primary);
+      transform: translateY(-2px);
+      box-shadow: 0 4px 15px rgba(255, 122, 0, 0.2);
+    }
+
+    .category-btn .btn-icon {
+      font-size: 1.5rem;
+    }
+
+    .category-btn .btn-text {
+      font-weight: 600;
+      text-align: center;
+    }
+    </style>
+
+    
+  </div>
+<div id="panel-properties" class="panel active">
     <div class="panel-header">
       <div class="panel-badge">
         <span class="badge-icon">🏠</span>
@@ -2912,89 +3005,6 @@
       </div>
     </div>
 
-    <!-- Quick Category Actions -->
-    <div class="category-buttons" style="margin-top: 20px;">
-      <a href="/add/dynamic/" class="category-btn" style="text-decoration: none;">
-        <span class="btn-icon">🏠</span>
-        <span class="btn-text">عقارات داخل العراق</span>
-      </a>
-      <a href="/properties-outside-iraq/add/" class="category-btn" style="text-decoration: none;">
-        <span class="btn-icon">🌍</span>
-        <span class="btn-text">عقارات خارج العراق</span>
-      </a>
-      <a href="/hotels/create/inside-iraq/" class="category-btn" style="text-decoration: none;">
-        <span class="btn-icon">🏨🇮🇶</span>
-        <span class="btn-text">فنادق داخل العراق</span>
-      </a>
-      <a href="/hotels/create/outside-iraq/" class="category-btn" style="text-decoration: none;">
-        <span class="btn-icon">🏨🌍</span>
-        <span class="btn-text">فنادق خارج العراق</span>
-      </a>
-      <a href="/resorts-inside-iraq/create/" class="category-btn" style="text-decoration: none;">
-        <span class="btn-icon">🏝️🇮🇶</span>
-        <span class="btn-text">منتجعات داخل العراق</span>
-      </a>
-      <a href="/resorts-outside-iraq/create/" class="category-btn" style="text-decoration: none;">
-        <span class="btn-icon">🏝️🌍</span>
-        <span class="btn-text">منتجعات خارج العراق</span>
-      </a>
-      <a href="/dashboard/dallal/travel-companies/create/" class="category-btn" style="text-decoration: none;">
-        <span class="btn-icon">✈️</span>
-        <span class="btn-text">نشر شركة سفر</span>
-      </a>
-      <a href="/jobs/create/" class="category-btn" style="text-decoration: none;">
-        <span class="btn-icon">➕</span>
-        <span class="btn-text">نشر وظيفة</span>
-      </a>
-      <a href="/service-provider/advertisement/create/" class="category-btn" style="text-decoration: none;">
-        <span class="btn-icon">🔧</span>
-        <span class="btn-text">نشر خدمة</span>
-      </a>
-      <a href="/broker/auctions/create/" class="category-btn" style="text-decoration: none;">
-        <span class="btn-icon">🔨</span>
-        <span class="btn-text">نشر مزاد</span>
-      </a>
-    </div>
-
-    <style>
-    .category-buttons {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-      gap: 10px;
-    }
-
-    .category-btn {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 8px;
-      padding: 15px 10px;
-      background: var(--bg-alt);
-      border: 2px solid var(--border);
-      border-radius: 10px;
-      color: var(--text);
-      font-size: 0.85rem;
-      cursor: pointer;
-      transition: all 0.3s ease;
-    }
-
-    .category-btn:hover {
-      background: rgba(255, 122, 0, 0.1);
-      border-color: var(--primary);
-      transform: translateY(-2px);
-      box-shadow: 0 4px 15px rgba(255, 122, 0, 0.2);
-    }
-
-    .category-btn .btn-icon {
-      font-size: 1.5rem;
-    }
-
-    .category-btn .btn-text {
-      font-weight: 600;
-      text-align: center;
-    }
-    </style>
-
     <!-- Media Grid -->
     <div id="media-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 15px; margin-top: 20px;">
       <div style="text-align: center; padding: 20px; color: #888;">جاري تحميل الوسائط...</div>
@@ -3636,51 +3646,18 @@
       </div>
       <h2>نظام إدارة العقود والاتفاقيات</h2>
       <div class="panel-actions">
-        <div class="dropdown">
-          <button class="btn btn-primary dropdown-toggle" onclick="toggleContractDropdown(event)">
-            <span class="btn-icon">➕</span>
-            عقد جديد
-            <span class="dropdown-arrow">▼</span>
-          </button>
-          <div class="dropdown-menu" id="contractDropdown">
-            <button class="dropdown-item" onclick="showCreateContractModal('sale'); event.stopPropagation();">
-              <span class="dropdown-icon">🏠</span>
-              عقد بيع
-            </button>
-            <button class="dropdown-item" onclick="showCreateContractModal('rent'); event.stopPropagation();">
-              <span class="dropdown-icon">🔑</span>
-              عقد إيجار
-            </button>
-            <button class="dropdown-item" onclick="showCreateContractModal('agency'); event.stopPropagation();">
-              <span class="dropdown-icon">🤝</span>
-              عقد وساطة
-            </button>
-            <button class="dropdown-item" onclick="showCreateContractModal('management'); event.stopPropagation();">
-              <span class="dropdown-icon">🏢</span>
-              عقد إدارة
-            </button>
-            <button class="dropdown-item" onclick="showCreateContractModal('lease'); event.stopPropagation();">
-              <span class="dropdown-icon">📋</span>
-              عقد تأجير
-            </button>
-            <button class="dropdown-item" onclick="showCreateContractModal('partnership'); event.stopPropagation();">
-              <span class="dropdown-icon">🤝</span>
-              عقد شراكة
-            </button>
-            <button class="dropdown-item" onclick="showCreateContractModal('maintenance'); event.stopPropagation();">
-              <span class="dropdown-icon">🔧</span>
-              عقد صيانة
-            </button>
-            <button class="dropdown-item" onclick="showCreateContractModal('other'); event.stopPropagation();">
-              <span class="dropdown-icon">📄</span>
-              عقد آخر
-            </button>
-          </div>
-        </div>
-        <button class="btn btn-success" onclick="exportContracts()">
-          <span class="btn-icon">📥</span>
-          تصدير
-        </button>
+        <a href="{% url 'contract_create' %}" class="btn btn-primary">
+          <span class="btn-icon">➕</span>
+          عقد جديد
+        </a>
+        <a href="{% url 'contract_list' %}" class="btn btn-success">
+          <span class="btn-icon">📚</span>
+          أرشيف العقود
+        </a>
+        <a href="{% url 'contract_statistics' %}" class="btn btn-info">
+          <span class="btn-icon">📊</span>
+          إحصائيات
+        </a>
         <button class="btn btn-secondary" onclick="refreshContracts()">
           <span class="btn-icon">🔄</span>
           تحديث
@@ -4798,7 +4775,7 @@
 .financial-preview-card {
   flex: 1;
   min-width: 300px;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #FF7A00 0%, #FF9500 100%);
   padding: 32px;
   border-radius: var(--radius-lg);
   color: white;
@@ -5902,7 +5879,7 @@ document.addEventListener('DOMContentLoaded', function() {
               datasets: [{
                 label: 'المستخدمين الجدد',
                 data: values.length > 0 ? values : [12, 19, 3, 5, 2, 3],
-                borderColor: '#667eea',
+                borderColor: '#FF7A00',
                 backgroundColor: 'rgba(102, 126, 234, 0.1)',
                 fill: true,
                 tension: 0.4
@@ -5934,7 +5911,7 @@ document.addEventListener('DOMContentLoaded', function() {
               datasets: [{
                 label: 'المستخدمين الجدد',
                 data: [12, 19, 3, 5, 2, 3],
-                borderColor: '#667eea',
+                borderColor: '#FF7A00',
                 backgroundColor: 'rgba(102, 126, 234, 0.1)',
                 fill: true,
                 tension: 0.4
@@ -5972,7 +5949,7 @@ document.addEventListener('DOMContentLoaded', function() {
               datasets: [{
                 label: 'العدد',
                 data: [data.conversations.total, data.messages.total],
-                backgroundColor: ['#667eea', '#48bb78']
+                backgroundColor: ['#FF7A00', '#48bb78']
               }]
             },
             options: {
@@ -6001,7 +5978,7 @@ document.addEventListener('DOMContentLoaded', function() {
               datasets: [{
                 label: 'العدد',
                 data: [totalConversations, totalMessages],
-                backgroundColor: ['#667eea', '#48bb78']
+                backgroundColor: ['#FF7A00', '#48bb78']
               }]
             },
             options: {
@@ -6052,7 +6029,7 @@ document.addEventListener('DOMContentLoaded', function() {
               labels: labels,
               datasets: [{
                 data: values,
-                backgroundColor: ['#667eea', '#48bb78', '#ed8936', '#f56565', '#4299e1']
+                backgroundColor: ['#FF7A00', '#48bb78', '#ed8936', '#f56565', '#FF7A00']
               }]
             },
             options: {
@@ -6075,7 +6052,7 @@ document.addEventListener('DOMContentLoaded', function() {
               labels: ['شقق', 'فيلا', 'أرض', 'محل تجاري', 'مكتب'],
               datasets: [{
                 data: [30, 20, 15, 25, 10],
-                backgroundColor: ['#667eea', '#48bb78', '#ed8936', '#f56565', '#4299e1']
+                backgroundColor: ['#FF7A00', '#48bb78', '#ed8936', '#f56565', '#FF7A00']
               }]
             },
             options: {
@@ -6973,7 +6950,7 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Django Configuration
     html += '<div style="margin-bottom: 15px; padding: 10px; background: #f5f5f5; border-radius: 5px;">';
-    html += '<h4 style="margin: 0 0 10px 0; color: #7b1fa2;">⚙️ إعدادات Django</h4>';
+    html += '<h4 style="margin: 0 0 10px 0; color: #FF7A00;">⚙️ إعدادات Django</h4>';
     html += '<div><strong>التطبيقات المثبتة:</strong> ' + info.installed_apps + '</div>';
     html += '<div><strong>Middleware:</strong> ' + info.middleware_count + '</div>';
     html += '<div><strong>المنطقة الزمنية:</strong> ' + info.timezone + '</div>';
@@ -9613,7 +9590,7 @@ document.addEventListener('DOMContentLoaded', function() {
         'مكتمل': '#2196f3',
         'ملغي': '#f44336',
         'لم يحضر': '#9e9e9e',
-        'تم إعادة الجدولة': '#9c27b0'
+        'تم إعادة الجدولة': '#FF9500'
       };
 
       const statusColor = statusColors[schedule.status] || '#666';
@@ -9801,7 +9778,7 @@ document.addEventListener('DOMContentLoaded', function() {
       'مكتمل': '#2196f3',
       'ملغي': '#f44336',
       'لم يحضر': '#9e9e9e',
-      'تم إعادة الجدولة': '#9c27b0'
+      'تم إعادة الجدولة': '#FF9500'
     };
 
     const statusColor = statusColors[appointment.status_display] || '#666';
@@ -10029,11 +10006,11 @@ document.addEventListener('DOMContentLoaded', function() {
 
   function loadRealEstateContracts() {
     try {
-      fetch('/api/real-estate/contracts/')
+      fetch('/api/contracts/')
         .then(response => response.json())
         .then(data => {
           if (data.success) {
-            updateRealEstateContractStatistics(data.statistics);
+            updateRealEstateContractStatistics(data.stats);
             renderRealEstateContracts(data.contracts);
           } else {
             console.error('Error loading contracts:', data.error);
@@ -10168,7 +10145,7 @@ document.addEventListener('DOMContentLoaded', function() {
   }
 
   function showCreatePropertyModal() {
-    alert('ميزة إنشاء عقار قيد التطوير');
+    window.location.href = '/dashboard/add/enhanced/';
   }
 
   function viewProperty(id) {
@@ -10180,19 +10157,37 @@ document.addEventListener('DOMContentLoaded', function() {
   }
 
   function deleteProperty(id) {
-    if (confirm('هل أنت متأكد من حذف هذا العقار؟')) {
-      // This would need to be implemented with a proper API call
-      alert(`حذف العقار ${id} - قيد التطوير`);
+    if (confirm('هل أنت متأكد من حذف هذا العقار حقاً؟')) {
+      fetch(`/api/properties/${id}/delete/`, {
+        method: 'POST',
+        headers: {
+          'X-CSRFToken': getCSRFToken(),
+          'Content-Type': 'application/json'
+        }
+      })
+      .then(response => response.json())
+      .then(data => {
+        if (data.success) {
+          alert('تم حذف العقار بنجاح');
+          refreshProperties();
+        } else {
+          alert('حدث خطأ أثناء الحذف: ' + (data.error || 'غير معروف'));
+        }
+      })
+      .catch(err => {
+        console.error(err);
+        alert('حدث خطأ في الاتصال بالخادم');
+      });
     }
   }
 
   function updateRealEstateContractStatistics(stats) {
-    document.getElementById('totalRealEstateContracts').textContent = stats.total;
-    document.getElementById('activeContracts').textContent = stats.active;
-    document.getElementById('completedContracts').textContent = stats.completed;
-    document.getElementById('totalContractValue').textContent = '$' + stats.total_value.toLocaleString();
-    document.getElementById('pendingContracts').textContent = stats.pending;
-    document.getElementById('expiringContracts').textContent = stats.expiring;
+    document.getElementById('totalRealEstateContracts').textContent = stats.total_contracts;
+    document.getElementById('activeContracts').textContent = stats.active_contracts;
+    document.getElementById('completedContracts').textContent = stats.completed_contracts;
+    document.getElementById('totalContractValue').textContent = stats.total_value;
+    document.getElementById('pendingContracts').textContent = stats.pending_contracts;
+    document.getElementById('expiringContracts').textContent = stats.expiring_7_days;
   }
 
   function renderRealEstateContracts(contracts) {
@@ -10209,8 +10204,7 @@ document.addEventListener('DOMContentLoaded', function() {
     contracts.forEach(contract => {
       const item = document.createElement('div');
       item.className = 'activity-item';
-      item.style.cssText = 'display: flex; gap: 10px; padding: 15px; border-bottom: 1px solid #eee; align-items: center; cursor: pointer;';
-      item.onclick = () => showContractDetail(contract.id);
+      item.style.cssText = 'display: flex; gap: 10px; padding: 15px; border-bottom: 1px solid #eee; align-items: center;';
       
       const statusColors = {
         'مسودة': '#9e9e9e',
@@ -10228,14 +10222,12 @@ document.addEventListener('DOMContentLoaded', function() {
         <div style="flex: 0 0 150px;"><strong>${contract.contract_number}</strong></div>
         <div style="flex: 0 0 120px;">${contract.contract_type_display}</div>
         <div style="flex: 0 0 100px; color: ${statusColor}; font-weight: bold;">${contract.status_display}</div>
-        <div style="flex: 0 0 100px;">$${contract.amount.toLocaleString()}</div>
-        <div style="flex: 0 0 100px;">${contract.property_title}</div>
-        <div style="flex: 0 0 100px;">${contract.broker_name}</div>
-        <div style="flex: 0 0 100px;">${contract.end_date}</div>
+        <div style="flex: 0 0 100px;">${contract.amount} ${contract.currency}</div>
+        <div style="flex: 0 0 100px;">${contract.property || '-'}</div>
+        <div style="flex: 0 0 100px;">${contract.broker || '-'}</div>
+        <div style="flex: 0 0 100px;">${contract.end_date || '-'}</div>
         <div style="flex: 0 0 100px; text-align: left;">
-          <button class="btn btn-sm btn-primary" onclick="event.stopPropagation(); showContractDetail(${contract.id})">عرض</button>
-          <button class="btn btn-sm btn-secondary" onclick="event.stopPropagation(); editContract(${contract.id})">تعديل</button>
-          <button class="btn btn-sm btn-danger" onclick="event.stopPropagation(); deleteContract(${contract.id})">حذف</button>
+          <a href="/contracts/${contract.id}/" class="btn btn-sm btn-primary">عرض</a>
         </div>
       `;
       container.appendChild(item);
@@ -10248,19 +10240,22 @@ document.addEventListener('DOMContentLoaded', function() {
     const dateFilter = document.getElementById('contractDateFilter').value;
     const searchInput = document.getElementById('contractSearchInput').value.toLowerCase();
     
-    fetch('/api/real-estate/contracts/')
+    let apiUrl = '/api/contracts/';
+    const params = new URLSearchParams();
+    
+    if (typeFilter) params.append('contract_type', typeFilter);
+    if (statusFilter) params.append('status', statusFilter);
+    if (searchInput) params.append('search', searchInput);
+    
+    if (params.toString()) {
+      apiUrl += '?' + params.toString();
+    }
+    
+    fetch(apiUrl)
       .then(response => response.json())
       .then(data => {
         if (data.success) {
           let filteredContracts = data.contracts;
-          
-          if (typeFilter) {
-            filteredContracts = filteredContracts.filter(c => c.contract_type === typeFilter);
-          }
-          
-          if (statusFilter) {
-            filteredContracts = filteredContracts.filter(c => c.status === statusFilter);
-          }
           
           if (dateFilter) {
             const today = new Date();
@@ -10285,15 +10280,6 @@ document.addEventListener('DOMContentLoaded', function() {
                   return true;
               }
             });
-          }
-          
-          if (searchInput) {
-            filteredContracts = filteredContracts.filter(c => 
-              c.contract_number.toLowerCase().includes(searchInput) ||
-              c.property_title.toLowerCase().includes(searchInput) ||
-              c.broker_name.toLowerCase().includes(searchInput) ||
-              c.client_name.toLowerCase().includes(searchInput)
-            );
           }
           
           renderRealEstateContracts(filteredContracts);
@@ -10323,34 +10309,54 @@ document.addEventListener('DOMContentLoaded', function() {
 
   function exportContracts() {
     if (confirm('هل تريد تصدير جميع العقود؟')) {
-      fetch('/api/real-estate/contracts/export/', {
-        method: 'GET',
-        headers: {
-          'X-CSRFToken': getCSRFToken()
-        }
-      })
-      .then(response => response.blob())
-      .then(blob => {
-        const url = window.URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = 'contracts.zip';
-        document.body.appendChild(a);
-        a.click();
-        window.URL.revokeObjectURL(url);
-        document.body.removeChild(a);
-      });
+      fetch('/api/contracts/')
+        .then(response => response.json())
+        .then(data => {
+          if (data.success) {
+            // Convert contracts to CSV
+            const contracts = data.contracts;
+            if (contracts.length === 0) {
+              alert('لا توجد عقود للتصدير');
+              return;
+            }
+            
+            const headers = ['رقم العقد', 'العنوان', 'النوع', 'الحالة', 'القيمة', 'العملة', 'تاريخ البدء', 'تاريخ الانتهاء'];
+            const csvContent = [
+              headers.join(','),
+              ...contracts.map(c => [
+                c.contract_number,
+                c.contract_title || '',
+                c.contract_type_display,
+                c.status_display,
+                c.amount,
+                c.currency,
+                c.start_date,
+                c.end_date || ''
+              ].join(','))
+            ].join('\n');
+            
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'contracts.csv';
+            document.body.appendChild(a);
+            a.click();
+            window.URL.revokeObjectURL(url);
+            document.body.removeChild(a);
+          }
+        });
     }
   }
 
   function showExpiringAlerts() {
-    fetch('/api/real-estate/contracts/expiring/')
+    fetch('/api/contracts/expiring/?days=7')
       .then(response => response.json())
       .then(data => {
         if (data.success && data.contracts.length > 0) {
           let message = 'العقود القاربة للانتهاء:\n\n';
           data.contracts.forEach(contract => {
-            message += `- ${contract.contract_number}: ${contract.property_title} (ينتهي في ${contract.days_until_expiry} يوم)\n`;
+            message += `- ${contract.contract_number}: ${contract.contract_title || contract.property || 'بدون عنوان'} (ينتهي في ${contract.days_remaining} يوم)\n`;
           });
           alert(message);
         } else {
@@ -10360,141 +10366,97 @@ document.addEventListener('DOMContentLoaded', function() {
   }
 
   function showCreateContractModal(type = null) {
-    // Create a modal for creating a new contract
-    const modal = document.createElement('div');
-    modal.className = 'modal';
-    modal.style.cssText = 'position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); display: flex; justify-content: center; align-items: center; z-index: 1000;';
-    
-    modal.innerHTML = `
-      <div style="background: white; padding: 20px; border-radius: 8px; max-width: 800px; width: 90%; max-height: 90vh; overflow-y: auto;">
-        <h3>إنشاء عقد جديد</h3>
-        <form id="createContractForm" onsubmit="createContract(event)">
-          <div class="form-group">
-            <label>نوع العقد</label>
-            <select name="contract_type" class="form-control" required>
-              <option value="">اختر نوع العقد</option>
-              <option value="sale" ${type === 'sale' ? 'selected' : ''}>عقد بيع</option>
-              <option value="rent" ${type === 'rent' ? 'selected' : ''}>عقد إيجار</option>
-              <option value="lease" ${type === 'lease' ? 'selected' : ''}>عقد تأجير</option>
-              <option value="agency" ${type === 'agency' ? 'selected' : ''}>عقد وساطة</option>
-              <option value="management" ${type === 'management' ? 'selected' : ''}>عقد إدارة</option>
-              <option value="partnership" ${type === 'partnership' ? 'selected' : ''}>عقد شراكة</option>
-              <option value="maintenance" ${type === 'maintenance' ? 'selected' : ''}>عقد صيانة</option>
-              <option value="other" ${type === 'other' ? 'selected' : ''}>عقد آخر</option>
-            </select>
-          </div>
-          <div class="form-group">
-            <label>العقار</label>
-            <select name="property" class="form-control">
-              <option value="">اختر العقار</option>
-            </select>
-          </div>
-          <div class="form-group">
-            <label>الدلال</label>
-            <select name="broker" class="form-control">
-              <option value="">اختر الدلال</option>
-            </select>
-          </div>
-          <div class="form-group">
-            <label>العميل</label>
-            <select name="client" class="form-control">
-              <option value="">اختر العميل</option>
-            </select>
-          </div>
-          <div class="form-group">
-            <label>قيمة العقد</label>
-            <input type="number" name="amount" class="form-control" required>
-          </div>
-          <div class="form-group">
-            <label>العربون</label>
-            <input type="number" name="deposit" class="form-control" value="0">
-          </div>
-          <div class="form-group">
-            <label>نسبة العمولة (%)</label>
-            <input type="number" name="commission_rate" class="form-control" value="0" step="0.1">
-          </div>
-          <div class="form-group">
-            <label>تاريخ البدء</label>
-            <input type="date" name="start_date" class="form-control" required>
-          </div>
-          <div class="form-group">
-            <label>تاريخ الانتهاء</label>
-            <input type="date" name="end_date" class="form-control">
-          </div>
-          <div class="form-group">
-            <label>توقيت الدفع</label>
-            <select name="payment_frequency" class="form-control">
-              <option value="one_time">دفعة واحدة</option>
-              <option value="monthly">شهري</option>
-              <option value="quarterly">ربع سنوي</option>
-              <option value="annually">سنوي</option>
-              <option value="custom">مخصص</option>
-            </select>
-          </div>
-          <div class="form-group">
-            <label>الشروط والأحكام</label>
-            <textarea name="terms_and_conditions" class="form-control" rows="3"></textarea>
-          </div>
-          <div class="form-group">
-            <label>بند التجديد</label>
-            <input type="checkbox" name="renewal_clause">
-          </div>
-          <div class="form-group">
-            <label>ملاحظات</label>
-            <textarea name="notes" class="form-control" rows="2"></textarea>
-          </div>
-          <div style="display: flex; gap: 10px; justify-content: flex-end; margin-top: 20px;">
-            <button type="button" class="btn btn-secondary" onclick="closeModal()">إلغاء</button>
-            <button type="submit" class="btn btn-primary">إنشاء العقد</button>
-          </div>
-        </form>
-      </div>
-    `;
-    
-    document.body.appendChild(modal);
-    
-    // Load options for select fields
-    loadPropertyOptions();
-    loadBrokerOptions();
-    loadClientOptions();
+    // Close dropdown if open
+    const dropdown = document.getElementById('contractDropdown');
+    if (dropdown) {
+      dropdown.classList.remove('active');
+    }
+
+    // Redirect to contract creation page with type parameter
+    const url = type ? `/contracts/create/?type=${type}` : '/contracts/create/';
+    window.location.href = url;
   }
 
-  function createContract(event) {
-    event.preventDefault();
-    const form = event.target;
-    const formData = new FormData(form);
-    
-    fetch('/api/real-estate/contracts/', {
-      method: 'POST',
-      headers: {
-        'X-CSRFToken': getCsrfToken(),
-        'Content-Type': 'application/x-www-form-urlencoded',
-      },
-      body: new URLSearchParams(formData)
-    })
-    .then(response => response.json())
-    .then(data => {
-      if (data.success) {
-        alert('تم إنشاء العقد بنجاح!');
-        closeModal();
-        refreshContracts();
-      } else {
-        alert('خطأ: ' + data.error);
-      }
-    })
-    .catch(error => {
-      console.error('Error creating contract:', error);
-      alert('حدث خطأ أثناء إنشاء العقد');
-    });
-  }
-
-  function showContractDetail(contractId) {
-    fetch(`/api/real-estate/contracts/${contractId}/`)
+  function loadPropertiesForModal() {
+    fetch('/api/real-estate/properties/')
       .then(response => response.json())
       .then(data => {
         if (data.success) {
-          displayContractDetail(data.contract, data.payments, data.documents, data.reminders);
-        } else {
+          const select = document.querySelector('select[name="property"]');
+          if (select) {
+            data.properties.forEach(prop => {
+              const option = document.createElement('option');
+              option.value = prop.id;
+              option.textContent = prop.title;
+              select.appendChild(option);
+            });
+          }
+        }
+      });
+  }
+
+  function loadBrokersForModal() {
+    fetch('/api/brokers/')
+      .then(response => response.json())
+      .then(data => {
+        if (data.success) {
+          const select = document.querySelector('select[name="broker"]');
+          if (select) {
+            data.brokers.forEach(broker => {
+              const option = document.createElement('option');
+              option.value = broker.id;
+              option.textContent = broker.name;
+              select.appendChild(option);
+            });
+          }
+        }
+      });
+  }
+
+  function loadClientsForModal() {
+    fetch('/api/users/')
+      .then(response => response.json())
+      .then(data => {
+        if (data.success) {
+          const select = document.querySelector('select[name="client"]');
+          if (select) {
+            data.users.forEach(user => {
+              const option = document.createElement('option');
+              option.value = user.id;
+              option.textContent = user.username;
+              select.appendChild(option);
+            });
+          }
+        }
+      });
+  }
+
+  function closeModal() {
+    const modal = document.querySelector('.modal');
+    if (modal) {
+      modal.remove();
+    }
+  }
+
+  function showContractDetail(contractId) {
+    window.open(`/contracts/${contractId}/`, '_blank');
+  }
+
+  function loadPropertiesForModal() {
+    // No longer needed since we redirect to creation page
+  }
+
+  function loadBrokersForModal() {
+    // No longer needed since we redirect to creation page
+  }
+
+  function loadClientsForModal() {
+    // No longer needed since we redirect to creation page
+  }
+
+  function closeModal() {
+    // No longer needed since we redirect to creation page
+  }
           alert('خطأ: ' + data.error);
         }
       })
@@ -11804,7 +11766,7 @@ function initAdvancedCharts() {
       labels: [],
       datasets: [{
         data: [],
-        backgroundColor: ['#FF7A00', '#FF6B6B', '#4ECDC4', '#667eea', '#F7DC6F'],
+        backgroundColor: ['#FF7A00', '#FF6B6B', '#4ECDC4', '#FF7A00', '#F7DC6F'],
         borderWidth: 0
       }]
     },
@@ -11873,7 +11835,7 @@ function initAdvancedCharts() {
       labels: [],
       datasets: [{
         data: [],
-        backgroundColor: ['#FF7A00', '#FF6B6B', '#4ECDC4', '#667eea', '#F7DC6F'],
+        backgroundColor: ['#FF7A00', '#FF6B6B', '#4ECDC4', '#FF7A00', '#F7DC6F'],
         borderWidth: 0
       }]
     },
@@ -11895,7 +11857,7 @@ function initAdvancedCharts() {
       datasets: [{
         label: 'النشاط',
         data: [],
-        backgroundColor: '#667eea',
+        backgroundColor: '#FF7A00',
         borderRadius: 8
       }]
     },
