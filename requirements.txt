@@ -37,4 +37,4 @@ django-solo>=2.0.0
 django-leaflet>=0.28.0
 qrcode>=7.4.0
 
-# Force rebuild - 2026-08-26-22-10
+# Force rebuild - 2026-08-28-19-15
