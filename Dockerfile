@@ -1,27 +1,24 @@
-# RAILWAY_REMOVE_LOGGING - 2026-08-25-05-45 - Remove temporary logging causing AttributeError
-# Removed session_engine logging that was causing errors
-# Use different base image and completely different structure
-FROM python:3.10-slim-bullseye
+# Production-ready Dockerfile for Dalal Platform
+FROM python:3.11-slim-bullseye
 
 ENV PYTHONUNBUFFERED=1 \
     PYTHONDONTWRITEBYTECODE=1 \
     PORT=8080 \
     DJANGO_SETTINGS_MODULE=dalal_project.settings \
     USE_WEBSOCKETS=false \
-    PYTHONPATH=/app \
-    FORCE_REBUILD=2026_08_25_05_45
+    PYTHONPATH=/app
 
 WORKDIR /app
 
+# Install system dependencies
 RUN apt-get update && apt-get install -y \
     gcc \
     libpq-dev \
     && rm -rf /var/lib/apt/lists/*
 
-# Install dependencies first
+# Install Python dependencies
 COPY requirements.txt .
 RUN pip install --upgrade pip && \
-    pip install django && \
     pip install -r requirements.txt
 
 # Copy application files
@@ -33,15 +30,14 @@ COPY manage.py /app/
 COPY run_server.py /app/
 COPY entrypoint.sh /app/
 
-# Create directories
+# Create necessary directories
 RUN mkdir -p /app/static /app/staticfiles /app/logs /app/media /app/locale
 
-# Verify Django
+# Verify Django installation
 RUN python -c "import django; print(f'Django {django.__version__} OK')"
 
-# Run Django commands (skip migrate at build time since DB will be deleted at runtime)
-# makemigrations removed from build time - will run in runtime with real database
-RUN python manage.py collectstatic --noinput || true
+# Static files will be collected at runtime by run_server.py
+# This avoids database connection issues during build
 
 EXPOSE 8080
 
