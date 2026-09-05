@@ -1,5 +1,5 @@
 # Railway configuration for Dalal Platform
-# Force rebuild - 2026-09-04-22-50
+# Force rebuild - 2026-09-05-01-45
 [build]
 builder = "DOCKERFILE"
 

@@ -1,5 +1,6 @@
 # Production-ready Dockerfile for Dalal Platform
 # Database Protection: No flush, no reset, only safe migrations
+# Cache bust: 2026-09-05-01-45
 FROM python:3.11-slim-bullseye
 
 ENV PYTHONUNBUFFERED=1 \

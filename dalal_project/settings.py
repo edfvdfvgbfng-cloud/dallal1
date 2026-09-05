@@ -1,6 +1,7 @@
 """
 Django settings for dalal_project — production-ready configuration.
-Supports SQLite (dev) and PostgreSQL (production) via environment variables.
+Supports SQLite (dev) and PostgreSQL (production) environment variables.
+Cache bust: 2026-09-05-01-45
 """
 
 import os
