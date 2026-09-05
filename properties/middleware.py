@@ -43,3 +43,75 @@ class CDNMiddleware(MiddlewareMixin):
                 response['X-Content-Type-Options'] = 'nosniff'
         
         return response
+
+
+class HealthCheckMiddleware(MiddlewareMixin):
+    """
+    Middleware to handle health check requests
+    """
+    
+    def process_request(self, request):
+        """
+        Handle health check endpoint
+        """
+        if request.path == '/health/' or request.path == '/health':
+            from django.http import JsonResponse
+            return JsonResponse({'status': 'healthy'})
+        return None
+
+
+class BaseURLMiddleware(MiddlewareMixin):
+    """
+    Middleware to handle base URL configuration
+    """
+    
+    def process_request(self, request):
+        """
+        Set base URL for the request
+        """
+        request.base_url = getattr(settings, 'BASE_URL', 'https://daluailiraq.com')
+        return None
+
+
+class MaintenanceModeMiddleware(MiddlewareMixin):
+    """
+    Middleware to handle maintenance mode
+    """
+    
+    def process_request(self, request):
+        """
+        Check if maintenance mode is enabled
+        """
+        if getattr(settings, 'MAINTENANCE_MODE', False):
+            from django.http import JsonResponse
+            # Allow health checks and admin to bypass maintenance mode
+            if request.path.startswith('/health') or request.path.startswith('/admin'):
+                return None
+            return JsonResponse({
+                'status': 'maintenance',
+                'message': getattr(settings, 'MAINTENANCE_MESSAGE', 'الموقع قيد الصيانة - سنعود قريباً')
+            }, status=503)
+        return None
+
+
+class SubscriptionCheckMiddleware(MiddlewareMixin):
+    """
+    Middleware to check user subscription status
+    """
+    
+    def process_request(self, request):
+        """
+        Check if user has active subscription for premium features
+        """
+        # Skip subscription check for non-authenticated users or admin
+        if not request.user.is_authenticated or request.user.is_staff:
+            return None
+        
+        # Skip for public pages
+        public_paths = ['/login/', '/register/', '/about/', '/contact/']
+        if any(request.path.startswith(path) for path in public_paths):
+            return None
+        
+        # Set subscription status on request
+        request.has_subscription = getattr(request.user, 'has_active_subscription', False)
+        return None
