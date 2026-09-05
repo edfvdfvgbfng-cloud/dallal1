@@ -1,5 +1,5 @@
 # Railway configuration for Dalal Platform
-# Force rebuild - 2026-08-28-19-15
+# Force rebuild - 2026-09-04-22-50
 [build]
 builder = "DOCKERFILE"
 
@@ -13,7 +13,7 @@ restartPolicyMaxRetries = 10
 DEBUG = "False"
 PORT = "8080"
 PYTHONUNBUFFERED = "1"
-PYTHONPATH = "/app"
+PYTHONPATH = "/app:/app/dalal_project"
 DJANGO_SETTINGS_MODULE = "dalal_project.settings"
 ALLOW_SQLITE_FALLBACK = "False"
 GUNICORN_WORKERS = "2"
