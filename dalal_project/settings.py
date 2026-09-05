@@ -6,12 +6,16 @@ Updated: 2026-09-05-02-15 - Replace with settings_production.py content
 
 import os
 from pathlib import Path
+import logging
 
 from dotenv import load_dotenv
 
 load_dotenv()
 
 BASE_DIR = Path(__file__).resolve().parent.parent
+
+# Configure logger
+logger = logging.getLogger(__name__)
 
 
 def _parse_csv_env(name, default=''):
@@ -78,12 +82,11 @@ if railway_public_domain:
 if DEBUG:
     ALLOWED_HOSTS = _unique(ALLOWED_HOSTS + ['localhost', '127.0.0.1', '[::1]'])
 
-# Log ALLOWED_HOSTS for debugging
-import logging
-logger = logging.getLogger(__name__)
-logger.info(f"DEBUG={DEBUG}, ALLOWED_HOSTS={ALLOWED_HOSTS}")
-logger.info(f"RAILWAY_PUBLIC_DOMAIN={railway_public_domain}")
-logger.info(f"CUSTOM_DOMAIN={custom_domain}")
+# Log ALLOWED_HOSTS for debugging (only in development)
+if DEBUG:
+    logger.info(f"DEBUG={DEBUG}, ALLOWED_HOSTS={ALLOWED_HOSTS}")
+    logger.info(f"RAILWAY_PUBLIC_DOMAIN={railway_public_domain}")
+    logger.info(f"CUSTOM_DOMAIN={custom_domain}")
 
 # CSRF_TRUSTED_ORIGINS
 if DEBUG:
@@ -140,15 +143,10 @@ INSTALLED_APPS = [
     'social_django',
 ]
 
-# Force logging to verify INSTALLED_APPS
-import sys
-print(f"=== SETTINGS.PY LOADED (FROM PRODUCTION) ===", file=sys.stderr)
-print(f"INSTALLED_APPS: {INSTALLED_APPS}", file=sys.stderr)
-print(f"Properties in INSTALLED_APPS: {'properties' in INSTALLED_APPS}", file=sys.stderr)
-
-# Log INSTALLED_APPS for debugging
-logger.info(f"INSTALLED_APPS: {INSTALLED_APPS}")
-logger.info(f"Properties in INSTALLED_APPS: {'properties' in INSTALLED_APPS}")
+# Log INSTALLED_APPS for debugging (only in development)
+if DEBUG:
+    logger.info(f"INSTALLED_APPS: {INSTALLED_APPS}")
+    logger.info(f"Properties in INSTALLED_APPS: {'properties' in INSTALLED_APPS}")
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
@@ -357,6 +355,14 @@ if os.getenv('REDIS_URL') and not DEBUG:
 LOG_DIR = BASE_DIR / 'logs'
 LOG_DIR.mkdir(exist_ok=True)
 
+# Reduce logging level for production to avoid Railway rate limits
+if DEBUG:
+    log_level = 'INFO'
+    console_level = 'INFO'
+else:
+    log_level = 'WARNING'
+    console_level = 'WARNING'
+
 LOGGING = {
     'version': 1,
     'disable_existing_loggers': False,
@@ -365,10 +371,14 @@ LOGGING = {
             'format': '{levelname} {asctime} {module} {message}',
             'style': '{',
         },
+        'simple': {
+            'format': '{levelname} {message}',
+            'style': '{',
+        },
     },
     'handlers': {
         'file': {
-            'level': 'INFO',
+            'level': log_level,
             'class': 'logging.handlers.RotatingFileHandler',
             'filename': LOG_DIR / 'dalal.log',
             'maxBytes': 5 * 1024 * 1024,
@@ -377,16 +387,17 @@ LOGGING = {
         },
         'console': {
             'class': 'logging.StreamHandler',
-            'formatter': 'verbose',
+            'level': console_level,
+            'formatter': 'simple',
         },
     },
     'root': {
-        'handlers': ['console', 'file'],
-        'level': 'INFO',
+        'handlers': ['file'],  # Only file logging in production
+        'level': log_level,
     },
     'loggers': {
-        'django': {'handlers': ['console', 'file'], 'level': 'WARNING', 'propagate': False},
-        'properties': {'handlers': ['console', 'file'], 'level': 'INFO', 'propagate': False},
+        'django': {'handlers': ['file'], 'level': 'WARNING', 'propagate': False},
+        'properties': {'handlers': ['file'], 'level': log_level, 'propagate': False},
     },
 }
 
