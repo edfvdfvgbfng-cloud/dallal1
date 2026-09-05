@@ -1,0 +1,241 @@
+{% extends 'properties/base.html' %}
+{% load static %}
+{% load custom_filters %}
+
+{% block title %}نسخ عقد - {{ original_contract.contract_number }}{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-lg-8 mx-auto">
+            <div class="card">
+                <div class="card-header">
+                    <h2 class="mb-0">📋 نسخ عقد</h2>
+                    <p class="text-muted mb-0">إنشاء عقد جديد مشابه للعقد {{ original_contract.contract_number }}</p>
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-info">
+                        <strong>معلومات العقد الأصلي:</strong>
+                        <ul class="mb-0">
+                            <li>رقم العقد: {{ original_contract.contract_number }}</li>
+                            <li>النوع: {{ original_contract.get_contract_type_display }}</li>
+                            <li>القيمة: {{ original_contract.amount }} {{ original_contract.currency }}</li>
+                            <li>الحالة: {{ original_contract.get_status_display }}</li>
+                        </ul>
+                    </div>
+                    
+                    <form method="post">
+                        {% csrf_token %}
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="id_contract_type">نوع العقد</label>
+                                    {{ form.contract_type }}
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="id_duration_type">مدة العقد</label>
+                                    {{ form.duration_type }}
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="id_amount">قيمة العقد</label>
+                                    {{ form.amount }}
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="id_currency">العملة</label>
+                                    {{ form.currency }}
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="id_start_date">تاريخ البدء</label>
+                                    {{ form.start_date }}
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="id_end_date">تاريخ الانتهاء</label>
+                                    {{ form.end_date }}
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="id_property">العقار</label>
+                            {{ form.property }}
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="id_broker">الدلال</label>
+                            {{ form.broker }}
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="id_second_party_name">اسم الطرف الثاني</label>
+                            {{ form.second_party_name }}
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="id_terms_and_conditions">الشروط والأحكام</label>
+                            {{ form.terms_and_conditions }}
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="id_special_clauses">البنود الخاصة</label>
+                            {{ form.special_clauses }}
+                        </div>
+                        
+                        <div class="form-check">
+                            {{ form.renewal_clause }}
+                            <label class="form-check-label" for="id_renewal_clause">
+                                بند التجديد
+                            </label>
+                        </div>
+                        
+                        <div class="form-group mt-3">
+                            <label for="id_termination_clause">بند الإنهاء</label>
+                            {{ form.termination_clause }}
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="id_notes">ملاحظات</label>
+                            {{ form.notes }}
+                        </div>
+                        
+                        <div class="alert alert-warning">
+                            <strong>ملاحظة:</strong> سيتم نسخ الوثائق والأطراف من العقد الأصلي تلقائياً.
+                        </div>
+                        
+                        <div class="btn-group">
+                            <button type="submit" class="btn btn-success">
+                                <span class="btn-icon">📋</span>
+                                نسخ وإنشاء العقد
+                            </button>
+                            <a href="{% url 'contract_detail' original_contract.id %}" class="btn btn-secondary">
+                                إلغاء
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.card {
+    background: #0A0A0A;
+    border: 1px solid #333;
+    border-radius: 10px;
+    margin-bottom: 20px;
+}
+
+.card-header {
+    background: #0A0A0A;
+    border-bottom: 1px solid #333;
+    padding: 20px;
+    border-radius: 10px 10px 0 0;
+}
+
+.card-header h2 {
+    color: #e67e22;
+    margin: 0;
+}
+
+.card-body {
+    padding: 20px;
+    color: #fff;
+}
+
+.form-group label {
+    color: #fff;
+    font-weight: 600;
+}
+
+.form-control, textarea, select {
+    background: #0A0A0A;
+    border: 1px solid #333;
+    color: #fff;
+    padding: 12px;
+    border-radius: 6px;
+    width: 100%;
+}
+
+.form-control:focus, textarea:focus, select:focus {
+    border-color: #e67e22;
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(230, 126, 34, 0.2);
+}
+
+.alert {
+    background: #1a1a1a;
+    border: 1px solid #333;
+    color: #fff;
+    border-radius: 8px;
+    padding: 15px;
+    margin-bottom: 20px;
+}
+
+.alert-info {
+    background: #0a2a3a;
+    border-color: #17a2b8;
+}
+
+.alert-warning {
+    background: #3a2a0a;
+    border-color: #e67e22;
+}
+
+.btn-group {
+    display: flex;
+    gap: 10px;
+    margin-top: 20px;
+}
+
+.btn {
+    padding: 10px 20px;
+    border-radius: 6px;
+    border: none;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.btn-success {
+    background: #28a745;
+    color: #fff;
+}
+
+.btn-success:hover {
+    background: #218838;
+}
+
+.btn-secondary {
+    background: #6c757d;
+    color: #fff;
+}
+
+.btn-secondary:hover {
+    background: #5a6268;
+}
+
+.btn-icon {
+    margin-left: 5px;
+}
+
+.form-check-label {
+    color: #fff;
+}
+</style>
+{% endblock %}

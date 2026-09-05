@@ -80,9 +80,17 @@
                                         {% endif %}
                                     </td>
                                     <td>
-                                        <a href="{% url 'user_monitoring_detail' data.user.id %}" class="btn btn-info btn-sm">
-                                            👁️ عرض التفاصيل
-                                        </a>
+                                        <div class="btn-group" role="group">
+                                            <a href="{% url 'user_monitoring_detail' data.user.id %}" class="btn btn-info btn-sm">
+                                                👁️ عرض
+                                            </a>
+                                            <a href="{% url 'admin_edit_user' data.user.id %}" class="btn btn-warning btn-sm">
+                                                ✏️ تعديل
+                                            </a>
+                                            <button onclick="deleteUser({{ data.user.id }}, '{{ data.user.username }}')" class="btn btn-danger btn-sm">
+                                                🗑️ حذف
+                                            </button>
+                                        </div>
                                     </td>
                                 </tr>
                                 {% empty %}
@@ -98,4 +106,33 @@
         </div>
     </div>
 </div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function deleteUser(userId, username) {
+    if (confirm(`هل أنت متأكد من حذف المستخدم "${username}"؟\n\n⚠️ هذا الإجراء لا يمكن التراجع عنه.`)) {
+        fetch(`/admin-panel/user-monitoring/${userId}/delete/`, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({})
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert('تم حذف المستخدم بنجاح');
+                location.reload();
+            } else {
+                alert('حدث خطأ: ' + (data.error || 'فشل الحذف'));
+            }
+        })
+        .catch(error => {
+            alert('حدث خطأ: ' + error);
+        });
+    }
+}
+</script>
 {% endblock %}

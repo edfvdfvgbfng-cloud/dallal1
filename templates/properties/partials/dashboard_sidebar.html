@@ -89,7 +89,10 @@
         <span class="nav-icon">🔨</span> موافقة المزادات
       </a></li>
       <li><a href="{% url 'admin_contact' %}">
-        <span class="nav-icon">�</span> مراسلة الإدارة
+        <span class="nav-icon">📧</span> مراسلة الإدارة
+      </a></li>
+      <li><a href="{% url 'appointments_management' %}" class="{% if request.resolver_match.url_name == 'appointments_management' or request.resolver_match.url_name == 'appointment_calendar' %}active{% endif %}">
+        <span class="nav-icon">📅</span> مواعيد المستخدمين
       </a></li>
       <li><a href="{% url 'settings_general' %}">
         <span class="nav-icon">🎨</span> إعدادات الموقع

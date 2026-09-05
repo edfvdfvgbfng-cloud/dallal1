@@ -23,7 +23,7 @@
   /* Functional Colors */
   --color-success: #22C55E;
   --color-warning: #F59E0B;
-  --color-info: #3B82F6;
+  --color-info: #FF7A00;
 
   /* Borders & Glass */
   --color-border: rgba(255, 122, 0, 0.15);
@@ -468,8 +468,8 @@ textarea::placeholder {
 }
 
 .badge-info {
-  background: rgba(52, 152, 219, 0.15);
-  color: var(--color-info);
+  background: rgba(255, 122, 0, 0.15);
+  color: var(--color-primary);
 }
 
 /* ============================================================================

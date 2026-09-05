@@ -24,15 +24,15 @@
                             </div>
                             <div class="progress-step" data-step="3">
                                 <span class="step-number">3</span>
-                                <span class="step-label">الموقع والراتب</span>
+                                <span class="step-label">المتطلبات والمهارات</span>
                             </div>
                             <div class="progress-step" data-step="4">
                                 <span class="step-number">4</span>
-                                <span class="step-label">المتطلبات والمهارات</span>
+                                <span class="step-label">الموقع والراتب</span>
                             </div>
                             <div class="progress-step" data-step="5">
                                 <span class="step-number">5</span>
-                                <span class="step-label">اتصال ونشر</span>
+                                <span class="step-label">الاتصال والنشر</span>
                             </div>
                         </div>
                     </div>
@@ -82,28 +82,58 @@
                                 </div>
                                 
                                 <div class="form-group">
-                                    <label for="{{ form.category.id_for_label }}" class="form-label">التصنيف</label>
+                                    <label for="{{ form.category.id_for_label }}" class="form-label">التصنيف الوظيفي <span class="required">*</span></label>
                                     {{ form.category }}
                                 </div>
-                                
+
+                                <div class="form-group">
+                                    <label for="{{ form.company_type.id_for_label }}" class="form-label">نوع جهة العمل</label>
+                                    {{ form.company_type }}
+                                </div>
+
+                                <div class="form-group">
+                                    <label for="{{ form.department.id_for_label }}" class="form-label">القسم / التخصص</label>
+                                    {{ form.department }}
+                                </div>
+
+                                <div class="form-group">
+                                    <label for="{{ form.field.id_for_label }}" class="form-label">المجال</label>
+                                    {{ form.field }}
+                                </div>
+
                                 <div class="form-group">
                                     <label for="{{ form.job_type.id_for_label }}" class="form-label">نوع الوظيفة <span class="required">*</span></label>
                                     {{ form.job_type }}
                                 </div>
-                                
+
                                 <div class="form-group">
                                     <label for="{{ form.experience_level.id_for_label }}" class="form-label">مستوى الخبرة <span class="required">*</span></label>
                                     {{ form.experience_level }}
                                 </div>
-                                
+
                                 <div class="form-group">
-                                    <label for="{{ form.number_of_positions.id_for_label }}" class="form-label">عدد الموظفين المطلوبين</label>
+                                    <label for="{{ form.experience_years.id_for_label }}" class="form-label">سنوات الخبرة المطلوبة</label>
+                                    {{ form.experience_years }}
+                                </div>
+
+                                <div class="form-group">
+                                    <label for="{{ form.number_of_positions.id_for_label }}" class="form-label">عدد الشواغر</label>
                                     {{ form.number_of_positions }}
                                 </div>
-                                
+
                                 <div class="form-group">
                                     <label for="{{ form.start_date.id_for_label }}" class="form-label">تاريخ بدء العمل</label>
                                     {{ form.start_date }}
+                                </div>
+
+                                <div class="form-group full-width">
+                                    <label for="{{ form.available_for_students.id_for_label }}" class="form-label">هل الوظيفة متاحة للطلاب؟</label>
+                                    {{ form.available_for_students }}
+                                </div>
+
+                                <div class="form-group full-width">
+                                    <label for="{{ form.accept_recent_graduates.id_for_label }}" class="form-label">هل تقبل حديثي التخرج؟</label>
+                                    {{ form.accept_recent_graduates }}
                                 </div>
                                 
                                 <div class="form-group full-width">
@@ -117,8 +147,9 @@
                                 </div>
                                 
                                 <div class="form-group full-width">
-                                    <label for="{{ form.additional_images.id_for_label }}" class="form-label">صور إضافية</label>
-                                    {{ form.additional_images }}
+                                    <label for="id_additional_images_files" class="form-label">صور إضافية</label>
+                                    <input type="file" name="additional_images_files" id="id_additional_images_files" class="form-control" accept="image/*" multiple autocomplete="off">
+                                    <small class="text-muted">يمكنك اختيار صور متعددة في نفس الوقت</small>
                                 </div>
                             </div>
                         </div>
@@ -135,162 +166,204 @@
                                     <label for="{{ form.description.id_for_label }}" class="form-label">وصف الوظيفة <span class="required">*</span></label>
                                     {{ form.description }}
                                 </div>
-                                
+
                                 <div class="form-group full-width">
                                     <label for="{{ form.responsibilities.id_for_label }}" class="form-label">المسؤوليات <span class="required">*</span></label>
                                     {{ form.responsibilities }}
                                 </div>
-                                
+
                                 <div class="form-group full-width">
                                     <label for="{{ form.requirements.id_for_label }}" class="form-label">المتطلبات <span class="required">*</span></label>
                                     {{ form.requirements }}
                                 </div>
-                                
+
                                 <div class="form-group full-width">
                                     <label for="{{ form.benefits.id_for_label }}" class="form-label">المزايا</label>
                                     {{ form.benefits }}
                                 </div>
-                                
+
                                 <div class="form-group full-width">
                                     <label for="{{ form.skills.id_for_label }}" class="form-label">المهارات المطلوبة <span class="required">*</span></label>
                                     {{ form.skills }}
                                     <small class="form-text text-muted">مفصولة بفواصل (مثال: Python, Django, JavaScript)</small>
                                 </div>
-                                
+
                                 <div class="form-group">
                                     <label for="{{ form.language.id_for_label }}" class="form-label">لغة الوظيفة</label>
                                     {{ form.language }}
                                 </div>
-                                
+
                                 <div class="form-group">
                                     <label for="{{ form.work_environment.id_for_label }}" class="form-label">بيئة العمل</label>
                                     {{ form.work_environment }}
                                 </div>
-                                
+
                                 <div class="form-group">
                                     <label for="{{ form.work_hours.id_for_label }}" class="form-label">ساعات العمل</label>
                                     {{ form.work_hours }}
                                 </div>
+
+                                <div class="form-group">
+                                    <label for="{{ form.work_days.id_for_label }}" class="form-label">أيام العمل</label>
+                                    {{ form.work_days }}
+                                </div>
+
+                                <div class="form-group">
+                                    <label for="{{ form.day_off.id_for_label }}" class="form-label">يوم العطلة</label>
+                                    {{ form.day_off }}
+                                </div>
+
+                                <div class="form-group full-width">
+                                    <label class="form-label">المزايا والامتيازات</label>
+                                    <div class="checkbox-group">
+                                        <label for="{{ form.transport_provided.id_for_label }}">{{ form.transport_provided }} مواصلات</label>
+                                        <label for="{{ form.meals_provided.id_for_label }}">{{ form.meals_provided }} وجبات</label>
+                                        <label for="{{ form.housing_provided.id_for_label }}">{{ form.housing_provided }} سكن</label>
+                                        <label for="{{ form.paid_vacations.id_for_label }}">{{ form.paid_vacations }} إجازات مدفوعة</label>
+                                        <label for="{{ form.bonuses.id_for_label }}">{{ form.bonuses }} مكافآت وحوافز</label>
+                                        <label for="{{ form.training_development.id_for_label }}">{{ form.training_development }} تدريب وتطوير</label>
+                                        <label for="{{ form.promotion_opportunity.id_for_label }}">{{ form.promotion_opportunity }} فرصة للترقية</label>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                         
-                        <!-- Step 3: Location and Salary -->
+                        <!-- Step 3: Requirements and Skills -->
                         <div class="form-section" data-section="3">
+                            <h3 class="section-title">
+                                <i class="fas fa-graduation-cap section-icon"></i>
+                                المتطلبات والمهارات
+                            </h3>
+
+                            <div class="form-grid">
+                                <div class="form-group">
+                                    <label for="{{ form.education_requirement.id_for_label }}" class="form-label">المؤهل الدراسي</label>
+                                    {{ form.education_requirement }}
+                                </div>
+
+                                <div class="form-group">
+                                    <label for="{{ form.education_specialization.id_for_label }}" class="form-label">التخصص الدراسي</label>
+                                    {{ form.education_specialization }}
+                                </div>
+
+                                <div class="form-group">
+                                    <label for="{{ form.gender_requirement.id_for_label }}" class="form-label">الجنس المطلوب</label>
+                                    {{ form.gender_requirement }}
+                                </div>
+
+                                <div class="form-group">
+                                    <label for="{{ form.language_level.id_for_label }}" class="form-label">مستوى اللغة</label>
+                                    {{ form.language_level }}
+                                </div>
+
+                                <div class="form-group full-width">
+                                    <label for="{{ form.required_certificates.id_for_label }}" class="form-label">الشهادات المطلوبة</label>
+                                    {{ form.required_certificates }}
+                                </div>
+
+                                <div class="form-group full-width">
+                                    <label for="{{ form.required_software.id_for_label }}" class="form-label">البرامج / الأدوات المطلوبة</label>
+                                    {{ form.required_software }}
+                                </div>
+
+                                <div class="form-group">
+                                    <label for="{{ form.driving_license_required.id_for_label }}" class="form-label">رخصة قيادة</label>
+                                    {{ form.driving_license_required }}
+                                </div>
+
+                                <div class="form-group">
+                                    <label for="{{ form.driving_license_type.id_for_label }}" class="form-label">نوع رخصة القيادة</label>
+                                    {{ form.driving_license_type }}
+                                </div>
+
+                                <div class="form-group full-width">
+                                    <label for="{{ form.additional_requirements.id_for_label }}" class="form-label">متطلبات إضافية</label>
+                                    {{ form.additional_requirements }}
+                                </div>
+
+                                <div class="form-group full-width">
+                                    <label class="form-label">المزايا الإضافية</label>
+                                    <div class="checkbox-group">
+                                        <label for="{{ form.has_health_insurance.id_for_label }}">{{ form.has_health_insurance }} تأمين صحي</label>
+                                        <label for="{{ form.has_transport_allowance.id_for_label }}">{{ form.has_transport_allowance }} بدلة نقل</label>
+                                        <label for="{{ form.has_housing_allowance.id_for_label }}">{{ form.has_housing_allowance }} بدلة سكن</label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Step 4: Location and Salary -->
+                        <div class="form-section" data-section="4">
                             <h3 class="section-title">
                                 <i class="fas fa-map-marker-alt section-icon"></i>
                                 الموقع والراتب
                             </h3>
-                            
+
                             <div class="form-grid">
                                 <div class="form-group">
                                     <label for="{{ form.location_type.id_for_label }}" class="form-label">نوع الموقع <span class="required">*</span></label>
                                     {{ form.location_type }}
                                 </div>
-                                
+
                                 <div class="form-group">
                                     <label for="{{ form.is_remote.id_for_label }}" class="form-label">عمل عن بعد</label>
                                     {{ form.is_remote }}
                                 </div>
-                                
+
                                 <div class="form-group">
                                     <label for="{{ form.governorate.id_for_label }}" class="form-label">المحافظة</label>
                                     {{ form.governorate }}
                                 </div>
-                                
+
                                 <div class="form-group">
-                                    <label for="{{ form.city.id_for_label }}" class="form-label">المدينة</label>
+                                    <label for="{{ form.city.id_for_label }}" class="form-label">المدينة / القضاء</label>
                                     {{ form.city }}
                                 </div>
-                                
+
+                                <div class="form-group">
+                                    <label for="{{ form.district.id_for_label }}" class="form-label">المنطقة</label>
+                                    {{ form.district }}
+                                </div>
+
+                                <div class="form-group">
+                                    <label for="{{ form.neighborhood.id_for_label }}" class="form-label">الحي</label>
+                                    {{ form.neighborhood }}
+                                </div>
+
                                 <div class="form-group">
                                     <label for="{{ form.country.id_for_label }}" class="form-label">الدولة</label>
                                     {{ form.country }}
                                 </div>
-                                
+
                                 <div class="form-group">
                                     <label for="{{ form.other_country_name.id_for_label }}" class="form-label">اسم الدولة الأخرى</label>
                                     {{ form.other_country_name }}
                                 </div>
-                                
+
                                 <div class="form-group">
                                     <label for="{{ form.outside_city.id_for_label }}" class="form-label">المدينة (خارج العراق)</label>
                                     {{ form.outside_city }}
                                 </div>
-                                
-                                <div class="form-group">
-                                    <label class="form-label">القضاء</label>
-                                    <input type="text" name="district" class="form-control">
-                                </div>
-                                
-                                <div class="form-group">
-                                    <label class="form-label">الناحية</label>
-                                    <input type="text" name="subdistrict" class="form-control">
-                                </div>
-                                
-                                <div class="form-group">
-                                    <label class="form-label">المنطقة</label>
-                                    <input type="text" name="area" class="form-control">
-                                </div>
-                                
-                                <div class="form-group">
-                                    <label class="form-label">الحي</label>
-                                    <input type="text" name="neighborhood" class="form-control">
-                                </div>
-                                
-                                <div class="form-group">
-                                    <label class="form-label">المحلة</label>
-                                    <input type="text" name="mahalla" class="form-control">
-                                </div>
-                                
-                                <div class="form-group">
-                                    <label class="form-label">البلوك</label>
-                                    <input type="text" name="block" class="form-control">
-                                </div>
-                                
-                                <div class="form-group">
-                                    <label class="form-label">الشارع</label>
-                                    <input type="text" name="street" class="form-control">
-                                </div>
-                                
-                                <div class="form-group">
-                                    <label class="form-label">الزقاق</label>
-                                    <input type="text" name="alley" class="form-control">
-                                </div>
-                                
-                                <div class="form-group">
-                                    <label class="form-label">رقم الدار</label>
-                                    <input type="text" name="house_number" class="form-control">
-                                </div>
-                                
-                                <div class="form-group">
-                                    <label class="form-label">رقم العقار</label>
-                                    <input type="text" name="property_number" class="form-control">
-                                </div>
-                                
-                                <div class="form-group">
-                                    <label class="form-label">أقرب نقطة دالة</label>
-                                    <input type="text" name="landmark" class="form-control">
-                                </div>
-                                
+
                                 <div class="form-group full-width">
-                                    <label for="{{ form.address.id_for_label }}" class="form-label">العنوان</label>
+                                    <label for="{{ form.address.id_for_label }}" class="form-label">العنوان التفصيلي</label>
                                     {{ form.address }}
                                 </div>
-                                
+
                                 <!-- GPS Location -->
                                 <div class="form-group full-width">
                                     <label class="form-label">الموقع الجغرافي</label>
                                     <div style="display: flex; gap: 10px; margin-bottom: 10px;">
                                         <div style="flex: 1;">
-                                            <label style="font-size: 0.9rem; margin-bottom: 5px;">خط العرض</label>
-                                            <input type="number" step="any" name="latitude" class="form-control" placeholder="مثال: 33.3152" id="latitude-input-job">
+                                            <label for="latitude-input-job" style="font-size: 0.9rem; margin-bottom: 5px;">خط العرض</label>
+                                            <input type="number" step="any" name="latitude" class="form-control" placeholder="مثال: 33.3152" id="latitude-input-job" autocomplete="off">
                                         </div>
                                         <div style="flex: 1;">
-                                            <label style="font-size: 0.9rem; margin-bottom: 5px;">خط الطول</label>
-                                            <input type="number" step="any" name="longitude" class="form-control" placeholder="مثال: 44.3661" id="longitude-input-job">
+                                            <label for="longitude-input-job" style="font-size: 0.9rem; margin-bottom: 5px;">خط الطول</label>
+                                            <input type="number" step="any" name="longitude" class="form-control" placeholder="مثال: 44.3661" id="longitude-input-job" autocomplete="off">
                                         </div>
                                         <div style="display: flex; align-items: flex-end;">
-                                            <button type="button" onclick="getLocationGPSJob()" class="btn btn-secondary" style="white-space: nowrap; height: 46px;">
+                                            <button type="button" data-gps="job" class="btn btn-secondary" style="white-space: nowrap; height: 46px;" autocomplete="off">
                                                 📍 GPS
                                             </button>
                                         </div>
@@ -302,11 +375,11 @@
                                     <div style="position: relative;">
                                         <div id="location-preview-map-job" style="height: 300px; border-radius: 10px; border: 1px solid #ddd;"></div>
                                         <div style="position: absolute; top: 10px; right: 10px; z-index: 1000; display: flex; gap: 5px;">
-                                            <button type="button" class="btn btn-secondary" onclick="changeMapLayer('job', 'osm')" style="padding: 5px 10px; font-size: 12px;">OpenStreetMap</button>
-                                            <button type="button" class="btn btn-secondary" onclick="changeMapLayer('job', 'satellite')" style="padding: 5px 10px; font-size: 12px;">Satellite</button>
-                                            <button type="button" class="btn btn-secondary" onclick="changeMapLayer('job', 'terrain')" style="padding: 5px 10px; font-size: 12px;">Terrain</button>
-                                            <button type="button" class="btn btn-secondary" onclick="changeMapLayer('job', 'dark')" style="padding: 5px 10px; font-size: 12px;">Dark</button>
-                                            <button type="button" class="btn btn-secondary" onclick="toggleMapFullscreen('job')" style="padding: 5px 10px; font-size: 12px;">⛶</button>
+                                            <button type="button" class="btn btn-secondary" onclick="changeMapLayer('job', 'osm')" style="padding: 5px 10px; font-size: 12px;" autocomplete="off">OpenStreetMap</button>
+                                            <button type="button" class="btn btn-secondary" onclick="changeMapLayer('job', 'satellite')" style="padding: 5px 10px; font-size: 12px;" autocomplete="off">Satellite</button>
+                                            <button type="button" class="btn btn-secondary" onclick="changeMapLayer('job', 'terrain')" style="padding: 5px 10px; font-size: 12px;" autocomplete="off">Terrain</button>
+                                            <button type="button" class="btn btn-secondary" onclick="changeMapLayer('job', 'dark')" style="padding: 5px 10px; font-size: 12px;" autocomplete="off">Dark</button>
+                                            <button type="button" class="btn btn-secondary" onclick="toggleMapFullscreen('job')" style="padding: 5px 10px; font-size: 12px;" autocomplete="off">⛶</button>
                                         </div>
                                     </div>
                                     <p style="font-size: 0.8rem; color: #6c757d; margin-top: 5px;">
@@ -315,114 +388,125 @@
                                 </div>
 
                                 <div class="form-group full-width">
-                                    <label class="form-check-label" style="display: flex; align-items: center; gap: 10px; cursor: pointer;">
-                                        <input type="checkbox" name="enable_gps" id="enable-gps-job" style="width: 20px; height: 20px;">
+                                    <label for="enable-gps-job" class="form-check-label" style="display: flex; align-items: center; gap: 10px; cursor: pointer;">
+                                        <input type="checkbox" name="enable_gps" id="enable-gps-job" style="width: 20px; height: 20px;" autocomplete="off">
                                         <span>📍 نشر GPS - إظهار الموقع على خريطة المنصة</span>
                                     </label>
                                     <p style="font-size: 0.8rem; color: #6c757d; margin-top: 5px;">
                                         عند تفعيل هذا الخيار، سيظهر موقع الوظيفة على خريطة المنصة الرئيسية
                                     </p>
                                 </div>
-                                
+
                                 <div class="form-group">
                                     <label for="{{ form.salary_min.id_for_label }}" class="form-label">الحد الأدنى للراتب</label>
                                     {{ form.salary_min }}
                                 </div>
-                                
+
                                 <div class="form-group">
                                     <label for="{{ form.salary_max.id_for_label }}" class="form-label">الحد الأقصى للراتب</label>
                                     {{ form.salary_max }}
                                 </div>
-                                
+
                                 <div class="form-group">
-                                    <label for="{{ form.salary_currency.id_for_label }}" class="form-label">عملة الراتب</label>
+                                    <label for="{{ form.salary_currency.id_for_label }}" class="form-label">العملة</label>
                                     {{ form.salary_currency }}
                                 </div>
-                                
+
                                 <div class="form-group">
-                                    <label for="{{ form.salary_period.id_for_label }}" class="form-label">فترة الراتب</label>
+                                    <label for="{{ form.salary_period.id_for_label }}" class="form-label">طريقة دفع الراتب</label>
                                     {{ form.salary_period }}
                                 </div>
-                                
+
                                 <div class="form-group">
-                                    <label for="{{ form.is_salary_negotiable.id_for_label }}" class="form-label">الراتب قابل للتفاوض</label>
+                                    <label for="{{ form.is_salary_negotiable.id_for_label }}" class="form-label">قابل للتفاوض</label>
                                     {{ form.is_salary_negotiable }}
                                 </div>
-                            </div>
-                        </div>
-                        
-                        <!-- Step 4: Requirements and Skills -->
-                        <div class="form-section" data-section="4">
-                            <h3 class="section-title">
-                                <i class="fas fa-graduation-cap section-icon"></i>
-                                المتطلبات والمهارات
-                            </h3>
-                            
-                            <div class="form-grid">
-                                <div class="form-group">
-                                    <label for="{{ form.education_requirement.id_for_label }}" class="form-label">الحد الأدنى للتعليم</label>
-                                    {{ form.education_requirement }}
-                                </div>
-                                
-                                <div class="form-group">
-                                    <label for="{{ form.experience_years.id_for_label }}" class="form-label">سنوات الخبرة المطلوبة</label>
-                                    {{ form.experience_years }}
-                                </div>
-                                
-                                <div class="form-group">
-                                    <label for="{{ form.gender_requirement.id_for_label }}" class="form-label">الجنس المطلوب</label>
-                                    {{ form.gender_requirement }}
-                                </div>
-                                
+
                                 <div class="form-group full-width">
-                                    <label class="form-label">المزايا الإضافية</label>
-                                    <div class="checkbox-group">
-                                        <label>{{ form.has_health_insurance }} تأمين صحي</label>
-                                        <label>{{ form.has_transport_allowance }} بدلة نقل</label>
-                                        <label>{{ form.has_housing_allowance }} بدلة سكن</label>
-                                    </div>
+                                    <label for="{{ form.additional_benefits.id_for_label }}" class="form-label">بدلات / حوافز</label>
+                                    {{ form.additional_benefits }}
+                                </div>
+
+                                <div class="form-group">
+                                    <label for="{{ form.commission.id_for_label }}" class="form-label">عمولة</label>
+                                    {{ form.commission }}
                                 </div>
                             </div>
                         </div>
-                        
+
                         <!-- Step 5: Contact and Publish -->
                         <div class="form-section" data-section="5">
                             <h3 class="section-title">
                                 <i class="fas fa-paper-plane section-icon"></i>
-                                اتصال ونشر
+                                الاتصال والنشر
                             </h3>
-                            
+
                             <div class="form-grid">
                                 <div class="form-group">
-                                    <label for="{{ form.contact_name.id_for_label }}" class="form-label">اسم جهة الاتصال <span class="required">*</span></label>
+                                    <label for="{{ form.contact_name.id_for_label }}" class="form-label">اسم مسؤول التوظيف <span class="required">*</span></label>
                                     {{ form.contact_name }}
                                 </div>
-                                
+
                                 <div class="form-group">
                                     <label for="{{ form.contact_email.id_for_label }}" class="form-label">البريد الإلكتروني <span class="required">*</span></label>
                                     {{ form.contact_email }}
                                 </div>
-                                
+
                                 <div class="form-group">
                                     <label for="{{ form.contact_phone.id_for_label }}" class="form-label">رقم الهاتف <span class="required">*</span></label>
                                     {{ form.contact_phone }}
                                 </div>
-                                
+
+                                <div class="form-group">
+                                    <label for="{{ form.contact_whatsapp.id_for_label }}" class="form-label">واتساب</label>
+                                    {{ form.contact_whatsapp }}
+                                </div>
+
+                                <div class="form-group">
+                                    <label for="{{ form.application_method.id_for_label }}" class="form-label">طريقة التقديم</label>
+                                    {{ form.application_method }}
+                                </div>
+
                                 <div class="form-group full-width">
-                                    <label for="{{ form.external_application_url.id_for_label }}" class="form-label">رابط التقديم الخارجي</label>
+                                    <label for="{{ form.external_application_url.id_for_label }}" class="form-label">رابط التقديم</label>
                                     {{ form.external_application_url }}
                                 </div>
-                                
+
+                                <div class="form-group">
+                                    <label for="{{ form.application_deadline.id_for_label }}" class="form-label">آخر موعد للتقديم</label>
+                                    {{ form.application_deadline }}
+                                </div>
+
+                                <div class="form-group">
+                                    <label for="{{ form.interview_method.id_for_label }}" class="form-label">طريقة المقابلة</label>
+                                    {{ form.interview_method }}
+                                </div>
+
+                                <div class="form-group">
+                                    <label for="{{ form.interview_location.id_for_label }}" class="form-label">مكان المقابلة</label>
+                                    {{ form.interview_location }}
+                                </div>
+
+                                <div class="form-group full-width">
+                                    <label for="{{ form.applicant_notes.id_for_label }}" class="form-label">ملاحظات للمتقدم</label>
+                                    {{ form.applicant_notes }}
+                                </div>
+
                                 <div class="form-group">
                                     <label for="{{ form.expiry_date.id_for_label }}" class="form-label">تاريخ انتهاء الإعلان</label>
                                     {{ form.expiry_date }}
                                 </div>
-                                
+
+                                <div class="form-group">
+                                    <label for="{{ form.status.id_for_label }}" class="form-label">حالة الإعلان</label>
+                                    {{ form.status }}
+                                </div>
+
                                 <div class="form-group full-width">
                                     <label class="form-label">خيارات النشر</label>
                                     <div class="checkbox-group">
-                                        <label>{{ form.is_featured }} مميز</label>
-                                        <label>{{ form.is_urgent }} عاجل</label>
+                                        <label for="{{ form.is_featured.id_for_label }}">{{ form.is_featured }} مميز</label>
+                                        <label for="{{ form.is_urgent.id_for_label }}">{{ form.is_urgent }} عاجل</label>
                                     </div>
                                 </div>
                             </div>
@@ -430,13 +514,13 @@
                         
                         <!-- Navigation Buttons -->
                         <div class="form-navigation">
-                            <button type="button" class="btn btn-secondary prev-btn" id="prevBtn" style="display: none;">
+                            <button type="button" class="btn btn-secondary prev-btn" id="prevBtn" style="display: none;" autocomplete="off">
                                 <i class="fas fa-arrow-right me-2"></i>السابق
                             </button>
-                            <button type="button" class="btn btn-primary next-btn" id="nextBtn">
+                            <button type="button" class="btn btn-primary next-btn" id="nextBtn" autocomplete="off">
                                 التالي<i class="fas fa-arrow-left ms-2"></i>
                             </button>
-                            <button type="submit" class="btn btn-success submit-btn" id="submitBtn" style="display: none;">
+                            <button type="submit" class="btn btn-success submit-btn" id="submitBtn" style="display: none;" autocomplete="off">
                                 <i class="fas fa-check me-2"></i>نشر الوظيفة
                             </button>
                         </div>
@@ -480,7 +564,7 @@
     font-weight: bold;
     color: #ffffff;
     margin-bottom: 10px;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: linear-gradient(135deg, #FF7A00 0%, #FF9500 100%);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
@@ -526,7 +610,7 @@
 }
 
 .progress-step.active .step-number {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: linear-gradient(135deg, #FF7A00 0%, #FF9500 100%);
     color: white;
 }
 
@@ -569,7 +653,7 @@
 }
 
 .section-icon {
-    color: #667eea;
+    color: #FF7A00;
     font-size: 24px;
 }
 
@@ -614,7 +698,7 @@
 .form-control-wrapper input:focus,
 .form-control-wrapper select:focus,
 .form-control-wrapper textarea:focus {
-    border-color: #667eea;
+    border-color: #FF7A00;
     background: #111111;
     box-shadow:0 0 0 3px rgba(102, 126, 234, 0.1);
     outline: none;
@@ -640,7 +724,7 @@
 
 .checkbox-group label:hover {
     background: #111111;
-    border-color: #667eea;
+    border-color: #FF7A00;
 }
 
 .form-navigation {
@@ -701,7 +785,7 @@
 
 .form-control:focus {
     background-color: #111111 !important;
-    border-color: #667eea !important;
+    border-color: #FF7A00 !important;
     color: #ffffff !important;
 }
 
@@ -729,24 +813,63 @@ document.addEventListener('DOMContentLoaded', function() {
     let currentStep = 1;
     const totalSteps = sections.length;
     
+    console.log('Form sections found:', sections.length);
+    console.log('Progress steps found:', progressSteps.length);
+    console.log('Total steps:', totalSteps);
+    
+    // Remove required attribute from all fields initially
+    const allRequiredFields = document.querySelectorAll('[required]');
+    allRequiredFields.forEach(field => {
+        field.removeAttribute('required');
+        field.dataset.required = 'true'; // Mark as required for validation
+    });
+    
+    // Add required attribute only to active section fields
+    function updateRequiredFields() {
+        // Remove required from all fields
+        document.querySelectorAll('[data-required="true"]').forEach(field => {
+            field.removeAttribute('required');
+        });
+        
+        // Add required to active section fields
+        const activeSection = document.querySelector(`.form-section[data-section="${currentStep}"]`);
+        if (activeSection) {
+            const activeRequiredFields = activeSection.querySelectorAll('[data-required="true"]');
+            activeRequiredFields.forEach(field => {
+                field.setAttribute('required', 'required');
+            });
+        }
+    }
+    
+    // Initial update
+    updateRequiredFields();
+    
     function validateStep(step) {
         const section = document.querySelector(`.form-section[data-section="${step}"]`);
-        const requiredFields = section.querySelectorAll('[required]');
+        const requiredFields = section.querySelectorAll('[data-required="true"]');
         let isValid = true;
         
+        console.log(`Validating step ${step}, found ${requiredFields.length} required fields`);
+        
         requiredFields.forEach(field => {
+            console.log(`Checking field: ${field.name || field.id}, value: "${field.value.trim()}"`);
             if (!field.value.trim()) {
                 field.style.borderColor = '#e74c3c';
                 isValid = false;
+                console.log(`Field ${field.name || field.id} is empty - validation failed`);
             } else {
                 field.style.borderColor = '#e0e0e0';
+                console.log(`Field ${field.name || field.id} is valid`);
             }
         });
         
+        console.log(`Step ${step} validation result: ${isValid}`);
         return isValid;
     }
     
     nextBtn.addEventListener('click', function() {
+        console.log('Next button clicked, current step:', currentStep, 'total steps:', totalSteps);
+        
         if (validateStep(currentStep)) {
             sections[currentStep - 1].classList.remove('active');
             progressSteps[currentStep - 1].classList.remove('active');
@@ -756,6 +879,9 @@ document.addEventListener('DOMContentLoaded', function() {
             sections[currentStep - 1].classList.add('active');
             progressSteps[currentStep - 1].classList.add('active');
             
+            // Update required fields for new section
+            updateRequiredFields();
+            
             if (currentStep === totalSteps) {
                 nextBtn.style.display = 'none';
                 submitBtn.style.display = 'inline-flex';
@@ -764,10 +890,16 @@ document.addEventListener('DOMContentLoaded', function() {
             if (currentStep > 1) {
                 prevBtn.style.display = 'inline-flex';
             }
+            
+            console.log('Moved to step:', currentStep);
+        } else {
+            console.log('Validation failed for step:', currentStep);
         }
     });
     
     prevBtn.addEventListener('click', function() {
+        console.log('Previous button clicked, current step:', currentStep);
+        
         sections[currentStep - 1].classList.remove('active');
         progressSteps[currentStep - 1].classList.remove('active');
         
@@ -775,6 +907,9 @@ document.addEventListener('DOMContentLoaded', function() {
         
         sections[currentStep - 1].classList.add('active');
         progressSteps[currentStep - 1].classList.add('active');
+        
+        // Update required fields for new section
+        updateRequiredFields();
         
         if (currentStep < totalSteps) {
             nextBtn.style.display = 'inline-flex';
@@ -784,6 +919,8 @@ document.addEventListener('DOMContentLoaded', function() {
         if (currentStep === 1) {
             prevBtn.style.display = 'none';
         }
+        
+        console.log('Moved back to step:', currentStep);
     });
 });
 </script>
@@ -880,7 +1017,7 @@ function getLocationGPSJob() {
   }
   
   if (navigator.geolocation) {
-    const gpsBtn = document.querySelector('button[onclick="getLocationGPSJob()"]');
+    const gpsBtn = document.querySelector('button[data-gps="job"]');
     if (gpsBtn) {
       gpsBtn.textContent = '⏳ جاري تحديد الموقع...';
       gpsBtn.disabled = true;
@@ -952,6 +1089,12 @@ function setManualLocationJob(lat, lng) {
 // Initialize location preview map for Job
 function initLocationMapJob() {
   if (document.getElementById('location-preview-map-job')) {
+    // Check if Leaflet Draw is loaded
+    if (typeof L.Control.Draw === 'undefined') {
+      console.error('Leaflet Draw is not loaded');
+      return;
+    }
+
     const defaultCenter = [33.3152, 44.3661];
     
     locationMapJob = L.map('location-preview-map-job', {
@@ -1014,6 +1157,12 @@ function initLocationMapJob() {
 // Initialize on page load
 document.addEventListener('DOMContentLoaded', function() {
   initLocationMapJob();
+  
+  // Add GPS button event listener
+  const gpsBtn = document.querySelector('button[data-gps="job"]');
+  if (gpsBtn) {
+    gpsBtn.addEventListener('click', getLocationGPSJob);
+  }
 });
 </script>
 

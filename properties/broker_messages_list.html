@@ -1,204 +1,1874 @@
 {% extends 'properties/base.html' %}
-{% load static %}
+{% load static humanize custom_filters price_filters %}
 
-{% block title %}الرسائل{% endblock %}
+{% block title %}الماسنجر — منصة دلال{% endblock %}
 
-{% block content %}
-<section class="messages-section">
-  <div class="container">
-    <div class="section-header">
-      <h1 class="section-title">الرسائل</h1>
-      <p class="section-subtitle">التواصل مع الدلالين الآخرين</p>
-    </div>
-
-    <div class="messages-nav">
-      <a href="?type=inbox" class="nav-link {% if message_type == 'inbox' %}active{% endif %}">
-        <span class="nav-icon">📥</span>
-        <span>الوارد</span>
-      </a>
-      <a href="?type=sent" class="nav-link {% if message_type == 'sent' %}active{% endif %}">
-        <span class="nav-icon">📤</span>
-        <span>المرسلة</span>
-      </a>
-      <a href="{% url 'send_broker_message' %}" class="nav-link">
-        <span class="nav-icon">✏️</span>
-        <span>رسالة جديدة</span>
-      </a>
-    </div>
-
-    <div class="messages-container">
-      {% if messages %}
-        <div class="messages-list">
-          {% for msg in messages %}
-          <div class="message-item {% if not msg.is_read %}unread{% endif %}">
-            <div class="message-header">
-              <div class="message-sender">
-                {% if message_type == 'inbox' %}
-                  <span class="sender-name">{{ msg.sender.get_full_name|default:msg.sender.username }}</span>
-                {% else %}
-                  <span class="sender-name">إلى: {{ msg.recipient.get_full_name|default:msg.recipient.username }}</span>
-                {% endif %}
-                <span class="message-date">{{ msg.created_at|date:"Y-m-d H:i" }}</span>
-              </div>
-              <div class="message-actions">
-                <a href="{% url 'broker_message_detail' msg.id %}" class="btn btn-sm btn-primary">عرض</a>
-              </div>
-            </div>
-            <div class="message-content">
-              <p>{{ msg.message|truncatewords:20 }}</p>
-            </div>
-          </div>
-          {% endfor %}
-        </div>
-      {% else %}
-        <div class="no-messages">
-          <p>لا توجد رسائل</p>
-        </div>
-      {% endif %}
-    </div>
-  </div>
-</section>
-
+{% block extra_css %}
 <style>
-.messages-section {
-  padding: 40px 0;
+/* =========================================================
+   Dallal Messenger - Luxury Dark Glassmorphism Theme
+   ========================================================= */
+:root {
+  --msg-primary: #FF7A00;
+  --msg-primary-glow: rgba(255, 122, 0, 0.35);
+  --msg-secondary: #FFA500;
+  --msg-success: #10B981;
+  --msg-bg-dark: #000000;
+  --msg-bg-card: #080808;
+  --msg-bg-sidebar: #050505;
+  --msg-bg-chat: #000000;
+  --msg-bubble-sent: linear-gradient(135deg, #FF7A00 0%, #E66A00 100%);
+  --msg-bubble-recv: #141414;
+  --msg-border: rgba(255, 255, 255, 0.08);
+  --msg-border-focus: rgba(255, 122, 0, 0.5);
+  --msg-text: #F8FAFC;
+  --msg-text-muted: #94A3B8;
+  --msg-radius-lg: 20px;
+  --msg-radius-md: 14px;
+  --msg-radius-sm: 10px;
 }
 
-.section-header {
-  text-align: center;
-  margin-bottom: 30px;
+body {
+  background: var(--msg-bg-dark) !important;
+  color: var(--msg-text);
+  overflow-x: hidden;
 }
 
-.section-title {
-  font-size: 2rem;
-  font-weight: 700;
-  margin: 0 0 10px 0;
+.messenger-wrapper {
+  max-width: 1600px;
+  margin: 15px auto;
+  padding: 0 15px;
+  height: calc(100vh - 100px);
+  min-height: 600px;
 }
 
-.section-subtitle {
-  color: #666;
-  margin: 0;
-}
-
-.messages-nav {
+.messenger-container {
   display: flex;
-  gap: 10px;
-  margin-bottom: 30px;
-  justify-content: center;
+  height: 100%;
+  background: var(--msg-bg-card);
+  border-radius: var(--msg-radius-lg);
+  border: 1px solid var(--msg-border);
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5), 0 0 30px rgba(255, 122, 0, 0.05);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  overflow: hidden;
+  position: relative;
 }
 
-.nav-link {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 12px 24px;
-  background: white;
-  border-radius: 10px;
-  text-decoration: none;
-  color: #333;
-  font-weight: 500;
-  transition: all 0.3s;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-}
-
-.nav-link.active {
-  background: #667eea;
-  color: white;
-}
-
-.nav-link:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 5px 20px rgba(0, 0, 0, 0.15);
-}
-
-.messages-container {
-  background: white;
-  border-radius: 10px;
-  padding: 30px;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-}
-
-.messages-list {
+/* ---------------------------------------------------------
+   Sidebar (Right side in RTL)
+   --------------------------------------------------------- */
+.messenger-sidebar {
+  width: 380px;
+  min-width: 340px;
+  max-width: 420px;
+  background: var(--msg-bg-sidebar);
+  border-left: 1px solid var(--msg-border);
   display: flex;
   flex-direction: column;
-  gap: 15px;
+  height: 100%;
+  z-index: 20;
+  transition: all 0.3s ease;
 }
 
-.message-item {
-  padding: 20px;
-  border: 2px solid #eee;
-  border-radius: 10px;
-  transition: all 0.3s;
-}
-
-.message-item.unread {
-  border-color: #667eea;
-  background: #f8f9ff;
-}
-
-.message-item:hover {
-  border-color: #667eea;
-  transform: translateX(5px);
-}
-
-.message-header {
+.sidebar-header {
+  padding: 18px 20px;
+  background: #080808;
+  border-bottom: 1px solid var(--msg-border);
   display: flex;
   justify-content: space-between;
   align-items: center;
+}
+
+.user-profile-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.user-avatar-wrap {
+  position: relative;
+  width: 46px;
+  height: 46px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.user-avatar-wrap img,
+.user-avatar-wrap .avatar-fallback {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid var(--msg-primary);
+}
+
+.avatar-fallback {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #181818, #000000);
+  color: var(--msg-primary);
+  font-weight: 700;
+  font-size: 1.15rem;
+}
+
+.online-dot {
+  position: absolute;
+  bottom: 2px;
+  right: 2px;
+  width: 12px;
+  height: 12px;
+  background: var(--msg-success);
+  border-radius: 50%;
+  border: 2px solid var(--msg-bg-sidebar);
+  box-shadow: 0 0 8px var(--msg-success);
+}
+
+.user-details h4 {
+  margin: 0;
+  font-size: 0.98rem;
+  font-weight: 700;
+  color: #FFFFFF;
+}
+
+.user-details span {
+  font-size: 0.78rem;
+  color: var(--msg-success);
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.sidebar-header-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.icon-btn {
+  width: 38px;
+  height: 38px;
+  border-radius: var(--msg-radius-sm);
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--msg-border);
+  color: var(--msg-text);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-size: 1.1rem;
+}
+
+.icon-btn:hover {
+  background: var(--msg-primary);
+  color: #FFFFFF;
+  border-color: var(--msg-primary);
+  box-shadow: 0 0 15px var(--msg-primary-glow);
+  transform: translateY(-2px);
+}
+
+/* Sidebar Search */
+.sidebar-search-box {
+  padding: 12px 18px;
+  background: #050505;
+  border-bottom: 1px solid var(--msg-border);
+}
+
+.search-input-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.search-input-wrap span {
+  position: absolute;
+  right: 14px;
+  color: var(--msg-text-muted);
+  font-size: 0.95rem;
+}
+
+.search-input-wrap input {
+  width: 100%;
+  padding: 10px 40px 10px 14px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid var(--msg-border);
+  border-radius: var(--msg-radius-md);
+  color: #FFFFFF;
+  font-size: 0.88rem;
+  outline: none;
+  transition: all 0.2s ease;
+}
+
+.search-input-wrap input:focus {
+  border-color: var(--msg-primary);
+  background: rgba(255, 255, 255, 0.09);
+  box-shadow: 0 0 10px rgba(255, 122, 0, 0.2);
+}
+
+/* Tabs */
+.messenger-tabs {
+  display: flex;
+  padding: 8px 12px;
+  background: #080808;
+  border-bottom: 1px solid var(--msg-border);
+  gap: 6px;
+}
+
+.tab-pill {
+  flex: 1;
+  padding: 8px 6px;
+  border-radius: var(--msg-radius-sm);
+  background: transparent;
+  border: 1px solid transparent;
+  color: var(--msg-text-muted);
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-align: center;
+  white-space: nowrap;
+}
+
+.tab-pill:hover {
+  color: var(--msg-text);
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.tab-pill.active {
+  background: linear-gradient(135deg, rgba(255, 122, 0, 0.2), rgba(255, 122, 0, 0.05));
+  color: var(--msg-primary);
+  border-color: rgba(255, 122, 0, 0.3);
+  box-shadow: 0 2px 8px rgba(255, 122, 0, 0.15);
+}
+
+/* Conversations / Users List */
+.sidebar-list-content {
+  flex: 1;
+  overflow-y: auto;
+  padding: 8px;
+}
+
+.sidebar-list-content::-webkit-scrollbar {
+  width: 5px;
+}
+.sidebar-list-content::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.15);
+  border-radius: 10px;
+}
+
+.conv-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+  border-radius: var(--msg-radius-md);
+  margin-bottom: 6px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border: 1px solid transparent;
+  position: relative;
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.conv-item:hover {
+  background: rgba(255, 255, 255, 0.06);
+  transform: translateX(-3px);
+}
+
+.conv-item.active {
+  background: linear-gradient(135deg, rgba(255, 122, 0, 0.18), #181818);
+  border-color: rgba(255, 122, 0, 0.35);
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+}
+
+.conv-avatar-box {
+  position: relative;
+  width: 44px;
+  height: 44px;
+  flex-shrink: 0;
+}
+
+.conv-avatar-box img,
+.conv-avatar-box .avatar-placeholder {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 1.5px solid rgba(255, 255, 255, 0.1);
+}
+
+.conv-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.conv-top-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 4px;
+}
+
+.conv-name {
+  font-weight: 700;
+  font-size: 0.92rem;
+  color: #FFFFFF;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.conv-time {
+  font-size: 0.72rem;
+  color: var(--msg-text-muted);
+}
+
+.conv-bottom-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.conv-last-msg {
+  font-size: 0.8rem;
+  color: var(--msg-text-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 180px;
+}
+
+.unread-count-badge {
+  background: var(--msg-primary);
+  color: #FFFFFF;
+  font-size: 0.7rem;
+  font-weight: 700;
+  padding: 2px 7px;
+  border-radius: 12px;
+  box-shadow: 0 0 8px var(--msg-primary-glow);
+}
+
+/* User / Broker Cards in Directory */
+.user-dir-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 14px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid var(--msg-border);
+  border-radius: var(--msg-radius-md);
+  margin-bottom: 8px;
+  transition: all 0.2s ease;
+}
+
+.user-dir-card:hover {
+  background: rgba(255, 255, 255, 0.07);
+  border-color: rgba(255, 122, 0, 0.3);
+  transform: translateY(-2px);
+}
+
+.user-dir-info {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.user-dir-texts h5 {
+  margin: 0;
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: #FFFFFF;
+}
+
+.user-dir-texts p {
+  margin: 2px 0 0;
+  font-size: 0.75rem;
+  color: var(--msg-text-muted);
+}
+
+.chat-now-btn {
+  padding: 6px 14px;
+  background: linear-gradient(135deg, var(--msg-primary), #E66A00);
+  color: #FFFFFF;
+  border: none;
+  border-radius: var(--msg-radius-sm);
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.chat-now-btn:hover {
+  box-shadow: 0 0 12px var(--msg-primary-glow);
+  transform: scale(1.05);
+}
+
+/* ---------------------------------------------------------
+   Main Chat Canvas
+   --------------------------------------------------------- */
+.messenger-main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  background: var(--msg-bg-chat);
+  position: relative;
+  overflow: hidden;
+}
+
+/* Empty State / Welcome Canvas */
+.empty-chat-canvas {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 40px;
+  text-align: center;
+  background: radial-gradient(circle at center, rgba(255, 122, 0, 0.06) 0%, transparent 70%);
+}
+
+.empty-chat-glow-icon {
+  width: 90px;
+  height: 90px;
+  border-radius: 50%;
+  background: rgba(255, 122, 0, 0.1);
+  border: 1px solid rgba(255, 122, 0, 0.3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 2.8rem;
+  margin-bottom: 20px;
+  box-shadow: 0 0 35px var(--msg-primary-glow);
+}
+
+.empty-chat-canvas h2 {
+  font-size: 1.6rem;
+  font-weight: 800;
+  color: #FFFFFF;
   margin-bottom: 10px;
 }
 
-.message-sender {
+.empty-chat-canvas p {
+  color: var(--msg-text-muted);
+  max-width: 420px;
+  font-size: 0.92rem;
+  line-height: 1.6;
+  margin-bottom: 24px;
+}
+
+.quick-start-buttons {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.btn-luxury {
+  padding: 12px 24px;
+  border-radius: var(--msg-radius-md);
+  background: linear-gradient(135deg, var(--msg-primary) 0%, #D95D00 100%);
+  color: #FFFFFF;
+  border: none;
+  font-weight: 700;
+  font-size: 0.95rem;
+  cursor: pointer;
+  transition: all 0.25s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  box-shadow: 0 4px 15px rgba(255, 122, 0, 0.3);
+}
+
+.btn-luxury:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(255, 122, 0, 0.5);
+  color: #FFFFFF;
+}
+
+.btn-luxury-outline {
+  padding: 12px 22px;
+  border-radius: var(--msg-radius-md);
+  background: rgba(255, 255, 255, 0.05);
+  color: #FFFFFF;
+  border: 1px solid var(--msg-border);
+  font-weight: 600;
+  font-size: 0.95rem;
+  cursor: pointer;
+  transition: all 0.25s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.btn-luxury-outline:hover {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.2);
+  color: #FFFFFF;
+}
+
+/* Active Chat Header */
+.chat-main-header {
+  padding: 14px 24px;
+  background: #080808;
+  border-bottom: 1px solid var(--msg-border);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  backdrop-filter: blur(10px);
+  z-index: 10;
+}
+
+.chat-recipient-meta {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.mobile-back-trigger {
+  display: none;
+  background: none;
+  border: none;
+  color: #FFFFFF;
+  font-size: 1.3rem;
+  cursor: pointer;
+  padding: 4px;
+}
+
+.recipient-avatar-box {
+  position: relative;
+  width: 44px;
+  height: 44px;
+}
+
+.recipient-avatar-box img,
+.recipient-avatar-box .avatar-placeholder {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid var(--msg-primary);
+}
+
+.recipient-title-box h3 {
+  margin: 0;
+  font-size: 1.05rem;
+  font-weight: 800;
+  color: #FFFFFF;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.badge-verified {
+  background: rgba(16, 185, 129, 0.15);
+  color: var(--msg-success);
+  border: 1px solid rgba(16, 185, 129, 0.3);
+  font-size: 0.72rem;
+  padding: 2px 6px;
+  border-radius: 8px;
+  font-weight: 600;
+}
+
+.recipient-subtext {
+  font-size: 0.78rem;
+  color: var(--msg-text-muted);
+  margin-top: 2px;
+}
+
+.chat-top-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.action-chip-btn {
+  padding: 7px 14px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--msg-border);
+  border-radius: var(--msg-radius-sm);
+  color: var(--msg-text);
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  text-decoration: none;
+  transition: all 0.2s ease;
+}
+
+.action-chip-btn:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: #FFFFFF;
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+.action-chip-btn.whatsapp-chip {
+  background: rgba(37, 211, 102, 0.15);
+  border-color: rgba(37, 211, 102, 0.3);
+  color: #25D366;
+}
+
+.action-chip-btn.whatsapp-chip:hover {
+  background: #25D366;
+  color: #FFFFFF;
+  box-shadow: 0 0 12px rgba(37, 211, 102, 0.4);
+}
+
+/* Chat Messages Flow */
+.chat-scroll-area {
+  flex: 1;
+  overflow-y: auto;
+  padding: 20px 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  background: radial-gradient(circle at bottom left, rgba(255, 122, 0, 0.03) 0%, transparent 60%);
+}
+
+.chat-scroll-area::-webkit-scrollbar {
+  width: 6px;
+}
+.chat-scroll-area::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.12);
+  border-radius: 10px;
+}
+
+/* Message Bubble Styles */
+.msg-row {
+  display: flex;
+  gap: 10px;
+  max-width: 75%;
+  animation: fadeInMsg 0.25s ease-out;
+}
+
+@keyframes fadeInMsg {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.msg-row.sent {
+  align-self: flex-start;
+  flex-direction: row;
+}
+
+.msg-row.received {
+  align-self: flex-end;
+  flex-direction: row-reverse;
+}
+
+.msg-bubble {
+  padding: 12px 16px;
+  border-radius: var(--msg-radius-md);
+  position: relative;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.25);
+  word-break: break-word;
+}
+
+.msg-row.sent .msg-bubble {
+  background: var(--msg-bubble-sent);
+  color: #FFFFFF;
+  border-bottom-right-radius: 3px;
+}
+
+.msg-row.received .msg-bubble {
+  background: var(--msg-bubble-recv);
+  color: var(--msg-text);
+  border: 1px solid var(--msg-border);
+  border-bottom-left-radius: 3px;
+}
+
+.msg-text-content {
+  font-size: 0.92rem;
+  line-height: 1.55;
+  white-space: pre-wrap;
+}
+
+.msg-meta-info {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 5px;
+  font-size: 0.68rem;
+  margin-top: 5px;
+  opacity: 0.8;
+}
+
+/* Property Listing Card Inside Chat */
+.chat-property-card {
+  background: #101010;
+  border: 1px solid rgba(255, 122, 0, 0.35);
+  border-radius: var(--msg-radius-md);
+  overflow: hidden;
+  max-width: 320px;
+  margin-bottom: 6px;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
+}
+
+.chat-property-img {
+  width: 100%;
+  height: 140px;
+  object-fit: cover;
+}
+
+.chat-property-body {
+  padding: 12px 14px;
+}
+
+.chat-property-title {
+  font-weight: 700;
+  font-size: 0.92rem;
+  color: #FFFFFF;
+  margin-bottom: 4px;
+}
+
+.chat-property-price {
+  color: var(--msg-primary);
+  font-weight: 800;
+  font-size: 1rem;
+  margin-bottom: 8px;
+}
+
+.chat-property-loc {
+  font-size: 0.78rem;
+  color: var(--msg-text-muted);
+  margin-bottom: 10px;
+}
+
+.chat-property-link {
+  display: block;
+  text-align: center;
+  padding: 8px 12px;
+  background: linear-gradient(135deg, var(--msg-primary), #E66A00);
+  color: #FFFFFF !important;
+  border-radius: var(--msg-radius-sm);
+  font-size: 0.82rem;
+  font-weight: 700;
+  text-decoration: none;
+  transition: all 0.2s ease;
+}
+
+.chat-property-link:hover {
+  box-shadow: 0 0 10px var(--msg-primary-glow);
+}
+
+/* Voice Message Waveform Card */
+.chat-voice-card {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 0;
+  min-width: 220px;
+}
+
+/* Image in Chat */
+.chat-img-attachment {
+  max-width: 260px;
+  max-height: 220px;
+  border-radius: var(--msg-radius-sm);
+  cursor: pointer;
+  transition: transform 0.2s ease;
+  margin-bottom: 4px;
+}
+
+.chat-img-attachment:hover {
+  transform: scale(1.02);
+}
+
+/* ---------------------------------------------------------
+   Input Bar & Controls
+   --------------------------------------------------------- */
+.chat-input-bar {
+  padding: 12px 20px 16px;
+  background: #080808;
+  border-top: 1px solid var(--msg-border);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  backdrop-filter: blur(10px);
+}
+
+/* Quick Canned Responses Bar */
+.quick-responses-bar {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  padding-bottom: 4px;
+}
+
+.quick-responses-bar::-webkit-scrollbar {
+  height: 3px;
+}
+.quick-responses-bar::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 10px;
+}
+
+.canned-chip {
+  padding: 5px 12px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--msg-border);
+  border-radius: 20px;
+  color: var(--msg-text-muted);
+  font-size: 0.78rem;
+  font-weight: 500;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.2s ease;
+}
+
+.canned-chip:hover {
+  background: rgba(255, 122, 0, 0.15);
+  border-color: rgba(255, 122, 0, 0.4);
+  color: #FFFFFF;
+}
+
+.input-main-row {
   display: flex;
   align-items: center;
   gap: 10px;
 }
 
-.sender-name {
-  font-weight: 600;
-  color: #333;
+.toolbar-buttons {
+  display: flex;
+  align-items: center;
+  gap: 6px;
 }
 
-.message-date {
-  color: #999;
-  font-size: 0.9rem;
-}
-
-.message-content p {
-  color: #666;
-  margin: 0;
-  line-height: 1.6;
-}
-
-.btn {
-  padding: 8px 16px;
-  border: none;
-  border-radius: 5px;
+.tool-icon-btn {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid var(--msg-border);
+  color: var(--msg-text);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.15rem;
   cursor: pointer;
-  text-decoration: none;
-  display: inline-block;
-  font-weight: 600;
-  transition: all 0.3s;
+  transition: all 0.2s ease;
 }
 
-.btn-primary {
-  background: #667eea;
-  color: white;
+.tool-icon-btn:hover {
+  background: rgba(255, 122, 0, 0.2);
+  border-color: var(--msg-primary);
+  color: var(--msg-primary);
+  transform: scale(1.08);
 }
 
-.btn-primary:hover {
-  background: #5568d3;
+.message-text-input {
+  flex: 1;
+  padding: 12px 18px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid var(--msg-border);
+  border-radius: var(--msg-radius-md);
+  color: #FFFFFF;
+  font-size: 0.92rem;
+  outline: none;
+  transition: all 0.2s ease;
 }
 
-.btn-sm {
-  padding: 5px 10px;
+.message-text-input:focus {
+  border-color: var(--msg-primary);
+  background: rgba(255, 255, 255, 0.09);
+  box-shadow: 0 0 12px rgba(255, 122, 0, 0.25);
+}
+
+.btn-send-msg {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--msg-primary), #E66A00);
+  color: #FFFFFF;
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.25rem;
+  cursor: pointer;
+  box-shadow: 0 4px 15px var(--msg-primary-glow);
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+}
+
+.btn-send-msg:hover {
+  transform: scale(1.1);
+  box-shadow: 0 6px 20px rgba(255, 122, 0, 0.6);
+}
+
+/* Recording Overlay */
+.recording-bar {
+  display: none;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 16px;
+  background: rgba(239, 68, 68, 0.15);
+  border: 1px solid rgba(239, 68, 68, 0.4);
+  border-radius: var(--msg-radius-md);
+}
+
+.recording-status {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #EF4444;
+  font-weight: 700;
+  font-size: 0.88rem;
+}
+
+.recording-pulse-dot {
+  width: 10px;
+  height: 10px;
+  background: #EF4444;
+  border-radius: 50%;
+  animation: pulseRec 1s infinite;
+}
+
+@keyframes pulseRec {
+  0% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.4); opacity: 0.5; }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+/* Modals */
+.msg-modal-overlay {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.75);
+  backdrop-filter: blur(8px);
+  z-index: 9999;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+
+.msg-modal-card {
+  width: 100%;
+  max-width: 580px;
+  background: #0c0c0c;
+  border: 1px solid var(--msg-border);
+  border-radius: var(--msg-radius-lg);
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.8), 0 0 30px rgba(255, 122, 0, 0.1);
+  overflow: hidden;
+  animation: modalPop 0.25s ease-out;
+}
+
+@keyframes modalPop {
+  from { transform: scale(0.92); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
+}
+
+.msg-modal-header {
+  padding: 16px 20px;
+  background: #080808;
+  border-bottom: 1px solid var(--msg-border);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.msg-modal-header h3 {
+  margin: 0;
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #FFFFFF;
+}
+
+.modal-close-cross {
+  background: none;
+  border: none;
+  color: var(--msg-text-muted);
+  font-size: 1.3rem;
+  cursor: pointer;
+  transition: color 0.2s;
+}
+
+.modal-close-cross:hover {
+  color: #FFFFFF;
+}
+
+.msg-modal-body {
+  padding: 20px;
+  max-height: 70vh;
+  overflow-y: auto;
+}
+
+/* Property Selection Grid in Modal */
+.prop-select-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 14px;
+}
+
+.prop-select-item {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid var(--msg-border);
+  border-radius: var(--msg-radius-md);
+  overflow: hidden;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.prop-select-item:hover {
+  border-color: var(--msg-primary);
+  transform: translateY(-2px);
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.prop-select-item img {
+  width: 100%;
+  height: 110px;
+  object-fit: cover;
+}
+
+.prop-select-details {
+  padding: 10px 12px;
+}
+
+.prop-select-details h5 {
+  margin: 0 0 4px;
+  font-size: 0.88rem;
+  font-weight: 700;
+  color: #FFFFFF;
+}
+
+.prop-select-details .price {
+  color: var(--msg-primary);
+  font-weight: 800;
   font-size: 0.9rem;
 }
 
-.no-messages {
-  text-align: center;
-  padding: 40px;
-  color: #999;
+/* Responsive */
+@media (max-width: 900px) {
+  .messenger-wrapper {
+    height: calc(100vh - 70px);
+    margin: 5px auto;
+    padding: 0 5px;
+  }
+  
+  .messenger-sidebar {
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    width: 100%;
+    max-width: 100%;
+    z-index: 50;
+  }
+  
+  .messenger-sidebar.hidden-mobile {
+    transform: translateX(100%);
+  }
+  
+  .mobile-back-trigger {
+    display: block;
+  }
 }
 </style>
+{% endblock %}
+
+{% block content %}
+{% csrf_token %}
+
+<div class="messenger-wrapper">
+  <div class="messenger-container">
+
+    <!-- =====================================================
+         MAIN CHAT VIEW (Left side in RTL)
+         ===================================================== -->
+    <div class="messenger-main" id="chat-main-panel">
+      {% if active_conversation %}
+      <!-- Active Chat Header -->
+      <div class="chat-main-header">
+        <div class="chat-recipient-meta">
+          <button class="mobile-back-trigger" onclick="toggleMobileSidebar()" title="رجوع للقائمة">✕</button>
+          <div class="recipient-avatar-box">
+            {% if active_conversation.other_user.user_profile.avatar %}
+              <img src="{{ active_conversation.other_user.user_profile.avatar.url }}" alt="{{ active_conversation.other_user.username }}">
+            {% else %}
+              <div class="avatar-placeholder">{{ active_conversation.other_user.username|slice:":1"|upper }}</div>
+            {% endif %}
+            <div class="online-dot"></div>
+          </div>
+          <div class="recipient-title-box">
+            <h3>
+              {{ active_conversation.other_user.get_full_name|default:active_conversation.other_user.username }}
+              {% if active_conversation.other_user.broker.is_verified %}
+                <span class="badge-verified">✓ دلال موثق</span>
+              {% elif active_conversation.other_user.is_staff %}
+                <span class="badge-verified" style="background:rgba(255,122,0,0.15);color:var(--msg-primary);border-color:rgba(255,122,0,0.3);">👑 الإدارة</span>
+              {% endif %}
+            </h3>
+            <div class="recipient-subtext">
+              {% if active_conversation.other_user.broker.office_name %}
+                🏢 {{ active_conversation.other_user.broker.office_name }} •
+              {% endif %}
+              <span id="active-user-status">متصل الآن</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="chat-top-actions">
+          {% if active_conversation.other_user.broker.phone %}
+            <a href="tel:{{ active_conversation.other_user.broker.phone }}" class="action-chip-btn" title="اتصال هاتفي">
+              <span>📞</span>
+              <span>اتصال</span>
+            </a>
+          {% endif %}
+          {% if active_conversation.other_user.broker.whatsapp or active_conversation.other_user.broker.phone %}
+            <a href="https://wa.me/{{ active_conversation.other_user.broker.whatsapp|default:active_conversation.other_user.broker.phone|cut:' ' }}" target="_blank" class="action-chip-btn whatsapp-chip" title="واتساب">
+              <span>💬</span>
+              <span>واتساب</span>
+            </a>
+          {% endif %}
+          <button class="action-chip-btn" onclick="openPropertyPickerModal()" title="مشاركة عقار">
+            <span>🏠</span>
+            <span>مشاركة عقار</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Messages Flow Area -->
+      <div class="chat-scroll-area" id="chat-messages-area">
+        {% for message in messages %}
+        <div class="msg-row {% if message.sender == request.user %}sent{% else %}received{% endif %}" id="msg-{{ message.id }}">
+          <div class="msg-bubble">
+            {% if message.message_type == 'property' or message.link_url %}
+              <div class="chat-property-card">
+                {% if message.link_image %}
+                  <img src="{{ message.link_image }}" class="chat-property-img" alt="عقار">
+                {% endif %}
+                <div class="chat-property-body">
+                  <div class="chat-property-title">{{ message.link_title|default:'عقار مميز' }}</div>
+                  {% if message.link_description %}
+                    <div class="chat-property-price">{{ message.link_description }}</div>
+                  {% endif %}
+                  <a href="{{ message.link_url }}" target="_blank" class="chat-property-link">معاينة العقار 🏠</a>
+                </div>
+              </div>
+            {% elif message.message_type == 'image' and message.file %}
+              <img src="{{ message.file.url }}" class="chat-img-attachment" alt="صورة مرفقة" onclick="window.open(this.src, '_blank')">
+            {% elif message.message_type == 'audio' and message.file %}
+              <div class="chat-voice-card">
+                <audio controls src="{{ message.file.url }}" style="max-width: 240px;"></audio>
+              </div>
+            {% endif %}
+
+            {% if message.content and message.message_type != 'property' %}
+              <div class="msg-text-content">{{ message.content }}</div>
+            {% endif %}
+
+            <div class="msg-meta-info">
+              <span>{{ message.created_at|time:"H:i" }}</span>
+              {% if message.sender == request.user %}
+                <span>{% if message.is_read %}✓✓{% else %}✓{% endif %}</span>
+              {% endif %}
+            </div>
+          </div>
+        </div>
+        {% empty %}
+        <div style="text-align: center; color: var(--msg-text-muted); margin: auto; padding: 40px;">
+          <div style="font-size: 2.5rem; margin-bottom: 10px;">👋</div>
+          <h4>ابدأ المحادثة الآن</h4>
+          <p style="font-size: 0.85rem;">أرسل رسالتك الأولى أو شارك تفاصيل العقار مباشرة.</p>
+        </div>
+        {% endfor %}
+      </div>
+
+      <!-- Input Toolbar & Controls -->
+      <div class="chat-input-bar">
+        <!-- Canned Quick Replies -->
+        <div class="quick-responses-bar">
+          <span style="font-size: 0.78rem; color: var(--msg-primary); font-weight: 700; align-self: center;">⚡ ردود سريعة:</span>
+          <button type="button" class="canned-chip" onclick="insertQuickReply('مرحباً بك! يسعدني خدمتك والإجابة عن أي استفسار.')">مرحباً بك 👋</button>
+          <button type="button" class="canned-chip" onclick="insertQuickReply('العقار متاح حالياً للمعاينة الميدانية.')">متاح للمعاينة 🏠</button>
+          <button type="button" class="canned-chip" onclick="insertQuickReply('سأرسل لك الموقع الدقيق وتفاصيل السند والأسعار.')">إرسال التفاصيل 📋</button>
+          <button type="button" class="canned-chip" onclick="insertQuickReply('هل يناسبك تحديد موعد لزيارة العقار اليوم أو غداً؟')">تحديد موعد 📅</button>
+        </div>
+
+        <!-- Recording Indicator -->
+        <div class="recording-bar" id="voice-recording-ui">
+          <div class="recording-status">
+            <div class="recording-pulse-dot"></div>
+            <span>جاري التسجيل الصوتي... (<span id="rec-timer">00:00</span>)</span>
+          </div>
+          <div style="display: flex; gap: 8px;">
+            <button type="button" class="btn-luxury" style="padding: 6px 14px; font-size: 0.8rem;" onclick="stopAndSendVoice()">إرسال 🎙️</button>
+            <button type="button" class="btn-luxury-outline" style="padding: 6px 12px; font-size: 0.8rem;" onclick="cancelVoiceRecording()">إلغاء</button>
+          </div>
+        </div>
+
+        <!-- Main Input Row -->
+        <div class="input-main-row" id="normal-input-ui">
+          <div class="toolbar-buttons">
+            <button type="button" class="tool-icon-btn" onclick="openPropertyPickerModal()" title="مشاركة عقار">🏠</button>
+            <button type="button" class="tool-icon-btn" onclick="triggerFileUpload()" title="إرفاق ملف أو صورة">📎</button>
+            <button type="button" class="tool-icon-btn" onclick="toggleVoiceRecording()" title="تسجيل رسالة صوتية">🎙️</button>
+            <input type="file" id="chat-file-input" style="display: none;" onchange="handleDirectFileSend(this)">
+          </div>
+
+          <input type="text" id="live-message-input" class="message-text-input" placeholder="اكتب رسالتك هنا... (اضغط Enter للإرسال)" autocomplete="off">
+
+          <button type="button" class="btn-send-msg" onclick="sendLiveMessage()" title="إرسال">
+            <span>➤</span>
+          </button>
+        </div>
+      </div>
+
+      {% else %}
+      <!-- Empty State Canvas when no chat selected -->
+      <div class="empty-chat-canvas">
+        <div class="empty-chat-glow-icon">💬</div>
+        <h2>ماسنجر دلال العقاري</h2>
+        <p>تواصل مباشرة وبشكل فوري مع الوسطاء العقاريين المعتمدين، العملاء، وفريق إدارة المنصة بكل سهولة وموثوقية.</p>
+        <div class="quick-start-buttons">
+          <button class="btn-luxury" onclick="openNewChatModal()">
+            <span>✏️</span>
+            <span>بدء محادثة جديدة</span>
+          </button>
+          <button class="btn-luxury-outline" onclick="switchSidebarTab('brokers')">
+            <span>🏘</span>
+            <span>تصفح الدلالين المعتمدين</span>
+          </button>
+          <button class="btn-luxury-outline" onclick="switchSidebarTab('admin')">
+            <span>👨‍💼</span>
+            <span>مراسلة الإدارة</span>
+          </button>
+        </div>
+      </div>
+      {% endif %}
+    </div>
+
+    <!-- =====================================================
+         SIDEBAR DIRECTORY & CONVERSATIONS (Right in RTL)
+         ===================================================== -->
+    <div class="messenger-sidebar" id="messenger-sidebar-panel">
+      <!-- Sidebar Header -->
+      <div class="sidebar-header">
+        <div class="user-profile-header">
+          <div class="user-avatar-wrap">
+            {% if request.user.user_profile.avatar %}
+              <img src="{{ request.user.user_profile.avatar.url }}" alt="{{ request.user.username }}">
+            {% else %}
+              <div class="avatar-fallback">{{ request.user.username|slice:":1"|upper }}</div>
+            {% endif %}
+            <div class="online-dot"></div>
+          </div>
+          <div class="user-details">
+            <h4>{{ request.user.get_full_name|default:request.user.username }}</h4>
+            <span>● متصل</span>
+          </div>
+        </div>
+
+        <div class="sidebar-header-actions">
+          <button class="icon-btn" onclick="openNewChatModal()" title="محادثة جديدة">✏️</button>
+          <a href="{% url 'dashboard' %}" class="icon-btn" title="لوحة التحكم">📊</a>
+        </div>
+      </div>
+
+      <!-- Search Input -->
+      <div class="sidebar-search-box">
+        <div class="search-input-wrap">
+          <span>🔍</span>
+          <input type="text" id="sidebar-live-search" placeholder="البحث في المحادثات والأسماء..." autocomplete="off">
+        </div>
+      </div>
+
+      <!-- Tabs Navigation -->
+      <div class="messenger-tabs">
+        <button class="tab-pill active" id="tab-convs" onclick="switchSidebarTab('conversations')">💬 المحادثات</button>
+        <button class="tab-pill" id="tab-brokers" onclick="switchSidebarTab('brokers')">🏘 الدلالين</button>
+        <button class="tab-pill" id="tab-admin" onclick="switchSidebarTab('admin')">👨‍💼 الإدارة</button>
+        <button class="tab-pill" id="tab-users" onclick="switchSidebarTab('users')">👥 الكل</button>
+      </div>
+
+      <!-- List Content Container -->
+      <div class="sidebar-list-content" id="sidebar-items-list">
+        {% if conversations %}
+          {% for conv in conversations %}
+          <div class="conv-item {% if conv.id == active_conversation_id %}active{% endif %}" onclick="goToConversation('{{ conv.id }}')">
+            <div class="conv-avatar-box">
+              {% if conv.other_user.user_profile.avatar %}
+                <img src="{{ conv.other_user.user_profile.avatar.url }}" alt="{{ conv.other_user.username }}">
+              {% else %}
+                <div class="avatar-placeholder">{{ conv.other_user.username|slice:":1"|upper }}</div>
+              {% endif %}
+              <div class="online-dot"></div>
+            </div>
+            <div class="conv-info">
+              <div class="conv-top-row">
+                <span class="conv-name">{{ conv.other_user.get_full_name|default:conv.other_user.username }}</span>
+                <span class="conv-time">{{ conv.last_message_time|timesince }}</span>
+              </div>
+              <div class="conv-bottom-row">
+                <span class="conv-last-msg">{{ conv.last_message|default:'محادثة جديدة' }}</span>
+                {% if conv.unread_count > 0 %}
+                  <span class="unread-count-badge">{{ conv.unread_count }}</span>
+                {% endif %}
+              </div>
+            </div>
+          </div>
+          {% endfor %}
+        {% else %}
+          <div style="text-align: center; padding: 40px 15px; color: var(--msg-text-muted);">
+            <div style="font-size: 2.2rem; margin-bottom: 8px;">💬</div>
+            <p style="font-size: 0.9rem; margin-bottom: 15px;">لا توجد محادثات سابقة</p>
+            <button class="chat-now-btn" style="margin: auto;" onclick="openNewChatModal()">ابدأ محادثة جديدة ✏️</button>
+          </div>
+        {% endif %}
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- =========================================================
+     MODALS
+     ========================================================= -->
+<!-- 1. New Message / Contacts Modal -->
+<div class="msg-modal-overlay" id="modal-new-chat">
+  <div class="msg-modal-card">
+    <div class="msg-modal-header">
+      <h3>✏️ بدء محادثة جديدة</h3>
+      <button class="modal-close-cross" onclick="closeModal('modal-new-chat')">✕</button>
+    </div>
+    <div class="msg-modal-body">
+      <div style="margin-bottom: 15px;">
+        <input type="text" id="modal-user-search-input" class="message-text-input" style="width: 100%;" placeholder="ابحث بالاسم أو رقم الهاتف أو اسم المكتب...">
+      </div>
+      <div id="modal-users-results-box" style="display: flex; flex-direction: column; gap: 8px;">
+        <p style="text-align: center; color: var(--msg-text-muted);">جاري تحميل قائمة المستخدمين...</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 2. Property Selector Modal -->
+<div class="msg-modal-overlay" id="modal-property-picker">
+  <div class="msg-modal-card" style="max-width: 680px;">
+    <div class="msg-modal-header">
+      <h3>🏠 اختر عقاراً لمشاركته في المحادثة</h3>
+      <button class="modal-close-cross" onclick="closeModal('modal-property-picker')">✕</button>
+    </div>
+    <div class="msg-modal-body">
+      <div style="margin-bottom: 15px;">
+        <input type="text" id="prop-search-modal-input" class="message-text-input" style="width: 100%;" placeholder="ابحث في العقارات بالعنوان أو المدينة...">
+      </div>
+      <div class="prop-select-grid" id="modal-props-grid">
+        <p style="grid-column: 1/-1; text-align: center; color: var(--msg-text-muted);">جاري تحميل العقارات المتاحة...</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+/* =========================================================
+   Dallal Messenger Interactive Engine (AJAX + Live Polling)
+   ========================================================= */
+const CURRENT_CONVERSATION_ID = "{{ active_conversation_id|default:'' }}";
+const CURRENT_USER_ID = {{ request.user.id }};
+let lastMessageId = 0;
+let pollingInterval = null;
+let mediaRecorder = null;
+let audioChunks = [];
+let recordStartTime = null;
+let recordTimerInterval = null;
+
+document.addEventListener('DOMContentLoaded', function() {
+  // Initialize last message ID from DOM
+  const existingMsgs = document.querySelectorAll('.msg-row[id^="msg-"]');
+  if (existingMsgs.length > 0) {
+    const lastEl = existingMsgs[existingMsgs.length - 1];
+    lastMessageId = parseInt(lastEl.id.replace('msg-', '')) || 0;
+  }
+
+  // Auto scroll chat to bottom
+  scrollToChatBottom();
+
+  // Setup input Enter key
+  const inputEl = document.getElementById('live-message-input');
+  if (inputEl) {
+    inputEl.addEventListener('keydown', function(e) {
+      if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        sendLiveMessage();
+      }
+    });
+  }
+
+  // Setup live sidebar search
+  const searchInput = document.getElementById('sidebar-live-search');
+  if (searchInput) {
+    searchInput.addEventListener('input', function() {
+      const q = this.value.trim().toLowerCase();
+      filterSidebarItems(q);
+    });
+  }
+
+  // Setup modal user search
+  const modalSearchInput = document.getElementById('modal-user-search-input');
+  if (modalSearchInput) {
+    modalSearchInput.addEventListener('input', function() {
+      fetchUsersForModal(this.value.trim());
+    });
+  }
+
+  // Setup modal property search
+  const modalPropInput = document.getElementById('prop-search-modal-input');
+  if (modalPropInput) {
+    modalPropInput.addEventListener('input', function() {
+      fetchPropertiesForModal(this.value.trim());
+    });
+  }
+
+  // Start live polling if in active conversation
+  if (CURRENT_CONVERSATION_ID) {
+    startLivePolling();
+  }
+});
+
+// Scroll to bottom helper
+function scrollToChatBottom() {
+  const area = document.getElementById('chat-messages-area');
+  if (area) {
+    area.scrollTop = area.scrollHeight;
+  }
+}
+
+// Navigation
+function goToConversation(convId) {
+  window.location.href = `/dashboard/messages/?conversation_id=${convId}`;
+}
+
+function toggleMobileSidebar() {
+  const sidebar = document.getElementById('messenger-sidebar-panel');
+  if (sidebar) {
+    sidebar.classList.toggle('hidden-mobile');
+  }
+}
+
+// Canned quick replies
+function insertQuickReply(text) {
+  const input = document.getElementById('live-message-input');
+  if (input) {
+    input.value = text;
+    input.focus();
+  }
+}
+
+// Filter sidebar items locally
+function filterSidebarItems(query) {
+  const items = document.querySelectorAll('.conv-item, .user-dir-card');
+  items.forEach(item => {
+    const text = item.textContent.toLowerCase();
+    item.style.display = text.includes(query) ? 'flex' : 'none';
+  });
+}
+
+// =========================================================
+// SEND MESSAGE (AJAX)
+// =========================================================
+function sendLiveMessage(overrideContent = null, propertyId = null, attachedFile = null) {
+  if (!CURRENT_CONVERSATION_ID) {
+    alert('يرجى اختيار محادثة أولاً');
+    return;
+  }
+
+  const inputEl = document.getElementById('live-message-input');
+  const content = overrideContent !== null ? overrideContent : (inputEl ? inputEl.value.trim() : '');
+
+  if (!content && !propertyId && !attachedFile) {
+    return;
+  }
+
+  const formData = new FormData();
+  formData.append('conversation_id', CURRENT_CONVERSATION_ID);
+  if (content) formData.append('content', content);
+  if (propertyId) formData.append('property_id', propertyId);
+  if (attachedFile) formData.append('file', attachedFile);
+
+  // Clear text input immediately for fast UX
+  if (inputEl && overrideContent === null) {
+    inputEl.value = '';
+  }
+
+  fetch('/api/messenger/send/', {
+    method: 'POST',
+    body: formData,
+    headers: {
+      'X-CSRFToken': getCookie('csrftoken')
+    }
+  })
+  .then(res => res.json())
+  .then(data => {
+    if (data.success && data.message) {
+      appendMessageToChat(data.message);
+      lastMessageId = Math.max(lastMessageId, data.message.id);
+      scrollToChatBottom();
+    } else if (data.error) {
+      alert(data.error);
+    }
+  })
+  .catch(err => {
+    console.error('Error sending message:', err);
+  });
+}
+
+// =========================================================
+// LIVE POLLING (Every 3 seconds)
+// =========================================================
+function startLivePolling() {
+  if (pollingInterval) clearInterval(pollingInterval);
+
+  pollingInterval = setInterval(() => {
+    if (!CURRENT_CONVERSATION_ID) return;
+
+    fetch(`/api/messenger/poll/?conversation_id=${CURRENT_CONVERSATION_ID}&last_id=${lastMessageId}`)
+      .then(res => res.json())
+      .then(data => {
+        if (data.success && data.messages && data.messages.length > 0) {
+          data.messages.forEach(msg => {
+            if (!document.getElementById(`msg-${msg.id}`)) {
+              appendMessageToChat(msg);
+              lastMessageId = Math.max(lastMessageId, msg.id);
+            }
+          });
+          scrollToChatBottom();
+        }
+      })
+      .catch(err => console.error('Polling error:', err));
+  }, 3000);
+}
+
+// Append message HTML dynamically
+function appendMessageToChat(msg) {
+  const chatArea = document.getElementById('chat-messages-area');
+  if (!chatArea) return;
+
+  const isMe = msg.is_from_me;
+  const row = document.createElement('div');
+  row.className = `msg-row ${isMe ? 'sent' : 'received'}`;
+  row.id = `msg-${msg.id}`;
+
+  let innerHTML = `<div class="msg-bubble">`;
+
+  // Property Card
+  if (msg.message_type === 'property' || msg.link_url) {
+    innerHTML += `
+      <div class="chat-property-card">
+        ${msg.link_image ? `<img src="${msg.link_image}" class="chat-property-img" alt="عقار">` : ''}
+        <div class="chat-property-body">
+          <div class="chat-property-title">${escapeHTML(msg.link_title || 'عقار مميز')}</div>
+          ${msg.link_description ? `<div class="chat-property-price">${escapeHTML(msg.link_description)}</div>` : ''}
+          <a href="${msg.link_url}" target="_blank" class="chat-property-link">معاينة العقار 🏠</a>
+        </div>
+      </div>
+    `;
+  }
+  // Image
+  else if (msg.message_type === 'image' && msg.file_url) {
+    innerHTML += `<img src="${msg.file_url}" class="chat-img-attachment" alt="صورة مرفقة" onclick="window.open(this.src, '_blank')">`;
+  }
+  // Voice note
+  else if (msg.message_type === 'audio' && msg.file_url) {
+    innerHTML += `
+      <div class="chat-voice-card">
+        <audio controls src="${msg.file_url}" style="max-width: 240px;"></audio>
+      </div>
+    `;
+  }
+
+  // Text content
+  if (msg.content && msg.message_type !== 'property') {
+    innerHTML += `<div class="msg-text-content">${escapeHTML(msg.content)}</div>`;
+  }
+
+  // Metadata
+  innerHTML += `
+      <div class="msg-meta-info">
+        <span>${msg.time || 'الآن'}</span>
+        ${isMe ? `<span>${msg.is_read ? '✓✓' : '✓'}</span>` : ''}
+      </div>
+    </div>
+  `;
+
+  row.innerHTML = innerHTML;
+  chatArea.appendChild(row);
+}
+
+// =========================================================
+// VOICE RECORDING (MediaRecorder API)
+// =========================================================
+function toggleVoiceRecording() {
+  if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+    alert('متصفحك لا يدعم تسجيل الصوت المباشر.');
+    return;
+  }
+
+  navigator.mediaDevices.getUserMedia({ audio: true })
+    .then(stream => {
+      mediaRecorder = new MediaRecorder(stream);
+      audioChunks = [];
+
+      mediaRecorder.ondataavailable = e => {
+        if (e.data.size > 0) audioChunks.push(e.data);
+      };
+
+      mediaRecorder.onstop = () => {
+        stream.getTracks().forEach(track => track.stop());
+      };
+
+      mediaRecorder.start();
+      recordStartTime = Date.now();
+
+      document.getElementById('normal-input-ui').style.display = 'none';
+      document.getElementById('voice-recording-ui').style.display = 'flex';
+
+      recordTimerInterval = setInterval(() => {
+        const diff = Math.floor((Date.now() - recordStartTime) / 1000);
+        const mins = String(Math.floor(diff / 60)).padStart(2, '0');
+        const secs = String(diff % 60).padStart(2, '0');
+        const timerEl = document.getElementById('rec-timer');
+        if (timerEl) timerEl.textContent = `${mins}:${secs}`;
+      }, 1000);
+    })
+    .catch(err => {
+      console.error('Microphone error:', err);
+      alert('تعذر الوصول إلى الميكروفون. يرجى منح الإذن.');
+    });
+}
+
+function stopAndSendVoice() {
+  if (mediaRecorder && mediaRecorder.state !== 'inactive') {
+    mediaRecorder.onstop = () => {
+      const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
+      const audioFile = new File([audioBlob], `voice_${Date.now()}.webm`, { type: 'audio/webm' });
+      sendLiveMessage('🎙️ رسالة صوتية', null, audioFile);
+      cancelVoiceRecording();
+    };
+    mediaRecorder.stop();
+  }
+}
+
+function cancelVoiceRecording() {
+  if (mediaRecorder && mediaRecorder.state !== 'inactive') {
+    mediaRecorder.stop();
+  }
+  clearInterval(recordTimerInterval);
+  document.getElementById('voice-recording-ui').style.display = 'none';
+  document.getElementById('normal-input-ui').style.display = 'flex';
+}
+
+// File Attachment Trigger
+function triggerFileUpload() {
+  const fileInput = document.getElementById('chat-file-input');
+  if (fileInput) fileInput.click();
+}
+
+function handleDirectFileSend(input) {
+  if (input.files && input.files[0]) {
+    const file = input.files[0];
+    sendLiveMessage(`📎 ملف مرفق: ${file.name}`, null, file);
+    input.value = '';
+  }
+}
+
+// =========================================================
+// PROPERTY PICKER MODAL
+// =========================================================
+function openPropertyPickerModal() {
+  openModal('modal-property-picker');
+  fetchPropertiesForModal('');
+}
+
+function fetchPropertiesForModal(searchQuery) {
+  const grid = document.getElementById('modal-props-grid');
+  grid.innerHTML = '<p style="grid-column: 1/-1; text-align: center; color: var(--msg-text-muted);">جاري التحميل...</p>';
+
+  fetch(`/api/messenger/properties/?search=${encodeURIComponent(searchQuery)}`)
+    .then(res => res.json())
+    .then(data => {
+      if (data.properties && data.properties.length > 0) {
+        grid.innerHTML = data.properties.map(p => `
+          <div class="prop-select-item" onclick="sharePropertyInChat(${p.id})">
+            <img src="${p.image || '/static/images/placeholder.jpg'}" alt="${escapeHTML(p.title)}">
+            <div class="prop-select-details">
+              <h5>${escapeHTML(p.title)}</h5>
+              <div class="price">${p.price}</div>
+              <div style="font-size:0.75rem; color:var(--msg-text-muted);">${escapeHTML(p.location)}</div>
+            </div>
+          </div>
+        `).join('');
+      } else {
+        grid.innerHTML = '<p style="grid-column: 1/-1; text-align: center; color: var(--msg-text-muted);">لا توجد عقارات متاحة حالياً.</p>';
+      }
+    })
+    .catch(err => {
+      grid.innerHTML = '<p style="grid-column: 1/-1; text-align: center; color: #EF4444;">حدث خطأ أثناء تحميل العقارات.</p>';
+    });
+}
+
+function sharePropertyInChat(propertyId) {
+  closeModal('modal-property-picker');
+  sendLiveMessage('', propertyId, null);
+}
+
+// =========================================================
+// SIDEBAR TABS & USER SEARCH
+// =========================================================
+function switchSidebarTab(tabName) {
+  document.querySelectorAll('.tab-pill').forEach(btn => btn.classList.remove('active'));
+  const activeBtn = document.getElementById(`tab-${tabName}`);
+  if (activeBtn) activeBtn.classList.add('active');
+
+  const listContainer = document.getElementById('sidebar-items-list');
+  listContainer.innerHTML = '<p style="text-align: center; padding: 30px; color: var(--msg-text-muted);">جاري التحميل...</p>';
+
+  if (tabName === 'conversations') {
+    window.location.href = '/dashboard/messages/';
+    return;
+  }
+
+  let roleFilter = tabName === 'brokers' ? 'broker' : (tabName === 'admin' ? 'admin' : '');
+  fetch(`/api/users/all/?role=${roleFilter}`)
+    .then(res => res.json())
+    .then(data => {
+      if (data.users && data.users.length > 0) {
+        listContainer.innerHTML = data.users.map(u => `
+          <div class="user-dir-card">
+            <div class="user-dir-info">
+              <div class="user-avatar-wrap" style="width: 40px; height: 40px;">
+                ${u.profile_image ? `<img src="${u.profile_image}" alt="${escapeHTML(u.username)}">` : `<div class="avatar-fallback">${escapeHTML(u.username.charAt(0).toUpperCase())}</div>`}
+                <div class="online-dot"></div>
+              </div>
+              <div class="user-dir-texts">
+                <h5>${escapeHTML(u.display_name || u.username)}</h5>
+                <p>${escapeHTML(u.broker_title || u.role || 'عضو')}</p>
+              </div>
+            </div>
+            <button class="chat-now-btn" onclick="startDirectChat(${u.id})">💬 مراسلة</button>
+          </div>
+        `).join('');
+      } else {
+        listContainer.innerHTML = `
+          <div style="text-align: center; padding: 40px 15px; color: var(--msg-text-muted);">
+            <div style="font-size: 2.2rem; margin-bottom: 8px;">👥</div>
+            <p>لا يوجد ${tabName === 'brokers' ? 'دلالين' : (tabName === 'admin' ? 'إداريين' : 'مستخدمين')} مسجلين حالياً</p>
+          </div>
+        `;
+      }
+    })
+    .catch(err => {
+      listContainer.innerHTML = '<p style="text-align: center; padding: 30px; color: #EF4444;">تعذر تحميل القائمة</p>';
+    });
+}
+
+function startDirectChat(userId) {
+  fetch('/api/conversations/create/', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'X-CSRFToken': getCookie('csrftoken')
+    },
+    body: JSON.stringify({ recipient_id: userId })
+  })
+  .then(res => res.json())
+  .then(data => {
+    if (data.success && data.conversation_id) {
+      goToConversation(data.conversation_id);
+    } else {
+      alert(data.error || 'تعذر بدء المحادثة');
+    }
+  })
+  .catch(err => {
+    console.error('Error starting conversation:', err);
+  });
+}
+
+// Modal open/close
+function openNewChatModal() {
+  openModal('modal-new-chat');
+  fetchUsersForModal('');
+}
+
+function fetchUsersForModal(query) {
+  const box = document.getElementById('modal-users-results-box');
+  box.innerHTML = '<p style="text-align: center; color: var(--msg-text-muted);">جاري البحث...</p>';
+
+  fetch(`/api/users/all/?search=${encodeURIComponent(query)}`)
+    .then(res => res.json())
+    .then(data => {
+      if (data.users && data.users.length > 0) {
+        box.innerHTML = data.users.map(u => `
+          <div class="user-dir-card" style="margin-bottom: 0;">
+            <div class="user-dir-info">
+              <div class="user-avatar-wrap" style="width: 40px; height: 40px;">
+                ${u.profile_image ? `<img src="${u.profile_image}" alt="${escapeHTML(u.username)}">` : `<div class="avatar-fallback">${escapeHTML(u.username.charAt(0).toUpperCase())}</div>`}
+                <div class="online-dot"></div>
+              </div>
+              <div class="user-dir-texts">
+                <h5>${escapeHTML(u.display_name || u.username)}</h5>
+                <p>${escapeHTML(u.broker_title || u.role || 'عضو')}</p>
+              </div>
+            </div>
+            <button class="chat-now-btn" onclick="startDirectChat(${u.id})">💬 بدء الشات</button>
+          </div>
+        `).join('');
+      } else {
+        box.innerHTML = '<p style="text-align: center; color: var(--msg-text-muted); padding: 15px;">لا توجد نتائج مطابقة</p>';
+      }
+    });
+}
+
+function openModal(id) {
+  const el = document.getElementById(id);
+  if (el) el.style.display = 'flex';
+}
+
+function closeModal(id) {
+  const el = document.getElementById(id);
+  if (el) el.style.display = 'none';
+}
+
+// Helpers
+function escapeHTML(str) {
+  if (!str) return '';
+  return str.replace(/[&<>'"]/g, tag => ({
+    '&': '&amp;',
+    '<': '&lt;',
+    '>': '&gt;',
+    "'": '&#39;',
+    '"': '&quot;'
+  }[tag] || tag));
+}
+
+function getCookie(name) {
+  let cookieValue = null;
+  if (document.cookie && document.cookie !== '') {
+    const cookies = document.cookie.split(';');
+    for (let i = 0; i < cookies.length; i++) {
+      const cookie = cookies[i].trim();
+      if (cookie.substring(0, name.length + 1) === (name + '=')) {
+        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+        break;
+      }
+    }
+  }
+  return cookieValue;
+}
+</script>
 {% endblock %}

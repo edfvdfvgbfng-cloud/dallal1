@@ -75,21 +75,13 @@
         {% csrf_token %}
         
         <div class="form-section">
-          <h2>الوضع والألوان</h2>
+          <h2>الوضع</h2>
           <div class="form-group">
             <label>الوضع</label>
             <select name="theme_mode" class="form-control">
               <option value="light" {% if settings.theme_mode == 'light' %}selected{% endif %}>فاتح</option>
               <option value="dark" {% if settings.theme_mode == 'dark' %}selected{% endif %}>داكن</option>
             </select>
-          </div>
-          <div class="form-group">
-            <label>اللون الرئيسي</label>
-            <input type="color" name="primary_color" value="{{ settings.primary_color }}" class="form-control">
-          </div>
-          <div class="form-group">
-            <label>اللون الثانوي</label>
-            <input type="color" name="secondary_color" value="{{ settings.secondary_color }}" class="form-control">
           </div>
         </div>
 

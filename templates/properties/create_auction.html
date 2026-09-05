@@ -282,6 +282,12 @@ let isFullscreenAuction = false;
 
 // Initialize the auction location preview map
 function initAuctionMap() {
+    // Check if Leaflet Draw is loaded
+    if (typeof L.Control.Draw === 'undefined') {
+        console.error('Leaflet Draw is not loaded');
+        return;
+    }
+
     const lat = document.getElementById('latitude-input-auction').value || 33.3152;
     const lng = document.getElementById('longitude-input-auction').value || 44.3661;
     

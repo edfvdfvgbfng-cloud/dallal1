@@ -1,6 +1,25 @@
-{% extends 'properties/base.html' %}
+{% extends 'properties/dashboard_base.html' %}
 {% load static %}
 {% block title %}نشر فندق خارج العراق{% endblock %}
+
+{% block dashboard_title %}نشر فندق <span>خارج العراق</span>{% endblock %}
+
+{% block dashboard_actions %}
+<div class="hotel-outside-actions" style="display: flex; flex-direction: column; gap: 10px; margin-bottom: 15px; padding: 15px; background: rgba(156, 39, 176, 0.1); border: 2px solid rgba(156, 39, 176, 0.3); border-radius: 12px;">
+  <h4 style="margin: 0 0 10px 0; color: #9C27B0; font-size: 1rem;">🌍🏨 صفحات الفنادق خارج العراق</h4>
+  <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+    <a href="{% url 'dallal_hotel_outside_create' %}" class="btn btn-primary btn-sm" style="background: linear-gradient(135deg, #9C27B0 0%, #E91E63 100%); border: none;">
+      🟩 إنشاء صفحة فندق خارج العراق
+    </a>
+    <a href="{% url 'broker_hotels_outside' %}" class="btn btn-secondary btn-sm" style="background: #6A1B9A; border: 1px solid #7B1FA2;">
+      🟦 إنشاء منشور داخل فندق
+    </a>
+    <a href="{% url 'broker_manage_hotels_outside' %}" class="btn btn-secondary btn-sm" style="background: #6A1B9A; border: 1px solid #7B1FA2;">
+      🟪 إدارة صفحات الفنادق
+    </a>
+  </div>
+</div>
+{% endblock %}
 
 {% block extra_css %}
 <!-- Leaflet CSS -->
@@ -9,17 +28,17 @@
 
 <style>
 .hotel-form-container {
-    padding: 40px 20px;
-    background: #000000;
+    padding: 20px;
+    background: var(--bg);
     min-height: 100vh;
 }
 
 .form-card {
-    background-color: #000000;
+    background-color: var(--card-bg);
     border-radius: 20px;
-    padding: 40px;
+    padding: 30px;
     box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
-    border: 1px solid #333;
+    border: 1px solid var(--border);
 }
 
 .form-header {
@@ -34,7 +53,7 @@
     font-weight: bold;
     color: #ffffff;
     margin-bottom: 10px;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: linear-gradient(135deg, #FF7A00 0%, #FF9500 100%);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
@@ -59,7 +78,7 @@
 }
 
 .section-icon {
-    color: #667eea;
+    color: #FF7A00;
     font-size: 24px;
 }
 
@@ -101,7 +120,7 @@
 
 .form-control:focus {
     background-color: #111111 !important;
-    border-color: #667eea !important;
+    border-color: #FF7A00 !important;
     color: #ffffff !important;
     box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
     outline: none;
@@ -172,16 +191,16 @@ select.form-control option {
 
 .checkbox-group label:hover {
     background: #111111;
-    border-color: #667eea;
+    border-color: #FF7A00;
 }
 </style>
 {% endblock %}
 
-{% block content %}
+{% block dashboard_content %}
 <div class="hotel-form-container">
-    <div class="container">
+    <div class="container-fluid">
         <div class="row">
-            <div class="col-lg-12">
+            <div class="col-12">
                 <div class="form-card">
                     <div class="form-header">
                         <h1 class="form-title">نشر فندق خارج العراق</h1>
@@ -597,6 +616,12 @@ function setManualLocationHotelOutside(lat, lng) {
 // Initialize location preview map for Hotel Outside Iraq
 function initLocationMapHotelOutside() {
   if (document.getElementById('location-preview-map-hotel-outside')) {
+    // Check if Leaflet Draw is loaded
+    if (typeof L.Control.Draw === 'undefined') {
+      console.error('Leaflet Draw is not loaded');
+      return;
+    }
+
     // Default center on a location outside Iraq (example: London)
     const defaultCenter = [51.5074, -0.1278];
     
@@ -662,5 +687,4 @@ document.addEventListener('DOMContentLoaded', function() {
   initLocationMapHotelOutside();
 });
 </script>
-
 {% endblock %}

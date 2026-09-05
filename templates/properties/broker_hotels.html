@@ -1,0 +1,57 @@
+{% extends 'properties/dashboard_base.html' %}
+
+{% block title %}اختر فندق{% endblock %}
+
+{% block dashboard_title %}📝 إنشاء منشور داخل صفحة فندق{% endblock %}
+
+{% block dashboard_subtitle %}
+<p style="margin:4px 0 0;color:var(--text-muted);font-size:0.9rem;">
+  اختر إحدى صفحات الفنادق التي أنشأتها لإنشاء منشور جديد داخلها
+</p>
+{% endblock %}
+
+{% block dashboard_actions %}
+<a href="{% url 'dallal_hotel_create' %}" class="btn btn-primary btn-sm">🟩 إنشاء صفحة فندق جديدة</a>
+<a href="{% url 'broker_manage_hotels' %}" class="btn btn-outline btn-sm">🟪 إدارة صفحات الفنادق</a>
+<a href="{% url 'dashboard' %}" class="btn btn-outline btn-sm">رجوع للوحة التحكم</a>
+{% endblock %}
+
+{% block dashboard_content %}
+<div class="card" style="padding: 28px;">
+  {% if hotels %}
+    <div style="margin-bottom: 30px;">
+      <h3 style="color: var(--text); margin-bottom: 20px;">📝 اختر الفندق</h3>
+      <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 20px;">
+        {% for hotel in hotels %}
+        <div style="background: var(--bg-alt); border: 2px solid var(--border); border-radius: 12px; padding: 20px; transition: all 0.3s ease; cursor: pointer;" onclick="window.location.href='{% url 'hotel_post_create' hotel.id %}'">
+          <div style="display: flex; align-items: center; gap: 15px; margin-bottom: 15px;">
+            {% if hotel.logo %}
+            <img src="{{ hotel.logo.url }}" alt="{{ hotel.name }}" style="width: 60px; height: 60px; border-radius: 50%; object-fit: cover; border: 2px solid var(--primary);">
+            {% else %}
+            <div style="width: 60px; height: 60px; border-radius: 50%; background: rgba(0, 150, 136, 0.2); display: flex; align-items: center; justify-content: center; color: #009688; font-size: 1.5rem;">🏨</div>
+            {% endif %}
+            <div>
+              <h4 style="color: var(--text); margin: 0 0 5px 0; font-size: 1.1rem;">{{ hotel.name }}</h4>
+              <p style="color: var(--text-muted); margin: 0; font-size: 0.85rem;">{{ hotel.get_page_type_display }}</p>
+            </div>
+          </div>
+          <div style="display: flex; gap: 10px;">
+            <span style="background: rgba(0, 150, 136, 0.1); color: #009688; padding: 4px 12px; border-radius: 15px; font-size: 0.8rem;">➕ إنشاء منشور</span>
+            <a href="{% url 'hotel_page_detail' hotel.id %}" style="background: rgba(0, 122, 255, 0.1); color: #007bff; padding: 4px 12px; border-radius: 15px; font-size: 0.8rem; text-decoration: none;">👁️ عرض الصفحة</a>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+  {% else %}
+    <div style="text-align: center; padding: 60px 20px; background: var(--bg-alt); border-radius: 12px; border: 2px dashed var(--border);">
+      <div style="font-size: 4rem; margin-bottom: 20px;">🏨</div>
+      <h3 style="color: var(--text); margin-bottom: 15px;">لا توجد صفحات فنادق بعد</h3>
+      <p style="color: var(--text-muted); margin-bottom: 25px;">ابدأ بإنشاء صفحة فندق جديدة لنشر عروضك وخدماتك</p>
+      <a href="{% url 'dallal_hotel_create' %}" class="btn btn-primary" style="background: linear-gradient(135deg, #009688 0%, #00BFA5 100%); border: none; padding: 12px 24px;">
+        🟩 إنشاء صفحة فندق جديدة
+      </a>
+    </div>
+  {% endif %}
+</div>
+{% endblock %}

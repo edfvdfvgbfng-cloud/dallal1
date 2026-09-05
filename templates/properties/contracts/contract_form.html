@@ -1,0 +1,406 @@
+{% extends 'properties/base.html' %}
+{% load static %}
+{% load custom_filters %}
+
+{% block title %}{% if contract %}تعديل عقد{% else %}إنشاء عقد جديد{% endif %}{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h2 class="mb-0">
+                        {% if contract %}
+                        ✏️ تعديل عقد {{ contract.contract_number }}
+                        {% else %}
+                        ➕ إنشاء عقد جديد
+                        {% endif %}
+                    </h2>
+                </div>
+                <div class="card-body">
+                    <form method="post" enctype="multipart/form-data">
+                        {% csrf_token %}
+                        
+                        <!-- معلومات العقد الأساسية -->
+                        <div class="section mb-4">
+                            <h4 class="section-title">معلومات العقد الأساسية</h4>
+                            <div class="row">
+                                <div class="col-md-4">
+                                    <div class="form-group">
+                                        <label for="{{ form.contract_title.id_for_label }}">{{ form.contract_title.label }}</label>
+                                        {{ form.contract_title }}
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="form-group">
+                                        <label for="{{ form.contract_type.id_for_label }}">{{ form.contract_type.label }} <span class="text-danger">*</span></label>
+                                        {{ form.contract_type }}
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="form-group">
+                                        <label for="{{ form.duration_type.id_for_label }}">{{ form.duration_type.label }} <span class="text-danger">*</span></label>
+                                        {{ form.duration_type }}
+                                    </div>
+                                </div>
+                            </div>
+                            {% if form.contract_number %}
+                            <div class="form-group">
+                                <label for="{{ form.contract_number.id_for_label }}">{{ form.contract_number.label }}</label>
+                                {{ form.contract_number }}
+                            </div>
+                            {% endif %}
+                        </div>
+                        
+                        <!-- الأطراف المعنية -->
+                        <div class="section mb-4">
+                            <h4 class="section-title">الأطراف المعنية</h4>
+                            <div class="row">
+                                <div class="col-md-4">
+                                    <div class="form-group">
+                                        <label for="{{ form.property.id_for_label }}">{{ form.property.label }}</label>
+                                        {{ form.property }}
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="form-group">
+                                        <label for="{{ form.broker.id_for_label }}">{{ form.broker.label }}</label>
+                                        {{ form.broker }}
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="form-group">
+                                        <label for="{{ form.client.id_for_label }}">{{ form.client.label }}</label>
+                                        {{ form.client }}
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <hr>
+                            
+                            <h5 class="mt-3">الطرف الثاني</h5>
+                            <div class="row">
+                                <div class="col-md-4">
+                                    <div class="form-group">
+                                        <label for="{{ form.second_party_name.id_for_label }}">{{ form.second_party_name.label }}</label>
+                                        {{ form.second_party_name }}
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="form-group">
+                                        <label for="{{ form.second_party_phone.id_for_label }}">{{ form.second_party_phone.label }}</label>
+                                        {{ form.second_party_phone }}
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="form-group">
+                                        <label for="{{ form.second_party_email.id_for_label }}">{{ form.second_party_email.label }}</label>
+                                        {{ form.second_party_email }}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- المعلومات المالية -->
+                        <div class="section mb-4">
+                            <h4 class="section-title">المعلومات المالية</h4>
+                            <div class="row">
+                                <div class="col-md-3">
+                                    <div class="form-group">
+                                        <label for="{{ form.amount.id_for_label }}">{{ form.amount.label }} <span class="text-danger">*</span></label>
+                                        {{ form.amount }}
+                                    </div>
+                                </div>
+                                <div class="col-md-3">
+                                    <div class="form-group">
+                                        <label for="{{ form.currency.id_for_label }}">{{ form.currency.label }}</label>
+                                        {{ form.currency }}
+                                    </div>
+                                </div>
+                                <div class="col-md-3">
+                                    <div class="form-group">
+                                        <label for="{{ form.deposit.id_for_label }}">{{ form.deposit.label }}</label>
+                                        {{ form.deposit }}
+                                    </div>
+                                </div>
+                                <div class="col-md-3">
+                                    <div class="form-group">
+                                        <label for="{{ form.commission_rate.id_for_label }}">{{ form.commission_rate.label }}</label>
+                                        {{ form.commission_rate }}
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        <label for="{{ form.commission_amount.id_for_label }}">{{ form.commission_amount.label }}</label>
+                                        {{ form.commission_amount }}
+                                        <small class="text-muted">يتم حسابه تلقائياً من نسبة العمولة</small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- معلومات التاريخ -->
+                        <div class="section mb-4">
+                            <h4 class="section-title">معلومات التاريخ</h4>
+                            <div class="row">
+                                <div class="col-md-4">
+                                    <div class="form-group">
+                                        <label for="{{ form.start_date.id_for_label }}">{{ form.start_date.label }} <span class="text-danger">*</span></label>
+                                        {{ form.start_date }}
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="form-group">
+                                        <label for="{{ form.end_date.id_for_label }}">{{ form.end_date.label }}</label>
+                                        {{ form.end_date }}
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="form-group">
+                                        <label for="{{ form.signing_date.id_for_label }}">{{ form.signing_date.label }}</label>
+                                        {{ form.signing_date }}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- معلومات الدفع -->
+                        <div class="section mb-4">
+                            <h4 class="section-title">معلومات الدفع</h4>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        <label for="{{ form.payment_frequency.id_for_label }}">{{ form.payment_frequency.label }}</label>
+                                        {{ form.payment_frequency }}
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label for="{{ form.payment_terms.id_for_label }}">{{ form.payment_terms.label }}</label>
+                                {{ form.payment_terms }}
+                            </div>
+                        </div>
+                        
+                        <!-- الشروط والأحكام -->
+                        <div class="section mb-4">
+                            <h4 class="section-title">الشروط والأحكام</h4>
+                            <div class="form-group">
+                                <label for="{{ form.terms_and_conditions.id_for_label }}">{{ form.terms_and_conditions.label }}</label>
+                                {{ form.terms_and_conditions }}
+                            </div>
+                            <div class="form-group">
+                                <label for="{{ form.special_clauses.id_for_label }}">{{ form.special_clauses.label }}</label>
+                                {{ form.special_clauses }}
+                            </div>
+                            <div class="form-group">
+                                <label for="{{ form.termination_clause.id_for_label }}">{{ form.termination_clause.label }}</label>
+                                {{ form.termination_clause }}
+                            </div>
+                            <div class="form-group">
+                                <label>
+                                    {{ form.renewal_clause }}
+                                    {{ form.renewal_clause.label }}
+                                </label>
+                            </div>
+                        </div>
+                        
+                        <!-- ملاحظات -->
+                        <div class="section mb-4">
+                            <h4 class="section-title">ملاحظات</h4>
+                            <div class="form-group">
+                                <label for="{{ form.notes.id_for_label }}">{{ form.notes.label }}</label>
+                                {{ form.notes }}
+                            </div>
+                        </div>
+                        
+                        <!-- صور العقد -->
+                        <div class="section mb-4">
+                            <h4 class="section-title">صور العقد</h4>
+                            <div class="form-group">
+                                <label for="{{ form.contract_images.id_for_label }}">{{ form.contract_images.label }}</label>
+                                {{ form.contract_images }}
+                                <small class="text-muted">يمكنك رفع صور متعددة (JPG, PNG, PDF - الحد الأقصى 10MB لكل صورة)</small>
+                            </div>
+                            <div id="image-preview" class="row mt-3"></div>
+                        </div>
+                        
+                        <!-- أزرار الإجراءات -->
+                        <div class="form-actions">
+                            <button type="submit" class="btn btn-primary">
+                                <span class="btn-icon">💾</span>
+                                {% if contract %}حفظ التغييرات{% else %}إنشاء العقد{% endif %}
+                            </button>
+                            <a href="{% if contract %}{% url 'contract_detail' contract.id %}{% else %}{% url 'contract_list' %}{% endif %}" class="btn btn-secondary">
+                                إلغاء
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.section {
+    background: linear-gradient(135deg, #0A0A0A 0%, #0A0A0A 100%);
+    border: 1px solid #333;
+    border-radius: 12px;
+    padding: 25px;
+    margin-bottom: 25px;
+}
+
+.section-title {
+    color: #e67e22;
+    font-size: 1.2rem;
+    font-weight: 600;
+    margin-bottom: 20px;
+    padding-bottom: 10px;
+    border-bottom: 2px solid #e67e22;
+}
+
+.form-group {
+    margin-bottom: 20px;
+}
+
+.form-group label {
+    color: #fff;
+    font-weight: 600;
+    margin-bottom: 8px;
+    display: block;
+}
+
+.form-control {
+    background: #0A0A0A;
+    border: 1px solid #333;
+    color: #fff;
+    padding: 12px;
+    border-radius: 6px;
+    font-size: 14px;
+    width: 100%;
+}
+
+.form-control:focus {
+    border-color: #e67e22;
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(230, 126, 34, 0.2);
+}
+
+.form-control::placeholder {
+    color: #888;
+}
+
+.form-control option {
+    background: #0A0A0A;
+    color: #fff;
+}
+
+.form-actions {
+    display: flex;
+    gap: 10px;
+    margin-top: 30px;
+    padding-top: 20px;
+    border-top: 2px solid #333;
+}
+
+.btn-icon {
+    margin-left: 5px;
+}
+
+.text-danger {
+    color: #e67e22;
+}
+
+.text-muted {
+    color: #888;
+}
+
+hr {
+    border-color: #333;
+    margin: 20px 0;
+}
+
+h5 {
+    color: #e67e22;
+    margin-top: 15px;
+    margin-bottom: 15px;
+}
+</style>
+
+<script>
+// حساب قيمة العمولة تلقائياً
+document.addEventListener('DOMContentLoaded', function() {
+    const amountField = document.querySelector('input[name="amount"]');
+    const commissionRateField = document.querySelector('input[name="commission_rate"]');
+    const commissionAmountField = document.querySelector('input[name="commission_amount"]');
+    
+    function calculateCommission() {
+        const amount = parseFloat(amountField.value) || 0;
+        const rate = parseFloat(commissionRateField.value) || 0;
+        const commission = (amount * rate) / 100;
+        commissionAmountField.value = commission.toFixed(2);
+    }
+    
+    if (amountField && commissionRateField && commissionAmountField) {
+        amountField.addEventListener('input', calculateCommission);
+        commissionRateField.addEventListener('input', calculateCommission);
+    }
+    
+    // معاينة الصور
+    const imageInput = document.querySelector('input[name="contract_images"]');
+    const imagePreview = document.getElementById('image-preview');
+    
+    if (imageInput && imagePreview) {
+        imageInput.addEventListener('change', function(e) {
+            imagePreview.innerHTML = '';
+            const files = e.target.files;
+            
+            for (let i = 0; i < files.length; i++) {
+                const file = files[i];
+                if (file.type.startsWith('image/')) {
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        const col = document.createElement('div');
+                        col.className = 'col-md-3 col-sm-4 mb-3';
+                        col.innerHTML = `
+                            <div class="image-preview-item">
+                                <img src="${e.target.result}" alt="معاينة" style="width: 100%; height: 150px; object-fit: cover; border-radius: 8px; border: 2px solid #333;">
+                                <div class="image-name" style="margin-top: 5px; font-size: 0.85rem; color: #888; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${file.name}</div>
+                            </div>
+                        `;
+                        imagePreview.appendChild(col);
+                    };
+                    reader.readAsDataURL(file);
+                }
+            }
+        });
+    }
+    
+    // إظهار/إخفاء تاريخ الانتهاء حسب نوع المدة
+    const durationTypeField = document.querySelector('select[name="duration_type"]');
+    const endDateField = document.querySelector('input[name="end_date"]');
+    
+    if (durationTypeField && endDateField) {
+        durationTypeField.addEventListener('change', function() {
+            if (this.value === 'permanent') {
+                endDateField.value = '';
+                endDateField.disabled = true;
+                endDateField.parentElement.style.opacity = '0.5';
+            } else {
+                endDateField.disabled = false;
+                endDateField.parentElement.style.opacity = '1';
+            }
+        });
+        
+        // التحقق عند التحميل
+        if (durationTypeField.value === 'permanent') {
+            endDateField.disabled = true;
+            endDateField.parentElement.style.opacity = '0.5';
+        }
+    }
+});
+</script>
+{% endblock %}

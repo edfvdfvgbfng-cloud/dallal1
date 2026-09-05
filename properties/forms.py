@@ -319,6 +319,39 @@ class VirtualTour360Form(forms.ModelForm):
     class Meta:
         model = VirtualTour360
         fields = '__all__'
+        widgets = {
+            'title': forms.TextInput(attrs=_fc('عنوان الجولة')),
+            'tour_type': forms.Select(attrs={'class': 'form-control'}),
+            'image': forms.FileInput(attrs={'accept': 'image/*'}),
+            'tour_file': forms.FileInput(),
+            'external_url': forms.URLInput(attrs=_fc('https://example.com/tour')),
+            'external_service': forms.Select(attrs={'class': 'form-control'}),
+            'description': forms.Textarea(attrs={'rows': 4}),
+            'order': forms.NumberInput(attrs={'min': 0}),
+            'is_active': forms.CheckboxInput(),
+            'is_featured': forms.CheckboxInput(),
+            'auto_rotate': forms.CheckboxInput(),
+            'auto_rotate_speed': forms.NumberInput(attrs={'min': 1, 'max': 10}),
+            'enable_zoom': forms.CheckboxInput(),
+            'min_zoom': forms.NumberInput(attrs={'step': 0.1, 'min': 0.5, 'max': 2.0}),
+            'max_zoom': forms.NumberInput(attrs={'step': 0.1, 'min': 1.0, 'max': 5.0}),
+            'enable_fullscreen': forms.CheckboxInput(),
+            'enable_vr': forms.CheckboxInput(),
+            'initial_view_pitch': forms.NumberInput(attrs={'step': 1, 'min': -90, 'max': 90}),
+            'initial_view_yaw': forms.NumberInput(attrs={'step': 1, 'min': -180, 'max': 180}),
+            'start_in_autoplay': forms.CheckboxInput(),
+            'autoplay_duration': forms.NumberInput(attrs={'min': 1}),
+            'enable_hotspots': forms.CheckboxInput(),
+            'enable_audio': forms.CheckboxInput(),
+            'audio_file': forms.FileInput(attrs={'accept': 'audio/*'}),
+            'enable_compass': forms.CheckboxInput(),
+            'enable_minimap': forms.CheckboxInput(),
+            'thumbnail': forms.FileInput(attrs={'accept': 'image/*'}),
+            'resolution': forms.Select(attrs={'class': 'form-control'}),
+            'loading_animation': forms.CheckboxInput(),
+            'background_music': forms.CheckboxInput(),
+            'transition_effect': forms.Select(attrs={'class': 'form-control'}),
+        }
 
 
 class AuctionForm(forms.ModelForm):
@@ -439,7 +472,51 @@ class HotelSearchForm(forms.Form):
     q = forms.CharField(required=False, label='بحث', widget=forms.TextInput(attrs=_fc('ابحث عن فندق...')))
     governorate = forms.ChoiceField(required=False, label='المحافظة', choices=[('', 'كل المحافظات')] + list(IRAQ_GOVERNORATES))
     city = forms.CharField(required=False, label='المدينة', widget=forms.TextInput(attrs=_fc('المدينة')))
-    stars = forms.IntegerField(required=False, label='عدد النجوم', validators=[MinValueValidator(0)])
+    district = forms.CharField(required=False, label='المنطقة', widget=forms.TextInput(attrs=_fc('المنطقة')))
+    star_rating = forms.MultipleChoiceField(required=False, label='تصنيف النجوم', choices=[
+        ('1', 'نجمة واحدة'),
+        ('2', 'نجمتان'),
+        ('3', 'ثلاث نجوم'),
+        ('4', 'أربع نجوم'),
+        ('5', 'خمس نجوم'),
+    ])
+    price_range = forms.MultipleChoiceField(required=False, label='السعر', choices=[
+        ('economy', 'اقتصادي'),
+        ('medium', 'متوسط'),
+        ('luxury', 'فاخر'),
+        ('budget', 'حسب الميزانية'),
+    ])
+    room_types = forms.MultipleChoiceField(required=False, label='نوع الغرفة', choices=[
+        ('single', 'مفردة'),
+        ('double', 'مزدوجة'),
+        ('triple', 'ثلاثية'),
+        ('family', 'عائلية'),
+        ('suite', 'جناح'),
+    ])
+    meal_plan = forms.ChoiceField(required=False, label='خطة الوجبات', choices=[
+        ('', 'الكل'),
+        ('bb', 'إفطار فقط'),
+        ('hb', 'إفطار وعشاء'),
+        ('fb', 'جميع الوجبات'),
+        ('ai', 'كل شيء مشمول'),
+    ])
+    services = forms.MultipleChoiceField(required=False, label='الخدمات', choices=[
+        ('wifi', 'واي فاي'),
+        ('ac', 'تكييف'),
+        ('parking', 'موقف سيارات'),
+        ('pool', 'مسبح'),
+        ('gym', 'نادي رياضي'),
+        ('spa', 'سبا'),
+        ('laundry', 'غسيل ملابس'),
+        ('room_service', 'خدمة غرف'),
+        ('airport_transfer', 'نقل مطار'),
+    ])
+    suitable_for = forms.MultipleChoiceField(required=False, label='مناسب لـ', choices=[
+        ('families', 'العائلات'),
+        ('couples', 'الأزواج'),
+        ('business', 'رجال الأعمال'),
+        ('groups', 'المجموعات'),
+    ])
     price_min = forms.IntegerField(required=False, label='السعر من', validators=[MinValueValidator(0)])
     price_max = forms.IntegerField(required=False, label='السعر إلى', validators=[MinValueValidator(0)])
 
@@ -469,20 +546,170 @@ class ServiceProviderForm(forms.ModelForm):
         model = ServiceProvider
         fields = '__all__'
         widgets = {
-            'description': forms.Textarea(attrs={'rows': 5}),
-            'licenses': forms.Textarea(attrs={'rows': 3}),
-            'address': forms.TextInput(attrs={'placeholder': 'العنوان التفصيلي'}),
-            'working_hours': forms.TextInput(attrs={'placeholder': 'مثال: 9:00 - 17:00'}),
-            'video_url': forms.URLInput(attrs={'placeholder': 'https://youtube.com/watch?v=...'}),
-            'latitude': forms.NumberInput(attrs={'step': '0.0000001', 'placeholder': 'مثال: 33.3152'}),
-            'longitude': forms.NumberInput(attrs={'step': '0.0000001', 'placeholder': 'مثال: 44.3661'}),
+            'description': forms.Textarea(attrs={'rows': 5, 'class': 'form-control'}),
+            'company_description': forms.Textarea(attrs={'rows': 4, 'class': 'form-control'}),
+            'licenses': forms.Textarea(attrs={'rows': 3, 'class': 'form-control'}),
+            'address': forms.TextInput(attrs={'placeholder': 'العنوان التفصيلي', 'class': 'form-control'}),
+            'working_hours': forms.TextInput(attrs={'placeholder': 'مثال: 9:00 - 17:00', 'class': 'form-control'}),
+            'video_url': forms.URLInput(attrs={'placeholder': 'https://youtube.com/watch?v=...', 'class': 'form-control'}),
+            'latitude': forms.NumberInput(attrs={'step': '0.0000001', 'placeholder': 'مثال: 33.3152', 'class': 'form-control'}),
+            'longitude': forms.NumberInput(attrs={'step': '0.0000001', 'placeholder': 'مثال: 44.3661', 'class': 'form-control'}),
+            'establishment_date': forms.DateInput(attrs={'type': 'date', 'class': 'form-control'}),
+            'services_offered': forms.Textarea(attrs={'rows': 3, 'placeholder': 'خدمات متعددة، مفصولة بفاصلة', 'class': 'form-control'}),
+            'areas_served': forms.Textarea(attrs={'rows': 2, 'placeholder': 'المناطق المخدومة', 'class': 'form-control'}),
+            'team_skills': forms.Textarea(attrs={'rows': 3, 'placeholder': 'التخصصات والمهارات', 'class': 'form-control'}),
+            'facebook_url': forms.URLInput(attrs={'placeholder': 'https://facebook.com/...', 'class': 'form-control'}),
+            'instagram_url': forms.URLInput(attrs={'placeholder': 'https://instagram.com/...', 'class': 'form-control'}),
+            'tiktok_url': forms.URLInput(attrs={'placeholder': 'https://tiktok.com/...', 'class': 'form-control'}),
+            'website_url': forms.URLInput(attrs={'placeholder': 'https://example.com', 'class': 'form-control'}),
+            'portfolio_url': forms.URLInput(attrs={'placeholder': 'رابط معرض الأعمال', 'class': 'form-control'}),
+            'google_maps_url': forms.URLInput(attrs={'placeholder': 'رابط Google Maps', 'class': 'form-control'}),
+            'business_name': forms.TextInput(attrs={'class': 'form-control'}),
+            'owner_name': forms.TextInput(attrs={'class': 'form-control'}),
+            'trade_name': forms.TextInput(attrs={'class': 'form-control'}),
+            'commercial_registration': forms.TextInput(attrs={'class': 'form-control'}),
+            'phone': forms.TextInput(attrs={'class': 'form-control'}),
+            'phone_secondary': forms.TextInput(attrs={'class': 'form-control'}),
+            'whatsapp': forms.TextInput(attrs={'class': 'form-control'}),
+            'email': forms.EmailInput(attrs={'class': 'form-control'}),
+            'city': forms.TextInput(attrs={'class': 'form-control'}),
+            'district': forms.TextInput(attrs={'class': 'form-control'}),
+            'years_experience': forms.NumberInput(attrs={'class': 'form-control'}),
+            'team_size': forms.NumberInput(attrs={'class': 'form-control'}),
+            'completed_projects_count': forms.NumberInput(attrs={'class': 'form-control'}),
+            'clients_count': forms.NumberInput(attrs={'class': 'form-control'}),
+            'min_price': forms.NumberInput(attrs={'class': 'form-control'}),
+            'max_price': forms.NumberInput(attrs={'class': 'form-control'}),
+            'price_unit': forms.TextInput(attrs={'class': 'form-control'}),
+            'additional_services': forms.Textarea(attrs={'rows': 2, 'class': 'form-control'}),
+            'saturday_hours': forms.TextInput(attrs={'class': 'form-control'}),
+            'sunday_hours': forms.TextInput(attrs={'class': 'form-control'}),
+            'monday_hours': forms.TextInput(attrs={'class': 'form-control'}),
+            'tuesday_hours': forms.TextInput(attrs={'class': 'form-control'}),
+            'wednesday_hours': forms.TextInput(attrs={'class': 'form-control'}),
+            'thursday_hours': forms.TextInput(attrs={'class': 'form-control'}),
+            'friday_hours': forms.TextInput(attrs={'class': 'form-control'}),
+        }
+        labels = {
+            'business_name': 'اسم العمل/الشركة',
+            'service_type': 'نوع الخدمة',
+            'description': 'وصف الخدمات',
+            'owner_name': 'اسم المسؤول / صاحب العمل',
+            'trade_name': 'الاسم التجاري',
+            'commercial_registration': 'رقم التسجيل التجاري',
+            'company_description': 'نبذة عن الشركة',
+            'establishment_date': 'تاريخ تأسيس العمل',
+            'ownership_type': 'نوع الملكية',
+            'business_status': 'حالة العمل',
+            'phone': 'رقم الهاتف',
+            'phone_secondary': 'رقم هاتف إضافي',
+            'whatsapp': 'واتساب',
+            'email': 'البريد الإلكتروني',
+            'facebook_url': 'رابط فيسبوك',
+            'instagram_url': 'رابط إنستغرام',
+            'tiktok_url': 'رابط تيك توك',
+            'website_url': 'رابط الموقع الإلكتروني',
+            'preferred_contact': 'أفضل وسيلة للتواصل',
+            'address': 'العنوان',
+            'governorate': 'المحافظة',
+            'city': 'المدينة / القضاء',
+            'district': 'المنطقة / الحي',
+            'years_experience': 'سنوات الخبرة',
+            'team_size': 'حجم الفريق',
+            'completed_projects_count': 'عدد المشاريع المنجزة',
+            'clients_count': 'عدد العملاء',
+            'team_skills': 'التخصصات / مهارات الفريق',
+            'min_price': 'أقل سعر',
+            'max_price': 'أعلى سعر',
+            'price_unit': 'وحدة السعر (متر مربع، مشروع، إلخ)',
+            'currency': 'العملة',
+            'pricing_method': 'طريقة التسعير',
+            'negotiable': 'السعر قابل للتفاوض',
+            'free_consultation': 'استشارة مجانية',
+            'working_hours': 'ساعات العمل',
+            'saturday_hours': 'السبت',
+            'sunday_hours': 'الأحد',
+            'monday_hours': 'الاثنين',
+            'tuesday_hours': 'الثلاثاء',
+            'wednesday_hours': 'الأربعاء',
+            'thursday_hours': 'الخميس',
+            'friday_hours': 'الجمعة',
+            'open_24_hours': 'مفتوح 24 ساعة',
+            'services_offered': 'الخدمات التي يقدمها',
+            'additional_services': 'خدمات إضافية',
+            'areas_served': 'المناطق التي نخدمها',
+            'home_service': 'تقدم خدمة منزلية',
+            'emergency_service': 'تقدم خدمة طوارئ',
+            'licenses': 'التراخيص والشهادات',
+            'logo': 'الشعار',
+            'cover_image': 'صورة الغلاف',
+            'additional_images': 'صور إضافية',
+            'video_url': 'رابط الفيديو',
+            'portfolio_url': 'رابط معرض الأعمال',
+            'catalog_pdf': 'ملف PDF للأعمال',
+            'google_maps_url': 'رابط Google Maps',
+            'latitude': 'خط العرض',
+            'longitude': 'خط الطول',
         }
 
 
 class ServiceAdvertisementForm(forms.ModelForm):
+    # حقول صور العمل الإضافية
+    work_image_1 = forms.ImageField(required=False, label='صورة العمل 1')
+    work_image_2 = forms.ImageField(required=False, label='صورة العمل 2')
+    work_image_3 = forms.ImageField(required=False, label='صورة العمل 3')
+    work_image_4 = forms.ImageField(required=False, label='صورة العمل 4')
+    work_image_5 = forms.ImageField(required=False, label='صورة العمل 5')
+    work_image_6 = forms.ImageField(required=False, label='صورة العمل 6')
+    work_image_7 = forms.ImageField(required=False, label='صورة العمل 7')
+    work_image_8 = forms.ImageField(required=False, label='صورة العمل 8')
+    work_image_9 = forms.ImageField(required=False, label='صورة العمل 9')
+    work_image_10 = forms.ImageField(required=False, label='صورة العمل 10')
+    
+    # حقول فيديوهات العمل الإضافية
+    work_video_1 = forms.FileField(required=False, label='فيديو العمل 1')
+    work_video_2 = forms.FileField(required=False, label='فيديو العمل 2')
+    work_video_3 = forms.FileField(required=False, label='فيديو العمل 3')
+    
+    # تجاوز حقل نوع الخدمة ليكون نصي بدلاً من قائمة منسدلة
+    service_type = forms.CharField(
+        max_length=100,
+        required=False,
+        label='نوع الخدمة',
+        widget=forms.TextInput(attrs={
+            'placeholder': 'اكتب نوع الخدمة (مثال: بناء، كهرباء، سباكة، إلخ)',
+            'class': 'form-control'
+        })
+    )
+    
+    # تجاوز حقل المحافظة ليكون نصي بدلاً من قائمة منسدلة
+    governorate = forms.CharField(
+        max_length=100,
+        required=False,
+        label='المحافظة',
+        widget=forms.TextInput(attrs={
+            'placeholder': 'اكتب المحافظة',
+            'class': 'form-control'
+        })
+    )
+    
     class Meta:
         model = ServiceAdvertisement
-        exclude = ['city', 'district', 'subdistrict', 'area', 'neighborhood', 'mahalla', 'block', 'street', 'alley', 'house_number', 'property_number', 'landmark', 'latitude', 'longitude']
+        fields = [
+            "title",
+            "description",
+            "service_type",
+            "project_type",
+            "governorate",
+            "price",
+            "price_description",
+            "completion_time",
+            "includes",
+            "requirements",
+            "cover_image",
+            "video_url",
+        ]
+        exclude = ['additional_images']
 
 
 class OfficePresenceForm(forms.ModelForm):
@@ -657,6 +884,12 @@ class PropertyInsideIraqForm(forms.ModelForm):
             'phone': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'رقم التواصل'}),
         }
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # Make all fields optional for smooth publishing
+        for field_name, field in self.fields.items():
+            field.required = False
+
 
 class PropertyOutsideIraqForm(forms.ModelForm):
     """نموذج إضافة عقار خارج العراق"""
@@ -725,6 +958,12 @@ class PropertyOutsideIraqForm(forms.ModelForm):
             'kitchen_appliances': forms.Textarea(attrs={'class': 'form-control', 'rows': 2, 'placeholder': 'أجهزة المطبخ'}),
         }
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # Make all fields optional for smooth publishing
+        for field_name, field in self.fields.items():
+            field.required = False
+
 
 class PropertyHotelForm(forms.ModelForm):
     """نموذج إضافة فندق"""
@@ -742,6 +981,12 @@ class PropertyHotelForm(forms.ModelForm):
             'currency': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'العملة'}),
             'booking_url': forms.URLInput(attrs={'class': 'form-control', 'placeholder': 'رابط الحجز'}),
         }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # Make all fields optional for smooth publishing
+        for field_name, field in self.fields.items():
+            field.required = False
 
 
 class PropertyResortForm(forms.ModelForm):
@@ -771,55 +1016,156 @@ class PropertyResortForm(forms.ModelForm):
             'check_out_time': forms.TimeInput(attrs={'class': 'form-control'}),
         }
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # Make all fields optional for smooth publishing
+        for field_name, field in self.fields.items():
+            field.required = False
+
 
 class JobForm(forms.ModelForm):
     """نموذج إضافة فرصة عمل"""
+    # حقول صور إضافية متعددة
+    additional_images_files = forms.ImageField(
+        required=False,
+        widget=forms.FileInput(attrs={'accept': 'image/*', 'class': 'form-control'}),
+        label='صور إضافية'
+    )
+    
     class Meta:
         model = Job
         fields = '__all__'
+        exclude = ['slug', 'posting_duration_days', 'views_count', 'applications_count', 'posted_by']
         widgets = {
-            'title': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'المسمى الوظيفي'}),
-            'company_name': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'اسم الشركة'}),
-            'company_description': forms.Textarea(attrs={'class': 'form-control', 'rows': 3, 'placeholder': 'وصف الشركة'}),
-            'category': forms.Select(attrs={'class': 'form-control'}),
-            'job_type': forms.Select(attrs={'class': 'form-control'}),
-            'experience_level': forms.Select(attrs={'class': 'form-control'}),
-            'location_type': forms.Select(attrs={'class': 'form-control'}),
-            'governorate': forms.Select(attrs={'class': 'form-control'}),
-            'city': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'المدينة'}),
-            'country': forms.Select(attrs={'class': 'form-control'}),
+            'title': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'المسمى الوظيفي', 'autocomplete': 'off'}),
+            'company_name': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'اسم الشركة', 'autocomplete': 'organization'}),
+            'company_description': forms.Textarea(attrs={'class': 'form-control', 'rows': 3, 'placeholder': 'وصف الشركة', 'autocomplete': 'off'}),
+            'category': forms.Select(attrs={'class': 'form-control', 'autocomplete': 'off'}),
+            'job_type': forms.Select(attrs={'class': 'form-control', 'autocomplete': 'off'}),
+            'experience_level': forms.Select(attrs={'class': 'form-control', 'autocomplete': 'off'}),
+            'location_type': forms.Select(attrs={'class': 'form-control', 'autocomplete': 'off'}),
+            'governorate': forms.Select(attrs={'class': 'form-control', 'autocomplete': 'off'}),
+            'city': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'المدينة', 'autocomplete': 'address-level2'}),
+            'district': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'القضاء/المنطقة', 'autocomplete': 'off'}),
+            'neighborhood': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'الحي', 'autocomplete': 'address-level3'}),
+            'country': forms.Select(attrs={'class': 'form-control', 'autocomplete': 'country'}),
             'other_country_name': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'اسم الدولة الأخرى'}),
             'outside_city': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'المدينة (خارج العراق)'}),
-            'address': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'العنوان'}),
+            'address': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'العنوان التفصيلي'}),
             'latitude': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.000001'}),
             'longitude': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.000001'}),
-            'salary_min': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01'}),
-            'salary_max': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01'}),
-            'salary_currency': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'العملة'}),
-            'salary_period': forms.Select(attrs={'class': 'form-control'}),
+            'salary_min': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01', 'autocomplete': 'off'}),
+            'salary_max': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01', 'autocomplete': 'off'}),
+            'salary_currency': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'العملة', 'autocomplete': 'off'}),
+            'salary_period': forms.Select(attrs={'class': 'form-control', 'autocomplete': 'off'}),
             'description': forms.Textarea(attrs={'class': 'form-control', 'rows': 5, 'placeholder': 'وصف الوظيفة'}),
             'requirements': forms.Textarea(attrs={'class': 'form-control', 'rows': 4, 'placeholder': 'المتطلبات'}),
             'responsibilities': forms.Textarea(attrs={'class': 'form-control', 'rows': 4, 'placeholder': 'المسؤوليات'}),
             'benefits': forms.Textarea(attrs={'class': 'form-control', 'rows': 3, 'placeholder': 'المزايا'}),
             'skills': forms.Textarea(attrs={'class': 'form-control', 'rows': 2, 'placeholder': 'المهارات المطلوبة (مفصولة بفواصل)'}),
-            'contact_name': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'اسم جهة الاتصال'}),
+            'contact_name': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'اسم مسؤول التوظيف'}),
             'contact_email': forms.EmailInput(attrs={'class': 'form-control', 'placeholder': 'البريد الإلكتروني'}),
             'contact_phone': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'رقم الهاتف'}),
+            'contact_whatsapp': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'واتساب'}),
             'language': forms.Select(attrs={'class': 'form-control'}),
             'work_environment': forms.Select(attrs={'class': 'form-control'}),
             'work_hours': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'ساعات العمل'}),
             'gender_requirement': forms.Select(attrs={'class': 'form-control'}),
             'education_requirement': forms.Select(attrs={'class': 'form-control'}),
-            'experience_years': forms.NumberInput(attrs={'class': 'form-control', 'min': 0}),
-            'start_date': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
-            'number_of_positions': forms.NumberInput(attrs={'class': 'form-control', 'min': 1}),
+            'experience_years': forms.NumberInput(attrs={'class': 'form-control', 'min': 0, 'autocomplete': 'off'}),
+            'start_date': forms.DateInput(attrs={'class': 'form-control', 'type': 'date', 'autocomplete': 'off'}),
+            'number_of_positions': forms.NumberInput(attrs={'class': 'form-control', 'min': 1, 'autocomplete': 'off'}),
             'external_application_url': forms.URLInput(attrs={'class': 'form-control', 'placeholder': 'رابط التقديم الخارجي'}),
             'expiry_date': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
+            'application_deadline': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
+            'interview_location': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'مكان المقابلة'}),
+            'applicant_notes': forms.Textarea(attrs={'class': 'form-control', 'rows': 3, 'placeholder': 'ملاحظات للمتقدم'}),
+            'education_specialization': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'التخصص الدراسي'}),
+            'required_certificates': forms.Textarea(attrs={'class': 'form-control', 'rows': 2, 'placeholder': 'الشهادات المطلوبة'}),
+            'required_software': forms.Textarea(attrs={'class': 'form-control', 'rows': 2, 'placeholder': 'البرامج/الأدوات المطلوبة'}),
+            'additional_requirements': forms.Textarea(attrs={'class': 'form-control', 'rows': 2, 'placeholder': 'متطلبات إضافية'}),
+            'work_days': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'أيام العمل'}),
+            'day_off': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'يوم العطلة'}),
+            'additional_benefits': forms.Textarea(attrs={'class': 'form-control', 'rows': 2, 'placeholder': 'بدلات/حوافز'}),
+            'commission': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'عمولة'}),
+            'department': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'القسم/التخصص', 'autocomplete': 'organization-title'}),
+            'field': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'المجال', 'autocomplete': 'off'}),
+            'additional_images': forms.HiddenInput(),
         }
-    
+        labels = {
+            'title': 'المسمى الوظيفي',
+            'company_name': 'اسم الشركة / جهة العمل',
+            'company_type': 'نوع جهة العمل',
+            'department': 'القسم / التخصص',
+            'field': 'المجال',
+            'category': 'التصنيف الوظيفي',
+            'job_type': 'نوع الوظيفة',
+            'experience_level': 'مستوى الخبرة',
+            'experience_years': 'سنوات الخبرة المطلوبة',
+            'number_of_positions': 'عدد الشواغر',
+            'available_for_students': 'هل الوظيفة متاحة للطلاب؟',
+            'accept_recent_graduates': 'هل تقبل حديثي التخرج؟',
+            'location_type': 'نوع الموقع',
+            'governorate': 'المحافظة',
+            'city': 'المدينة / القضاء',
+            'district': 'المنطقة',
+            'neighborhood': 'الحي',
+            'address': 'العنوان التفصيلي',
+            'latitude': 'خط العرض',
+            'longitude': 'خط الطول',
+            'enable_gps': 'نشر GPS - إظهار الموقع على خريطة المنصة',
+            'is_remote': 'عمل عن بعد',
+            'work_environment': 'نوع العمل (حضوري/عن بُعد/هجين)',
+            'salary_min': 'الحد الأدنى للراتب',
+            'salary_max': 'الحد الأعلى للراتب',
+            'salary_currency': 'العملة',
+            'salary_period': 'طريقة دفع الراتب',
+            'is_salary_negotiable': 'قابل للتفاوض',
+            'additional_benefits': 'بدلات / حوافز',
+            'commission': 'عمولة',
+            'description': 'وصف الوظيفة',
+            'requirements': 'المتطلبات',
+            'responsibilities': 'المسؤوليات',
+            'benefits': 'المزايا',
+            'skills': 'المهارات المطلوبة',
+            'education_requirement': 'المؤهل الدراسي',
+            'education_specialization': 'التخصص الدراسي',
+            'language': 'اللغات المطلوبة',
+            'language_level': 'مستوى اللغة',
+            'required_certificates': 'الشهادات المطلوبة',
+            'required_software': 'البرامج/الأدوات المطلوبة',
+            'driving_license_required': 'رخصة قيادة',
+            'driving_license_type': 'نوع رخصة القيادة',
+            'additional_requirements': 'متطلبات إضافية',
+            'work_hours': 'ساعات العمل',
+            'work_days': 'أيام العمل',
+            'day_off': 'يوم العطلة',
+            'has_health_insurance': 'تأمين صحي',
+            'has_transport_allowance': 'مواصلات',
+            'has_housing_allowance': 'سكن',
+            'transport_provided': 'مواصلات',
+            'meals_provided': 'وجبات',
+            'housing_provided': 'سكن',
+            'paid_vacations': 'إجازات مدفوعة',
+            'bonuses': 'مكافآت وحوافز',
+            'training_development': 'تدريب وتطوير',
+            'promotion_opportunity': 'فرصة للترقية',
+            'contact_name': 'اسم مسؤول التوظيف',
+            'contact_phone': 'رقم الهاتف',
+            'contact_whatsapp': 'واتساب',
+            'contact_email': 'البريد الإلكتروني',
+            'application_method': 'طريقة التقديم',
+            'external_application_url': 'رابط التقديم',
+            'application_deadline': 'آخر موعد للتقديم',
+            'interview_method': 'طريقة المقابلة',
+            'interview_location': 'مكان المقابلة',
+            'applicant_notes': 'ملاحظات للمتقدم',
+            'status': 'حالة الإعلان',
+        }
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        
+
         # Set field classes
         for field_name, field in self.fields.items():
             if 'widget' not in field.widget.attrs:
@@ -1365,7 +1711,7 @@ class BrokerMessageForm(forms.ModelForm):
         
         # Filter properties to show only user's properties if user is provided
         if user:
-            self.fields['property_ref'].queryset = Property.objects.filter(user=user)
+            self.fields['property_ref'].queryset = Property.objects.filter(owner=user)
             self.fields['property_ref'].required = False
         else:
             self.fields['property_ref'].queryset = Property.objects.none()

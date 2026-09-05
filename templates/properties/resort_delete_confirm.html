@@ -1,0 +1,38 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}حذف صفحة المنتجع{% endblock %}
+
+{% block content %}
+<div class="container" style="max-width: 600px; margin: 50px auto; padding: 30px; background: #1a1a1a; border-radius: 15px; border: 1px solid #333;">
+    <div class="text-center">
+        <div style="font-size: 60px; margin-bottom: 20px;">⚠️</div>
+        <h2 style="color: #ff6b6b; margin-bottom: 20px;">تأكيد حذف صفحة المنتجع</h2>
+        
+        <div style="background: #2a2a2a; padding: 20px; border-radius: 10px; margin-bottom: 25px; text-align: right;">
+            <h3 style="color: #fff; margin-bottom: 10px;">{{ resort.name }}</h3>
+            <p style="color: #888; margin: 0;">{{ resort.get_page_type_display }}</p>
+            <p style="color: #888; margin: 5px 0 0 0;">📍 {{ resort.get_governorate_display|default:'' }} {% if resort.city %}— {{ resort.city }}{% endif %}</p>
+        </div>
+        
+        <div style="background: rgba(255, 107, 107, 0.1); border: 1px solid #ff6b6b; padding: 15px; border-radius: 8px; margin-bottom: 25px;">
+            <p style="color: #ff6b6b; margin: 0; font-weight: bold;">
+                ⚠️ هل أنت متأكد من حذف صفحة المنتجع؟
+            </p>
+            <p style="color: #888; margin: 10px 0 0 0; font-size: 14px;">
+                سيتم حذف جميع المنشورات والغرف والعروض المرتبطة بهذه الصفحة
+            </p>
+        </div>
+        
+        <form method="post" style="display: flex; gap: 15px; justify-content: center;">
+            {% csrf_token %}
+            <a href="{% url 'broker_manage_resorts' %}" class="btn" style="background: #333; color: #fff; padding: 12px 30px; border-radius: 8px; text-decoration: none; border: none; cursor: pointer;">
+                إلغاء
+            </a>
+            <button type="submit" class="btn" style="background: #ff6b6b; color: #fff; padding: 12px 30px; border-radius: 8px; border: none; cursor: pointer;">
+                نعم، احذف الصفحة
+            </button>
+        </form>
+    </div>
+</div>
+{% endblock %}

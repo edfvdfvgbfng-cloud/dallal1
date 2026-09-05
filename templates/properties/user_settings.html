@@ -405,6 +405,209 @@ input:checked + .slider:before {
   gap: 0.5rem;
 }
 
+.profile-picture-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.profile-picture {
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 3px solid var(--primary, #FF7A00);
+  box-shadow: 0 5px 15px rgba(255, 122, 0, 0.3);
+}
+
+.profile-picture-placeholder {
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  background: var(--bg-secondary, #1a1a1a);
+  border: 3px solid var(--border-primary, rgba(255, 122, 0, 0.15));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 3rem;
+  color: var(--text-muted, rgba(255, 255, 255, 0.5));
+}
+
+.alert-success {
+  background: rgba(34, 197, 94, 0.1);
+  border: 1px solid rgba(34, 197, 94, 0.3);
+  color: #22c55e;
+}
+
+.notifications-list {
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+.notification-item {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.75rem;
+  border-bottom: 1px solid var(--border-primary, rgba(255, 122, 0, 0.15));
+  transition: all 0.3s ease;
+}
+
+.notification-item:hover {
+  background: var(--bg-secondary, #1a1a1a);
+}
+
+.notification-item.unread {
+  background: rgba(255, 122, 0, 0.1);
+  border-left: 3px solid var(--primary, #FF7A00);
+}
+
+.notification-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: var(--bg-secondary, #1a1a1a);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--primary, #FF7A00);
+  font-size: 1rem;
+}
+
+.notification-content {
+  flex: 1;
+}
+
+.notification-title {
+  color: var(--text-primary, #FFFFFF);
+  font-size: 0.9rem;
+  font-weight: 500;
+  margin-bottom: 0.25rem;
+}
+
+.notification-time {
+  color: var(--text-muted, rgba(255, 255, 255, 0.5));
+  font-size: 0.8rem;
+}
+
+.devices-list {
+  max-height: 400px;
+  overflow-y: auto;
+}
+
+.device-item {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem;
+  border-bottom: 1px solid var(--border-primary, rgba(255, 122, 0, 0.15));
+  transition: all 0.3s ease;
+}
+
+.device-item:hover {
+  background: var(--bg-secondary, #1a1a1a);
+}
+
+.device-item.current-device {
+  background: rgba(34, 197, 94, 0.1);
+  border-left: 3px solid #22c55e;
+}
+
+.device-icon {
+  width: 50px;
+  height: 50px;
+  border-radius: 10px;
+  background: var(--bg-secondary, #1a1a1a);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--primary, #FF7A00);
+  font-size: 1.5rem;
+}
+
+.device-info {
+  flex: 1;
+}
+
+.device-name {
+  color: var(--text-primary, #FFFFFF);
+  font-size: 0.95rem;
+  font-weight: 600;
+  margin-bottom: 0.25rem;
+}
+
+.device-details {
+  color: var(--text-muted, rgba(255, 255, 255, 0.6));
+  font-size: 0.85rem;
+  margin-bottom: 0.25rem;
+}
+
+.device-time {
+  color: var(--text-muted, rgba(255, 255, 255, 0.5));
+  font-size: 0.8rem;
+}
+
+.device-badge {
+  background: #22c55e;
+  color: white;
+  padding: 0.25rem 0.75rem;
+  border-radius: 20px;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.activity-timeline {
+  max-height: 400px;
+  overflow-y: auto;
+}
+
+.activity-item {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem;
+  border-bottom: 1px solid var(--border-primary, rgba(255, 122, 0, 0.15));
+  transition: all 0.3s ease;
+}
+
+.activity-item:hover {
+  background: var(--bg-secondary, #1a1a1a);
+}
+
+.activity-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1rem;
+  flex-shrink: 0;
+}
+
+.activity-content {
+  flex: 1;
+}
+
+.activity-title {
+  color: var(--text-primary, #FFFFFF);
+  font-size: 0.9rem;
+  font-weight: 500;
+  margin-bottom: 0.25rem;
+}
+
+.activity-time {
+  color: var(--text-muted, rgba(255, 255, 255, 0.5));
+  font-size: 0.8rem;
+}
+
+.password-strength {
+  font-weight: 600;
+  padding: 0.25rem 0.75rem;
+  border-radius: 20px;
+  font-size: 0.8rem;
+}
+
 h4 {
   color: var(--text-primary, #FFFFFF);
   font-size: 1rem;
@@ -491,6 +694,24 @@ h4 {
     <div class="settings-grid">
       <div class="settings-card">
         <h3><span class="icon">👤</span> المعلومات الأساسية</h3>
+        
+        <!-- Profile Picture -->
+        <div style="text-align: center; margin-bottom: 1.5rem;">
+          <div class="profile-picture-container">
+            {% if settings.profile_picture %}
+              <img src="{{ settings.profile_picture.url }}" alt="صورة الملف الشخصي" class="profile-picture">
+            {% else %}
+              <div class="profile-picture-placeholder">
+                <i class="fas fa-user"></i>
+              </div>
+            {% endif %}
+            <button class="btn-primary" style="margin-top: 10px; font-size: 0.8rem;" onclick="document.getElementById('profile-picture-input').click()">
+              <i class="fas fa-camera"></i> تغيير الصورة
+            </button>
+            <input type="file" id="profile-picture-input" accept="image/*" style="display: none;" onchange="uploadProfilePicture(this)">
+          </div>
+        </div>
+        
         <div class="info-item">
           <span class="info-label"><i class="fas fa-user"></i> اسم المستخدم:</span>
           <span class="info-value">{{ request.user.username }}</span>
@@ -511,90 +732,252 @@ h4 {
           <span class="info-label"><i class="fas fa-city"></i> المدينة:</span>
           <span class="info-value">{{ settings.city|default:"غير محدد" }}</span>
         </div>
-        <a href="/settings/profile/" class="btn-primary" style="margin-top: 15px;">تعديل الملف الشخصي</a>
+        <a href="{% url 'user_settings_profile' %}" class="btn-primary" style="margin-top: 15px;">تعديل الملف الشخصي</a>
       </div>
       
       <div class="settings-card">
         <h3><span class="icon">📊</span> إحصائيات الحساب</h3>
         <div class="info-item">
-          <span class="info-label"><i class="fas fa-home"></i> العقارات:</span>
-          <span class="info-value">{{ request.user.property_set.count|default:0 }}</span>
+          <span class="info-label"><i class="fas fa-home"></i> العقارات المفضلة:</span>
+          <span class="info-value">{{ favorite_properties.count|default:0 }}</span>
         </div>
         <div class="info-item">
           <span class="info-label"><i class="fas fa-heart"></i> المفضلة:</span>
-          <span class="info-value">{{ request.user.savedproperty_set.count|default:0 }}</span>
+          <span class="info-value">{{ request.user.property_saves.count|default:0 }}</span>
         </div>
         <div class="info-item">
           <span class="info-label"><i class="fas fa-comment"></i> التعليقات:</span>
-          <span class="info-value">{{ request.user.propertycomment_set.count|default:0 }}</span>
+          <span class="info-value">{{ request.user.property_comments.count|default:0 }}</span>
+        </div>
+        <div class="info-item">
+          <span class="info-label"><i class="fas fa-envelope"></i> الرسائل المرسلة:</span>
+          <span class="info-value">{{ activity_summary.messages_sent|default:0 }}</span>
         </div>
         <div class="info-item">
           <span class="info-label"><i class="fas fa-calendar"></i> تاريخ التسجيل:</span>
           <span class="info-value">{{ request.user.date_joined|date:"Y-m-d" }}</span>
         </div>
+        <div class="info-item">
+          <span class="info-label"><i class="fas fa-clock"></i> آخر ظهور:</span>
+          <span class="info-value">{{ request.user.last_login|date:"Y-m-d H:i"|default:"لم يسجل دخول" }}</span>
+        </div>
+      </div>
+      
+      <!-- Profile Completion Card -->
+      <div class="settings-card" style="border: 2px solid var(--primary, #FF7A00);">
+        <h3><span class="icon">🎯</span> اكتمال الملف الشخصي</h3>
+        
+        <div class="progress-container">
+          <div class="progress-text">
+            <span>اكتمال الملف الشخصي</span>
+            <span>{{ settings.get_profile_completion_percentage }}%</span>
+          </div>
+          <div class="progress-bar">
+            <div class="progress-fill" style="width: {{ settings.get_profile_completion_percentage }}%;"></div>
+          </div>
+        </div>
+        
+        {% if settings.get_completion_suggestions %}
+          <div style="margin-top: 1rem;">
+            <h4 style="margin-bottom: 0.5rem;">اقتراحات لتحسين ملفك:</h4>
+            <ul style="padding-right: 1.5rem; color: var(--text-muted, rgba(255, 255, 255, 0.7));">
+              {% for suggestion in settings.get_completion_suggestions %}
+                <li>{{ suggestion }}</li>
+              {% endfor %}
+            </ul>
+          </div>
+        {% else %}
+          <div class="alert alert-success" style="margin-top: 1rem;">
+            <i class="fas fa-check-circle"></i>
+            ملفك الشخصي مكتمل! 🎉
+          </div>
+        {% endif %}
       </div>
     </div>
   </div>
   
   <!-- Security Section -->
   <div class="settings-section" id="security-section">
-    <div class="settings-card">
-      <h3><span class="icon">🔒</span> الأمان</h3>
-      <div class="info-item">
-        <span class="info-label"><i class="fas fa-shield-alt"></i> المصادقة الثنائية:</span>
-        <span class="info-value">
-          {% if settings.two_factor_enabled %}
-            <span class="status-active">مفعلة</span>
-          {% else %}
-            <span class="status-inactive">غير مفعلة</span>
-          {% endif %}
-        </span>
+    <div class="settings-grid">
+      <div class="settings-card">
+        <h3><span class="icon">🔒</span> الأمان</h3>
+        <div class="info-item">
+          <span class="info-label"><i class="fas fa-shield-alt"></i> المصادقة الثنائية:</span>
+          <span class="info-value">
+            {% if settings.two_factor_enabled %}
+              <span class="status-active">مفعلة</span>
+            {% else %}
+              <span class="status-inactive">غير مفعلة</span>
+            {% endif %}
+          </span>
+        </div>
+        <div class="info-item">
+          <span class="info-label"><i class="fas fa-clock"></i> آخر تغيير لكلمة المرور:</span>
+          <span class="info-value">
+            {% if settings.last_password_change %}
+              {{ settings.last_password_change|date:"Y-m-d" }}
+            {% else %}
+              لم يتم التغيير
+            {% endif %}
+          </span>
+        </div>
+        <div class="info-item">
+          <span class="info-label"><i class="fas fa-key"></i> قوة كلمة المرور:</span>
+          <span class="info-value">
+            <span class="password-strength" style="color: {{ password_strength.color }};">
+              {{ password_strength.label }}
+            </span>
+          </span>
+        </div>
+        <div class="info-item">
+          <span class="info-label"><i class="fas fa-history"></i> آخر تسجيل دخول:</span>
+          <span class="info-value">{{ request.user.last_login|date:"Y-m-d H:i"|default:"لم يسجل دخول" }}</span>
+        </div>
+        <a href="{% url 'user_settings_security' %}" class="btn-primary" style="margin-top: 15px;">تغيير كلمة المرور</a>
       </div>
-      <div class="info-item">
-        <span class="info-label"><i class="fas fa-clock"></i> آخر تغيير لكلمة المرور:</span>
-        <span class="info-value">
-          {% if settings.last_password_change %}
-            {{ settings.last_password_change|date:"Y-m-d" }}
-          {% else %}
-            لم يتم التغيير
-          {% endif %}
-        </span>
+      
+      <div class="settings-card">
+        <h3><span class="icon">📱</span> الأجهزة المتصلة</h3>
+        {% if user_devices %}
+          <div class="devices-list">
+            {% for device in user_devices %}
+              <div class="device-item {% if device.is_current %}current-device{% endif %}">
+                <div class="device-icon">
+                  {% if device.device_type == 'desktop' %}
+                    <i class="fas fa-desktop"></i>
+                  {% elif device.device_type == 'mobile' %}
+                    <i class="fas fa-mobile-alt"></i>
+                  {% elif device.device_type == 'tablet' %}
+                    <i class="fas fa-tablet-alt"></i>
+                  {% else %}
+                    <i class="fas fa-laptop"></i>
+                  {% endif %}
+                </div>
+                <div class="device-info">
+                  <div class="device-name">{{ device.device_name }}</div>
+                  <div class="device-details">{{ device.browser }} | {{ device.operating_system }}</div>
+                  <div class="device-time">{{ device.last_seen|timesince }} مضى</div>
+                </div>
+                {% if device.is_current %}
+                  <span class="device-badge">الجهاز الحالي</span>
+                {% else %}
+                  <button class="btn-danger" style="font-size: 0.7rem; padding: 0.25rem 0.5rem;" onclick="revokeDevice({{ device.id }})">
+                    <i class="fas fa-times"></i>
+                  </button>
+                {% endif %}
+              </div>
+            {% endfor %}
+          </div>
+        {% else %}
+          <div class="empty-state">
+            <i class="fas fa-mobile-alt"></i>
+            <p>لا توجد أجهزة مسجلة</p>
+          </div>
+        {% endif %}
       </div>
-      <a href="/settings/security/" class="btn-primary" style="margin-top: 15px;">تغيير كلمة المرور</a>
     </div>
   </div>
   
   <!-- Notifications Section -->
   <div class="settings-section" id="notifications-section">
-    <div class="settings-card">
-      <h3><span class="icon">🔔</span> الإشعارات</h3>
-      <div class="info-item">
-        <span class="info-label"><i class="fas fa-home"></i> إشعارات العقارات الجديدة:</span>
-        <span class="info-value">
-          {% if settings.email_new_properties %}
-            <span class="status-active">مفعلة</span>
-          {% else %}
-            <span class="status-inactive">معطلة</span>
-          {% endif %}
-        </span>
+    <div class="settings-grid">
+      <div class="settings-card">
+        <h3><span class="icon">🔔</span> إعدادات الإشعارات</h3>
+        <div class="info-item">
+          <span class="info-label"><i class="fas fa-home"></i> إشعارات العقارات الجديدة:</span>
+          <span class="info-value">
+            {% if settings.notification_new_properties %}
+              <span class="status-active">مفعلة</span>
+            {% else %}
+              <span class="status-inactive">معطلة</span>
+            {% endif %}
+          </span>
+        </div>
+        <div class="info-item">
+          <span class="info-label"><i class="fas fa-envelope"></i> إشعارات الرسائل:</span>
+          <span class="info-value">
+            {% if settings.notification_messages %}
+              <span class="status-active">مفعلة</span>
+            {% else %}
+              <span class="status-inactive">معطلة</span>
+            {% endif %}
+          </span>
+        </div>
+        <div class="info-item">
+          <span class="info-label"><i class="fas fa-percent"></i> إشعارات العروض والخصومات:</span>
+          <span class="info-value">
+            {% if settings.notification_offers %}
+              <span class="status-active">مفعلة</span>
+            {% else %}
+              <span class="status-inactive">معطلة</span>
+            {% endif %}
+          </span>
+        </div>
+        <div class="info-item">
+          <span class="info-label"><i class="fas fa-search"></i> إشعارات العقارات المطابقة:</span>
+          <span class="info-value">
+            {% if settings.notification_matching %}
+              <span class="status-active">مفعلة</span>
+            {% else %}
+              <span class="status-inactive">معطلة</span>
+            {% endif %}
+          </span>
+        </div>
+        <div class="info-item">
+          <span class="info-label"><i class="fas fa-at"></i> إشعارات البريد الإلكتروني:</span>
+          <span class="info-value">
+            {% if settings.email_notifications %}
+              <span class="status-active">مفعلة</span>
+            {% else %}
+              <span class="status-inactive">معطلة</span>
+            {% endif %}
+          </span>
+        </div>
+        <div class="info-item">
+          <span class="info-label"><i class="fas fa-mobile-alt"></i> إشعارات التطبيق:</span>
+          <span class="info-value">
+            {% if settings.app_notifications %}
+              <span class="status-active">مفعلة</span>
+            {% else %}
+              <span class="status-inactive">معطلة</span>
+            {% endif %}
+          </span>
+        </div>
+        <a href="{% url 'user_settings_notifications' %}" class="btn-primary" style="margin-top: 15px;">تعديل إعدادات الإشعارات</a>
       </div>
-      <div class="info-item">
-        <span class="info-label"><i class="fas fa-envelope"></i> إشعارات الرسائل:</span>
-        <span class="info-value">
-          {% if settings.email_messages %}
-            <span class="status-active">مفعلة</span>
-          {% else %}
-            <span class="status-inactive">معطلة</span>
-          {% endif %}
-        </span>
+      
+      <div class="settings-card">
+        <h3><span class="icon">📱</span> الإشعارات الحديثة</h3>
+        {% if recent_notifications %}
+          <div class="notifications-list">
+            {% for notification in recent_notifications %}
+              <div class="notification-item {% if not notification.is_read %}unread{% endif %}">
+                <div class="notification-icon">
+                  {% if notification.notification_type == 'property_new' %}
+                    <i class="fas fa-home"></i>
+                  {% elif notification.notification_type == 'message' %}
+                    <i class="fas fa-envelope"></i>
+                  {% elif notification.notification_type == 'offer' %}
+                    <i class="fas fa-percent"></i>
+                  {% else %}
+                    <i class="fas fa-bell"></i>
+                  {% endif %}
+                </div>
+                <div class="notification-content">
+                  <div class="notification-title">{{ notification.title|default:"إشعار جديد" }}</div>
+                  <div class="notification-time">{{ notification.created_at|timesince }} مضى</div>
+                </div>
+              </div>
+            {% endfor %}
+          </div>
+        {% else %}
+          <div class="empty-state">
+            <i class="fas fa-bell-slash"></i>
+            <p>لا توجد إشعارات حديثة</p>
+          </div>
+        {% endif %}
+        <a href="#" class="btn-primary" style="margin-top: 15px; font-size: 0.8rem;">عرض جميع الإشعارات</a>
       </div>
-      <div class="info-item">
-        <span class="info-label"><i class="fas fa-at"></i> إشعارات البريد الإلكتروني:</span>
-        <span class="info-value">
-          <span class="status-active">مفعلة</span>
-        </span>
-      </div>
-      <a href="/settings/notifications/" class="btn-primary" style="margin-top: 15px;">تعديل إعدادات الإشعارات</a>
     </div>
   </div>
   
@@ -624,9 +1007,9 @@ h4 {
       </div>
       <div class="info-item">
         <span class="info-label"><i class="fas fa-users"></i> من يمكنه مراسلتي:</span>
-        <span class="info-value">{{ settings.messaging_permission|default:"الجميع" }}</span>
+        <span class="info-value">{{ settings.get_who_can_message_display|default:"الجميع" }}</span>
       </div>
-      <a href="/settings/privacy/" class="btn-primary" style="margin-top: 15px;">تعديل إعدادات الخصوصية</a>
+      <a href="{% url 'user_settings_privacy' %}" class="btn-primary" style="margin-top: 15px;">تعديل إعدادات الخصوصية</a>
     </div>
   </div>
   
@@ -640,10 +1023,10 @@ h4 {
         <div class="progress-container">
           <div class="progress-text">
             <span>اكتمال الملف الشخصي</span>
-            <span>65%</span>
+            <span>{{ settings.get_profile_completion_percentage }}%</span>
           </div>
           <div class="progress-bar">
-            <div class="progress-fill" style="width: 65%;"></div>
+            <div class="progress-fill" style="width: {{ settings.get_profile_completion_percentage }}%;"></div>
           </div>
         </div>
         
@@ -651,7 +1034,7 @@ h4 {
           <span class="info-label"><i class="fas fa-moon"></i> الوضع الليلي:</span>
           <span class="info-value">
             <label class="switch">
-              <input type="checkbox" id="dark-mode-toggle">
+              <input type="checkbox" id="dark-mode-toggle" {% if settings.dark_mode %}checked{% endif %}>
               <span class="slider round"></span>
             </label>
           </span>
@@ -661,7 +1044,7 @@ h4 {
           <span class="info-label"><i class="fas fa-bell"></i> الإشعارات:</span>
           <span class="info-value">
             <label class="switch">
-              <input type="checkbox" id="notifications-toggle" checked>
+              <input type="checkbox" id="notifications-toggle" {% if settings.notification_messages %}checked{% endif %}>
               <span class="slider round"></span>
             </label>
           </span>
@@ -669,25 +1052,25 @@ h4 {
         
         <div class="info-item">
           <span class="info-label"><i class="fas fa-language"></i> اللغة:</span>
-          <span class="info-value">ar</span>
+          <span class="info-value">{{ settings.get_language_display }}</span>
         </div>
         
         <div class="info-item">
           <span class="info-label"><i class="fas fa-dollar-sign"></i> العملة:</span>
-          <span class="info-value">IQD</span>
+          <span class="info-value">{{ settings.currency }}</span>
         </div>
         
         <div class="info-item">
           <span class="info-label"><i class="fas fa-th"></i> طريقة عرض العقارات:</span>
-          <span class="info-value">grid</span>
+          <span class="info-value">{{ settings.get_property_view_mode_display }}</span>
         </div>
         
         <div class="info-item">
           <span class="info-label"><i class="fas fa-list-ol"></i> عدد العقارات في الصفحة:</span>
-          <span class="info-value">12</span>
+          <span class="info-value">{{ settings.properties_per_page }}</span>
         </div>
         
-        <a href="/settings/preferences/" class="btn-primary" style="margin-top: 15px;">تعديل التفضيلات</a>
+        <a href="{% url 'user_settings_preferences' %}" class="btn-primary" style="margin-top: 15px;">تعديل التفضيلات</a>
       </div>
       
       <div class="settings-card">
@@ -739,13 +1122,15 @@ h4 {
     <div class="settings-card">
       <h3><span class="icon">❤️</span> العقارات المفضلة</h3>
       
-      {% if saved_properties %}
+      {% if favorite_properties %}
         <div class="settings-grid">
-          {% for property in saved_properties %}
-          <div class="settings-card">
-            <h4>{{ property.title }}</h4>
-            <p>{{ property.location }}</p>
-            <p>{{ property.price }}</p>
+          {% for save in favorite_properties %}
+          <div class="settings-card" style="padding: 1rem;">
+            <h4>{{ save.property.title }}</h4>
+            <p style="color: var(--text-muted, rgba(255, 255, 255, 0.7));">
+              {{ save.property.price|default:"غير محدد" }} | {{ save.property.city|default:"غير محدد" }}
+            </p>
+            <a href="{% url 'property_detail' save.property.id %}" class="btn-primary" style="font-size: 0.8rem; padding: 0.5rem 1rem;">عرض التفاصيل</a>
           </div>
           {% endfor %}
         </div>
@@ -755,6 +1140,8 @@ h4 {
           <p>لا توجد عقارات مفضلة</p>
         </div>
       {% endif %}
+      
+      <a href="{% url 'user_settings_favorites' %}" class="btn-primary" style="margin-top: 15px;">عرض جميع المفضلة</a>
     </div>
   </div>
   
@@ -766,23 +1153,96 @@ h4 {
         <span class="label"><i class="fas fa-ban"></i> المستخدمون المحظورون:</span>
         <span class="info-value">{{ blocked_users.count }}</span>
       </div>
-      <a href="/settings/messages/" class="btn-primary" style="margin-top: 15px;">إدارة الرسائل</a>
+      <a href="{% url 'user_settings_messages' %}" class="btn-primary" style="margin-top: 15px;">إدارة الرسائل</a>
     </div>
   </div>
   
   <!-- Activity Section -->
   <div class="settings-section" id="activity-section">
-    <div class="settings-card">
-      <h3><span class="icon">📊</span> النشاط</h3>
-      <div class="info-item">
-        <span class="info-label"><i class="fas fa-search"></i> عمليات البحث المحفوظة:</span>
-        <span class="info-value">{{ saved_searches.count }}</span>
+    <div class="settings-grid">
+      <div class="settings-card">
+        <h3><span class="icon">📊</span> النشاط</h3>
+        <div class="info-item">
+          <span class="info-label"><i class="fas fa-search"></i> عمليات البحث المحفوظة:</span>
+          <span class="info-value">{{ saved_searches.count }}</span>
+        </div>
+        <div class="info-item">
+          <span class="info-label"><i class="fas fa-eye"></i> العقارات المشاهدة مؤخراً:</span>
+          <span class="info-value">{{ viewed_properties|length }}</span>
+        </div>
+        <div class="info-item">
+          <span class="info-label"><i class="fas fa-heart"></i> المفضلة:</span>
+          <span class="info-value">{{ favorite_properties.count }}</span>
+        </div>
+        <div class="info-item">
+          <span class="info-label"><i class="fas fa-comment"></i> التعليقات:</span>
+          <span class="info-value">{{ activity_summary.comments }}</span>
+        </div>
+        <a href="{% url 'user_settings_activity' %}" class="btn-primary" style="margin-top: 15px;">عرض النشاط الكامل</a>
       </div>
-      <div class="info-item">
-        <span class="info-label"><i class="fas fa-eye"></i> العقارات المشاهدة مؤخراً:</span>
-        <span class="info-value">{{ recently_viewed.count }}</span>
+      
+      <div class="settings-card">
+        <h3><span class="icon">🕒</span> النشاط الحديث</h3>
+        <div class="activity-timeline">
+          <div class="activity-item">
+            <div class="activity-icon" style="background: rgba(34, 197, 94, 0.2); color: #22c55e;">
+              <i class="fas fa-user-plus"></i>
+            </div>
+            <div class="activity-content">
+              <div class="activity-title">تم إنشاء الحساب</div>
+              <div class="activity-time">{{ request.user.date_joined|timesince }} مضى</div>
+            </div>
+          </div>
+          
+          {% if request.user.last_login %}
+          <div class="activity-item">
+            <div class="activity-icon" style="background: rgba(59, 130, 246, 0.2); color: #3b82f6;">
+              <i class="fas fa-sign-in-alt"></i>
+            </div>
+            <div class="activity-content">
+              <div class="activity-title">آخر تسجيل دخول</div>
+              <div class="activity-time">{{ request.user.last_login|timesince }} مضى</div>
+            </div>
+          </div>
+          {% endif %}
+          
+          {% if activity_summary.property_saves > 0 %}
+          <div class="activity-item">
+            <div class="activity-icon" style="background: rgba(255, 122, 0, 0.2); color: #FF7A00;">
+              <i class="fas fa-heart"></i>
+            </div>
+            <div class="activity-content">
+              <div class="activity-title">أضفت {{ activity_summary.property_saves }} عقار للمفضلة</div>
+              <div class="activity-time">نشاط حديث</div>
+            </div>
+          </div>
+          {% endif %}
+          
+          {% if activity_summary.comments > 0 %}
+          <div class="activity-item">
+            <div class="activity-icon" style="background: rgba(168, 85, 247, 0.2); color: #a855f7;">
+              <i class="fas fa-comment"></i>
+            </div>
+            <div class="activity-content">
+              <div class="activity-title">كتبت {{ activity_summary.comments }} تعليق</div>
+              <div class="activity-time">نشاط حديث</div>
+            </div>
+          </div>
+          {% endif %}
+          
+          {% if activity_summary.total_messages > 0 %}
+          <div class="activity-item">
+            <div class="activity-icon" style="background: rgba(236, 72, 153, 0.2); color: #ec4899;">
+              <i class="fas fa-envelope"></i>
+            </div>
+            <div class="activity-content">
+              <div class="activity-title">أرسلت وتم استلام {{ activity_summary.total_messages }} رسالة</div>
+              <div class="activity-time">نشاط حديث</div>
+            </div>
+          </div>
+          {% endif %}
+        </div>
       </div>
-      <a href="/settings/activity/" class="btn-primary" style="margin-top: 15px;">عرض النشاط الكامل</a>
     </div>
   </div>
   
@@ -796,7 +1256,7 @@ h4 {
           <i class="fas fa-info-circle"></i>
           البيانات تشمل: الملف الشخصي، الإعدادات، المفضلة، عمليات البحث
         </div>
-        <form action="/settings/account/" method="POST">
+        <form action="{% url 'user_settings_account' %}" method="POST">
           <input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">
           <input type="hidden" name="action" value="download">
           <button type="submit" class="btn-primary">
@@ -812,7 +1272,7 @@ h4 {
           <i class="fas fa-exclamation-triangle"></i>
           <strong>تنبيه:</strong> سيتم تسجيل خروجك من جميع الأجهزة
         </div>
-        <form action="/settings/account/" method="POST" onsubmit="return confirm('هل أنت متأكد من تعطيل حسابك؟');">
+        <form action="{% url 'user_settings_account' %}" method="POST" onsubmit="return confirm('هل أنت متأكد من تعطيل حسابك؟');">
           <input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">
           <input type="hidden" name="action" value="disable">
           <input type="text" name="reason" placeholder="سبب التعطيل (اختياري)" class="form-control">
@@ -829,7 +1289,7 @@ h4 {
           <i class="fas fa-exclamation-triangle"></i>
           <strong>تحذير خطير:</strong> سيتم حذف جميع بياناتك بما في ذلك المفضلة، الرسائل، وعمليات البحث المحفوظة.
         </div>
-        <form action="/settings/account/" method="POST" onsubmit="return confirm('هل أنت متأكد من حذف حسابك نهائياً؟ هذا الإجراء لا يمكن التراجع عنه.');">
+        <form action="{% url 'user_settings_account' %}" method="POST" onsubmit="return confirm('هل أنت متأكد من حذف حسابك نهائياً؟ هذا الإجراء لا يمكن التراجع عنه.');">
           <input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">
           <input type="hidden" name="action" value="delete">
           <button type="submit" class="btn-danger">
@@ -840,6 +1300,9 @@ h4 {
     </div>
   </div>
 </div>
+
+<!-- CSRF Token for AJAX calls -->
+<input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
@@ -865,8 +1328,8 @@ document.addEventListener('DOMContentLoaded', function() {
   if (darkModeToggle) {
     darkModeToggle.addEventListener('change', function() {
       document.body.classList.toggle('dark-mode', this.checked);
-      // Save preference
-      localStorage.setItem('darkMode', this.checked);
+      // Save preference via AJAX
+      savePreference('dark_mode', this.checked);
       // Show notification
       showNotification(this.checked ? 'تم تفعيل الوضع الليلي' : 'تم تعطيل الوضع الليلي');
     });
@@ -876,8 +1339,8 @@ document.addEventListener('DOMContentLoaded', function() {
   const notificationsToggle = document.getElementById('notifications-toggle');
   if (notificationsToggle) {
     notificationsToggle.addEventListener('change', function() {
-      // Save preference
-      localStorage.setItem('notificationsEnabled', this.checked);
+      // Save preference via AJAX
+      savePreference('notification_messages', this.checked);
       // Show notification
       showNotification(this.checked ? 'تم تفعيل الإشعارات' : 'تم تعطيل الإشعارات');
     });
@@ -888,22 +1351,14 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 function loadSavedPreferences() {
-  // Load dark mode preference
-  const darkMode = localStorage.getItem('darkMode');
-  if (darkMode === 'true') {
-    document.body.classList.add('dark-mode');
-    const darkModeToggle = document.getElementById('dark-mode-toggle');
-    if (darkModeToggle) {
-      darkModeToggle.checked = true;
-    }
-  }
+  // Preferences are already loaded from the backend via Django template
+  // The checkboxes are already set based on the actual database values
+  // No need for localStorage since we're using AJAX for persistence
   
-  // Load notifications preference
-  const notificationsEnabled = localStorage.getItem('notificationsEnabled');
-  const notificationsToggle = document.getElementById('notifications-toggle');
-  if (notificationsEnabled === 'true' && notificationsToggle) {
-    notificationsToggle.checked = true;
-  }
+  // Initialize dark mode based on settings
+  {% if settings.dark_mode %}
+  document.body.classList.add('dark-mode');
+  {% endif %}
 }
 
 function toggleSetting(setting) {
@@ -942,6 +1397,109 @@ function getSettingName(setting) {
   return names[setting] || setting;
 }
 
+function savePreference(field, value) {
+  // Save preference via AJAX
+  const formData = new FormData();
+  formData.append('field', field);
+  formData.append('value', value);
+  
+  // Get CSRF token
+  const csrfToken = document.querySelector('input[name="csrfmiddlewaretoken"]').value;
+  formData.append('csrfmiddlewaretoken', csrfToken);
+  
+  fetch('/settings/api/save-preference/', {
+    method: 'POST',
+    body: formData,
+    credentials: 'same-origin',
+    headers: {
+      'X-CSRFToken': csrfToken
+    }
+  })
+  .then(response => response.json())
+  .then(data => {
+    if (data.success) {
+      console.log('Preference saved successfully');
+    } else {
+      console.error('Failed to save preference:', data.error);
+      showNotification('فشل حفظ الإعداد');
+    }
+  })
+  .catch(error => {
+    console.error('Error saving preference:', error);
+    showNotification('خطأ في الاتصال');
+  });
+}
+
+function uploadProfilePicture(input) {
+  if (input.files && input.files[0]) {
+    const file = input.files[0];
+    const formData = new FormData();
+    formData.append('profile_picture', file);
+    
+    // Get CSRF token
+    const csrfToken = document.querySelector('input[name="csrfmiddlewaretoken"]').value;
+    formData.append('csrfmiddlewaretoken', csrfToken);
+    
+    showNotification('جاري رفع الصورة...');
+    
+    fetch('/settings/api/upload-profile-picture/', {
+      method: 'POST',
+      body: formData,
+      credentials: 'same-origin',
+      headers: {
+        'X-CSRFToken': csrfToken
+      }
+    })
+    .then(response => response.json())
+    .then(data => {
+      if (data.success) {
+        showNotification('تم رفع الصورة بنجاح');
+        // Update the displayed image
+        const profileImg = document.querySelector('.profile-picture');
+        if (profileImg) {
+          profileImg.src = data.url + '?t=' + new Date().getTime();
+        } else {
+          // Replace placeholder with new image
+          const placeholder = document.querySelector('.profile-picture-placeholder');
+          if (placeholder) {
+            placeholder.outerHTML = `<img src="${data.url}" alt="صورة الملف الشخصي" class="profile-picture">`;
+          }
+        }
+      } else {
+        console.error('Failed to upload profile picture:', data.error);
+        showNotification('فشل رفع الصورة: ' + data.error);
+      }
+    })
+    .catch(error => {
+      console.error('Error uploading profile picture:', error);
+      showNotification('خطأ في الاتصال');
+    });
+  }
+}
+
+function revokeDevice(deviceId) {
+  if (confirm('هل أنت متأكد من إلغاء تفعيل هذا الجهاز؟')) {
+    const csrfToken = document.querySelector('input[name="csrfmiddlewaretoken"]').value;
+    
+    fetch(`/settings/security/revoke-device/${deviceId}/`, {
+      method: 'POST',
+      credentials: 'same-origin',
+      headers: {
+        'X-CSRFToken': csrfToken
+      }
+    })
+    .then(response => response.text())
+    .then(data => {
+      // Reload the page to see the updated devices list
+      location.reload();
+    })
+    .catch(error => {
+      console.error('Error revoking device:', error);
+      showNotification('خطأ في الاتصال');
+    });
+  }
+}
+
 function showNotification(message) {
   // Create notification element
   const notification = document.createElement('div');
@@ -959,7 +1517,7 @@ function showNotification(message) {
     top: 20px;
     left: 50%;
     transform: translateX(-50%);
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: linear-gradient(135deg, #FF7A00 0%, #FF9500 100%);
     color: white;
     padding: 15px 25px;
     border-radius: 10px;

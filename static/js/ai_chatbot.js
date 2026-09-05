@@ -245,7 +245,7 @@ document.addEventListener('DOMContentLoaded', function() {
   // New chat
   if (chatbotNewChat) {
     chatbotNewChat.addEventListener('click', function() {
-      chatbotMessages.innerHTML = '<div class="message bot-message"><div class="message-content"><p>السلام عليكم 👋</p><p>أهلاً بك، شلون أگدر أساعدك اليوم؟</p></div></div>';
+      chatbotMessages.innerHTML = '<div class="message bot-message"><div class="message-content"><p>السلام عليكم 👋</p><p>أهلاً بك، شلون أقدر أساعدك اليوم؟</p></div></div>';
       conversationState = { intent: null, data: {}, step: 0 };
     });
   }
@@ -275,7 +275,7 @@ document.addEventListener('DOMContentLoaded', function() {
         addUserMessage(`📎 ملف مرفق: ${file.name}`);
         addBotMessage('تم استلام الملف. جاري معالجته...');
         setTimeout(() => {
-          addBotMessage('تمت معالجة الملف بنجاح. شلون أگدر أساعدك بعد؟');
+          addBotMessage('تمت معالجة الملف بنجاح. شلون أقدر أساعدك بعد؟');
         }, 1500);
       }
     });
@@ -311,7 +311,7 @@ document.addEventListener('DOMContentLoaded', function() {
         addBotMessage('حسناً، تريد بيع عقار. هل عندك تفاصيل عن العقار؟');
         break;
       case 'broker':
-        addBotMessage('حسناً، أنت دلال. شلون أگدر أساعدك؟');
+        addBotMessage('حسناً، أنت دلال. شلون أقدر أساعدك؟');
         break;
       case 'job':
         addBotMessage('حسناً، تبحث عن وظيفة. في أي مجال؟');

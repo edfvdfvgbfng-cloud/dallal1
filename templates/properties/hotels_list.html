@@ -163,55 +163,32 @@
           <span class="label-icon">🔍</span>
           بحث
         </label>
-        <input type="text" class="form-control" name="search" placeholder="ابحث باسم الفندق..." value="{{ request.GET.search }}">
+        <input type="text" class="form-control" name="q" placeholder="ابحث باسم الفندق..." value="{{ request.GET.q }}">
       </div>
       <div class="form-group">
         <label>
           <span class="label-icon">⭐</span>
           التصنيف
         </label>
-        <select name="star_rating" class="form-control">
-          <option value="">كل التصنيفات</option>
-          {% for value, label in form.star_rating.field.choices %}
-          <option value="{{ value }}" {% if value == request.GET.star_rating %}selected{% endif %}>{{ label }}</option>
+        <select name="star_rating" class="form-control" multiple>
+          {% for value, label in form.star_rating.choices %}
+          <option value="{{ value }}" {% if value in request.GET.getlist('star_rating') %}selected{% endif %}>{{ label }}</option>
           {% endfor %}
         </select>
       </div>
       <div class="form-group">
         <label>
           <span class="label-icon">💰</span>
-          السعر
+          السعر من
         </label>
-        <select name="price_range" class="form-control">
-          <option value="">كل الأسعار</option>
-          {% for value, label in form.price_range.field.choices %}
-          <option value="{{ value }}" {% if value == request.GET.price_range %}selected{% endif %}>{{ label }}</option>
-          {% endfor %}
-        </select>
+        <input type="number" class="form-control" name="price_min" placeholder="السعر الأدنى" value="{{ request.GET.price_min }}">
       </div>
       <div class="form-group">
         <label>
-          <span class="label-icon">🛏️</span>
-          نوع الغرفة
+          <span class="label-icon">�</span>
+          السعر إلى
         </label>
-        <select name="room_types" class="form-control">
-          <option value="">كل الأنواع</option>
-          {% for value, label in form.room_types.field.choices %}
-          <option value="{{ value }}" {% if value == request.GET.room_types %}selected{% endif %}>{{ label }}</option>
-          {% endfor %}
-        </select>
-      </div>
-      <div class="form-group">
-        <label>
-          <span class="label-icon">🍽️</span>
-          خطة الوجبات
-        </label>
-        <select name="meal_plan" class="form-control">
-          <option value="">الكل</option>
-          {% for value, label in form.meal_plan.field.choices %}
-          <option value="{{ value }}" {% if value == request.GET.meal_plan %}selected{% endif %}>{{ label }}</option>
-          {% endfor %}
-        </select>
+        <input type="number" class="form-control" name="price_max" placeholder="السعر الأعلى" value="{{ request.GET.price_max }}">
       </div>
       <div class="form-group">
         <label>
@@ -219,11 +196,17 @@
           المحافظة
         </label>
         <select name="governorate" class="form-control">
-          <option value="">الكل</option>
-          {% for value, label in form.governorate.field.choices %}
+          {% for value, label in form.governorate.choices %}
           <option value="{{ value }}" {% if value == request.GET.governorate %}selected{% endif %}>{{ label }}</option>
           {% endfor %}
         </select>
+      </div>
+      <div class="form-group">
+        <label>
+          <span class="label-icon">🏛️</span>
+          المنطقة
+        </label>
+        <input type="text" class="form-control" name="district" placeholder="اكتب اسم المنطقة..." value="{{ request.GET.district }}">
       </div>
       <div class="form-group">
         <label>&nbsp;</label>
@@ -242,64 +225,75 @@
       {% for hotel in hotels %}
         <div class="col-md-6 mb-4">
           <div class="hotel-card h-100">
-            {% if hotel.image %}
-              <img src="{{ hotel.image.url }}" class="card-img-top" alt="{{ hotel.name }}">
+            {% if hotel.cover_image %}
+              <img src="{{ hotel.cover_image.url }}" class="card-img-top" alt="{{ hotel.title }}">
             {% endif %}
             <div class="card-body">
               <h5 class="card-title">
-                {{ hotel.name }}
+                {{ hotel.title }}
                 {% if hotel.is_featured %}
                   <span class="badge badge-warning">⭐ مميز</span>
                 {% endif %}
               </h5>
               <p class="card-text" style="color: var(--text-light);">{{ hotel.description|truncatewords:20 }}</p>
               
-              <div class="hotel-info">
-                <strong>⭐ التصنيف:</strong>
-                {% for i in hotel.star_rating %}⭐{% endfor %}
-              </div>
-              
-              <div class="hotel-info">
-                <strong>💰 السعر:</strong> {{ hotel.get_price_range_display }}
-              </div>
-              
-              <div class="hotel-info">
-                <strong>📍 الموقع:</strong> {{ hotel.city }}, {{ hotel.get_governorate_display }}
-              </div>
-              
-              {% if hotel.meal_plan %}
+              {% if hotel.hotel_data %}
                 <div class="hotel-info">
-                  <strong>🍽️ الوجبات:</strong> {{ hotel.get_meal_plan_display }}
+                  <strong>⭐ التصنيف:</strong>
+                  {% with stars=hotel.hotel_data.star_rating|default:0 %}
+                    {% for i in stars %}⭐{% endfor %}
+                  {% endwith %}
                 </div>
-              {% endif %}
-              
-              {% if hotel.services %}
-                <div class="hotel-services">
-                  {% for service in hotel.services %}
-                    {% if service == 'wifi' %}<span>📶 واي فاي</span>{% endif %}
-                    {% if service == 'ac' %}<span>❄️ تكييف</span>{% endif %}
-                    {% if service == 'parking' %}<span>🚗 موقف سيارات</span>{% endif %}
-                    {% if service == 'pool' %}<span>🏊 مسبح</span>{% endif %}
-                    {% if service == 'gym' %}<span>🏋️ نادي رياضي</span>{% endif %}
-                    {% if service == 'spa' %}<span>🧖 سبا</span>{% endif %}
-                    {% if service == 'laundry' %}<span>🧺 غسيل ملابس</span>{% endif %}
-                    {% if service == 'room_service' %}<span>🛎️ خدمة غرف</span>{% endif %}
-                    {% if service == 'airport_transfer' %}<span>✈️ نقل مطار</span>{% endif %}
-                  {% endfor %}
+                
+                <div class="hotel-info">
+                  <strong>💰 السعر:</strong> {{ hotel.price|default:0 }} {{ hotel.currency|default:'IQD' }}
                 </div>
               {% endif %}
               
               <div class="hotel-info">
-                <strong>مناسب لـ:</strong>
-                {% for suitable in hotel.suitable_for %}
-                  {% if suitable == 'families' %}👨‍👩‍👧 العائلات{% endif %}
-                  {% if suitable == 'couples' %}💑 الأزواج{% endif %}
-                  {% if suitable == 'business' %}👔 رجال الأعمال{% endif %}
-                  {% if suitable == 'groups' %}👥 المجموعات{% endif %}
-                {% endfor %}
+                <strong>📍 الموقع:</strong> 
+                {{ hotel.governorate|default:'' }}
+                {% if hotel.city %} — {{ hotel.city }}{% endif %}
+                {% if hotel.district %} — {{ hotel.district }}{% endif %}
               </div>
               
-              <a href="#" class="btn btn-primary btn-block mt-3">عرض التفاصيل</a>
+              {% if hotel.hotel_data %}
+                {% if hotel.hotel_data.meal_plan %}
+                  <div class="hotel-info">
+                    <strong>🍽️ الوجبات:</strong> {{ hotel.hotel_data.meal_plan }}
+                  </div>
+                {% endif %}
+                
+                {% if hotel.hotel_data.services %}
+                  <div class="hotel-services">
+                    {% for service in hotel.hotel_data.services %}
+                      {% if service == 'wifi' %}<span>📶 واي فاي</span>{% endif %}
+                      {% if service == 'ac' %}<span>❄️ تكييف</span>{% endif %}
+                      {% if service == 'parking' %}<span>🚗 موقف سيارات</span>{% endif %}
+                      {% if service == 'pool' %}<span>🏊 مسبح</span>{% endif %}
+                      {% if service == 'gym' %}<span>🏋️ نادي رياضي</span>{% endif %}
+                      {% if service == 'spa' %}<span>🧖 سبا</span>{% endif %}
+                      {% if service == 'laundry' %}<span>🧺 غسيل ملابس</span>{% endif %}
+                      {% if service == 'room_service' %}<span>🛎️ خدمة غرف</span>{% endif %}
+                      {% if service == 'airport_transfer' %}<span>✈️ نقل مطار</span>{% endif %}
+                    {% endfor %}
+                  </div>
+                {% endif %}
+                
+                {% if hotel.hotel_data.suitable_for %}
+                  <div class="hotel-info">
+                    <strong>مناسب لـ:</strong>
+                    {% for suitable in hotel.hotel_data.suitable_for %}
+                      {% if suitable == 'families' %}👨‍👩‍👧 العائلات{% endif %}
+                      {% if suitable == 'couples' %}💑 الأزواج{% endif %}
+                      {% if suitable == 'business' %}👔 رجال الأعمال{% endif %}
+                      {% if suitable == 'groups' %}👥 المجموعات{% endif %}
+                    {% endfor %}
+                  </div>
+                {% endif %}
+              {% endif %}
+              
+              <a href="{% url 'property_detail' hotel.id %}" class="btn btn-primary btn-block mt-3">عرض التفاصيل</a>
             </div>
           </div>
         </div>

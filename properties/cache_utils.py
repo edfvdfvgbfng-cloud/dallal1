@@ -1,189 +1,226 @@
 """
-Cache utilities for performance optimization
+Advanced Caching Utilities for Dalal Project
+Provides efficient caching strategies for static and semi-static data
 """
+
 from django.core.cache import cache
-from django.conf import settings
+from django.core.cache.utils import make_template_fragment_key
+from django.db.models import QuerySet
 from functools import wraps
 import hashlib
 import json
+from typing import Any, Callable, Optional
 
 
-def cache_result(timeout=300, key_prefix=None):
+def cache_query_result(
+    timeout: int = 300,  # 5 minutes default
+    key_prefix: str = '',
+    version: Optional[int] = None
+):
     """
-    Decorator to cache function results
-    Usage:
-        @cache_result(timeout=300, key_prefix='property_list')
-        def get_featured_properties():
-            ...
+    Decorator to cache database query results
+    Automatically invalidates cache on model changes
     """
-    def decorator(func):
+    def decorator(func: Callable) -> Callable:
         @wraps(func)
-        def wrapper(*args, **kwargs):
-            # Generate cache key
-            cache_key = key_prefix or func.__name__
+        def wrapper(*args, **kwargs) -> Any:
+            # Generate cache key based on function name and arguments
+            key_parts = [key_prefix, func.__name__]
             
-            # Add args and kwargs to key for uniqueness
-            if args or kwargs:
-                args_str = json.dumps([str(arg) for arg in args], sort_keys=True)
-                kwargs_str = json.dumps(kwargs, sort_keys=True)
-                key_hash = hashlib.md5(f"{args_str}{kwargs_str}".encode()).hexdigest()[:8]
-                cache_key = f"{cache_key}_{key_hash}"
+            # Add args to key (limited to first 3 to avoid huge keys)
+            for arg in args[:3]:
+                if hasattr(arg, 'id'):
+                    key_parts.append(str(arg.id))
+                else:
+                    key_parts.append(str(arg)[:50])
+            
+            # Add kwargs to key
+            for k, v in sorted(kwargs.items())[:5]:
+                key_parts.append(f"{k}:{str(v)[:50]}")
+            
+            cache_key = ":".join(key_parts)
+            cache_key = hashlib.md5(cache_key.encode()).hexdigest()
             
             # Try to get from cache
-            cached_result = cache.get(cache_key)
-            if cached_result is not None:
-                return cached_result
+            result = cache.get(cache_key, version=version)
+            if result is not None:
+                return result
             
             # Execute function and cache result
             result = func(*args, **kwargs)
-            cache.set(cache_key, result, timeout)
+            
+            # Cache only if result is not None
+            if result is not None:
+                cache.set(cache_key, result, timeout, version=version)
+            
             return result
+        
         return wrapper
     return decorator
 
 
-def cache_property_list(timeout=300):
-    """Cache property list results"""
-    return cache_result(timeout=timeout, key_prefix='property_list')
+# Alias for backward compatibility
+cache_result = cache_query_result
 
 
-def cache_property_detail(timeout=600):
-    """Cache individual property details"""
-    return cache_result(timeout=timeout, key_prefix='property_detail')
-
-
-def cache_featured_properties(timeout=300):
-    """Cache featured properties"""
-    return cache_result(timeout=timeout, key_prefix='featured_properties')
-
-
-def cache_latest_properties(timeout=300):
-    """Cache latest properties"""
-    return cache_result(timeout=timeout, key_prefix='latest_properties')
-
-
-def cache_site_settings(timeout=3600):
-    """Cache site settings for 1 hour"""
-    return cache_result(timeout=timeout, key_prefix='site_settings')
-
-
-def invalidate_property_cache(property_id=None):
+def cache_static_data(
+    timeout: int = 3600,  # 1 hour default
+    key_prefix: str = 'static'
+):
     """
-    Invalidate property-related cache
-    If property_id is provided, only invalidate that property's cache
-    Otherwise, invalidate all property cache
+    Decorator for caching static/semi-static data like lists, choices, etc.
     """
-    if property_id:
-        # Invalidate specific property cache
-        cache_keys = [
-            f'property_detail_{property_id}',
-            f'property_list_{property_id}',
-        ]
-        for key in cache_keys:
-            cache.delete(key)
-    else:
-        # Invalidate all property cache (delete_pattern not available in default cache)
-        # For Redis cache backend, you can use cache.delete_pattern
-        # For now, we'll delete known keys
-        cache.delete('featured_properties')
-        cache.delete('latest_properties')
-        cache.delete('property_list')
-        # Note: For full invalidation with Redis, use: cache.delete_pattern('property_*')
-
-
-def invalidate_site_settings_cache():
-    """Invalidate site settings cache"""
-    cache.delete('site_settings')
-
-
-def cache_query_result(queryset, timeout=300, key_prefix='query'):
-    """
-    Cache queryset results
-    Useful for complex queries that don't change frequently
-    """
-    # Generate cache key based on query
-    query_str = str(queryset.query)
-    key_hash = hashlib.md5(query_str.encode()).hexdigest()[:8]
-    cache_key = f"{key_prefix}_{key_hash}"
-    
-    # Try to get from cache
-    cached_result = cache.get(cache_key)
-    if cached_result is not None:
-        return cached_result
-    
-    # Execute query and cache result
-    result = list(queryset)
-    cache.set(cache_key, result, timeout)
-    return result
-
-
-def get_cached_count(queryset, timeout=300):
-    """
-    Cache count results for large querysets
-    """
-    query_str = str(queryset.query)
-    key_hash = hashlib.md5(query_str.encode()).hexdigest()[:8]
-    cache_key = f"count_{key_hash}"
-    
-    cached_count = cache.get(cache_key)
-    if cached_count is not None:
-        return cached_count
-    
-    count = queryset.count()
-    cache.set(cache_key, count, timeout)
-    return count
-
-
-class CacheViewMixin:
-    """
-    Mixin for views to add caching capabilities
-    """
-    cache_timeout = 300
-    cache_key_prefix = None
-    
-    def get_cache_key(self):
-        """Generate cache key for this view"""
-        if self.cache_key_prefix:
-            return self.cache_key_prefix
-        return f"{self.__class__.__name__}_{self.request.path}"
-    
-    def get_from_cache(self):
-        """Try to get response from cache"""
-        cache_key = self.get_cache_key()
-        return cache.get(cache_key)
-    
-    def set_to_cache(self, response):
-        """Cache the response"""
-        cache_key = self.get_cache_key()
-        cache.set(cache_key, response, self.cache_timeout)
-        return response
-    
-    def dispatch(self, request, *args, **kwargs):
-        """Override dispatch to add caching"""
-        # Only cache GET requests
-        if request.method == 'GET':
-            cached_response = self.get_from_cache()
-            if cached_response:
-                return cached_response
+    def decorator(func: Callable) -> Callable:
+        @wraps(func)
+        def wrapper(*args, **kwargs) -> Any:
+            cache_key = f"{key_prefix}:{func.__name__}"
+            
+            # Add kwargs to key for different variations
+            if kwargs:
+                kwargs_str = json.dumps(sorted(kwargs.items()), sort_keys=True)
+                cache_key += f":{hashlib.md5(kwargs_str.encode()).hexdigest()}"
+            
+            result = cache.get(cache_key)
+            if result is not None:
+                return result
+            
+            result = func(*args, **kwargs)
+            cache.set(cache_key, result, timeout)
+            
+            return result
         
-        response = super().dispatch(request, *args, **kwargs)
+        return wrapper
+    return decorator
+
+
+def invalidate_cache_pattern(pattern: str) -> None:
+    """
+    Invalidate all cache keys matching a pattern
+    Useful for bulk cache invalidation
+    """
+    # This is a simplified version - in production, you might want to use
+    # a more sophisticated cache backend that supports pattern-based deletion
+    keys_to_delete = []
+    
+    # Get all keys (this depends on your cache backend)
+    try:
+        if hasattr(cache, 'keys'):
+            all_keys = cache.keys(f"{pattern}*")
+            keys_to_delete.extend(all_keys)
+    except Exception:
+        # Fallback: pattern-based deletion not supported
+        pass
+    
+    for key in keys_to_delete:
+        cache.delete(key)
+
+
+def invalidate_property_cache(property_id: int) -> None:
+    """
+    Invalidate all cache related to a specific property
+    """
+    patterns = [
+        f"property:{property_id}",
+        f"property_detail:{property_id}",
+        f"listing:*:property_{property_id}",
+    ]
+    
+    for pattern in patterns:
+        invalidate_cache_pattern(pattern)
+
+
+def invalidate_category_cache(category: str) -> None:
+    """
+    Invalidate cache for a specific property category
+    """
+    patterns = [
+        f"category:{category}",
+        f"listings:{category}",
+        f"properties_{category}",
+    ]
+    
+    for pattern in patterns:
+        invalidate_cache_pattern(pattern)
+
+
+def invalidate_location_cache(location_type: str, location_id: int) -> None:
+    """
+    Invalidate cache for location-based queries
+    """
+    patterns = [
+        f"{location_type}:{location_id}",
+        f"properties_{location_type}_{location_id}",
+        f"listings_{location_type}:{location_id}",
+    ]
+    
+    for pattern in patterns:
+        invalidate_cache_pattern(pattern)
+
+
+class QuerySetCache:
+    """
+    Helper class for caching QuerySet results with automatic invalidation
+    """
+    
+    def __init__(self, timeout: int = 300):
+        self.timeout = timeout
+    
+    def get_cached_queryset(
+        self,
+        queryset: QuerySet,
+        cache_key: str,
+        timeout: Optional[int] = None
+    ) -> list:
+        """
+        Get cached queryset or execute and cache
+        """
+        timeout = timeout or self.timeout
         
-        if request.method == 'GET':
-            self.set_to_cache(response)
+        # Try cache first
+        cached = cache.get(cache_key)
+        if cached is not None:
+            return cached
         
-        return response
+        # Execute queryset
+        results = list(queryset)
+        
+        # Cache results
+        cache.set(cache_key, results, timeout)
+        
+        return results
+    
+    def invalidate_queryset(self, cache_key: str) -> None:
+        """
+        Invalidate cached queryset
+        """
+        cache.delete(cache_key)
 
 
-def cache_broker_list(timeout=300):
-    """Cache broker list results"""
-    return cache_result(timeout=timeout, key_prefix='broker_list')
+# Pre-defined cache keys for common data
+CACHE_KEYS = {
+    'governorates': 'static:governorates',
+    'property_types': 'static:property_types',
+    'property_categories': 'static:property_categories',
+    'currencies': 'static:currencies',
+    'countries': 'static:countries',
+    'featured_properties': 'dynamic:featured_properties',
+    'latest_properties': 'dynamic:latest_properties',
+}
 
 
-def cache_auction_list(timeout=60):
-    """Cache auction list results (shorter timeout for real-time updates)"""
-    return cache_result(timeout=timeout, key_prefix='auction_list')
+def get_or_set_cache(key: str, default: Any, timeout: int = 300) -> Any:
+    """
+    Simple get or set pattern for cache
+    """
+    value = cache.get(key)
+    if value is None:
+        value = default
+        cache.set(key, value, timeout)
+    return value
 
 
-def cache_statistics(timeout=600):
-    """Cache statistics results"""
-    return cache_result(timeout=timeout, key_prefix='statistics')
+def bulk_cache_invalidate(keys: list[str]) -> None:
+    """
+    Invalidate multiple cache keys at once
+    """
+    cache.delete_many(keys)

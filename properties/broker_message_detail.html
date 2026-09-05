@@ -33,7 +33,7 @@
     </form>
 
     {% if not msg.is_archived %}
-    <form method="post" action="{% url 'broker_message_archive' msg.id %}" style="margin-top:1rem">
+    <form method="post" action="{% url 'archive_message' msg.id %}" style="margin-top:1rem">
       {% csrf_token %}
       <button type="submit" class="btn btn-outline">أرشفة المحادثة</button>
     </form>

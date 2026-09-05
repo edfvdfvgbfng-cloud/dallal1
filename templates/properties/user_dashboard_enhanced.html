@@ -1,0 +1,549 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}لوحة تحكمي | دلال{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/user-dashboard.css' %}">
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'js/user-dashboard.js' %}" defer></script>
+{% endblock %}
+
+{% block content %}
+<div class="user-dashboard">
+    <!-- Dashboard Header -->
+    <header class="dashboard-header">
+        <div class="header-content">
+            <div class="user-profile">
+                <div class="user-avatar">
+                    {% if request.user.user_settings.profile_picture %}
+                    <img src="{{ request.user.user_settings.profile_picture.url }}" alt="{{ request.user.username }}">
+                    {% else %}
+                    <span>{{ request.user.username|first|upper }}</span>
+                    {% endif %}
+                </div>
+                <div class="user-info">
+                    <h1>أهلاً بك، {{ request.user.first_name|default:request.user.username }}</h1>
+                    <p>{{ request.user.email }}</p>
+                </div>
+            </div>
+            <div class="header-actions">
+                <a href="{% url 'discover' %}" class="btn btn-outline">
+                    <span class="btn-icon">🌍</span>
+                    اكتشف
+                </a>
+                <a href="{% url 'logout' %}" class="btn btn-danger">
+                    <span class="btn-icon">🚪</span>
+                    تسجيل الخروج
+                </a>
+            </div>
+        </div>
+    </header>
+
+    <!-- Dashboard Navigation -->
+    <nav class="dashboard-nav">
+        <button class="nav-tab active" data-tab="overview">
+            <span class="tab-icon">📊</span>
+            <span class="tab-label">نظرة عامة</span>
+        </button>
+        <button class="nav-tab" data-tab="profile">
+            <span class="tab-icon">👤</span>
+            <span class="tab-label">حسابي</span>
+        </button>
+        <button class="nav-tab" data-tab="interests">
+            <span class="tab-icon">❤️</span>
+            <span class="tab-label">اهتماماتي</span>
+        </button>
+        <button class="nav-tab" data-tab="saved">
+            <span class="tab-icon">🏠</span>
+            <span class="tab-label">المحفوظات</span>
+        </button>
+        <button class="nav-tab" data-tab="searches">
+            <span class="tab-icon">🔍</span>
+            <span class="tab-label">بحث محفوظ</span>
+        </button>
+        <button class="nav-tab" data-tab="comparisons">
+            <span class="tab-icon">⚖️</span>
+            <span class="tab-label">المقارنات</span>
+        </button>
+        <button class="nav-tab" data-tab="viewed">
+            <span class="tab-icon">👁️</span>
+            <span class="tab-label">شاهدت</span>
+        </button>
+        <button class="nav-tab" data-tab="viewings">
+            <span class="tab-icon">📅</span>
+            <span class="tab-label">المعاينات</span>
+        </button>
+        <button class="nav-tab" data-tab="bookings">
+            <span class="tab-icon">🏨</span>
+            <span class="tab-label">الحجوزات</span>
+        </button>
+        <button class="nav-tab" data-tab="messages">
+            <span class="tab-icon">💬</span>
+            <span class="tab-label">المحادثات</span>
+        </button>
+        <button class="nav-tab" data-tab="notifications">
+            <span class="tab-icon">🔔</span>
+            <span class="tab-label">الإشعارات</span>
+        </button>
+        <button class="nav-tab" data-tab="alerts">
+            <span class="tab-icon">🔊</span>
+            <span class="tab-label">التنبيهات</span>
+        </button>
+    </nav>
+
+    <!-- Dashboard Content -->
+    <main class="dashboard-content">
+        <!-- Overview Tab -->
+        <div class="tab-content active" id="overview">
+            <!-- Stats Cards -->
+            <div class="stats-grid">
+                <div class="stat-card stat-primary">
+                    <div class="stat-icon">🏠</div>
+                    <div class="stat-info">
+                        <div class="stat-value">{{ stats.saved_properties }}</div>
+                        <div class="stat-label">عقارات محفوظة</div>
+                    </div>
+                </div>
+                
+                <div class="stat-card stat-secondary">
+                    <div class="stat-icon">🔍</div>
+                    <div class="stat-info">
+                        <div class="stat-value">{{ stats.saved_searches }}</div>
+                        <div class="stat-label">بحث محفوظ</div>
+                    </div>
+                </div>
+                
+                <div class="stat-card stat-success">
+                    <div class="stat-icon">👁️</div>
+                    <div class="stat-info">
+                        <div class="stat-value">{{ stats.viewed_properties }}</div>
+                        <div class="stat-label">عقارات شاهدتها</div>
+                    </div>
+                </div>
+                
+                <div class="stat-card stat-warning">
+                    <div class="stat-icon">🔔</div>
+                    <div class="stat-info">
+                        <div class="stat-value">{{ stats.unread_notifications }}</div>
+                        <div class="stat-label">إشعارات جديدة</div>
+                    </div>
+                </div>
+                
+                <div class="stat-card stat-info">
+                    <div class="stat-icon">💬</div>
+                    <div class="stat-info">
+                        <div class="stat-value">{{ stats.unread_messages }}</div>
+                        <div class="stat-label">رسائل جديدة</div>
+                    </div>
+                </div>
+                
+                <div class="stat-card stat-danger">
+                    <div class="stat-icon">📅</div>
+                    <div class="stat-info">
+                        <div class="stat-value">{{ stats.upcoming_viewings }}</div>
+                        <div class="stat-label">معاينات قادمة</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Recent Activity -->
+            <div class="dashboard-section">
+                <div class="section-header">
+                    <h2>📊 النشاط الأخير</h2>
+                    <a href="#" class="view-all-link">عرض الكل</a>
+                </div>
+                <div class="section-content">
+                    <div class="activity-timeline">
+                        {% for activity in recent_activity %}
+                        <div class="activity-item">
+                            <div class="activity-icon">{{ activity.icon }}</div>
+                            <div class="activity-content">
+                                <div class="activity-title">{{ activity.title }}</div>
+                                <div class="activity-description">{{ activity.description }}</div>
+                                <div class="activity-time">{{ activity.time }}</div>
+                            </div>
+                        </div>
+                        {% empty %}
+                        <div class="empty-state">
+                            <div class="empty-icon">📊</div>
+                            <h3>لا يوجد نشاط</h3>
+                            <p>ابدأ باستكشاف العقارات لعرض نشاطك هنا</p>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Quick Actions -->
+            <div class="dashboard-section">
+                <div class="section-header">
+                    <h2>⚡ إجراءات سريعة</h2>
+                </div>
+                <div class="section-content">
+                    <div class="quick-actions">
+                        <a href="{% url 'discover' %}" class="quick-action">
+                            <span class="action-icon">🌍</span>
+                            <span class="action-label">اكتشف عقارات</span>
+                        </a>
+                        <a href="{% url 'unified_search' %}" class="quick-action">
+                            <span class="action-icon">🔍</span>
+                            <span class="action-label">بحث جديد</span>
+                        </a>
+                        <a href="#" class="quick-action">
+                            <span class="action-icon">🏠</span>
+                            <span class="action-label">أضف عقار</span>
+                        </a>
+                        <a href="#" class="quick-action">
+                            <span class="action-icon">💬</span>
+                            <span class="action-label">ابدأ محادثة</span>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Profile Tab -->
+        <div class="tab-content" id="profile">
+            <div class="dashboard-section">
+                <div class="section-header">
+                    <h2>👤 معلومات الحساب</h2>
+                </div>
+                <div class="section-content">
+                    <form class="profile-form" id="profileForm">
+                        <div class="form-group">
+                            <label>الاسم الكامل</label>
+                            <input type="text" name="full_name" value="{{ request.user.get_full_name }}" placeholder="أدخل اسمك الكامل">
+                        </div>
+                        <div class="form-group">
+                            <label>البريد الإلكتروني</label>
+                            <input type="email" name="email" value="{{ request.user.email }}" placeholder="أدخل بريدك الإلكتروني">
+                        </div>
+                        <div class="form-group">
+                            <label>رقم الهاتف</label>
+                            <input type="tel" name="phone" value="{{ request.user.user_settings.phone|default:'' }}" placeholder="أدخل رقم هاتفك">
+                        </div>
+                        <div class="form-group">
+                            <label>المدينة</label>
+                            <input type="text" name="city" value="{{ request.user.user_settings.city|default:'' }}" placeholder="أدخل مدينتك">
+                        </div>
+                        <div class="form-group">
+                            <label>نبذة عنك</label>
+                            <textarea name="bio" rows="4" placeholder="أخبرنا عن نفسك...">{{ request.user.user_settings.bio|default:'' }}</textarea>
+                        </div>
+                        <div class="form-actions">
+                            <button type="submit" class="btn btn-primary">حفظ التغييرات</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <div class="dashboard-section">
+                <div class="section-header">
+                    <h2>🔐 الأمان</h2>
+                </div>
+                <div class="section-content">
+                    <form class="security-form" id="securityForm">
+                        <div class="form-group">
+                            <label>كلمة المرور الحالية</label>
+                            <input type="password" name="current_password" placeholder="أدخل كلمة المرور الحالية">
+                        </div>
+                        <div class="form-group">
+                            <label>كلمة المرور الجديدة</label>
+                            <input type="password" name="new_password" placeholder="أدخل كلمة المرور الجديدة">
+                        </div>
+                        <div class="form-group">
+                            <label>تأكيد كلمة المرور</label>
+                            <input type="password" name="confirm_password" placeholder="أعد إدخال كلمة المرور الجديدة">
+                        </div>
+                        <div class="form-actions">
+                            <button type="submit" class="btn btn-primary">تغيير كلمة المرور</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Interests Tab -->
+        <div class="tab-content" id="interests">
+            <div class="dashboard-section">
+                <div class="section-header">
+                    <h2>❤️ اهتماماتي</h2>
+                    <button class="btn btn-sm btn-outline" id="editInterests">تعديل</button>
+                </div>
+                <div class="section-content">
+                    <div class="interests-grid">
+                        <div class="interest-item">
+                            <span class="interest-icon">🏠</span>
+                            <span class="interest-label">عقارات سكنية</span>
+                            <div class="interest-level">
+                                <div class="interest-bar" style="width: 80%"></div>
+                            </div>
+                        </div>
+                        <div class="interest-item">
+                            <span class="interest-icon">🏢</span>
+                            <span class="interest-label">عقارات تجارية</span>
+                            <div class="interest-level">
+                                <div class="interest-bar" style="width: 60%"></div>
+                            </div>
+                        </div>
+                        <div class="interest-item">
+                            <span class="interest-icon">🏨</span>
+                            <span class="interest-label">فنادق</span>
+                            <div class="interest-level">
+                                <div class="interest-bar" style="width: 40%"></div>
+                            </div>
+                        </div>
+                        <div class="interest-item">
+                            <span class="interest-icon">🏝️</span>
+                            <span class="interest-label">منتجعات</span>
+                            <div class="interest-level">
+                                <div class="interest-bar" style="width: 30%"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="dashboard-section">
+                <div class="section-header">
+                    <h2>📍 المناطق المفضلة</h2>
+                    <button class="btn btn-sm btn-outline" id="addArea">إضافة منطقة</button>
+                </div>
+                <div class="section-content">
+                    <div class="areas-list">
+                        <div class="area-item">
+                            <span class="area-name">بغداد - الكرادة</span>
+                            <button class="btn btn-sm btn-icon btn-danger">×</button>
+                        </div>
+                        <div class="area-item">
+                            <span class="area-name">بغداد - المنصور</span>
+                            <button class="btn btn-sm btn-icon btn-danger">×</button>
+                        </div>
+                        <div class="area-item">
+                            <span class="area-name">البصرة - العشاق</span>
+                            <button class="btn btn-sm btn-icon btn-danger">×</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="dashboard-section">
+                <div class="section-header">
+                    <h2>💰 نطاق السعر المفضل</h2>
+                </div>
+                <div class="section-content">
+                    <div class="price-range">
+                        <div class="price-slider">
+                            <input type="range" min="0" max="100000000" value="0" id="minPrice">
+                            <input type="range" min="0" max="100000000" value="100000000" id="maxPrice">
+                        </div>
+                        <div class="price-labels">
+                            <span id="minPriceLabel">0 د.ع</span>
+                            <span id="maxPriceLabel">100,000,000 د.ع</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Saved Tab -->
+        <div class="tab-content" id="saved">
+            <div class="dashboard-section">
+                <div class="section-header">
+                    <h2>🏠 العقارات المحفوظة</h2>
+                    <div class="section-filters">
+                        <button class="filter-btn active" data-filter="all">الكل</button>
+                        <button class="filter-btn" data-filter="properties">عقارات</button>
+                        <button class="filter-btn" data-filter="hotels">فنادق</button>
+                        <button class="filter-btn" data-filter="resorts">منتجعات</button>
+                    </div>
+                </div>
+                <div class="section-content">
+                    <div class="saved-grid" id="savedGrid">
+                        <!-- Saved items will be loaded here -->
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Searches Tab -->
+        <div class="tab-content" id="searches">
+            <div class="dashboard-section">
+                <div class="section-header">
+                    <h2>🔍 البحث المحفوظ</h2>
+                    <button class="btn btn-sm btn-primary" id="newSearch">بحث جديد</button>
+                </div>
+                <div class="section-content">
+                    <div class="searches-list" id="searchesList">
+                        <!-- Saved searches will be loaded here -->
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Comparisons Tab -->
+        <div class="tab-content" id="comparisons">
+            <div class="dashboard-section">
+                <div class="section-header">
+                    <h2>⚖️ المقارنات المحفوظة</h2>
+                    <button class="btn btn-sm btn-primary" id="newComparison">مقارنة جديدة</button>
+                </div>
+                <div class="section-content">
+                    <div class="comparisons-list" id="comparisonsList">
+                        <!-- Comparisons will be loaded here -->
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Viewed Tab -->
+        <div class="tab-content" id="viewed">
+            <div class="dashboard-section">
+                <div class="section-header">
+                    <h2>👁️ العقارات التي شاهدتها</h2>
+                    <button class="btn btn-sm btn-outline" id="clearHistory">مسح السجل</button>
+                </div>
+                <div class="section-content">
+                    <div class="viewed-grid" id="viewedGrid">
+                        <!-- Viewed items will be loaded here -->
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Viewings Tab -->
+        <div class="tab-content" id="viewings">
+            <div class="dashboard-section">
+                <div class="section-header">
+                    <h2>📅 طلبات المعاينة</h2>
+                    <button class="btn btn-sm btn-primary" id="newViewing">طلب معاينة جديد</button>
+                </div>
+                <div class="section-content">
+                    <div class="viewings-list" id="viewingsList">
+                        <!-- Viewings will be loaded here -->
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Bookings Tab -->
+        <div class="tab-content" id="bookings">
+            <div class="dashboard-section">
+                <div class="section-header">
+                    <h2>🏨 الحجوزات</h2>
+                    <div class="section-filters">
+                        <button class="filter-btn active" data-filter="all">الكل</button>
+                        <button class="filter-btn" data-filter="upcoming">قادمة</button>
+                        <button class="filter-btn" data-filter="past">سابقة</button>
+                        <button class="filter-btn" data-filter="cancelled">ملغاة</button>
+                    </div>
+                </div>
+                <div class="section-content">
+                    <div class="bookings-list" id="bookingsList">
+                        <!-- Bookings will be loaded here -->
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Messages Tab -->
+        <div class="tab-content" id="messages">
+            <div class="dashboard-section">
+                <div class="section-header">
+                    <h2>💬 المحادثات</h2>
+                    <button class="btn btn-sm btn-primary" id="newMessage">رسالة جديدة</button>
+                </div>
+                <div class="section-content">
+                    <div class="messages-list" id="messagesList">
+                        <!-- Messages will be loaded here -->
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Notifications Tab -->
+        <div class="tab-content" id="notifications">
+            <div class="dashboard-section">
+                <div class="section-header">
+                    <h2>🔔 الإشعارات</h2>
+                    <button class="btn btn-sm btn-outline" id="markAllRead">تعيين الكل كمقروء</button>
+                </div>
+                <div class="section-content">
+                    <div class="notifications-list" id="notificationsList">
+                        <!-- Notifications will be loaded here -->
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Alerts Tab -->
+        <div class="tab-content" id="alerts">
+            <div class="dashboard-section">
+                <div class="section-header">
+                    <h2>🔊 التنبيهات</h2>
+                    <button class="btn btn-sm btn-primary" id="newAlert">تنبيه جديد</button>
+                </div>
+                <div class="section-content">
+                    <div class="alerts-tabs">
+                        <button class="alerts-tab active" data-type="price">تنبيهات الأسعار</button>
+                        <button class="alerts-tab" data-type="property">تنبيهات العقارات الجديدة</button>
+                    </div>
+                    <div class="alerts-content">
+                        <div class="alerts-list" id="priceAlerts">
+                            <!-- Price alerts will be loaded here -->
+                        </div>
+                        <div class="alerts-list" id="propertyAlerts">
+                            <!-- Property alerts will be loaded here -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+</div>
+
+<!-- Modals -->
+<div class="modal" id="searchModal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3>بحث جديد</h3>
+            <button class="modal-close">×</button>
+        </div>
+        <div class="modal-body">
+            <form id="searchForm">
+                <!-- Search form content -->
+            </form>
+        </div>
+    </div>
+</div>
+
+<div class="modal" id="viewingModal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3>طلب معاينة جديد</h3>
+            <button class="modal-close">×</button>
+        </div>
+        <div class="modal-body">
+            <form id="viewingForm">
+                <!-- Viewing form content -->
+            </form>
+        </div>
+    </div>
+</div>
+
+<div class="modal" id="alertModal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3>تنبيه جديد</h3>
+            <button class="modal-close">×</button>
+        </div>
+        <div class="modal-body">
+            <form id="alertForm">
+                <!-- Alert form content -->
+            </form>
+        </div>
+    </div>
+</div>

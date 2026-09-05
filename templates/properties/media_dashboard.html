@@ -10,7 +10,7 @@
 
 {% block dashboard_actions %}
 <a href="{% url 'dashboard' %}" class="btn btn-outline">← لوحة التحكم</a>
-<a href="{% url 'api_media_management' %}" class="btn btn-primary">📊 API الوسائط</a>
+<a href="{% url 'media_management' %}" class="btn btn-primary">📊 API الوسائط</a>
 {% endblock %}
 
 {% block content %}
@@ -62,7 +62,7 @@
   <div class="stats-grid">
     <div class="stats-card warning">
       <h3>غير منشورة</h3>
-      <div class="stat-number">{{ unpublished_images + unpublished_videos }}</div>
+      <div class="stat-number">{{ unpublished_images|add:unpublished_videos }}</div>
       <div class="stat-sub">صور: {{ unpublished_images }} | فيديو: {{ unpublished_videos }}</div>
     </div>
     <div class="stats-card processing">

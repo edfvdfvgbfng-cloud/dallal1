@@ -26,6 +26,7 @@
 <a href="{% url 'subscription_renewal_request' %}" class="btn btn-warning btn-sm">🔄 تجديد اشتراك</a>
 <a href="{% url 'broker_messages' %}" class="btn btn-outline btn-sm">💬 الرسائل</a>
 <a href="{% url 'properties_map' %}" class="btn btn-outline btn-sm">🗺️ الخريطة</a>
+<a href="{% url 'appointments_management' %}" class="btn btn-outline btn-sm">📅 مواعيد المستخدمين</a>
 {% if can_manage_brokers %}
 <a href="{% url 'broker_list' %}" class="btn btn-outline btn-sm">👔 الدلالين</a>
 <a href="{% url 'subscription_renewal_requests_list' %}" class="btn btn-outline btn-sm">🔄 طلبات التجديد</a>
@@ -1649,7 +1650,7 @@
         <span class="btn-icon">🏠</span>
         <span class="btn-text">عقارات داخل العراق</span>
       </a>
-      <a href="/properties-outside-iraq/add/" class="category-btn" style="text-decoration: none;">
+      <a href="{% url 'enhanced_add_outside_property' %}" class="category-btn" style="text-decoration: none;">
         <span class="btn-icon">🌍</span>
         <span class="btn-text">عقارات خارج العراق</span>
       </a>
@@ -11908,7 +11909,7 @@ function initAdvancedCharts() {
             <div class="message bot-message">
               <div class="message-content">
                 <p>السلام عليكم 👋</p>
-                <p>أهلاً بك، شلون أگدر أساعدك اليوم؟</p>
+                <p>أهلاً بك، شلون أقدر أساعدك اليوم؟</p>
               </div>
             </div>
             

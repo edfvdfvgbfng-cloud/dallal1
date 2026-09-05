@@ -1,0 +1,227 @@
+{% extends "base.html" %}
+{% load static %}
+{% load i18n %}
+
+{% block title %}{% trans "وكلاء العقارات الذكي" %} - {% trans "دلال" %}{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-lg-8 mx-auto">
+            <div class="card shadow mb-4">
+                <div class="card-header bg-primary text-white">
+                    <h2 class="h4 mb-0">
+                        <i class="fas fa-robot ml-2"></i>
+                        {% trans "وكلاء العقارات الذكي" %}
+                    </h2>
+                </div>
+                <div class="card-body">
+                    <p class="text-muted mb-4">
+                        {% trans "دع وكلاء العقارات الذكي يبحثون عن العقارات المناسبة لك تلقائياً ويجددونك عند ظهور عقارات جديدة تطابق معاييرك" %}
+                    </p>
+                    
+                    <form method="post" class="ai-agent-form">
+                        {% csrf_token %}
+                        
+                        <div class="form-group">
+                            <label for="search_criteria">{% trans "معايير البحث" %}</label>
+                            <textarea class="form-control" id="search_criteria" name="search_criteria" rows="3" placeholder="مثال: شقة في بغداد الكرادة، 3 غرف، سعر مناسب"></textarea>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="preferences">{% trans "تفضيلات إضافية" %}</label>
+                            <textarea class="form-control" id="preferences" name="preferences" rows="2" placeholder="مثال: طابق علوي، مواقف سيارات، قرب المدارس"></textarea>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="budget_min">{% trans "أقل ميزانية" %}</label>
+                                    <input type="number" class="form-control" id="budget_min" name="budget_min" placeholder="0">
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="budget_max">{% trans "أقصى ميزانية" %}</label>
+                                    <input type="number" class="form-control" id="budget_max" name="budget_max" placeholder="100000000">
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="locations">{% trans "المناطق المفضلة" %}</label>
+                            <select class="form-control" id="locations" name="locations" multiple>
+                                <option value="بغداد">بغداد</option>
+                                <option value="البصرة">البصرة</option>
+                                <option value="أربيل">أربيل</option>
+                                <option value="النجف">النجف</option>
+                                <option value="كربلاء">كربلاء</option>
+                                <option value="كركوك">كركوك</option>
+                                <option value="السليمانية">السليمانية</option>
+                                <option value="نينوى">نينوى</option>
+                            </select>
+                            <small class="form-text text-muted">{% trans "اختر عدة مناطق بالضغط على Ctrl" %}</small>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="property_types">{% trans "أنواع العقارات" %}</label>
+                            <select class="form-control" id="property_types" name="property_types" multiple>
+                                <option value="apartment">{% trans "شقة" %}</option>
+                                <option value="house">{% trans "بيت" %}</option>
+                                <option value="villa">{% trans "فيلا" %}</option>
+                                <option value="land">{% trans "أرض" %}</option>
+                                <option value="commercial">{% trans "تجاري" %}</option>
+                            </select>
+                            <small class="form-text text-muted">{% trans "اختر عدة أنواع بالضغط على Ctrl" %}</small>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="min_area">{% trans "أقل مساحة (م²)" %}</label>
+                                    <input type="number" class="form-control" id="min_area" name="min_area" placeholder="0">
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="max_area">{% trans "أقصى مساحة (م²)" %}</label>
+                                    <input type="number" class="form-control" id="max_area" name="max_area" placeholder="500">
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="bedrooms">{% trans "عدد الغرف" %}</label>
+                            <input type="number" class="form-control" id="bedrooms" name="bedrooms" placeholder="3">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="notify_frequency">{% trans "تكرار الإشعارات" %}</label>
+                            <select class="form-control" id="notify_frequency" name="notify_frequency">
+                                <option value="immediate">{% trans "فوري" %}</option>
+                                <option value="daily" selected>{% trans "يومي" %}</option>
+                                <option value="weekly">{% trans "أسبوعي" %}</option>
+                                <option value="monthly">{% trans "شهري" %}</option>
+                            </select>
+                        </div>
+                        
+                        <button type="submit" class="btn btn-primary btn-lg btn-block mt-4">
+                            <i class="fas fa-robot ml-2"></i>
+                            {% trans "إنشاء وكلاء العقارات الذكي" %}
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    {% if user_agents %}
+        <div class="row">
+            <div class="col-12">
+                <h3 class="mb-3">{% trans "وكلاء العقارات الذكي الخاصة بك" %}</h3>
+                
+                <div class="row">
+                    {% for agent in user_agents %}
+                        <div class="col-md-6 mb-4">
+                            <div class="card">
+                                <div class="card-header d-flex justify-content-between align-items-center">
+                                    <h5 class="mb-0">
+                                        <i class="fas fa-robot ml-2"></i>
+                                        {% trans "وكيل" %} #{{ agent.id }}
+                                    </h5>
+                                    <span class="badge badge-success">{% trans "نشط" %}</span>
+                                </div>
+                                <div class="card-body">
+                                    <p class="mb-2">
+                                        <strong>{% trans "معايير البحث:" %}</strong>
+                                        {{ agent.search_criteria }}
+                                    </p>
+                                    <p class="mb-2">
+                                        <strong>{% trans "الميزانية:" %}</strong>
+                                        {{ agent.budget_min|default:"--" }} - {{ agent.budget_max|default:"--" }} د.ع
+                                    </p>
+                                    <p class="mb-2">
+                                        <strong>{% trans "المناطق:" %}</strong>
+                                        {{ agent.locations|join:", "|default:"--" }}
+                                    </p>
+                                    <p class="mb-2">
+                                        <strong>{% trans "تكرار الإشعارات:" %}</strong>
+                                        {{ agent.get_notify_frequency_display }}
+                                    </p>
+                                    <p class="mb-0">
+                                        <strong>{% trans "آخر فحص:" %}</strong>
+                                        {{ agent.last_checked|default:"لم يتم الفحص بعد" }}
+                                    </p>
+                                </div>
+                                <div class="card-footer">
+                                    <div class="btn-group btn-group-sm">
+                                        <button class="btn btn-primary">
+                                            <i class="fas fa-sync ml-1"></i>
+                                            {% trans "فحص الآن" %}
+                                        </button>
+                                        <button class="btn btn-warning">
+                                            <i class="fas fa-edit ml-1"></i>
+                                            {% trans "تعديل" %}
+                                        </button>
+                                        <button class="btn btn-danger">
+                                            <i class="fas fa-stop ml-1"></i>
+                                            {% trans "إيقاف" %}
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    {% endif %}
+    
+    {% if matching_properties %}
+        <div class="row">
+            <div class="col-12">
+                <h3 class="mb-3">{% trans "العقارات المطابقة حالياً" %}</h3>
+                
+                <div class="row">
+                    {% for property in matching_properties %}
+                        <div class="col-md-6 col-lg-4 mb-4">
+                            <div class="card property-card h-100">
+                                {% if property.images.first %}
+                                    <img src="{{ property.images.first.image.url }}" class="card-img-top" alt="{{ property.title }}">
+                                {% else %}
+                                    <div class="card-img-top bg-light d-flex align-items-center justify-content-center" style="height: 200px;">
+                                        <i class="fas fa-home fa-3x text-muted"></i>
+                                    </div>
+                                {% endif %}
+                                
+                                <div class="card-body">
+                                    <h5 class="card-title">{{ property.title }}</h5>
+                                    <p class="card-text text-muted">{{ property.location }}</p>
+                                    
+                                    <div class="property-price">
+                                        <span class="h4 text-primary">{{ property.price }} {{ property.currency }}</span>
+                                    </div>
+                                    
+                                    <div class="property-details mt-2">
+                                        <small class="text-muted">
+                                            <i class="fas fa-bed ml-1"></i> {{ property.bedrooms }} |
+                                            <i class="fas fa-bath ml-1"></i> {{ property.bathrooms }} |
+                                            <i class="fas fa-ruler-combined ml-1"></i> {{ property.area }} م²
+                                        </small>
+                                    </div>
+                                </div>
+                                
+                                <div class="card-footer">
+                                    <a href="{% url 'property_detail' property.id %}" class="btn btn-primary btn-block">
+                                        {% trans "عرض التفاصيل" %}
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

@@ -10,18 +10,44 @@ from django.utils import timezone
 from rest_framework import permissions
 from drf_yasg.views import get_schema_view
 from drf_yasg import openapi
-import sys
 
 from properties.sitemaps import PropertySitemap, StaticViewSitemap
 
-# Force rebuild - 2026-08-25-05-10 - Fix superuser login
-print("URLS.PY LOADED - Force rebuild 2026-08-25-05-10", file=sys.stderr)
-
 def health_check(request):
+    """
+    Production healthcheck endpoint for Railway.
+    Safely verifies application and database connectivity without leaking credentials.
+    """
     try:
-        return JsonResponse({'status': 'healthy', 'service': 'dalal-backend', 'time': str(timezone.now())})
+        from django.db import connection
+        with connection.cursor() as cursor:
+            cursor.execute("SELECT 1;")
+            cursor.fetchone()
+
+        db_engine = connection.settings_dict.get('ENGINE', '').split('.')[-1]
+        db_name = connection.settings_dict.get('NAME', '')
+        safe_db_name = str(db_name).split('/')[-1] if isinstance(db_name, str) else 'database'
+
+        return JsonResponse({
+            'status': 'healthy',
+            'service': 'dalal-backend',
+            'database': {
+                'status': 'connected',
+                'engine': db_engine,
+                'name': safe_db_name,
+            },
+            'time': str(timezone.now())
+        })
     except Exception as e:
-        return JsonResponse({'status': 'error', 'error': str(e)}, status=500)
+        return JsonResponse({
+            'status': 'unhealthy',
+            'service': 'dalal-backend',
+            'database': {
+                'status': 'disconnected',
+                'error': str(e) if settings.DEBUG else 'Database connection failure'
+            },
+            'time': str(timezone.now())
+        }, status=503)
 
 sitemaps = {
     'properties': PropertySitemap,
@@ -47,7 +73,7 @@ def simple_home(request):
     return JsonResponse({'status': 'ok', 'message': 'Home works', 'time': str(timezone.now())})
 
 urlpatterns = [
-    # Health check endpoint (move to top for Railway healthcheck)
+    # Health check endpoint (first for Railway healthcheck)
     path('health/', health_check, name='health-check'),
     # Include properties URLs as main path (includes dashboard/)
     path('', include('properties.urls')),
@@ -76,12 +102,8 @@ urlpatterns = [
     ),
 ]
 
+# Serve static and media files in DEBUG mode only
+# In production, WhiteNoise handles static files
 if settings.DEBUG:
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
     urlpatterns += static(settings.STATIC_URL, document_root=settings.STATICFILES_DIRS[0])
-else:
-    # Serve static files in production using Django's static serve (fallback)
-    from django.views.static import serve
-    from django.conf.urls.static import static as static_files
-    urlpatterns += static_files(settings.STATIC_URL, document_root=settings.STATICFILES_DIRS[0])
-    urlpatterns += static_files(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

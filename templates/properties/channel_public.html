@@ -1,5 +1,6 @@
 {% extends 'properties/base.html' %}
 {% load static %}
+{% load custom_filters %}
 
 {% block title %}{{ channel.name }} - قناة الدلال{% endblock %}
 
@@ -11,7 +12,7 @@
     {% if channel.cover_image %}
     <div style="height: 100%; background-image: url('{{ channel.cover_image.url }}'); background-size: cover; background-position: center;"></div>
     {% else %}
-    <div style="height: 100%; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);"></div>
+    <div style="height: 100%; background: linear-gradient(135deg, #FF7A00 0%, #FF9500 100%);"></div>
     {% endif %}
     
     <!-- Cover Actions -->
@@ -34,7 +35,7 @@
             {% if channel.logo %}
             <img src="{{ channel.logo.url }}" alt="{{ channel.name }}" style="width: 100%; height: 100%; object-fit: cover;">
             {% else %}
-            <div style="width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; font-size: 4rem; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+            <div style="width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; font-size: 4rem; background: linear-gradient(135deg, #FF7A00 0%, #FF9500 100%);">
               🏢
             </div>
             {% endif %}
@@ -123,7 +124,7 @@
         <!-- Stats -->
         <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px; min-width: 200px;">
           <div style="background: rgba(255,255,255,0.05); padding: 15px; border-radius: 12px; text-align: center;">
-            <div style="font-size: 1.8rem; font-weight: 700; color: #667eea;">{{ channel.followers_count }}</div>
+            <div style="font-size: 1.8rem; font-weight: 700; color: #FF7A00;">{{ channel.followers_count }}</div>
             <div style="color: rgba(255,255,255,0.6); font-size: 0.85rem;">متابع</div>
           </div>
           <div style="background: rgba(255,255,255,0.05); padding: 15px; border-radius: 12px; text-align: center;">
@@ -213,7 +214,7 @@
         <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px;">
           <div style="text-align: center;">
             <div style="font-size: 2.5rem; margin-bottom: 10px;">💼</div>
-            <div style="font-size: 1.8rem; font-weight: 700; color: #667eea;">{{ channel.deals_count|default:0 }}</div>
+            <div style="font-size: 1.8rem; font-weight: 700; color: #FF7A00;">{{ channel.deals_count|default:0 }}</div>
             <div style="color: rgba(255,255,255,0.6);">صفقة منجزة</div>
           </div>
           <div style="text-align: center;">
@@ -269,7 +270,7 @@
       <div style="background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%); border-radius: 20px; padding: 30px;">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
           <h2 style="color: white; margin: 0;">🏢 أحدث العقارات</h2>
-          <a href="?tab=properties" style="color: #667eea; text-decoration: none;">عرض الكل →</a>
+          <a href="?tab=properties" style="color: #FF7A00; text-decoration: none;">عرض الكل →</a>
         </div>
         
         {% if properties %}
@@ -283,9 +284,9 @@
             {% endif %}
             <div style="padding: 20px;">
               <h3 style="color: white; margin: 0 0 10px 0; font-size: 1.1rem;">{{ property.title|truncatechars:50 }}</h3>
-              <div style="color: #667eea; font-size: 1.3rem; font-weight: 700; margin-bottom: 10px;">{{ property.price }} {{ property.currency }}</div>
+              <div style="color: #FF7A00; font-size: 1.3rem; font-weight: 700; margin-bottom: 10px;">{{ property.price }} {{ property.currency }}</div>
               <div style="color: rgba(255,255,255,0.6); font-size: 0.9rem; margin-bottom: 15px;">📍 {{ property.get_governorate_display }}</div>
-              <a href="{% url 'property_detail' property.id %}" style="display: block; text-align: center; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 10px; border-radius: 10px; text-decoration: none;">
+              <a href="{% url 'property_detail' property.id %}" style="display: block; text-align: center; background: linear-gradient(135deg, #FF7A00 0%, #FF9500 100%); color: white; padding: 10px; border-radius: 10px; text-decoration: none;">
                 عرض التفاصيل
               </a>
             </div>
@@ -323,9 +324,9 @@
             {% endif %}
             <div style="padding: 20px;">
               <h3 style="color: white; margin: 0 0 10px 0; font-size: 1.1rem;">{{ property.title|truncatechars:50 }}</h3>
-              <div style="color: #667eea; font-size: 1.3rem; font-weight: 700; margin-bottom: 10px;">{{ property.price }} {{ property.currency }}</div>
+              <div style="color: #FF7A00; font-size: 1.3rem; font-weight: 700; margin-bottom: 10px;">{{ property.price }} {{ property.currency }}</div>
               <div style="color: rgba(255,255,255,0.6); font-size: 0.9rem; margin-bottom: 15px;">📍 {{ property.get_governorate_display }}</div>
-              <a href="{% url 'property_detail' property.id %}" style="display: block; text-align: center; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 10px; border-radius: 10px; text-decoration: none;">
+              <a href="{% url 'property_detail' property.id %}" style="display: block; text-align: center; background: linear-gradient(135deg, #FF7A00 0%, #FF9500 100%); color: white; padding: 10px; border-radius: 10px; text-decoration: none;">
                 عرض التفاصيل
               </a>
             </div>
@@ -367,7 +368,7 @@
                 <div style="color: rgba(255,255,255,0.6); font-size: 0.85rem;">{{ post.created_at|timesince }}</div>
               </div>
               {% if post.is_pinned %}
-              <span style="margin-left: auto; background: #667eea; padding: 3px 10px; border-radius: 10px; font-size: 0.75rem; color: white;">📌 مثبت</span>
+              <span style="margin-left: auto; background: #FF7A00; padding: 3px 10px; border-radius: 10px; font-size: 0.75rem; color: white;">📌 مثبت</span>
               {% endif %}
             </div>
             
@@ -524,7 +525,7 @@
                 <div style="color: white; font-weight: 600;">{{ review.user.get_full_name|default:review.user.username }}</div>
                 <div style="color: rgba(255,255,255,0.6); font-size: 0.85rem;">{{ review.created_at|timesince }}</div>
               </div>
-              <div style="margin-left: auto; color: #ff6b35;">{{ '⭐' * review.rating }}</div>
+              <div style="margin-left: auto; color: #ff6b35;">{{ '⭐'|repeat:review.rating }}</div>
             </div>
             <p style="color: rgba(255,255,255,0.8); margin: 0;">{{ review.comment }}</p>
           </div>
@@ -660,7 +661,7 @@
 }
 
 .tab-btn.active {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #FF7A00 0%, #FF9500 100%);
   color: white;
 }
 

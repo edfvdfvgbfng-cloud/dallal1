@@ -153,7 +153,7 @@ class SystemHealthChecker:
             return cached_result
         
         try:
-            from .ai_intent_detection import intent_detector
+            from .ai_intent_classifier import intent_classifier
             from .ai_entity_extraction import entity_extractor
             from .ai_conversation_manager import conversation_manager
             from .ai_agent_loop import ai_agent

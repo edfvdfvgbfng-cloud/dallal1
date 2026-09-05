@@ -25,6 +25,7 @@ class AIGateway:
         self._multimodal_system = None
         self._proactive_system = None
         self._conversation_state_manager = None
+        self._smart_conversation_manager = None
     
     def _get_advanced_orchestrator(self):
         """Lazy load advanced orchestrator"""
@@ -68,6 +69,13 @@ class AIGateway:
             self._conversation_state_manager = conversation_state_manager
         return self._conversation_state_manager
     
+    def _get_smart_conversation_manager(self):
+        """Lazy load smart conversation manager"""
+        if self._smart_conversation_manager is None:
+            from .ai_smart_conversation_handler import smart_conversation_manager
+            self._smart_conversation_manager = smart_conversation_manager
+        return self._smart_conversation_manager
+    
     def process_request(self, request_type: str, user_id: int, conversation_id: str, 
                        input_data: Dict, context: Dict = None) -> Dict:
         """
@@ -91,6 +99,8 @@ class AIGateway:
             # Route based on request type
             if request_type == "chat":
                 return self._process_chat_request(user_id, conversation_id, input_data, context, state)
+            elif request_type == "smart_assistant":
+                return self._process_smart_assistant_request(user_id, conversation_id, input_data, context, state)
             elif request_type == "multimodal":
                 return self._process_multimodal_request(user_id, conversation_id, input_data, context, state)
             elif request_type == "market":
@@ -141,6 +151,40 @@ class AIGateway:
             'response': response.get('response', ''),
             'intent': response.get('intent'),
             'entities': response.get('entities', {}),
+            'state': state
+        }
+    
+    def _process_smart_assistant_request(self, user_id: int, conversation_id: str, 
+                                        input_data: Dict, context: Dict, state: Dict) -> Dict:
+        """Process smart assistant request with intent detection and search"""
+        smart_manager = self._get_smart_conversation_manager()
+        
+        user_input = input_data.get('input', '')
+        
+        # Process through smart conversation manager
+        response = smart_manager.process_message(
+            message=user_input,
+            conversation_id=conversation_id,
+            user_id=user_id
+        )
+        
+        # Update conversation state
+        state_manager = self._get_conversation_state_manager()
+        state_manager.update_state(conversation_id, {
+            'last_input': user_input,
+            'last_response': response.get('response', ''),
+            'intent': response.get('metadata', {}).get('intent'),
+            'action': response.get('action'),
+            'results_count': len(response.get('results', []))
+        })
+        
+        return {
+            'success': True,
+            'response': response.get('response', ''),
+            'action': response.get('action'),
+            'results': response.get('results'),
+            'rendered_results': response.get('rendered_results'),
+            'metadata': response.get('metadata'),
             'state': state
         }
     

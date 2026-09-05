@@ -1,4 +1,152 @@
 {% extends 'properties/base.html' %}
+{% load static %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/floor-plan.css' %}">
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'js/floor-plan.js' %}" defer></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Interactive Property Tabs
+    const tabBtns = document.querySelectorAll('.tab-btn');
+    const tabContents = document.querySelectorAll('.tab-content');
+    
+    tabBtns.forEach(btn => {
+        btn.addEventListener('click', () => {
+            // Remove active class from all tabs
+            tabBtns.forEach(b => b.classList.remove('active'));
+            tabContents.forEach(c => c.classList.remove('active'));
+            
+            // Add active class to clicked tab
+            btn.classList.add('active');
+            const tabId = btn.dataset.tab + '-tab';
+            document.getElementById(tabId).classList.add('active');
+        });
+    });
+    
+    // Property ID for API calls
+    const propertyId = {{ property.id }};
+    const apiBaseUrl = '/api';
+    
+    // Offer Form Submission
+    const offerForm = document.getElementById('offer-form');
+    if (offerForm) {
+        offerForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const formData = new FormData(offerForm);
+            const data = Object.fromEntries(formData);
+            data.property_id = propertyId;
+            
+            try {
+                const response = await fetch(`${apiBaseUrl}/offers/`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': getCookie('csrftoken')
+                    },
+                    body: JSON.stringify(data)
+                });
+                
+                const result = await response.json();
+                if (result.success) {
+                    alert('تم إرسال العرض بنجاح!');
+                    offerForm.reset();
+                } else {
+                    alert('حدث خطأ: ' + (result.error || 'يرجى المحاولة مرة أخرى'));
+                }
+            } catch (error) {
+                alert('حدث خطأ في الاتصال');
+                console.error(error);
+            }
+        });
+    }
+    
+    // Negotiation Form Submission
+    const negotiationForm = document.getElementById('negotiation-form');
+    if (negotiationForm) {
+        negotiationForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const formData = new FormData(negotiationForm);
+            const data = Object.fromEntries(formData);
+            data.property_id = propertyId;
+            
+            try {
+                const response = await fetch(`${apiBaseUrl}/negotiations/`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': getCookie('csrftoken')
+                    },
+                    body: JSON.stringify(data)
+                });
+                
+                const result = await response.json();
+                if (result.success) {
+                    alert('تم بدء المفاوضة بنجاح!');
+                    negotiationForm.reset();
+                } else {
+                    alert('حدث خطأ: ' + (result.error || 'يرجى المحاولة مرة أخرى'));
+                }
+            } catch (error) {
+                alert('حدث خطأ في الاتصال');
+                console.error(error);
+            }
+        });
+    }
+    
+    // Reservation Form Submission
+    const reservationForm = document.getElementById('reservation-form');
+    if (reservationForm) {
+        reservationForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const formData = new FormData(reservationForm);
+            const data = Object.fromEntries(formData);
+            data.property_id = propertyId;
+            
+            try {
+                const response = await fetch(`${apiBaseUrl}/reservations/`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': getCookie('csrftoken')
+                    },
+                    body: JSON.stringify(data)
+                });
+                
+                const result = await response.json();
+                if (result.success) {
+                    alert('تم حجز الموعد بنجاح!');
+                    reservationForm.reset();
+                } else {
+                    alert('حدث خطأ: ' + (result.error || 'يرجى المحاولة مرة أخرى'));
+                }
+            } catch (error) {
+                alert('حدث خطأ في الاتصال');
+                console.error(error);
+            }
+        });
+    }
+    
+    // Helper function to get CSRF token
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+});
+</script>
+{% endblock %}
 
 {% block title %}{{ property.display_title }}{% endblock %}
 {% block og_title %}{{ property.display_title }}{% endblock %}
@@ -45,6 +193,71 @@
           </div>
         </div>
         {% endfor %}
+      </div>
+    </div>
+    {% endif %}
+
+    <!-- Floor Plan Section -->
+    {% if floor_plans %}
+    <div class="floor-plan-section">
+      <div class="section-header">
+        <span class="section-icon">📐</span>
+        <h2>مخطط العقار</h2>
+      </div>
+      <div class="floor-plan-container">
+        <div class="floor-plan-main">
+          <div class="floor-plan-toolbar">
+            <button type="button" class="floor-plan-tool-btn" onclick="zoomFloorPlan('in')" title="تكبير">
+              <span>+</span>
+            </button>
+            <button type="button" class="floor-plan-tool-btn" onclick="zoomFloorPlan('out')" title="تصغير">
+              <span>−</span>
+            </button>
+            <button type="button" class="floor-plan-tool-btn" onclick="zoomFloorPlan('reset')" title="إعادة تعيين">
+              <span>↺</span>
+            </button>
+            <button type="button" class="floor-plan-tool-btn" onclick="toggleFloorPlanFullscreen()" title="ملء الشاشة">
+              <span>⛶</span>
+            </button>
+            <button type="button" class="floor-plan-tool-btn" onclick="downloadFloorPlan()" title="تحميل">
+              <span>⬇</span>
+            </button>
+          </div>
+          <img src="{{ floor_plans.0.image.url }}" 
+               alt="مخطط الطابق - {{ floor_plans.0.title }}" 
+               class="floor-plan-image"
+               id="floor-plan-main"
+               loading="lazy">
+          {% if floor_plans|length > 1 %}
+          <div class="floor-plan-controls">
+            <button type="button" class="floor-plan-nav prev" onclick="changeFloorPlan(-1)">
+              <span>‹</span>
+            </button>
+            <button type="button" class="floor-plan-nav next" onclick="changeFloorPlan(1)">
+              <span>›</span>
+            </button>
+          </div>
+          {% endif %}
+        </div>
+        {% if floor_plans|length > 1 %}
+        <div class="floor-plan-thumbs">
+          {% for plan in floor_plans %}
+          <div class="floor-plan-thumb {% if forloop.first %}active{% endif %}" 
+               onclick="setFloorPlan({{ forloop.counter0 }})"
+               data-index="{{ forloop.counter0 }}">
+            <img src="{{ plan.image.url }}" 
+                 alt="{{ plan.title }}" 
+                 loading="lazy">
+            <span class="floor-plan-title">{{ plan.title }}</span>
+          </div>
+          {% endfor %}
+        </div>
+        {% endif %}
+        {% if floor_plans.0.description %}
+        <div class="floor-plan-description">
+          <p>{{ floor_plans.0.description }}</p>
+        </div>
+        {% endif %}
       </div>
     </div>
     {% endif %}
@@ -96,6 +309,12 @@
           <span class="btn-icon">📅</span>
           <span>جدولة معاينة</span>
         </button>
+        {% if request.user.is_superuser or request.user.is_staff %}
+        <a href="{% url 'property_contracts' property.id %}" class="btn btn-outline contract-btn">
+          <span class="btn-icon">📄</span>
+          <span>عقود العقار</span>
+        </a>
+        {% endif %}
         <a href="tel:{{ property.phone }}" class="btn btn-primary call-btn">
           <span class="btn-icon">📞</span>
           <span>اتصال</span>
@@ -829,6 +1048,99 @@
         <span>واتساب</span>
       </a>
       {% endif %}
+    </div>
+
+    <div class="sidebar-card interactive-property-card">
+      <div class="card-header">
+        <span class="card-icon">💼</span>
+        <h3>تفاعل مع العقار</h3>
+      </div>
+      <div class="interactive-tabs">
+        <button class="tab-btn active" data-tab="offer">عرض سعر</button>
+        <button class="tab-btn" data-tab="negotiate">مفاوضة</button>
+        <button class="tab-btn" data-tab="reserve">حجز</button>
+      </div>
+      
+      <!-- Offer Tab -->
+      <div class="tab-content active" id="offer-tab">
+        <form id="offer-form" class="interaction-form">
+          <div class="form-group">
+            <label>السعر المقدم (IQD)</label>
+            <input type="number" name="offered_price" class="form-control" placeholder="أدخل السعر المقدم" required>
+          </div>
+          <div class="form-group">
+            <label>رسالة العرض</label>
+            <textarea name="message" class="form-control" rows="3" placeholder="اكتب رسالة للبائع..."></textarea>
+          </div>
+          <div class="form-group">
+            <label>طريقة التمويل</label>
+            <select name="financing_method" class="form-control">
+              <option value="">اختر طريقة التمويل</option>
+              <option value="cash">نقداً</option>
+              <option value="installment">أقساط</option>
+              <option value="bank">قروض بنكية</option>
+            </select>
+          </div>
+          <button type="submit" class="btn btn-primary btn-lg">
+            <span class="btn-icon">💰</span>
+            <span>إرسال العرض</span>
+          </button>
+        </form>
+      </div>
+      
+      <!-- Negotiate Tab -->
+      <div class="tab-content" id="negotiate-tab">
+        <form id="negotiation-form" class="interaction-form">
+          <div class="form-group">
+            <label>السعر المستهدف (IQD)</label>
+            <input type="number" name="target_price" class="form-control" placeholder="السعر الذي تفاوض عليه" required>
+          </div>
+          <div class="form-group">
+            <label>رسالة المفاوضة</label>
+            <textarea name="message" class="form-control" rows="3" placeholder="اشرح موقفك التفاوضي..."></textarea>
+          </div>
+          <button type="submit" class="btn btn-accent btn-lg">
+            <span class="btn-icon">🤝</span>
+            <span>بدء المفاوضة</span>
+          </button>
+        </form>
+      </div>
+      
+      <!-- Reserve Tab -->
+      <div class="tab-content" id="reserve-tab">
+        <form id="reservation-form" class="interaction-form">
+          <div class="form-group">
+            <label>رقم الهاتف</label>
+            <input type="tel" name="contact_phone" class="form-control" placeholder="رقم التواصل" required>
+          </div>
+          <div class="form-group">
+            <label>البريد الإلكتروني</label>
+            <input type="email" name="contact_email" class="form-control" placeholder="البريد الإلكتروني" required>
+          </div>
+          <div class="form-group">
+            <label>غرض الزيارة</label>
+            <textarea name="visit_purpose" class="form-control" rows="2" placeholder="سبب زيارة العقار..." required></textarea>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>التاريخ المفضل</label>
+              <input type="date" name="preferred_date" class="form-control" required>
+            </div>
+            <div class="form-group">
+              <label>الوقت المفضل</label>
+              <input type="time" name="preferred_time" class="form-control" required>
+            </div>
+          </div>
+          <div class="form-group">
+            <label>عدد الزوار</label>
+            <input type="number" name="number_of_visitors" class="form-control" value="1" min="1" max="10">
+          </div>
+          <button type="submit" class="btn btn-secondary btn-lg">
+            <span class="btn-icon">📅</span>
+            <span>حجز موعد</span>
+          </button>
+        </form>
+      </div>
     </div>
 
     <div class="sidebar-card message-card">
@@ -1780,6 +2092,94 @@
   text-decoration: none;
 }
 
+/* ===== Interactive Property Card ===== */
+.interactive-property-card {
+  margin-bottom: 24px;
+}
+
+.interactive-tabs {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 20px;
+  border-bottom: 2px solid var(--border);
+}
+
+.tab-btn {
+  flex: 1;
+  padding: 12px 16px;
+  background: transparent;
+  border: none;
+  border-bottom: 3px solid transparent;
+  cursor: pointer;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--text-light);
+  transition: all 0.3s ease;
+}
+
+.tab-btn:hover {
+  color: var(--primary);
+  background: var(--bg-alt);
+}
+
+.tab-btn.active {
+  color: var(--primary);
+  border-bottom-color: var(--primary);
+}
+
+.tab-content {
+  display: none;
+}
+
+.tab-content.active {
+  display: block;
+}
+
+.interaction-form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.interaction-form .form-group {
+  margin-bottom: 0;
+}
+
+.interaction-form .form-control {
+  width: 100%;
+  padding: 12px 16px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  font-size: 0.95rem;
+  background: var(--bg);
+  color: var(--text);
+  transition: border-color 0.3s ease;
+}
+
+.interaction-form .form-control:focus {
+  outline: none;
+  border-color: var(--primary);
+}
+
+.interaction-form .form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.interaction-form label {
+  display: block;
+  margin-bottom: 8px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.interaction-form textarea.form-control {
+  resize: vertical;
+  min-height: 80px;
+}
+
 .call-btn-full,
 .whatsapp-btn-full,
 .submit-btn {
@@ -2051,6 +2451,14 @@
 
   .contact-phone a {
     font-size: 1rem;
+  }
+
+  .interactive-tabs {
+    flex-direction: column;
+  }
+
+  .interaction-form .form-row {
+    grid-template-columns: 1fr;
   }
 
   .message-form input,
@@ -2454,7 +2862,7 @@ function getCsrfToken() {
 .form-group input:focus,
 .form-group select:focus,
 .form-group textarea:focus {
-  border-color: #667eea;
+  border-color: #FF7A00;
 }
 
 /* Modal Styles */
@@ -2517,7 +2925,6 @@ function getCsrfToken() {
   gap: 10px;
 }
 </style>
-{% endblock %}
 
 <!-- Fullscreen Map Modal -->
 <div id="detail-map-modal" class="fullscreen-map-modal" style="display: none;">
@@ -2529,6 +2936,7 @@ function getCsrfToken() {
     <div id="detail-fullscreen-map" style="height: calc(100vh - 80px);"></div>
   </div>
 </div>
+{% endblock %}
 
 {% block extra_js %}
 <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.min.js"></script>

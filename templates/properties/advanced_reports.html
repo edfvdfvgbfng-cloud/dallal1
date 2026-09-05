@@ -1,5 +1,6 @@
 {% extends 'properties/dashboard_base.html' %}
 {% load static %}
+{% load custom_filters %}
 
 {% block title %}التقارير المتقدمة{% endblock %}
 {% block dashboard_title %}التقارير المتقدمة{% endblock %}
@@ -218,7 +219,7 @@
       <div class="overview-label">المستخدمين النشطين</div>
       <div class="overview-trend trend-up">↑ {{ user_growth|default:0 }}% هذا الشهر</div>
     </div>
-    <div class="overview-card" style="--card-color-1: #667eea; --card-color-2: #764ba2;">
+    <div class="overview-card" style="--card-color-1: #FF7A00; --card-color-2: #FF9500;">
       <div class="overview-icon">💰</div>
       <div class="overview-value">{{ total_revenue|intcomma }}</div>
       <div class="overview-label">الإيرادات (د.ع)</div>
@@ -405,7 +406,7 @@ function initCharts() {
       datasets: [{
         label: 'النشاط',
         data: [120, 150, 180, 140, 160, 200, 90],
-        borderColor: '#667eea',
+        borderColor: '#FF7A00',
         backgroundColor: 'rgba(102, 126, 234, 0.1)',
         fill: true,
         tension: 0.4
@@ -427,7 +428,7 @@ function initCharts() {
       labels: ['شقق', 'فيلات', 'أراضي', 'محلات', 'مستودعات'],
       datasets: [{
         data: [35, 25, 20, 12, 8],
-        backgroundColor: ['#FF7A00', '#FF6B6B', '#4ECDC4', '#667eea', '#F7DC6F'],
+        backgroundColor: ['#FF7A00', '#FF6B6B', '#4ECDC4', '#FF7A00', '#F7DC6F'],
         borderWidth: 0
       }]
     },

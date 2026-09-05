@@ -1,26 +1,24 @@
 #!/usr/bin/env bash
 set -o errexit
 
-# Force Railway redeploy - 2026-08-24-15-25 - Simplified startup
 echo "=== Dalal Platform Startup ==="
+echo "=== Database Protection: ENABLED ==="
+echo "=== No flush, no reset, safe migrations only ==="
 export PYTHONPATH=/app:$PYTHONPATH
 
-# Check if Django is installed
+# Verify Django installation
 python -c "import django; print('Django installed successfully')"
 
-# Check if settings.py exists
-if [ -f /app/dalal_project/settings.py ]; then
-    echo "Settings.py found"
-else
+# Verify critical files exist
+if [ ! -f /app/dalal_project/settings.py ]; then
     echo "ERROR: settings.py not found"
+    exit 1
 fi
 
-# Check if properties app exists
-if [ -d /app/properties ]; then
-    echo "Properties app exists"
-else
+if [ ! -d /app/properties ]; then
     echo "ERROR: Properties app not found"
+    exit 1
 fi
 
-echo "Starting server..."
+echo "All checks passed. Starting server with protected database..."
 exec python run_server.py

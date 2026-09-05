@@ -1,6 +1,6 @@
 {% extends 'properties/base.html' %}
 
-{% block title %}شركات السفر{% endblock %}
+{% block title %}✈️ شركات السفر والسياحة{% endblock %}
 
 {% block extra_css %}
 <style>
@@ -363,11 +363,11 @@
   <form class="quick-search-box container" method="get" action="{% url 'travel_companies' %}">
     <div class="search-header">
       <div class="search-icon">✈️</div>
-      <h3>ابحث عن شركة سفر</h3>
+      <h3>✈️ شركات السفر والسياحة</h3>
       <p>اكتشف شركات السفر المميزة في العراق</p>
       {% if request.user.is_authenticated %}
       <a href="{% url 'dallal_travel_company_create' %}" class="btn btn-primary btn-sm" style="margin-top: 12px;">
-        <span>✈️ نشر شركة سفر</span>
+        <span>🏢 إنشاء صفحة شركة سفر</span>
       </a>
       {% endif %}
     </div>
@@ -413,79 +413,67 @@
   </form>
 </div>
 
-{% if companies %}
+{% if has_companies %}
 <div class="companies-grid">
-  {% for company in companies %}
-  <a href="{% url 'travel_company_detail' company.pk %}" class="company-card">
+  {% for item in companies_with_packages %}
+  <a href="{% url 'travel_company_detail' item.company.pk %}" class="company-card">
     <div class="company-cover">
-      {% if company.cover_image %}
-      <img src="{{ company.cover_image.url }}" alt="{{ company.name }}">
+      {% if item.company.cover_image %}
+      <img src="{{ item.company.cover_image.url }}" alt="{{ item.company.name }}">
       {% else %}
       <div style="width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; color: white; font-size: 3rem;">✈️</div>
       {% endif %}
-      {% if company.is_verified %}
+      {% if item.company.is_verified %}
       <span class="company-badge verified">✓ موثق</span>
       {% endif %}
-      {% if company.is_featured %}
+      {% if item.company.is_featured %}
       <span class="company-badge featured">⭐ مميز</span>
       {% endif %}
-      {% if company.logo %}
-      <img src="{{ company.logo.url }}" alt="{{ company.name }}" class="company-logo">
+      {% if item.company.logo %}
+      <img src="{{ item.company.logo.url }}" alt="{{ item.company.name }}" class="company-logo">
       {% endif %}
     </div>
     <div class="company-content">
-      <h3 class="company-name">{{ company.name }}</h3>
-      <p class="company-type">{{ company.get_company_type_display }}</p>
-      <p class="company-description">{{ company.description }}</p>
-      
-      <div class="company-meta">
-        <div class="meta-item">
-          <span>📞</span>
-          <span>{{ company.phone }}</span>
-        </div>
-        {% if company.whatsapp %}
-        <div class="meta-item">
-          <span>💬</span>
-          <span>{{ company.whatsapp }}</span>
-        </div>
-        {% endif %}
-        {% if company.travel_scope %}
-        <div class="meta-item">
-          <span>🌍</span>
-          <span>{{ company.get_travel_scope_display }}</span>
-        </div>
-        {% endif %}
-        {% if company.departure_time %}
-        <div class="meta-item">
-          <span>🕐</span>
-          <span>{{ company.departure_time }}</span>
-        </div>
-        {% endif %}
-        {% if company.price %}
-        <div class="meta-item">
-          <span>💰</span>
-          <span>{{ company.price }}</span>
-        </div>
-        {% endif %}
+      <h3 class="company-name">✈️ {{ item.company.name }}</h3>
+      {% if item.company.is_verified %}
+      <p class="company-type">✓ شركة موثقة</p>
+      {% endif %}
+      <div class="company-rating">
+        <span class="rating-stars">⭐</span>
+        <span class="rating-value">{{ item.company.rating }}</span>
+        <span class="rating-count">👥 {{ item.company.reviews_count }} تقييم</span>
       </div>
       
-      {% if company.travel_types %}
-      <div class="travel-types">
-        {% for travel_type in company.travel_types %}
-        <span class="travel-type-badge">{{ travel_type }}</span>
-        {% endfor %}
+      <!-- Packages Preview -->
+      {% if item.packages %}
+      <div class="packages-preview" style="margin-top: 15px; padding-top: 15px; border-top: 1px solid var(--border);">
+        <div style="font-size: 0.85rem; color: var(--text-light); margin-bottom: 10px;">
+          📦 {{ item.packages_count }} رحلة متاحة
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 8px;">
+          {% for package in item.packages %}
+          <div style="background: var(--bg-alt); padding: 10px; border-radius: 8px; border: 1px solid var(--border);">
+            <div style="font-size: 0.9rem; font-weight: 600; color: var(--text); margin-bottom: 5px;">
+              {{ package.title }}
+            </div>
+            <div style="display: flex; justify-content: space-between; align-items: center; font-size: 0.85rem;">
+              <span style="color: var(--text-light);">📅 {{ package.departure_date|date:"Y-m-d" }}</span>
+              <span style="color: var(--primary); font-weight: 700;">{{ package.price }} {{ package.price_currency }}</span>
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+        {% if item.packages_count > 3 %}
+        <div style="text-align: center; margin-top: 10px; font-size: 0.85rem; color: var(--primary); font-weight: 600;">
+          +{{ item.packages_count|add:"-3" }} رحلات أخرى
+        </div>
+        {% endif %}
       </div>
       {% endif %}
       
-      <div class="company-rating">
-        <span class="rating-stars">⭐</span>
-        <span class="rating-value">{{ company.rating }}</span>
-        <span class="rating-count">({{ company.reviews_count }} تقييم)</span>
-      </div>
-      
       <div class="company-footer">
-        <span class="company-location">📍 {{ company.governorate }}</span>
-        <span class="view-btn">عرض التفاصيل</span>
+        <span class="company-location">📍 {{ item.company.get_governorate_display }}</span>
+        <span class="view-btn">عرض الصفحة</span>
       </div>
     </div>
   </a>

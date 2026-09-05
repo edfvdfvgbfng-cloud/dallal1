@@ -2,62 +2,10 @@
 
 {% block title %}إضافة جولة افتراضية - {{ property.display_title }}{% endblock %}
 
-{% block content %}
-<div class="container">
-  <div class="form-card">
-    <div class="form-header">
-      <h1>🌐 إضافة جولة افتراضية 360°</h1>
-      <p>العقار: {{ property.display_title }}</p>
-    </div>
-
-    <form method="post" enctype="multipart/form-data" class="property-form">
-      {% csrf_token %}
-      
-      <div class="form-group">
-        <label>{{ form.property.label }}</label>
-        {{ form.property }}
-      </div>
-
-      <div class="form-group">
-        <label>{{ form.title.label }} *</label>
-        {{ form.title }}
-      </div>
-
-      <div class="form-group">
-        <label>{{ form.image.label }} *</label>
-        {{ form.image }}
-        <small style="color: var(--text-light); display: block; margin-top: 8px;">
-          يرجى رفع صورة بانورامية 360° بصيغة JPG أو PNG
-        </small>
-      </div>
-
-      <div class="form-group">
-        <label>{{ form.description.label }}</label>
-        {{ form.description }}
-      </div>
-
-      <div class="form-group">
-        <label>{{ form.order.label }}</label>
-        {{ form.order }}
-      </div>
-
-      <div class="form-actions">
-        <button type="submit" class="btn btn-primary btn-lg">
-          <span class="btn-icon">💾</span>
-          <span>حفظ الجولة</span>
-        </button>
-        <a href="{% url 'edit_property' property.id %}" class="btn btn-secondary btn-lg">
-          <span class="btn-icon">←</span>
-          <span>رجوع</span>
-        </a>
-      </div>
-    </form>
-  </div>
-</div>
-
+{% block extra_css %}
 <style>
 .form-card {
-  max-width: 600px;
+  max-width: 800px;
   margin: 40px auto;
   padding: 32px;
   background: var(--bg);
@@ -82,15 +30,36 @@
   font-size: 0.95rem;
 }
 
+.form-section {
+  margin-bottom: 32px;
+  padding: 24px;
+  background: var(--bg-alt);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border);
+}
+
+.form-section h3 {
+  margin: 0 0 16px 0;
+  font-size: 1.2rem;
+  color: var(--text);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
 .property-form {
   display: flex;
   flex-direction: column;
-  gap: 24px;
+  gap: 20px;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
 }
 
 .form-group label {
-  display: block;
-  margin-bottom: 8px;
   font-weight: 600;
   color: var(--text);
 }
@@ -98,11 +67,10 @@
 .form-group input,
 .form-group textarea,
 .form-group select {
-  width: 100%;
   padding: 12px 16px;
   border: 1px solid var(--border);
   border-radius: var(--radius-md);
-  background: var(--bg-alt);
+  background: var(--bg);
   color: var(--text);
   font-size: 1rem;
   transition: all 0.3s ease;
@@ -113,7 +81,7 @@
 .form-group select:focus {
   outline: none;
   border-color: var(--primary);
-  box-shadow: 0 0 0 3px rgba(13, 148, 136, 0.1);
+  box-shadow: 0 0 0 3px rgba(255, 122, 0, 0.2);
 }
 
 .form-group textarea {
@@ -121,10 +89,85 @@
   resize: vertical;
 }
 
+.form-group small {
+  color: var(--text-light);
+  font-size: 0.85rem;
+}
+
+.form-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 20px;
+}
+
+.toggle-switch {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.toggle-switch input {
+  width: 50px;
+  height: 26px;
+  -webkit-appearance: none;
+  appearance: none;
+  background: var(--border);
+  border-radius: 13px;
+  position: relative;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.toggle-switch input::before {
+  content: '';
+  position: absolute;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: var(--text-light);
+  top: 2px;
+  left: 2px;
+  transition: all 0.3s ease;
+}
+
+.toggle-switch input:checked {
+  background: var(--primary);
+}
+
+.toggle-switch input:checked::before {
+  transform: translateX(24px);
+  background: white;
+}
+
+.preview-container {
+  margin-top: 16px;
+  border: 2px dashed var(--border);
+  border-radius: var(--radius-md);
+  padding: 20px;
+  text-align: center;
+  min-height: 200px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg-alt);
+}
+
+.preview-container.has-image {
+  padding: 0;
+  min-height: 300px;
+}
+
+.preview-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: var(--radius-md);
+}
+
 .form-actions {
   display: flex;
   gap: 16px;
-  margin-top: 16px;
+  margin-top: 32px;
 }
 
 .form-actions .btn {
@@ -148,9 +191,9 @@
 }
 
 .btn-primary:hover {
-  background: #0d9488;
+  background: #ff9500;
   transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(13, 148, 136, 0.3);
+  box-shadow: 0 4px 12px rgba(255, 122, 0, 0.3);
 }
 
 .btn-secondary {
@@ -162,5 +205,446 @@
 .btn-secondary:hover {
   background: var(--border);
 }
+
+.upload-zone {
+  border: 2px dashed var(--border);
+  border-radius: var(--radius-md);
+  padding: 32px;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  background: var(--bg-alt);
+}
+
+.upload-zone:hover {
+  border-color: var(--primary);
+  background: rgba(255, 122, 0, 0.1);
+}
+
+.upload-zone.dragover {
+  border-color: var(--primary);
+  background: rgba(255, 122, 0, 0.2);
+}
+
+.upload-zone i {
+  font-size: 48px;
+  margin-bottom: 16px;
+  color: var(--text-light);
+}
+
+.upload-zone p {
+  color: var(--text-light);
+  margin: 8px 0;
+}
+
+.upload-zone .upload-hint {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+}
+
+@media (max-width: 768px) {
+  .form-card {
+    margin: 20px;
+    padding: 20px;
+  }
+  
+  .form-row {
+    grid-template-columns: 1fr;
+  }
+}
 </style>
+{% endblock %}
+
+{% block content %}
+<div class="container">
+  <div class="form-card">
+    <div class="form-header">
+      <h1>🌐 إضافة جولة افتراضية 360°</h1>
+      <p>العقار: {{ property.display_title }}</p>
+    </div>
+
+    <form method="post" enctype="multipart/form-data" class="property-form" id="virtual-tour-form">
+      {% csrf_token %}
+      
+      <!-- Basic Information -->
+      <div class="form-section">
+        <h3>📋 المعلومات الأساسية</h3>
+        
+        <div class="form-group">
+          <label>{{ form.title.label }} *</label>
+          {{ form.title }}
+        </div>
+        
+        <div class="form-group">
+          <label>{{ form.tour_type.label }}</label>
+          {{ form.tour_type }}
+          <small>اختر نوع الجولة الافتراضية</small>
+        </div>
+        
+        <div class="form-group">
+          <label>{{ form.description.label }}</label>
+          {{ form.description }}
+          <small>وصف الجولة وما يتضمنه</small>
+        </div>
+        
+        <div class="form-row">
+          <div class="form-group">
+            <label>{{ form.order.label }}</label>
+            {{ form.order }}
+            <small>الترتيب في عرض الجولات</small>
+          </div>
+          
+          <div class="form-group">
+            <label>{{ form.is_active.label }}</label>
+            <div class="toggle-switch">
+              {{ form.is_active }}
+            </div>
+          </div>
+          
+          <div class="form-group">
+            <label>{{ form.is_featured.label }}</label>
+            <div class="toggle-switch">
+              {{ form.is_featured }}
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Media Upload -->
+      <div class="form-section">
+        <h3>🖼️ الوسائط</h3>
+        
+        <div class="form-group">
+          <label>{{ form.image.label }} *</label>
+          <div class="upload-zone" id="image-upload-zone">
+            <i class="fas fa-cloud-upload-alt"></i>
+            <p>اسحب وأفلت صورة بانورامية 360° هنا</p>
+            <p class="upload-hint">أو انقر لاختيار ملف</p>
+            {{ form.image }}
+          </div>
+          <small>يدعم: JPG, PNG, WebP | الحد الأقصى: 10MB</small>
+        </div>
+        
+        <div class="form-group">
+          <label>{{ form.thumbnail.label }}</label>
+          <div class="upload-zone" id="thumbnail-upload-zone">
+            <i class="fas fa-image"></i>
+            <p>صورة مصغرة للمعاينة</p>
+            {{ form.thumbnail }}
+          </div>
+          <small>سيتم استخدام هذه الصورة كمعاينة قبل فتح الجولة</small>
+        </div>
+        
+        <div class="form-group">
+          <label>{{ form.resolution.label }}</label>
+          {{ form.resolution }}
+          <small>اختر دقة الصورة المناسبة</small>
+        </div>
+      </div>
+      
+      <!-- External Service -->
+      <div class="form-section">
+        <h3>🔗 خدمات خارجية</h3>
+        
+        <div class="form-group">
+          <label>{{ form.external_url.label }}</label>
+          {{ form.external_url }}
+          <small>رابط الجولة من خدمة خارجية مثل Matterport</small>
+        </div>
+        
+        <div class="form-group">
+          <label>{{ form.external_service.label }}</label>
+          {{ form.external_service }}
+          <small>اختر خدمة الطرف الثالث</small>
+        </div>
+      </div>
+      
+      <!-- Display Settings -->
+      <div class="form-section">
+        <h3>⚙️ إعدادات العرض</h3>
+        
+        <div class="form-row">
+          <div class="form-group">
+            <label>{{ form.auto_rotate.label }}</label>
+            <div class="toggle-switch">
+              {{ form.auto_rotate }}
+            </div>
+          </div>
+          
+          <div class="form-group">
+            <label>{{ form.auto_rotate_speed.label }}</label>
+            {{ form.auto_rotate_speed }}
+            <small>سرعة التدوير التلقائي (1-10)</small>
+          </div>
+        </div>
+        
+        <div class="form-row">
+          <div class="form-group">
+            <label>{{ form.enable_zoom.label }}</label>
+            <div class="toggle-switch">
+              {{ form.enable_zoom }}
+            </div>
+          </div>
+          
+          <div class="form-group">
+            <label>{{ form.min_zoom.label }}</label>
+            {{ form.min_zoom }}
+            <small>أدنى تكبير (0.5-2.0)</small>
+          </div>
+          
+          <div class="form-group">
+            <label>{{ form.max_zoom.label }}</label>
+            {{ form.max_zoom }}
+            <small>أقصى تكبير (1.0-5.0)</small>
+          </div>
+        </div>
+        
+        <div class="form-row">
+          <div class="form-group">
+            <label>{{ form.enable_fullscreen.label }}</label>
+            <div class="toggle-switch">
+              {{ form.enable_fullscreen }}
+            </div>
+          </div>
+          
+          <div class="form-group">
+            <label>{{ form.enable_vr.label }}</label>
+            <div class="toggle-switch">
+              {{ form.enable_vr }}
+            </div>
+          </div>
+        </div>
+        
+        <div class="form-row">
+          <div class="form-group">
+            <label>{{ form.initial_view_pitch.label }}</label>
+            {{ form.initial_view_pitch }}
+            <small>زاوية الميل الأولية (-90 إلى 90)</small>
+          </div>
+          
+          <div class="form-group">
+            <label>{{ form.initial_view_yaw.label }}</label>
+            {{ form.initial_view_yaw }}
+            <small>زاوية الدوران الأولية (-180 إلى 180)</small>
+          </div>
+        </div>
+        
+        <div class="form-row">
+          <div class="form-group">
+            <label>{{ form.start_in_autoplay.label }}</label>
+            <div class="toggle-switch">
+              {{ form.start_in_autoplay }}
+            </div>
+          </div>
+          
+          <div class="form-group">
+            <label>{{ form.autoplay_duration.label }}</label>
+            {{ form.autoplay_duration }}
+            <small>مدة التشغيل التلقائي بالثواني</small>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Advanced Features -->
+      <div class="form-section">
+        <h3>🚀 ميزات متقدمة</h3>
+        
+        <div class="form-row">
+          <div class="form-group">
+            <label>{{ form.enable_hotspots.label }}</label>
+            <div class="toggle-switch">
+              {{ form.enable_hotspots }}
+            </div>
+          </div>
+          
+          <div class="form-group">
+            <label>{{ form.enable_audio.label }}</label>
+            <div class="toggle-switch">
+              {{ form.enable_audio }}
+            </div>
+          </div>
+          
+          <div class="form-group">
+            <label>{{ form.enable_compass.label }}</label>
+            <div class="toggle-switch">
+              {{ form.enable_compass }}
+            </div>
+          </div>
+          
+          <div class="form-group">
+            <label>{{ form.enable_minimap.label }}</label>
+            <div class="toggle-switch">
+              {{ form.enable_minimap }}
+            </div>
+          </div>
+        </div>
+        
+        <div class="form-group">
+          <label>{{ form.audio_file.label }}</label>
+          {{ form.audio_file }}
+          <small>ملف صوت للجولة (MP3, WAV)</small>
+        </div>
+        
+        <div class="form-row">
+          <div class="form-group">
+            <label>{{ form.loading_animation.label }}</label>
+            <div class="toggle-switch">
+              {{ form.loading_animation }}
+            </div>
+          </div>
+          
+          <div class="form-group">
+            <label>{{ form.background_music.label }}</label>
+            <div class="toggle-switch">
+              {{ form.background_music }}
+            </div>
+          </div>
+          
+          <div class="form-group">
+            <label>{{ form.transition_effect.label }}</label>
+            {{ form.transition_effect }}
+            <small>تأثير الانتقال بين النقاط</small>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Preview -->
+      <div class="form-section">
+        <h3>👁️ معاينة</h3>
+        <div class="preview-container" id="preview-container">
+          <div id="preview-placeholder">
+            <i class="fas fa-cube" style="font-size: 48px; color: var(--text-light);"></i>
+            <p style="color: var(--text-light); margin-top: 16px;">سيظهر معاينة الجولة هنا</p>
+          </div>
+        </div>
+      </div>
+      
+      <div class="form-actions">
+        <button type="submit" class="btn btn-primary btn-lg">
+          <span class="btn-icon">💾</span>
+          <span>حفظ الجولة</span>
+        </button>
+        <a href="{% url 'edit_property' property.id %}" class="btn btn-secondary btn-lg">
+          <span class="btn-icon">←</span>
+          <span>رجوع</span>
+        </a>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+// Drag and drop functionality
+const imageUploadZone = document.getElementById('image-upload-zone');
+const thumbnailUploadZone = document.getElementById('thumbnail-upload-zone');
+const imageInput = document.querySelector('input[name="image"]');
+const thumbnailInput = document.querySelector('input[name="thumbnail"]');
+
+// Image upload zone
+imageUploadZone.addEventListener('click', () => imageInput.click());
+imageUploadZone.addEventListener('dragover', (e) => {
+  e.preventDefault();
+  imageUploadZone.classList.add('dragover');
+});
+imageUploadZone.addEventListener('dragleave', () => {
+  imageUploadZone.classList.remove('dragover');
+});
+imageUploadZone.addEventListener('drop', (e) => {
+  e.preventDefault();
+  imageUploadZone.classList.remove('dragover');
+  if (e.dataTransfer.files.length) {
+    imageInput.files = e.dataTransfer.files;
+    previewImage(e.dataTransfer.files[0]);
+  }
+});
+imageInput.addEventListener('change', (e) => {
+  if (e.target.files.length) {
+    previewImage(e.target.files[0]);
+  }
+});
+
+// Thumbnail upload zone
+thumbnailUploadZone.addEventListener('click', () => thumbnailInput.click());
+thumbnailUploadZone.addEventListener('dragover', (e) => {
+  e.preventDefault();
+  thumbnailUploadZone.classList.add('dragover');
+});
+thumbnailUploadZone.addEventListener('dragleave', () => {
+  thumbnailUploadZone.classList.remove('dragover');
+});
+thumbnailUploadZone.addEventListener('drop', (e) => {
+  e.preventDefault();
+  thumbnailUploadZone.classList.remove('dragover');
+  if (e.dataTransfer.files.length) {
+    thumbnailInput.files = e.dataTransfer.files;
+    previewThumbnail(e.dataTransfer.files[0]);
+  }
+});
+thumbnailInput.addEventListener('change', (e) => {
+  if (e.target.files.length) {
+    previewThumbnail(e.target.files[0]);
+  }
+});
+
+function previewImage(file) {
+  if (file && file.type.startsWith('image/')) {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      imageUploadZone.innerHTML = `
+        <img src="${e.target.result}" class="preview-image" alt="معاينة الصورة">
+        <button type="button" onclick="clearImage()" style="margin-top: 10px; padding: 8px 16px; background: var(--bg-alt); color: var(--text); border: 1px solid var(--border); border-radius: var(--radius-md); cursor: pointer;">إزالة</button>
+      `;
+      imageUploadZone.classList.add('has-image');
+    };
+    reader.readAsDataURL(file);
+  }
+}
+
+function previewThumbnail(file) {
+  if (file && file.type.startsWith('image/')) {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      thumbnailUploadZone.innerHTML = `
+        <img src="${e.target.result}" class="preview-image" alt="معاينة الصورة المصغرة" style="max-height: 200px;">
+        <button type="button" onclick="clearThumbnail()" style="margin-top: 10px; padding: 8px 16px; background: var(--bg-alt); color: var(--text); border: 1px solid var(--border); border-radius: var(--radius-md); cursor: pointer;">إزالة</button>
+      `;
+    };
+    reader.readAsDataURL(file);
+  }
+}
+
+function clearImage() {
+  imageInput.value = '';
+  imageUploadZone.innerHTML = `
+    <i class="fas fa-cloud-upload-alt"></i>
+    <p>اسحب وأفلت صورة بانورامية 360° هنا</p>
+    <p class="upload-hint">أو انقر لاختيار ملف</p>
+    ${imageInput.outerHTML}
+  `;
+  imageUploadZone.classList.remove('has-image');
+  // Re-attach event listeners
+  const newImageInput = imageUploadZone.querySelector('input[name="image"]');
+  newImageInput.addEventListener('change', (e) => {
+    if (e.target.files.length) {
+      previewImage(e.target.files[0]);
+    }
+  });
+}
+
+function clearThumbnail() {
+  thumbnailInput.value = '';
+  thumbnailUploadZone.innerHTML = `
+    <i class="fas fa-image"></i>
+    <p>صورة مصغرة للمعاينة</p>
+    ${thumbnailInput.outerHTML}
+  `;
+  // Re-attach event listeners
+  const newThumbnailInput = thumbnailUploadZone.querySelector('input[name="thumbnail"]');
+  newThumbnailInput.addEventListener('change', (e) => {
+    if (e.target.files.length) {
+      previewThumbnail(e.target.files[0]);
+    }
+  });
+}
+</script>
 {% endblock %}

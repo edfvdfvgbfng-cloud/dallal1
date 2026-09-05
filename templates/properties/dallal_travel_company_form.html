@@ -8,17 +8,17 @@
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
 <style>
 .enhanced-travel-form-container {
-    background: #0a0a0a;
+    background: var(--bg);
     min-height: 100vh;
-    padding: 2rem 0;
+    padding: 20px 0;
 }
 
 .form-card {
-    background: #1a1a1a;
+    background: var(--card-bg);
     border-radius: 20px;
     box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
     overflow: hidden;
-    border: 1px solid #333;
+    border: 1px solid var(--border);
 }
 
 .form-header {
@@ -86,7 +86,7 @@
 
 .progress-step.active .step-number {
     background: white;
-    color: #667eea;
+    color: #FF7A00;
     border-color: white;
 }
 
@@ -501,20 +501,79 @@ input[type="file"]::file-selector-button:hover {
 .guide-note strong {
     color: #FF9F1C;
 }
+
+/* Checkbox Group Styling */
+.checkbox-group {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 10px;
+    padding: 15px;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 8px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.checkbox-group label {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    color: #e0e0e0;
+    font-size: 0.9rem;
+    cursor: pointer;
+    padding: 8px;
+    border-radius: 5px;
+    transition: background 0.3s ease;
+}
+
+.checkbox-group label:hover {
+    background: rgba(255, 122, 0, 0.1);
+}
+
+.checkbox-group input[type="checkbox"] {
+    width: 18px;
+    height: 18px;
+    accent-color: #FF7A00;
+    cursor: pointer;
+}
+
+/* Form Steps Navigation */
+.form-section {
+    display: none;
+}
+
+.form-section.active {
+    display: block;
+}
 </style>
 {% endblock %}
 
-{% block title %}{{ title }}{% endblock %}
+{% block title %}إنشاء صفحة شركة سفر{% endblock %}
 
-{% block content %}
+{% block dashboard_title %}إنشاء صفحة <span>شركة سفر</span>{% endblock %}
+
+{% block dashboard_actions %}
+<div class="travel-company-actions" style="display: flex; flex-direction: column; gap: 10px; margin-bottom: 15px; padding: 15px; background: rgba(255, 122, 0, 0.1); border: 2px solid rgba(255, 122, 0, 0.3); border-radius: 12px;">
+  <h4 style="margin: 0 0 10px 0; color: #FF7A00; font-size: 1rem;">🏢 شركات السفر</h4>
+  <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+    <a href="{% url 'dallal_travel_company_create' %}" class="btn btn-primary btn-sm" style="background: linear-gradient(135deg, #FF7A00 0%, #FF9F1C 100%); border: none;">
+      🟧 إنشاء شركة سفر جديدة
+    </a>
+    <a href="{% url 'broker_travel_companies' %}" class="btn btn-secondary btn-sm" style="background: #1E3A5F; border: 1px solid #2C5282;">
+      🟦 إنشاء منشور داخل صفحة موجودة
+    </a>
+  </div>
+</div>
+{% endblock %}
+
+{% block dashboard_content %}
 <div class="enhanced-travel-form-container">
-    <div class="container">
+    <div class="container-fluid">
         <div class="row">
-            <div class="col-lg-12">
+            <div class="col-12">
                 <div class="form-card">
                     <div class="form-header">
-                        <h1 class="form-title">{{ title }}</h1>
-                        <p class="form-subtitle">أكمل جميع المعلومات المطلوبة لإضافة شركة السفر</p>
+                        <h1 class="form-title">🏢 إنشاء صفحة شركة سفر</h1>
+                        <p class="form-subtitle">أكمل جميع المعلومات المطلوبة لإنشاء صفحة شركة السفر</p>
                         
                         <div class="progress-indicator">
                             <div class="progress-step active" data-step="1">
@@ -523,19 +582,11 @@ input[type="file"]::file-selector-button:hover {
                             </div>
                             <div class="progress-step" data-step="2">
                                 <span class="step-number">2</span>
-                                <span class="step-label">الأسعار والوجهات</span>
+                                <span class="step-label">معلومات التواصل الإضافية</span>
                             </div>
                             <div class="progress-step" data-step="3">
                                 <span class="step-number">3</span>
-                                <span class="step-label">المرافق والخدمات</span>
-                            </div>
-                            <div class="progress-step" data-step="4">
-                                <span class="step-number">4</span>
-                                <span class="step-label">معلومات الاتصال</span>
-                            </div>
-                            <div class="progress-step" data-step="5">
-                                <span class="step-number">5</span>
-                                <span class="step-label">الموقع والوسائط</span>
+                                <span class="step-label">الصور والهوية</span>
                             </div>
                         </div>
                     </div>
@@ -617,172 +668,46 @@ input[type="file"]::file-selector-button:hover {
                         </div>
                         {% endif %}
                         
-                        <!-- المعلومات الأساسية -->
-                        <div class="form-section">
+                        <!-- Step 1: المعلومات الأساسية -->
+                        <div class="form-section active">
                             <h3 class="section-title">
                                 <i class="fas fa-info-circle section-icon"></i>
                                 المعلومات الأساسية
                             </h3>
-                            
+
                             <div class="form-grid">
                                 <div class="form-group full-width">
-                                    <label class="form-label">اسم الشركة بالعربية <span class="required">*</span></label>
+                                    <label class="form-label">اسم شركة السفر <span class="required">*</span></label>
                                     {{ form.name }}
                                     {% if form.name.errors %}
                                     <div class="text-danger">{{ form.name.errors }}</div>
                                     {% endif %}
                                 </div>
-                                
+
                                 <div class="form-group full-width">
-                                    <label class="form-label">اسم الشركة بالإنجليزية</label>
-                                    {{ form.name_en }}
-                                    {% if form.name_en.errors %}
-                                    <div class="text-danger">{{ form.name_en.errors }}</div>
-                                    {% endif %}
-                                </div>
-                                
-                                <div class="form-group">
                                     <label class="form-label">نوع الشركة <span class="required">*</span></label>
                                     {{ form.company_type }}
                                     {% if form.company_type.errors %}
                                     <div class="text-danger">{{ form.company_type.errors }}</div>
                                     {% endif %}
                                 </div>
-                                
-                                <div class="form-group">
-                                    <label class="form-label">نطاق السفر</label>
-                                    {{ form.travel_scope }}
-                                    {% if form.travel_scope.errors %}
-                                    <div class="text-danger">{{ form.travel_scope.errors }}</div>
-                                    {% endif %}
-                                </div>
-                                
-                                <div class="form-group">
-                                    <label class="form-label">نوع السفر</label>
-                                    {{ form.travel_type }}
-                                    {% if form.travel_type.errors %}
-                                    <div class="text-danger">{{ form.travel_type.errors }}</div>
-                                    {% endif %}
-                                </div>
-                                
-                                <div class="form-group">
-                                    <label class="form-label">وقت الانطلاق</label>
-                                    {{ form.departure_time }}
-                                    {% if form.departure_time.errors %}
-                                    <div class="text-danger">{{ form.departure_time.errors }}</div>
-                                    {% endif %}
-                                </div>
-                                
+
                                 <div class="form-group full-width">
-                                    <label class="form-label">أنواع السفر المدعومة <span class="required">*</span></label>
-                                    <textarea name="travel_types" cols="40" rows="3" class="form-control" required="" id="id_travel_types"></textarea>
-                                    {% if form.travel_types.errors %}
-                                    <div class="text-danger">{{ form.travel_types.errors }}</div>
-                                    {% endif %}
-                                </div>
-                                
-                                <div class="form-group full-width">
-                                    <label class="form-label">وصف الشركة بالعربية <span class="required">*</span></label>
+                                    <label class="form-label">وصف الشركة <span class="required">*</span></label>
                                     {{ form.description }}
                                     {% if form.description.errors %}
                                     <div class="text-danger">{{ form.description.errors }}</div>
                                     {% endif %}
                                 </div>
-                                
-                                <div class="form-group full-width">
-                                    <label class="form-label">وصف الشركة بالإنجليزية</label>
-                                    {{ form.description_en }}
-                                    {% if form.description_en.errors %}
-                                    <div class="text-danger">{{ form.description_en.errors }}</div>
-                                    {% endif %}
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <!-- الأسعار والوجهات -->
-                        <div class="form-section">
-                            <h3 class="section-title">
-                                <i class="fas fa-dollar-sign section-icon"></i>
-                                الأسعار والوجهات
-                            </h3>
-                            
-                            <div class="form-grid">
+
                                 <div class="form-group">
-                                    <label class="form-label">السعر</label>
-                                    {{ form.price }}
-                                    {% if form.price.errors %}
-                                    <div class="text-danger">{{ form.price.errors }}</div>
-                                    {% endif %}
-                                </div>
-                                
-                                <div class="form-group">
-                                    <label class="form-label">عملة السعر <span class="required">*</span></label>
-                                    {{ form.price_currency }}
-                                    {% if form.price_currency.errors %}
-                                    <div class="text-danger">{{ form.price_currency.errors }}</div>
-                                    {% endif %}
-                                </div>
-                                
-                                <div class="form-group full-width">
-                                    <label class="form-label">الوجهات <span class="required">*</span></label>
-                                    <textarea name="destinations" cols="40" rows="3" class="form-control" required="" aria-describedby="id_destinations_helptext" id="id_destinations"></textarea>
-                                    {% if form.destinations.errors %}
-                                    <div class="text-danger">{{ form.destinations.errors }}</div>
-                                    {% endif %}
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <!-- المرافق والخدمات -->
-                        <div class="form-section">
-                            <h3 class="section-title">
-                                <i class="fas fa-concierge-bell section-icon"></i>
-                                المرافق والخدمات
-                            </h3>
-                            
-                            <div class="form-grid">
-                                <div class="form-group full-width">
-                                    <label class="form-label">المرافق <span class="required">*</span></label>
-                                    <textarea name="facilities" cols="40" rows="3" class="form-control" required="" aria-describedby="id_facilities_helptext" id="id_facilities"></textarea>
-                                    {% if form.facilities.errors %}
-                                    <div class="text-danger">{{ form.facilities.errors }}</div>
-                                    {% endif %}
-                                </div>
-                                
-                                <div class="form-group full-width">
-                                    <label class="form-label">الخدمات <span class="required">*</span></label>
-                                    <textarea name="services" cols="40" rows="3" class="form-control" required="" aria-describedby="id_services_helptext" id="id_services"></textarea>
-                                    {% if form.services.errors %}
-                                    <div class="text-danger">{{ form.services.errors }}</div>
-                                    {% endif %}
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <!-- معلومات الاتصال -->
-                        <div class="form-section">
-                            <h3 class="section-title">
-                                <i class="fas fa-phone section-icon"></i>
-                                معلومات الاتصال
-                            </h3>
-                            
-                            <div class="form-grid">
-                                <div class="form-group">
-                                    <label class="form-label">رقم الهاتف <span class="required">*</span></label>
+                                    <label class="form-label">رقم الهاتف الرئيسي <span class="required">*</span></label>
                                     {{ form.phone }}
                                     {% if form.phone.errors %}
                                     <div class="text-danger">{{ form.phone.errors }}</div>
                                     {% endif %}
                                 </div>
-                                
-                                <div class="form-group">
-                                    <label class="form-label">رقم الواتساب</label>
-                                    {{ form.whatsapp }}
-                                    {% if form.whatsapp.errors %}
-                                    <div class="text-danger">{{ form.whatsapp.errors }}</div>
-                                    {% endif %}
-                                </div>
-                                
+
                                 <div class="form-group">
                                     <label class="form-label">البريد الإلكتروني <span class="required">*</span></label>
                                     {{ form.email }}
@@ -790,7 +715,49 @@ input[type="file"]::file-selector-button:hover {
                                     <div class="text-danger">{{ form.email.errors }}</div>
                                     {% endif %}
                                 </div>
-                                
+
+                                <div class="form-group">
+                                    <label class="form-label">المحافظة <span class="required">*</span></label>
+                                    {{ form.governorate }}
+                                    {% if form.governorate.errors %}
+                                    <div class="text-danger">{{ form.governorate.errors }}</div>
+                                    {% endif %}
+                                </div>
+
+                                <div class="form-group">
+                                    <label class="form-label">المدينة <span class="required">*</span></label>
+                                    {{ form.city }}
+                                    {% if form.city.errors %}
+                                    <div class="text-danger">{{ form.city.errors }}</div>
+                                    {% endif %}
+                                </div>
+
+                                <div class="form-group full-width">
+                                    <label class="form-label">العنوان <span class="required">*</span></label>
+                                    {{ form.address }}
+                                    {% if form.address.errors %}
+                                    <div class="text-danger">{{ form.address.errors }}</div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Step 2: معلومات التواصل الإضافية -->
+                        <div class="form-section">
+                            <h3 class="section-title">
+                                <i class="fas fa-phone section-icon"></i>
+                                معلومات التواصل الإضافية
+                            </h3>
+
+                            <div class="form-grid">
+                                <div class="form-group">
+                                    <label class="form-label">واتساب</label>
+                                    {{ form.whatsapp }}
+                                    {% if form.whatsapp.errors %}
+                                    <div class="text-danger">{{ form.whatsapp.errors }}</div>
+                                    {% endif %}
+                                </div>
+
                                 <div class="form-group">
                                     <label class="form-label">الموقع الإلكتروني</label>
                                     {{ form.website }}
@@ -798,7 +765,7 @@ input[type="file"]::file-selector-button:hover {
                                     <div class="text-danger">{{ form.website.errors }}</div>
                                     {% endif %}
                                 </div>
-                                
+
                                 <div class="form-group">
                                     <label class="form-label">فيسبوك</label>
                                     {{ form.facebook }}
@@ -806,15 +773,15 @@ input[type="file"]::file-selector-button:hover {
                                     <div class="text-danger">{{ form.facebook.errors }}</div>
                                     {% endif %}
                                 </div>
-                                
+
                                 <div class="form-group">
-                                    <label class="form-label">انستغرام</label>
+                                    <label class="form-label">إنستغرام</label>
                                     {{ form.instagram }}
                                     {% if form.instagram.errors %}
                                     <div class="text-danger">{{ form.instagram.errors }}</div>
                                     {% endif %}
                                 </div>
-                                
+
                                 <div class="form-group">
                                     <label class="form-label">تويتر</label>
                                     {{ form.twitter }}
@@ -822,9 +789,9 @@ input[type="file"]::file-selector-button:hover {
                                     <div class="text-danger">{{ form.twitter.errors }}</div>
                                     {% endif %}
                                 </div>
-                                
+
                                 <div class="form-group">
-                                    <label class="form-label">تيليجرام</label>
+                                    <label class="form-label">تليغرام</label>
                                     {{ form.telegram }}
                                     {% if form.telegram.errors %}
                                     <div class="text-danger">{{ form.telegram.errors }}</div>
@@ -833,63 +800,24 @@ input[type="file"]::file-selector-button:hover {
                             </div>
                         </div>
                         
-                        <!-- الموقع والوسائط -->
+                        <!-- Step 3: الصور والهوية -->
                         <div class="form-section">
                             <h3 class="section-title">
-                                <i class="fas fa-map-marker-alt section-icon"></i>
-                                الموقع والوسائط
+                                <i class="fas fa-images section-icon"></i>
+                                الصور والهوية
                             </h3>
-                            
+
                             <div class="form-grid">
                                 <div class="form-group full-width">
-                                    <label class="form-label">العنوان <span class="required">*</span></label>
-                                    {{ form.address }}
-                                    {% if form.address.errors %}
-                                    <div class="text-danger">{{ form.address.errors }}</div>
-                                    {% endif %}
-                                </div>
-                                
-                                <div class="form-group">
-                                    <label class="form-label">المحافظة <span class="required">*</span></label>
-                                    {{ form.governorate }}
-                                    {% if form.governorate.errors %}
-                                    <div class="text-danger">{{ form.governorate.errors }}</div>
-                                    {% endif %}
-                                </div>
-                                
-                                <div class="form-group">
-                                    <label class="form-label">المدينة <span class="required">*</span></label>
-                                    {{ form.city }}
-                                    {% if form.city.errors %}
-                                    <div class="text-danger">{{ form.city.errors }}</div>
-                                    {% endif %}
-                                </div>
-                                
-                                <div class="form-group">
-                                    <label class="form-label">خط العرض</label>
-                                    <div style="display: flex; gap: 10px;">
-                                        <input type="number" step="any" name="latitude" class="form-control" placeholder="مثال: 33.3152" id="latitude-input-travel">
-                                        <button type="button" onclick="getLocationGPSTravel()" class="btn btn-secondary" style="white-space: nowrap;">
-                                            📍 GPS
-                                        </button>
-                                    </div>
-                                </div>
-                                
-                                <div class="form-group">
-                                    <label class="form-label">خط الطول</label>
-                                    <input type="number" step="any" name="longitude" class="form-control" placeholder="مثال: 44.3661" id="longitude-input-travel">
-                                </div>
-                                
-                                <div class="form-group">
-                                    <label class="form-label">شعار الشركة</label>
+                                    <label class="form-label">شعار الشركة <span class="required">*</span></label>
                                     {{ form.logo }}
                                     {% if form.logo.errors %}
                                     <div class="text-danger">{{ form.logo.errors }}</div>
                                     {% endif %}
                                 </div>
-                                
-                                <div class="form-group">
-                                    <label class="form-label">صورة الغلاف</label>
+
+                                <div class="form-group full-width">
+                                    <label class="form-label">صورة الغلاف <span class="required">*</span></label>
                                     {{ form.cover_image }}
                                     {% if form.cover_image.errors %}
                                     <div class="text-danger">{{ form.cover_image.errors }}</div>
@@ -898,65 +826,19 @@ input[type="file"]::file-selector-button:hover {
                             </div>
                         </div>
                         
-                        <!-- حالة الشركة -->
-                        <div class="form-section">
-                            <h3 class="section-title">
-                                <i class="fas fa-toggle-on section-icon"></i>
-                                حالة الشركة
-                            </h3>
-                            
-                            <div class="form-grid">
-                                <div class="form-group">
-                                    <label class="form-label">التقييم (0-5) <span class="required">*</span></label>
-                                    {{ form.rating }}
-                                    {% if form.rating.errors %}
-                                    <div class="text-danger">{{ form.rating.errors }}</div>
-                                    {% endif %}
-                                </div>
-                                
-                                <div class="form-group">
-                                    <label class="form-label">عدد التقييمات <span class="required">*</span></label>
-                                    {{ form.reviews_count }}
-                                    {% if form.reviews_count.errors %}
-                                    <div class="text-danger">{{ form.reviews_count.errors }}</div>
-                                    {% endif %}
-                                </div>
-                                
-                                <div class="form-group">
-                                    <label class="form-label">موثقة</label>
-                                    {{ form.is_verified }}
-                                    {% if form.is_verified.errors %}
-                                    <div class="text-danger">{{ form.is_verified.errors }}</div>
-                                    {% endif %}
-                                </div>
-                                
-                                <div class="form-group">
-                                    <label class="form-label">مميزة</label>
-                                    {{ form.is_featured }}
-                                    {% if form.is_featured.errors %}
-                                    <div class="text-danger">{{ form.is_featured.errors }}</div>
-                                    {% endif %}
-                                </div>
-                                
-                                <div class="form-group">
-                                    <label class="form-label">نشطة</label>
-                                    {{ form.is_active }}
-                                    {% if form.is_active.errors %}
-                                    <div class="text-danger">{{ form.is_active.errors }}</div>
-                                    {% endif %}
-                                </div>
-                            </div>
-                        </div>
-                        
                         <!-- أزرار الإجراءات -->
                         <div class="form-actions">
-                            <button type="submit" class="btn btn-primary">
-                                <i class="fas fa-plus-circle"></i>
-                                إضافة الشركة
+                            <button type="button" class="btn btn-secondary" id="prevBtn" onclick="prevStep()" style="display: none;">
+                                <i class="fas fa-arrow-right"></i> السابق
+                            </button>
+                            <button type="button" class="btn btn-primary" id="nextBtn" onclick="nextStep()">
+                                التالي <i class="fas fa-arrow-left"></i>
+                            </button>
+                            <button type="submit" class="btn btn-success" id="submitBtn" style="display: none;">
+                                <i class="fas fa-plus-circle"></i> إنشاء صفحة شركة السفر
                             </button>
                             <a href="{% url 'travel_companies' %}" class="btn btn-secondary">
-                                <i class="fas fa-times"></i>
-                                إلغاء
+                                <i class="fas fa-times"></i> إلغاء
                             </a>
                         </div>
                     </form>
@@ -970,20 +852,115 @@ input[type="file"]::file-selector-button:hover {
 function toggleGuide() {
     const guideContent = document.getElementById('guideContent');
     const guideToggle = document.querySelector('.guide-toggle');
-    
+
     guideContent.classList.toggle('active');
     guideToggle.classList.toggle('active');
+}
+
+// Multi-step form navigation
+let currentStep = 1;
+const totalSteps = 3;
+
+function showStep(step) {
+    // Hide all sections and remove required from hidden fields
+    const sections = document.querySelectorAll('.form-section');
+    sections.forEach((section, index) => {
+        section.classList.remove('active');
+        // Remove required from all fields in hidden sections
+        section.querySelectorAll('input, select, textarea').forEach(field => {
+            field.removeAttribute('required');
+        });
+    });
+
+    // Show current section and add required to visible fields
+    if (sections[step - 1]) {
+        sections[step - 1].classList.add('active');
+        // Add required back to fields that should be required
+        sections[step - 1].querySelectorAll('input, select, textarea').forEach(field => {
+            if (field.hasAttribute('data-required')) {
+                field.setAttribute('required', 'required');
+            }
+        });
+    }
+
+    // Update progress indicator
+    document.querySelectorAll('.progress-step').forEach((progressStep, index) => {
+        if (index + 1 === step) {
+            progressStep.classList.add('active');
+        } else {
+            progressStep.classList.remove('active');
+        }
+    });
+
+    // Update button visibility
+    const prevBtn = document.getElementById('prevBtn');
+    const nextBtn = document.getElementById('nextBtn');
+    const submitBtn = document.getElementById('submitBtn');
+
+    if (prevBtn) {
+        prevBtn.style.display = step > 1 ? 'inline-flex' : 'none';
+    }
+
+    if (nextBtn) {
+        nextBtn.style.display = step < totalSteps ? 'inline-flex' : 'none';
+    }
+
+    if (submitBtn) {
+        submitBtn.style.display = step === totalSteps ? 'inline-flex' : 'none';
+    }
+
+    currentStep = step;
+}
+
+function nextStep() {
+    if (currentStep < totalSteps) {
+        showStep(currentStep + 1);
+    }
+}
+
+function prevStep() {
+    if (currentStep > 1) {
+        showStep(currentStep - 1);
+    }
+}
+
+// GPS Location function
+function getLocationGPSTravel() {
+    if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(function(position) {
+            document.getElementById('latitude-input-travel').value = position.coords.latitude;
+            document.getElementById('longitude-input-travel').value = position.coords.longitude;
+        }, function(error) {
+            alert('تعذر الحصول على الموقع: ' + error.message);
+        });
+    } else {
+        alert('المتصفح لا يدعم تحديد الموقع الجغرافي');
+    }
 }
 
 // Open guide by default
 document.addEventListener('DOMContentLoaded', function() {
     const guideContent = document.getElementById('guideContent');
     const guideToggle = document.querySelector('.guide-toggle');
-    
+
     if (guideContent && guideToggle) {
         guideContent.classList.add('active');
         guideToggle.classList.add('active');
     }
+
+    // Initialize form validation for multi-step form
+    const form = document.querySelector('.enhanced-travel-form');
+    if (form) {
+        form.addEventListener('submit', function(e) {
+            // Add required to all data-required fields before validation
+            document.querySelectorAll('[data-required="true"]').forEach(field => {
+                field.setAttribute('required', 'required');
+            });
+        });
+    }
+
+    // Show first step
+    showStep(1);
 });
 </script>
 {% endblock %}

@@ -1,0 +1,303 @@
+{% extends 'properties/base.html' %}
+{% load static %}
+{% load custom_filters %}
+
+{% block title %}تذكيرات العقد - {{ contract.contract_number }}{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <div>
+                        <h2 class="mb-0">⏰ تذكيرات العقد</h2>
+                        <p class="text-muted mb-0">{{ contract.contract_number }} - {{ contract.get_contract_type_display }}</p>
+                    </div>
+                    <a href="{% url 'contract_detail' contract.id %}" class="btn btn-secondary">
+                        العودة للتفاصيل
+                    </a>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-4">
+                            <div class="card bg-dark border-secondary">
+                                <div class="card-header">
+                                    <h5 class="mb-0">إضافة تذكير جديد</h5>
+                                </div>
+                                <div class="card-body">
+                                    <form method="post">
+                                        {% csrf_token %}
+                                        
+                                        <div class="form-group">
+                                            <label for="id_reminder_type">نوع التذكير</label>
+                                            {{ form.reminder_type }}
+                                        </div>
+                                        
+                                        <div class="form-group">
+                                            <label for="id_reminder_date">تاريخ التذكير</label>
+                                            {{ form.reminder_date }}
+                                        </div>
+                                        
+                                        <div class="form-group">
+                                            <label for="id_reminder_time">وقت التذكير</label>
+                                            {{ form.reminder_time }}
+                                        </div>
+                                        
+                                        <div class="form-group">
+                                            <label for="id_message">رسالة التذكير</label>
+                                            {{ form.message }}
+                                        </div>
+                                        
+                                        <div class="form-check">
+                                            {{ form.send_email }}
+                                            <label class="form-check-label" for="id_send_email">
+                                                إرسال عبر البريد الإلكتروني
+                                            </label>
+                                        </div>
+                                        
+                                        <div class="form-check">
+                                            {{ form.send_sms }}
+                                            <label class="form-check-label" for="id_send_sms">
+                                                إرسال عبر SMS
+                                            </label>
+                                        </div>
+                                        
+                                        <button type="submit" class="btn btn-success btn-block mt-3">
+                                            <span class="btn-icon">➕</span>
+                                            إضافة التذكير
+                                        </button>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-8">
+                            <div class="card bg-dark border-secondary">
+                                <div class="card-header">
+                                    <h5 class="mb-0">التذكيرات الموجودة</h5>
+                                </div>
+                                <div class="card-body">
+                                    {% if reminders %}
+                                        <div class="list-group">
+                                            {% for reminder in reminders %}
+                                            <div class="list-group-item bg-dark border-secondary">
+                                                <div class="d-flex justify-content-between align-items-start">
+                                                    <div>
+                                                        <h6 class="mb-1">
+                                                            <span class="badge badge-{{ reminder.reminder_type }}">
+                                                                {{ reminder.get_reminder_type_display }}
+                                                            </span>
+                                                            {{ reminder.reminder_date|date:"Y-m-d" }}
+                                                            {% if reminder.reminder_time %}
+                                                                {{ reminder.reminder_time|date:"H:i" }}
+                                                            {% endif %}
+                                                        </h6>
+                                                        <p class="mb-1">{{ reminder.message }}</p>
+                                                        <small class="text-muted">
+                                                            {% if reminder.send_email %}📧 بريد إلكتروني{% endif %}
+                                                            {% if reminder.send_sms %}{% if reminder.send_email %}، {% endif %}📱 SMS{% endif %}
+                                                        </small>
+                                                    </div>
+                                                    <div class="ml-2">
+                                                        {% if not reminder.is_sent %}
+                                                        <span class="badge badge-warning">قيد الانتظار</span>
+                                                        {% else %}
+                                                        <span class="badge badge-success">تم الإرسال</span>
+                                                        {% endif %}
+                                                    </div>
+                                                </div>
+                                                <div class="mt-2">
+                                                    <small class="text-muted">
+                                                        تم الإنشاء: {{ reminder.created_at|date:"Y-m-d H:i" }}
+                                                    </small>
+                                                </div>
+                                            </div>
+                                            {% endfor %}
+                                        </div>
+                                    {% else %}
+                                        <div class="alert alert-info text-center">
+                                            <div class="empty-icon">📭</div>
+                                            <h4>لا توجد تذكيرات</h4>
+                                            <p>أضف تذكيرات جديدة لهذا العقد</p>
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.card {
+    background: #0A0A0A;
+    border: 1px solid #333;
+    border-radius: 10px;
+    margin-bottom: 20px;
+}
+
+.card-header {
+    background: #0A0A0A;
+    border-bottom: 1px solid #333;
+    padding: 15px;
+    border-radius: 10px 10px 0 0;
+}
+
+.card-header h2, .card-header h5 {
+    color: #e67e22;
+    margin: 0;
+}
+
+.card-header p {
+    color: #888;
+    margin: 5px 0 0 0;
+}
+
+.card-body {
+    padding: 20px;
+    color: #fff;
+}
+
+.form-group label {
+    color: #fff;
+    font-weight: 600;
+}
+
+.form-control, textarea, select {
+    background: #0A0A0A;
+    border: 1px solid #333;
+    color: #fff;
+    padding: 12px;
+    border-radius: 6px;
+    width: 100%;
+}
+
+.form-control:focus, textarea:focus, select:focus {
+    border-color: #e67e22;
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(230, 126, 34, 0.2);
+}
+
+.form-check-label {
+    color: #fff;
+}
+
+.list-group-item {
+    background: #1a1a1a;
+    border: 1px solid #333;
+    color: #fff;
+    margin-bottom: 10px;
+    border-radius: 8px;
+    padding: 15px;
+}
+
+.list-group-item:hover {
+    background: #2a2a2a;
+    border-color: #e67e22;
+}
+
+.badge {
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 0.75rem;
+}
+
+.badge-warning {
+    background: #3a2a0a;
+    color: #e67e22;
+}
+
+.badge-success {
+    background: #0a3a0a;
+    color: #28a745;
+}
+
+.badge-info {
+    background: #0a2a3a;
+    color: #17a2b8;
+}
+
+.badge-danger {
+    background: #3a0a0a;
+    color: #dc3545;
+}
+
+.alert {
+    background: #1a1a1a;
+    border: 1px solid #333;
+    color: #fff;
+    border-radius: 8px;
+    padding: 15px;
+    margin-bottom: 20px;
+}
+
+.alert-info {
+    background: #0a2a3a;
+    border-color: #17a2b8;
+}
+
+.empty-icon {
+    font-size: 4rem;
+    margin-bottom: 20px;
+    opacity: 0.5;
+}
+
+.btn {
+    padding: 10px 20px;
+    border-radius: 6px;
+    border: none;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    text-decoration: none;
+    color: #fff;
+}
+
+.btn-success {
+    background: #28a745;
+}
+
+.btn-success:hover {
+    background: #218838;
+}
+
+.btn-secondary {
+    background: #6c757d;
+}
+
+.btn-secondary:hover {
+    background: #5a6268;
+}
+
+.btn-icon {
+    margin-left: 5px;
+}
+
+.btn-block {
+    width: 100%;
+}
+
+.bg-dark {
+    background: #0A0A0A !important;
+}
+
+.border-secondary {
+    border-color: #333 !important;
+}
+
+.ml-2 {
+    margin-left: 10px;
+}
+
+.mt-2 {
+    margin-top: 10px;
+}
+
+.mt-3 {
+    margin-top: 15px;
+}
+</style>
+{% endblock %}

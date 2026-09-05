@@ -8,7 +8,7 @@ from unittest.mock import Mock, patch
 from django.test import TestCase, Client
 from django.contrib.auth.models import User
 from .ai_arabic_normalizer import arabic_normalizer, number_parser
-from .ai_intent_detection import intent_detector, feature_extractor
+from .ai_intent_classifier import intent_detector, feature_extractor
 from .ai_entity_extraction import entity_extractor, entity_normalizer
 from .ai_context_engine import context_manager, question_generator
 from .ai_conversation_manager import conversation_manager

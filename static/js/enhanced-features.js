@@ -445,17 +445,9 @@ class PerformanceMonitor {
   }
 
   async sendMetrics() {
-    try {
-      await fetch('/api/analytics/performance/', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(this.metrics)
-      });
-    } catch (error) {
-      console.error('Failed to send metrics:', error);
-    }
+    // Disabled metrics sending to avoid connection errors
+    // Metrics are optional for now
+    return;
   }
 }
 
@@ -605,17 +597,15 @@ class BackToTop {
 
   init() {
     if (this.button) {
-      window.addEventListener('scroll', this.handleScroll.bind(this));
+      // Always show the button
+      this.button.classList.add('visible');
       this.button.addEventListener('click', this.scrollToTop.bind(this));
     }
   }
 
   handleScroll() {
-    if (window.pageYOffset > 300) {
-      this.button.classList.add('visible');
-    } else {
-      this.button.classList.remove('visible');
-    }
+    // Always keep button visible
+    this.button.classList.add('visible');
   }
 
   scrollToTop() {

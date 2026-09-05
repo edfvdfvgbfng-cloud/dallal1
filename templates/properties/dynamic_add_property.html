@@ -88,12 +88,12 @@
 }
 
 .form-section {
-  display: none !important;
+  display: none;
   animation: fadeIn 0.5s ease;
 }
 
 .form-section.active {
-  display: block !important;
+  display: block;
 }
 
 @keyframes fadeIn {
@@ -147,7 +147,7 @@
 
 .form-control:focus {
   outline: none;
-  border-color: #667eea;
+  border-color: #FF7A00;
   background: rgba(255, 255, 255, 0.15);
 }
 
@@ -191,7 +191,7 @@
 }
 
 .btn-submit {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #FF7A00 0%, #FF9500 100%);
   color: white;
   border: none;
   padding: 15px 40px;
@@ -360,6 +360,10 @@
         <span class="btn-icon">🔨</span>
         <span class="btn-text">نشر مزاد</span>
       </a>
+      <a href="{% url 'my_posts' %}?type=outside_iraq" class="category-btn" style="text-decoration: none; background: rgba(0, 100, 200, 0.1); border-color: rgba(0, 100, 200, 0.3);">
+        <span class="btn-icon">📋</span>
+        <span class="btn-text">إدارة منشورات عقارات خارج العراق</span>
+      </a>
     </div>
   </div>
 
@@ -370,11 +374,11 @@
   </div>
 
   <!-- Property Form -->
-  <form method="post" enctype="multipart/form-data" id="propertyForm">
+  <form method="post" enctype="multipart/form-data" id="propertyForm" action="{% url 'dynamic_add_property' %}">
     {% csrf_token %}
     
     <!-- Hidden category field -->
-    <input type="hidden" name="category" id="hidden-category" value="{{ category }}">
+    <input type="hidden" name="category" id="hidden-category" value="{% if category %}{{ category }}{% else %}inside_iraq{% endif %}">
     
     {% if property_form.non_field_errors %}
     <div class="error-message">
@@ -385,14 +389,14 @@
     {% endif %}
     
     <!-- Inside Iraq Form -->
-    <div id="inside_iraq-form" class="form-section {% if category == 'inside_iraq' or not category %}active{% endif %}">
+    <div id="inside_iraq-form" class="form-section {% if category == 'inside_iraq' or not category %}active{% endif %}" style="{% if category == 'inside_iraq' or not category %}display: block;{% else %}display: none;{% endif %}">
       <h2 class="section-title">🏠 عقارات داخل العراق</h2>
       
       <h3 class="section-title" style="font-size: 1.2rem;">المعلومات الأساسية</h3>
       <div class="form-grid">
         <div class="form-group" style="grid-column: span 2;">
           <label>صورة الغلاف <span class="required">*</span></label>
-          <input type="file" name="cover_image" accept="image/*" class="form-control" required>
+          <input type="file" name="cover_image" accept="image/*" class="form-control">
           <small style="color: rgba(255,255,255,0.6);">صورة الغلاف الرئيسية للعقار</small>
         </div>
         
@@ -404,12 +408,12 @@
         
         <div class="form-group" style="grid-column: span 2;">
           <label>عنوان الإعلان <span class="required">*</span></label>
-          <input type="text" name="title" class="form-control" required>
+          <input type="text" name="title" class="form-control">
         </div>
         
         <div class="form-group">
           <label>نوع العقار <span class="required">*</span></label>
-          <select name="type" class="form-control" required>
+          <select name="type" class="form-control">
             <option value="">اختر نوع العقار</option>
             <option value="apartment">شقة</option>
             <option value="house">منزل</option>
@@ -474,7 +478,7 @@
       <div class="form-grid">
         <div class="form-group">
           <label>السعر (د.ع) <span class="required">*</span></label>
-          <input type="number" name="price" class="form-control" required>
+          <input type="number" name="price" class="form-control">
         </div>
         
         <div class="form-group">
@@ -519,7 +523,7 @@
       <div class="form-grid">
         <div class="form-group">
           <label>المحافظة <span class="required">*</span></label>
-          <select name="governorate" class="form-control" required>
+          <select name="governorate" class="form-control">
             <option value="">اختر المحافظة</option>
             <option value="بغداد">بغداد</option>
             <option value="البصرة">البصرة</option>
@@ -799,7 +803,7 @@
       <div class="form-grid">
         <div class="form-group" style="grid-column: span 2;">
           <label>صورة الغلاف الأمامية <span class="required">*</span></label>
-          <input type="file" name="cover_image" accept="image/*" class="form-control" required>
+          <input type="file" name="cover_image" accept="image/*" class="form-control">
           <small style="color: rgba(255,255,255,0.6);">الصورة الرئيسية التي ستظهر في نتائج البحث</small>
         </div>
         
@@ -870,36 +874,36 @@
       <h3 class="section-title" style="font-size: 1.2rem;">بيانات التواصل</h3>
       <div class="form-group">
         <label>رقم الهاتف <span class="required">*</span></label>
-        <input type="tel" name="phone" class="form-control" required>
+        <input type="tel" name="phone" class="form-control">
       </div>
     </div>
     
     <!-- Outside Iraq Form -->
-    <div id="outside_iraq-form" class="form-section {% if category == 'outside_iraq' %}active{% endif %}">
+    <div id="outside_iraq-form" class="form-section {% if category == 'outside_iraq' %}active{% endif %}" style="{% if category == 'outside_iraq' %}display: block;{% else %}display: none;{% endif %}">
       <h2 class="section-title">🌍 عقارات خارج العراق</h2>
-      
+
       <h3 class="section-title" style="font-size: 1.2rem;">المعلومات الأساسية</h3>
       <div class="form-grid">
         <div class="form-group" style="grid-column: span 2;">
           <label>صورة الغلاف <span class="required">*</span></label>
-          <input type="file" name="cover_image" accept="image/*" class="form-control" required>
+          <input type="file" name="cover_image" accept="image/*" class="form-control" data-required="true">
           <small style="color: rgba(255,255,255,0.6);">صورة الغلاف الرئيسية للعقار</small>
         </div>
-        
+
         <div class="form-group" style="grid-column: span 2;">
           <label>صورة شخصية</label>
           <input type="file" name="personal_image" accept="image/*" class="form-control">
           <small style="color: rgba(255,255,255,0.6);">صورة شخصية لصاحب العقار (اختياري)</small>
         </div>
-        
+
         <div class="form-group" style="grid-column: span 2;">
           <label>عنوان الإعلان <span class="required">*</span></label>
-          <input type="text" name="title" class="form-control" required>
+          <input type="text" name="title" class="form-control" data-required="true">
         </div>
-        
+
         <div class="form-group">
           <label>نوع العقار <span class="required">*</span></label>
-          <select name="type" class="form-control" required>
+          <select name="type" class="form-control" data-required="true">
             <option value="">اختر نوع العقار</option>
             <option value="outside_apartment">شقة خارج العراق</option>
             <option value="outside_villa">فيلا خارج العراق</option>
@@ -958,7 +962,7 @@
       <div class="form-grid">
         <div class="form-group">
           <label>السعر <span class="required">*</span></label>
-          <input type="number" name="price" class="form-control" required>
+          <input type="number" name="price" class="form-control" data-required="true">
         </div>
         
         <div class="form-group">
@@ -1003,7 +1007,7 @@
       <div class="form-grid">
         <div class="form-group">
           <label>الدولة <span class="required">*</span></label>
-          <input type="text" name="country" class="form-control" required>
+          <input type="text" name="country" class="form-control" data-required="true">
         </div>
         
         <div class="form-group">
@@ -1241,7 +1245,7 @@
       <div class="form-grid">
         <div class="form-group" style="grid-column: span 2;">
           <label>صورة الغلاف الأمامية <span class="required">*</span></label>
-          <input type="file" name="cover_image" accept="image/*" class="form-control" required>
+          <input type="file" name="cover_image" accept="image/*" class="form-control">
           <small style="color: rgba(255,255,255,0.6);">الصورة الرئيسية التي ستظهر في نتائج البحث</small>
         </div>
         
@@ -1312,10 +1316,22 @@
       <h3 class="section-title" style="font-size: 1.2rem;">بيانات التواصل</h3>
       <div class="form-group">
         <label>رقم الهاتف <span class="required">*</span></label>
-        <input type="tel" name="phone" class="form-control" required>
+        <input type="tel" name="phone" class="form-control" data-required="true">
+      </div>
+
+      <!-- Submit Button for Outside Iraq -->
+      <div class="form-actions">
+        <a href="{% url 'my_posts' %}?type=outside_iraq" class="category-btn" style="text-decoration: none; background: rgba(0, 100, 200, 0.1); border-color: rgba(0, 100, 200, 0.3); margin-bottom: 15px; display: inline-block;">
+          <span class="btn-icon">📋</span>
+          <span class="btn-text">إدارة منشورات عقارات خارج العراق</span>
+        </a>
+        <button type="submit" class="btn-submit" id="submit-btn-outside" style="display: none;">
+          <span class="btn-icon">🌍</span>
+          <span class="btn-text" id="submit-text-outside">نشر عقار خارج العراق</span>
+        </button>
       </div>
     </div>
-    
+
     <!-- Hotel Form -->
     <div id="hotel-form" class="form-section {% if category == 'hotel' %}active{% endif %}">
       <h2 class="section-title">🏨 فنادق</h2>
@@ -1324,7 +1340,7 @@
       <div class="form-grid">
         <div class="form-group" style="grid-column: span 2;">
           <label>صورة الغلاف <span class="required">*</span></label>
-          <input type="file" name="cover_image" accept="image/*" class="form-control" required>
+          <input type="file" name="cover_image" accept="image/*" class="form-control">
           <small style="color: rgba(255,255,255,0.6);">صورة الغلاف الرئيسية للفندق</small>
         </div>
         
@@ -1336,12 +1352,12 @@
         
         <div class="form-group" style="grid-column: span 2;">
           <label>اسم الفندق <span class="required">*</span></label>
-          <input type="text" name="hotel_name" class="form-control" required>
+          <input type="text" name="hotel_name" class="form-control">
         </div>
         
         <div class="form-group">
           <label>عدد النجوم <span class="required">*</span></label>
-          <select name="star_rating" class="form-control" required>
+          <select name="star_rating" class="form-control">
             <option value="">اختر عدد النجوم</option>
             <option value="1">نجمة واحدة</option>
             <option value="2">نجمتان</option>
@@ -1364,7 +1380,7 @@
         
         <div class="form-group">
           <label>عدد الغرف <span class="required">*</span></label>
-          <input type="number" name="total_rooms" class="form-control" required>
+          <input type="number" name="total_rooms" class="form-control">
         </div>
         
         <div class="form-group">
@@ -1382,12 +1398,12 @@
       <div class="form-grid">
         <div class="form-group">
           <label>سعر الليلة <span class="required">*</span></label>
-          <input type="number" name="price_per_night" class="form-control" required>
+          <input type="number" name="price_per_night" class="form-control">
         </div>
         
         <div class="form-group">
           <label>العملة <span class="required">*</span></label>
-          <select name="currency" class="form-control" required>
+          <select name="currency" class="form-control">
             <option value="IQD">دينار عراقي</option>
             <option value="USD">دولار أمريكي</option>
             <option value="EUR">يورو</option>
@@ -1440,7 +1456,7 @@
       <div class="form-grid">
         <div class="form-group">
           <label>الدولة <span class="required">*</span></label>
-          <input type="text" name="country" class="form-control" required>
+          <input type="text" name="country" class="form-control">
         </div>
         
         <div class="form-group">
@@ -1518,7 +1534,7 @@
       <div class="form-grid">
         <div class="form-group" style="grid-column: span 2;">
           <label>صورة الغلاف الأمامية <span class="required">*</span></label>
-          <input type="file" name="cover_image" accept="image/*" class="form-control" required>
+          <input type="file" name="cover_image" accept="image/*" class="form-control">
           <small style="color: rgba(255,255,255,0.6);">الصورة الرئيسية التي ستظهر في نتائج البحث</small>
         </div>
         
@@ -1589,7 +1605,7 @@
       <h3 class="section-title" style="font-size: 1.2rem;">بيانات التواصل</h3>
       <div class="form-group">
         <label>رقم الهاتف <span class="required">*</span></label>
-        <input type="tel" name="phone" class="form-control" required>
+        <input type="tel" name="phone" class="form-control">
       </div>
     </div>
     
@@ -1601,7 +1617,7 @@
       <div class="form-grid">
         <div class="form-group" style="grid-column: span 2;">
           <label>صورة الغلاف <span class="required">*</span></label>
-          <input type="file" name="cover_image" accept="image/*" class="form-control" required>
+          <input type="file" name="cover_image" accept="image/*" class="form-control">
           <small style="color: rgba(255,255,255,0.6);">صورة الغلاف الرئيسية للمنتجع</small>
         </div>
         
@@ -1613,12 +1629,12 @@
         
         <div class="form-group" style="grid-column: span 2;">
           <label>اسم المنتجع <span class="required">*</span></label>
-          <input type="text" name="name" maxlength="200" class="form-control" required id="id_resort_name">
+          <input type="text" name="name" maxlength="200" class="form-control" id="id_resort_name">
         </div>
         
         <div class="form-group">
           <label>نوع المنتجع <span class="required">*</span></label>
-          <select name="resort_type" class="form-control" id="id_resort_type" required>
+          <select name="resort_type" class="form-control" id="id_resort_type">
             <option value="">اختر النوع</option>
             <option value="resort">منتجع سياحي</option>
             <option value="hotel">فندق</option>
@@ -1650,7 +1666,7 @@
         
         <div class="form-group" style="grid-column: span 2;">
           <label>الوصف <span class="required">*</span></label>
-          <textarea name="description" class="form-control" rows="4" required></textarea>
+          <textarea name="description" class="form-control" rows="4"></textarea>
         </div>
       </div>
       
@@ -1658,7 +1674,7 @@
       <div class="form-grid">
         <div class="form-group">
           <label>المحافظة <span class="required">*</span></label>
-          <select name="governorate" class="form-control" required>
+          <select name="governorate" class="form-control">
             <option value="">اختر المحافظة</option>
             <option value="بغداد">بغداد</option>
             <option value="البصرة">البصرة</option>
@@ -1694,7 +1710,7 @@
         
         <div class="form-group">
           <label>المدينة <span class="required">*</span></label>
-          <input type="text" name="city" class="form-control" required>
+          <input type="text" name="city" class="form-control">
         </div>
         
         <div class="form-group">
@@ -1739,7 +1755,7 @@
         
         <div class="form-group" style="grid-column: span 2;">
           <label>العنوان الكامل <span class="required">*</span></label>
-          <textarea name="full_address" class="form-control" rows="2" required></textarea>
+          <textarea name="full_address" class="form-control" rows="2"></textarea>
         </div>
         
         <div class="form-group">
@@ -1790,7 +1806,7 @@
       <div class="form-grid">
         <div class="form-group">
           <label>رقم الهاتف <span class="required">*</span></label>
-          <input type="tel" name="phone" class="form-control" required>
+          <input type="tel" name="phone" class="form-control">
         </div>
         
         <div class="form-group">
@@ -1967,7 +1983,7 @@
       <div class="form-grid">
         <div class="form-group" style="grid-column: span 2;">
           <label>صورة الغلاف الأمامية <span class="required">*</span></label>
-          <input type="file" name="cover_image" accept="image/*" class="form-control" required>
+          <input type="file" name="cover_image" accept="image/*" class="form-control">
           <small style="color: rgba(255,255,255,0.6);">الصورة الرئيسية التي ستظهر في نتائج البحث</small>
         </div>
         
@@ -2049,7 +2065,11 @@
     
     <!-- Submit Button -->
     <div class="form-actions">
-      <button type="submit" class="btn-submit" id="submit-btn">
+      <a href="{% url 'my_posts' %}" class="category-btn" style="text-decoration: none; background: rgba(255, 122, 0, 0.1); border-color: rgba(255, 122, 0, 0.3); margin-bottom: 15px; display: inline-block;">
+        <span class="btn-icon">📋</span>
+        <span class="btn-text">إدارة منشورات عقارات داخل العراق</span>
+      </a>
+      <button type="submit" class="btn-submit" id="submit-btn" {% if category == 'outside_iraq' %}style="display: none;"{% endif %}>
         <span class="btn-icon">📝</span>
         <span class="btn-text" id="submit-text">إضافة العقار</span>
       </button>
@@ -2061,6 +2081,7 @@
 {% block extra_js %}
 <!-- Leaflet Map Library -->
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<link rel="stylesheet" href="https://unpkg.com/leaflet-draw@1.0.4/dist/leaflet.draw.css" />
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script src="https://unpkg.com/leaflet-draw@1.0.4/dist/leaflet.draw.js"></script>
 
@@ -2217,6 +2238,18 @@ document.addEventListener('fullscreenchange', function() {
 // Initialize location preview map
 function initLocationMap() {
   if (document.getElementById('location-preview-map')) {
+    // Check if map is already initialized
+    if (locationMap) {
+      console.log('Location map already initialized, skipping');
+      return;
+    }
+    
+    // Check if Leaflet Draw is loaded
+    if (typeof L.Control.Draw === 'undefined') {
+      console.error('Leaflet Draw is not loaded');
+      return;
+    }
+
     // Default center on Iraq
     const defaultCenter = [33.3152, 44.3661];
     
@@ -2459,11 +2492,68 @@ document.addEventListener('DOMContentLoaded', function() {
   initLocationMap();
   initLocationMapInside();
   initLocationMapOutside();
+  
+  // Mark all fields with required labels as data-required
+  const requiredLabels = document.querySelectorAll('.required');
+  requiredLabels.forEach(label => {
+    const parent = label.closest('.form-group');
+    if (parent) {
+      const input = parent.querySelector('input, select, textarea');
+      if (input) {
+        input.dataset.required = 'true';
+      }
+    }
+  });
+  
+  // Add form validation - disabled for smooth publishing
+  const propertyForm = document.getElementById('propertyForm');
+  if (propertyForm) {
+    propertyForm.addEventListener('submit', function(e) {
+      const category = document.getElementById('hidden-category').value;
+      const selectedForm = document.getElementById(category + '-form');
+
+      if (!selectedForm || !selectedForm.classList.contains('active')) {
+        e.preventDefault();
+        alert('يرجى اختيار فئة العقار أولاً');
+        return false;
+      }
+
+      // Show loading state
+      let submitBtn, submitText;
+      if (category === 'outside_iraq') {
+        submitBtn = document.getElementById('submit-btn-outside');
+        submitText = document.getElementById('submit-text-outside');
+      } else {
+        submitBtn = document.getElementById('submit-btn');
+        submitText = document.getElementById('submit-text');
+      }
+
+      if (submitBtn && submitText) {
+        submitBtn.disabled = true;
+        submitText.textContent = 'جاري النشر...';
+      }
+
+      // Set category before submit
+      document.getElementById('hidden-category').value = category;
+    });
+  }
 });
 
 // GPS for Inside Iraq Properties
 function initLocationMapInside() {
   if (document.getElementById('location-preview-map-inside')) {
+    // Check if map is already initialized
+    if (locationMapInside) {
+      console.log('Location map inside already initialized, skipping');
+      return;
+    }
+    
+    // Check if Leaflet Draw is loaded
+    if (typeof L.Control.Draw === 'undefined') {
+      console.error('Leaflet Draw is not loaded');
+      return;
+    }
+
     // Default center on Iraq
     const defaultCenter = [33.3152, 44.3661];
     
@@ -2534,6 +2624,18 @@ function initLocationMapInside() {
 // GPS for Outside Iraq Properties
 function initLocationMapOutside() {
   if (document.getElementById('location-preview-map-outside')) {
+    // Check if map is already initialized
+    if (locationMapOutside) {
+      console.log('Location map outside already initialized, skipping');
+      return;
+    }
+    
+    // Check if Leaflet Draw is loaded
+    if (typeof L.Control.Draw === 'undefined') {
+      console.error('Leaflet Draw is not loaded');
+      return;
+    }
+
     // Default center on a location outside Iraq (example: London)
     const defaultCenter = [51.5074, -0.1278];
 
@@ -2815,35 +2917,40 @@ function capture360Photo() {
 function selectCategory(category) {
   console.log('=== selectCategory called ===');
   console.log('Category:', category);
-  
+
   // Hide all form sections
   const formSections = document.querySelectorAll('.form-section');
   console.log('Form sections found:', formSections.length);
   formSections.forEach(section => {
     section.classList.remove('active');
-    section.style.setProperty('display', 'none', 'important');
+    section.style.display = 'none';
     console.log('Removed active from:', section.id);
   });
-  
+
   // Remove active class from all buttons
   const buttons = document.querySelectorAll('.category-btn');
   console.log('Buttons found:', buttons.length);
   buttons.forEach(btn => {
     btn.classList.remove('active');
   });
-  
+
   // Show selected form section
   const selectedForm = document.getElementById(category + '-form');
   console.log('Looking for form ID:', category + '-form');
   console.log('Selected form element:', selectedForm);
   if (selectedForm) {
     selectedForm.classList.add('active');
-    selectedForm.style.setProperty('display', 'block', 'important');
+    selectedForm.style.display = 'block';
     console.log('Added active to form:', selectedForm.id);
+
+    // Scroll to form
+    selectedForm.scrollIntoView({ behavior: 'smooth', block: 'start' });
   } else {
     console.error('Form section not found!');
+    alert('نموذج هذه الفئة غير متوفر حالياً');
+    return;
   }
-  
+
   // Add active class to clicked button using ID
   const clickedBtn = document.getElementById('btn-' + category);
   console.log('Looking for button ID:', 'btn-' + category);
@@ -2854,7 +2961,7 @@ function selectCategory(category) {
   } else {
     console.error('Button not found!');
   }
-  
+
   // Update hidden input
   const hiddenCategory = document.getElementById('hidden-category');
   console.log('Hidden category input:', hiddenCategory);
@@ -2862,13 +2969,25 @@ function selectCategory(category) {
     hiddenCategory.value = category;
     console.log('Updated hidden category to:', category);
   }
-  
+
   // Show/hide no selection message
   const noSelection = document.getElementById('no-selection');
   if (noSelection) {
     noSelection.style.display = 'none';
   }
-  
+
+  // Handle submit button visibility based on category
+  const mainSubmitBtn = document.getElementById('submit-btn');
+  const outsideSubmitBtn = document.getElementById('submit-btn-outside');
+
+  if (category === 'outside_iraq') {
+    if (mainSubmitBtn) mainSubmitBtn.style.display = 'none';
+    if (outsideSubmitBtn) outsideSubmitBtn.style.display = 'block';
+  } else {
+    if (mainSubmitBtn) mainSubmitBtn.style.display = 'block';
+    if (outsideSubmitBtn) outsideSubmitBtn.style.display = 'none';
+  }
+
   // Update submit button text based on category
   const submitText = document.getElementById('submit-text');
   if (submitText) {
@@ -2899,11 +3018,18 @@ document.addEventListener('DOMContentLoaded', function() {
   console.log('=== DOMContentLoaded ===');
   const category = '{{ category|default:"" }}';
   console.log('Initial category from template:', category);
-  if (category) {
-    selectCategory(category);
-  } else {
+
+  // Always set default category to inside_iraq if not set
+  if (!category) {
     console.log('No category selected, defaulting to inside_iraq');
+    const hiddenCategory = document.getElementById('hidden-category');
+    if (hiddenCategory) {
+      hiddenCategory.value = 'inside_iraq';
+      console.log('Set hidden category to: inside_iraq');
+    }
     selectCategory('inside_iraq');
+  } else {
+    selectCategory(category);
   }
 });
 </script>

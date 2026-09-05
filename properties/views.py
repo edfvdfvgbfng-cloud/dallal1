@@ -18,7 +18,7 @@ from .models import Property, PropertyVerification, Job, Backup, Hotel, Resort, 
 from django.http import JsonResponse, HttpResponse
 from django.urls import reverse
 from django.shortcuts import get_object_or_404, redirect, render
-from django.views.decorators.http import require_http_methods, require_POST
+from django.views.decorators.http import require_http_methods, require_POST, require_GET
 from django.views.decorators.csrf import csrf_exempt
 from django.conf import settings
 from django.utils import timezone
@@ -427,7 +427,419 @@ from .permissions import (
 )
 from .utils import filter_properties, get_public_properties, save_gallery_images, save_gallery_videos, sort_properties, PUBLIC_STATUSES
 
+# Import hotel and travel views
+try:
+    from . import hotel_travel_views
+    HOTEL_TRAVEL_AVAILABLE = True
+except ImportError:
+    HOTEL_TRAVEL_AVAILABLE = False
+
 logger = logging.getLogger('properties')
+
+# ==================== User Experience Views ====================
+
+@api_view(['GET'])
+@permission_classes([AllowAny])
+def discover_view(request):
+    """صفحة الاكتشاف العالمية - تجربة مثل Instagram"""
+    category = request.GET.get('category', 'all')
+    
+    # Get all feed items based on category
+    feed_items = []
+    
+    if category in ['all', 'properties']:
+        # Get properties
+        properties = Property.objects.filter(status='published').order_by('-created_at')[:20]
+        for prop in properties:
+            feed_items.append({
+                'id': prop.id,
+                'type': 'property',
+                'title': prop.title,
+                'description': prop.description[:200] if prop.description else '',
+                'price': str(prop.price) if prop.price else 'غير محدد',
+                'location': prop.district or prop.city or 'غير محدد',
+                'image': prop.main_image.url if prop.main_image else '/static/img/placeholder-property.svg',
+                'url': prop.get_absolute_url(),
+                'is_featured': prop.is_featured,
+                'views_count': prop.views_count if hasattr(prop, 'views_count') else 0,
+                'country': prop.country.name if prop.country else 'غير محدد',
+                'property_type': prop.get_property_type_display() if prop.property_type else 'غير محدد',
+                'created_at': prop.created_at.isoformat() if prop.created_at else None
+            })
+    
+    if category in ['all', 'hotels']:
+        # Get hotels
+        hotels = Hotel.objects.filter(status='active').order_by('-created_at')[:20]
+        for hotel in hotels:
+            feed_items.append({
+                'id': hotel.id,
+                'type': 'hotel',
+                'title': hotel.name,
+                'description': hotel.description[:200] if hotel.description else '',
+                'price': str(hotel.price_per_night) if hotel.price_per_night else 'غير محدد',
+                'location': hotel.city or 'غير محدد',
+                'image': hotel.main_image.url if hotel.main_image else '/static/img/placeholder-hotel.svg',
+                'url': hotel.get_absolute_url(),
+                'is_featured': hotel.is_featured if hasattr(hotel, 'is_featured') else False,
+                'views_count': hotel.views_count if hasattr(hotel, 'views_count') else 0,
+                'country': hotel.country.name if hotel.country else 'غير محدد',
+                'hotel_type': hotel.get_hotel_type_display() if hotel.hotel_type else 'غير محدد',
+                'created_at': hotel.created_at.isoformat() if hotel.created_at else None
+            })
+    
+    if category in ['all', 'resorts']:
+        # Get resorts
+        resorts = Resort.objects.filter(status='active').order_by('-created_at')[:20]
+        for resort in resorts:
+            feed_items.append({
+                'id': resort.id,
+                'type': 'resort',
+                'title': resort.name,
+                'description': resort.description[:200] if resort.description else '',
+                'price': str(resort.price_per_night) if resort.price_per_night else 'غير محدد',
+                'location': resort.city or 'غير محدد',
+                'image': resort.main_image.url if resort.main_image else '/static/img/placeholder-resort.svg',
+                'url': resort.get_absolute_url(),
+                'is_featured': resort.is_featured if hasattr(resort, 'is_featured') else False,
+                'views_count': resort.views_count if hasattr(resort, 'views_count') else 0,
+                'country': resort.country.name if resort.country else 'غير محدد',
+                'resort_type': resort.get_resort_type_display() if resort.resort_type else 'غير محدد',
+                'created_at': resort.created_at.isoformat() if resort.created_at else None
+            })
+    
+    if category in ['all', 'jobs']:
+        # Get jobs
+        jobs = Job.objects.filter(status='active').order_by('-created_at')[:20]
+        for job in jobs:
+            feed_items.append({
+                'id': job.id,
+                'type': 'job',
+                'title': job.title,
+                'description': job.description[:200] if job.description else '',
+                'price': str(job.salary) if job.salary else 'غير محدد',
+                'location': job.location or 'غير محدد',
+                'image': job.company_logo.url if job.company_logo else '/static/img/placeholder-job.svg',
+                'url': job.get_absolute_url(),
+                'is_featured': job.is_featured if hasattr(job, 'is_featured') else False,
+                'views_count': job.views_count if hasattr(job, 'views_count') else 0,
+                'country': job.country.name if job.country else 'غير محدد',
+                'job_type': job.get_job_type_display() if job.job_type else 'غير محدد',
+                'created_at': job.created_at.isoformat() if job.created_at else None
+            })
+    
+    # Sort by featured first, then by date
+    feed_items.sort(key=lambda x: (not x['is_featured'], x['created_at'] or ''), reverse=True)
+    
+    context = {
+        'feed_data': json.dumps(feed_items),
+        'category': category
+    }
+    
+    return render(request, 'properties/discover.html', context)
+
+
+@api_view(['GET'])
+@permission_classes([AllowAny])
+def discover_api(request):
+    """API endpoint for discover feed"""
+    category = request.GET.get('category', 'all')
+    filter_type = request.GET.get('filter', 'featured')
+    page = int(request.GET.get('page', 1))
+    per_page = int(request.GET.get('per_page', 20))
+    
+    feed_items = []
+    
+    # Get items based on category and filter
+    if category in ['all', 'properties']:
+        queryset = Property.objects.filter(status='published')
+        if filter_type == 'featured':
+            queryset = queryset.filter(is_featured=True)
+        elif filter_type == 'new':
+            queryset = queryset.filter(created_at__gte=timezone.now() - timedelta(days=7))
+        
+        properties = queryset.order_by('-created_at')[(page-1)*per_page:page*per_page]
+        for prop in properties:
+            feed_items.append({
+                'id': prop.id,
+                'type': 'property',
+                'title': prop.title,
+                'description': prop.description[:200] if prop.description else '',
+                'price': str(prop.price) if prop.price else 'غير محدد',
+                'location': prop.district or prop.city or 'غير محدد',
+                'image': prop.main_image.url if prop.main_image else '/static/img/placeholder-property.svg',
+                'url': prop.get_absolute_url(),
+                'is_featured': prop.is_featured,
+                'views_count': prop.views_count if hasattr(prop, 'views_count') else 0,
+                'country': prop.country.name if prop.country else 'غير محدد',
+                'property_type': prop.get_property_type_display() if prop.property_type else 'غير محدد',
+                'created_at': prop.created_at.isoformat() if prop.created_at else None
+            })
+    
+    # Similar logic for hotels, resorts, jobs...
+    
+    return Response({
+        'items': feed_items,
+        'page': page,
+        'has_more': len(feed_items) == per_page
+    })
+
+
+@api_view(['GET'])
+@permission_classes([AllowAny])
+def trending_properties_api(request):
+    """API endpoint for trending properties"""
+    try:
+        # Get properties with most views in the last 7 days
+        trending = Property.objects.filter(
+            status='published',
+            created_at__gte=timezone.now() - timedelta(days=7)
+        ).order_by('-views_count')[:10]
+        
+        items = []
+        for prop in trending:
+            items.append({
+                'id': prop.id,
+                'type': 'property',
+                'title': prop.title,
+                'price': str(prop.price) if prop.price else 'غير محدد',
+                'location': prop.district or prop.city or 'غير محدد',
+                'image': prop.main_image.url if prop.main_image else '/static/img/placeholder-property.svg',
+                'url': prop.get_absolute_url(),
+                'views_count': prop.views_count if hasattr(prop, 'views_count') else 0,
+                'country': prop.country.name if prop.country else 'غير محدد'
+            })
+        
+        return Response({'items': items})
+    except Exception as e:
+        logger.error(f"Error in trending_properties_api: {e}")
+        return Response({'items': []}, status=500)
+
+
+@api_view(['GET'])
+@permission_classes([AllowAny])
+def international_hotels_api(request):
+    """API endpoint for international hotels"""
+    try:
+        from .models import Country
+        iraq_country = Country.objects.filter(code='IQ').first()
+        
+        hotels = Hotel.objects.filter(status='active')
+        if iraq_country:
+            hotels = hotels.exclude(country=iraq_country)
+        
+        hotels = hotels.order_by('-created_at')[:10]
+        
+        items = []
+        for hotel in hotels:
+            items.append({
+                'id': hotel.id,
+                'type': 'hotel',
+                'title': hotel.name,
+                'price': str(hotel.price_per_night) if hotel.price_per_night else 'غير محدد',
+                'location': hotel.city or 'غير محدد',
+                'image': hotel.main_image.url if hotel.main_image else '/static/img/placeholder-hotel.svg',
+                'url': hotel.get_absolute_url(),
+                'country': hotel.country.name if hotel.country else 'غير محدد',
+                'hotel_type': hotel.get_hotel_type_display() if hotel.hotel_type else 'غير محدد'
+            })
+        
+        return Response({'items': items})
+    except Exception as e:
+        logger.error(f"Error in international_hotels_api: {e}")
+        return Response({'items': []}, status=500)
+
+
+@api_view(['GET'])
+@permission_classes([AllowAny])
+def luxury_resorts_api(request):
+    """API endpoint for luxury resorts"""
+    try:
+        resorts = Resort.objects.filter(
+            status='active',
+            is_featured=True
+        ).order_by('-created_at')[:10]
+        
+        items = []
+        for resort in resorts:
+            items.append({
+                'id': resort.id,
+                'type': 'resort',
+                'title': resort.name,
+                'price': str(resort.price_per_night) if resort.price_per_night else 'غير محدد',
+                'location': resort.city or 'غير محدد',
+                'image': resort.main_image.url if resort.main_image else '/static/img/placeholder-resort.svg',
+                'url': resort.get_absolute_url(),
+                'country': resort.country.name if resort.country else 'غير محدد',
+                'resort_type': resort.get_resort_type_display() if resort.resort_type else 'غير محدد'
+            })
+        
+        return Response({'items': items})
+    except Exception as e:
+        logger.error(f"Error in luxury_resorts_api: {e}")
+        return Response({'items': []}, status=500)
+
+
+@api_view(['GET'])
+@permission_classes([AllowAny])
+def international_jobs_api(request):
+    """API endpoint for international jobs"""
+    try:
+        from .models import Country
+        iraq_country = Country.objects.filter(code='IQ').first()
+        
+        jobs = Job.objects.filter(status='active')
+        if iraq_country:
+            jobs = jobs.exclude(country=iraq_country)
+        
+        jobs = jobs.order_by('-created_at')[:10]
+        
+        items = []
+        for job in jobs:
+            items.append({
+                'id': job.id,
+                'type': 'job',
+                'title': job.title,
+                'salary': str(job.salary) if job.salary else 'غير محدد',
+                'location': job.location or 'غير محدد',
+                'image': job.company_logo.url if job.company_logo else '/static/img/placeholder-job.svg',
+                'url': job.get_absolute_url(),
+                'country': job.country.name if job.country else 'غير محدد',
+                'job_type': job.get_job_type_display() if job.job_type else 'غير محدد'
+            })
+        
+        return Response({'items': items})
+    except Exception as e:
+        logger.error(f"Error in international_jobs_api: {e}")
+        return Response({'items': []}, status=500)
+
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def track_user_behavior(request):
+    """API endpoint to track user behavior"""
+    try:
+        action = request.data.get('action')
+        item_id = request.data.get('item_id')
+        item_type = request.data.get('item_type')
+        metadata = request.data.get('metadata', {})
+        
+        # Create user behavior record
+        from .models import UserBehavior
+        behavior = UserBehavior.objects.create(
+            user=request.user,
+            action=action,
+            item_id=item_id,
+            item_type=item_type,
+            metadata=metadata
+        )
+        
+        return Response({'success': True, 'behavior_id': behavior.id})
+    except Exception as e:
+        logger.error(f"Error in track_user_behavior: {e}")
+        return Response({'success': False, 'error': str(e)}, status=500)
+
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def user_recommendations_api(request):
+    """API endpoint for personalized recommendations"""
+    try:
+        from .models import UserBehavior
+        
+        # Get user's recent behavior
+        recent_behavior = UserBehavior.objects.filter(
+            user=request.user
+        ).order_by('-created_at')[:50]
+        
+        # Extract preferences
+        preferred_types = set()
+        preferred_locations = set()
+        price_range = {'min': None, 'max': None}
+        
+        for behavior in recent_behavior:
+            if behavior.item_type:
+                preferred_types.add(behavior.item_type)
+            if behavior.metadata and 'location' in behavior.metadata:
+                preferred_locations.add(behavior.metadata['location'])
+            if behavior.metadata and 'price' in behavior.metadata:
+                price = behavior.metadata['price']
+                if price_range['min'] is None or price < price_range['min']:
+                    price_range['min'] = price
+                if price_range['max'] is None or price > price_range['max']:
+                    price_range['max'] = price
+        
+        # Get recommendations based on preferences
+        recommendations = []
+        
+        if 'property' in preferred_types:
+            properties = Property.objects.filter(status='published')
+            if preferred_locations:
+                properties = properties.filter(district__in=preferred_locations)
+            if price_range['min']:
+                properties = properties.filter(price__gte=price_range['min'])
+            if price_range['max']:
+                properties = properties.filter(price__lte=price_range['max'])
+            
+            properties = properties.order_by('-created_at')[:5]
+            for prop in properties:
+                recommendations.append({
+                    'id': prop.id,
+                    'type': 'property',
+                    'title': prop.title,
+                    'price': str(prop.price) if prop.price else 'غير محدد',
+                    'location': prop.district or prop.city or 'غير محدد',
+                    'image': prop.main_image.url if prop.main_image else '/static/img/placeholder-property.svg',
+                    'url': prop.get_absolute_url(),
+                    'reason': 'بناءً على اهتماماتك في العقارات'
+                })
+        
+        return Response({'recommendations': recommendations})
+    except Exception as e:
+        logger.error(f"Error in user_recommendations_api: {e}")
+        return Response({'recommendations': []}, status=500)
+
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def user_behavior_insights_api(request):
+    """API endpoint for user behavior insights"""
+    try:
+        from .models import UserBehavior
+        
+        behavior = UserBehavior.objects.filter(user=request.user)
+        
+        insights = {
+            'total_views': behavior.filter(action='view').count(),
+            'total_saves': behavior.filter(action='save').count(),
+            'total_shares': behavior.filter(action='share').count(),
+            'top_types': list(behavior.values('item_type').annotate(count=Count('id')).order_by('-count')[:5]),
+            'behavior_pattern': analyze_behavior_pattern(behavior)
+        }
+        
+        return Response(insights)
+    except Exception as e:
+        logger.error(f"Error in user_behavior_insights_api: {e}")
+        return Response({}, status=500)
+
+
+def analyze_behavior_pattern(behavior_queryset):
+    """Analyze user behavior pattern"""
+    total = behavior_queryset.count()
+    if total == 0:
+        return 'explorer'
+    
+    save_count = behavior_queryset.filter(action='save').count()
+    view_count = behavior_queryset.filter(action='view').count()
+    
+    save_ratio = save_count / total if total > 0 else 0
+    view_ratio = view_count / total if total > 0 else 0
+    
+    if save_ratio > 0.3:
+        return 'decisive'
+    elif view_ratio > 0.7:
+        return 'explorer'
+    else:
+        return 'focused'
 
 staff_required = user_passes_test(lambda u: u.is_authenticated and can_access_dashboard(u))
 
@@ -667,6 +1079,11 @@ def service_categories_view(request):
 def navigation_error_view(request):
     """Navigation error page - shown when route is not found"""
     return render(request, 'properties/navigation_error.html', status=404)
+
+
+def interactive_map_view(request):
+    """Interactive map page for property search and visualization"""
+    return render(request, 'properties/interactive_map.html')
 
 
 def contact_page(request):
@@ -1147,13 +1564,32 @@ def broker_standalone_settings(request):
     })
 
 
-@csrf_exempt
 def login_view(request):
+    """Login view with CSRF protection enabled and rate limiting"""
     from .permissions import get_redirect_after_login, get_user_type, can_access_dashboard, get_broker
+    from django.core.cache import cache
+    from django.utils import timezone
 
     if request.user.is_authenticated:
         redirect_url = get_redirect_after_login(request.user)
         return redirect(redirect_url)
+
+    # Rate limiting - prevent brute force attacks
+    client_ip = get_client_ip(request)
+    rate_limit_key = f'login_attempts_{client_ip}'
+    attempts = cache.get(rate_limit_key, 0)
+    
+    if attempts >= 5:
+        # Block for 15 minutes
+        block_key = f'login_blocked_{client_ip}'
+        if not cache.get(block_key):
+            cache.set(block_key, True, 900)  # 15 minutes
+            logger.warning('IP blocked due to too many login attempts: %s', client_ip)
+            messages.error(request, 'تم حظر IP الخاص بك لمدة 15 دقيقة بسبب محاولات تسجيل دخول كثيرة')
+            return render(request, 'properties/login.html')
+        else:
+            messages.error(request, 'تم حظر IP الخاص بك مؤقتاً. يرجى المحاولة لاحقاً')
+            return render(request, 'properties/login.html')
 
     if request.method == 'POST':
         username = request.POST.get('username', '').strip()
@@ -1168,7 +1604,12 @@ def login_view(request):
                 if not user.is_active:
                     messages.error(request, 'تم تعطيل حسابك. يرجى التواصل مع الإدارة')
                     logger.warning('Login attempt for inactive user: %s', username)
+                    # Increment failed attempts
+                    cache.set(rate_limit_key, attempts + 1, 900)
                     return render(request, 'properties/login.html')
+                
+                # Clear failed attempts on successful login
+                cache.delete(rate_limit_key)
                 
                 login(request, user)
                 user_type = get_user_type(user)
@@ -1203,18 +1644,32 @@ def login_view(request):
                     messages.success(request, 'تم تسجيل الدخول بنجاح')
                     return redirect('home')
             else:
+                # Increment failed attempts
+                cache.set(rate_limit_key, attempts + 1, 900)
                 messages.error(request, 'بيانات الدخول غير صحيحة')
-                logger.warning('Failed login attempt for user: %s', username)
+                logger.warning('Failed login attempt for user: %s (attempt %d)', username, attempts + 1)
     
     return render(request, 'properties/login.html')
 
 
 def register_view(request):
-    """Register a new user account (regular users only)."""
+    """Register a new user account with email verification and proper validation."""
     from django.contrib.auth.models import User
+    from django.core.cache import cache
+    import secrets
+    import re
     
     if request.user.is_authenticated:
         return redirect('home')
+    
+    # Rate limiting for registration
+    client_ip = get_client_ip(request)
+    rate_limit_key = f'register_attempts_{client_ip}'
+    attempts = cache.get(rate_limit_key, 0)
+    
+    if attempts >= 3:
+        messages.error(request, 'محاولات تسجيل كثيرة. يرجى المحاولة بعد 15 دقيقة')
+        return render(request, 'properties/register.html')
     
     if request.method == 'POST':
         username = request.POST.get('username', '').strip()
@@ -1236,10 +1691,20 @@ def register_view(request):
             messages.error(request, 'يرجى ملء جميع الحقول المطلوبة')
         elif len(username) < 3:
             messages.error(request, 'اسم المستخدم يجب أن يكون 3 أحرف على الأقل')
+        elif len(username) > 20:
+            messages.error(request, 'اسم المستخدم يجب أن يكون 20 حرف كحد أقصى')
+        elif not re.match(r'^[a-zA-Z0-9_]+$', username):
+            messages.error(request, 'اسم المستخدم يجب أن يحتوي على أحرف وأرقام وشرطات سفلية فقط')
         elif password != confirm_password:
             messages.error(request, 'كلمات المرور غير متطابقة')
         elif len(password) < 8:
             messages.error(request, 'كلمة المرور يجب أن تكون 8 أحرف على الأقل')
+        elif not re.search(r'[A-Z]', password):
+            messages.error(request, 'كلمة المرور يجب أن تحتوي على حرف كبير واحد على الأقل')
+        elif not re.search(r'[a-z]', password):
+            messages.error(request, 'كلمة المرور يجب أن تحتوي على حرف صغير واحد على الأقل')
+        elif not re.search(r'[0-9]', password):
+            messages.error(request, 'كلمة المرور يجب أن تحتوي على رقم واحد على الأقل')
         elif User.objects.filter(username=username).exists():
             messages.error(request, 'اسم المستخدم مستخدم بالفعل')
         elif User.objects.filter(email=email).exists():
@@ -1250,6 +1715,9 @@ def register_view(request):
             if Broker.objects.filter(phone=phone).exists():
                 messages.error(request, 'رقم الهاتف مستخدم بالفعل')
             else:
+                # Increment registration attempts
+                cache.set(rate_limit_key, attempts + 1, 900)
+                
                 # Create regular user (no broker profile)
                 user = User.objects.create_user(
                     username=username,
@@ -1257,8 +1725,19 @@ def register_view(request):
                     first_name=first_name,
                     last_name=last_name,
                     password=password,
-                    is_staff=False  # Regular users are not staff
+                    is_staff=False,  # Regular users are not staff
+                    is_active=False  # Require email verification
                 )
+                
+                # Generate verification token
+                verification_token = secrets.token_urlsafe(32)
+                
+                # Store verification token in session (in production, use database with expiry)
+                request.session[f'email_verification_{user.id}'] = {
+                    'token': verification_token,
+                    'email': email,
+                    'created_at': timezone.now().isoformat(),
+                }
                 
                 # Create or update UserProfile with additional information
                 user_profile, created = UserProfile.objects.get_or_create(user=user)
@@ -1285,10 +1764,10 @@ def register_view(request):
                     create_notification(
                         user=admin,
                         notification_type='system',
-                        title='مستخدم جديد',
-                        message=f'مستخدم جديد: {user.get_full_name() or user.username}',
+                        title='مستخدم جديد يحتاج تفعيل',
+                        message=f'مستخدم جديد ينتظر التفعيل: {user.get_full_name() or user.username}',
                         link=f'/admin/auth/user/{user.id}/change/',
-                        metadata={'user_id': user.id}
+                        metadata={'user_id': user.id, 'requires_verification': True}
                     )
                 
                 # Log activity
@@ -1299,26 +1778,164 @@ def register_view(request):
                     model_type='user',
                     object_id=user.id,
                     object_repr=user.username,
-                    description=f'إنشاء حساب مستخدم جديد: {user.username}',
+                    description=f'إنشاء حساب مستخدم جديد (غير مفعل): {user.username}',
                     ip_address=get_client_ip(request),
                     user_agent=request.META.get('HTTP_USER_AGENT', ''),
-                    metadata={'account_type': 'user'}
+                    metadata={'account_type': 'user', 'requires_verification': True}
                 )
                 
-                messages.success(request, 'تم إنشاء الحساب بنجاح. يمكنك الآن تسجيل الدخول')
+                # Send verification email
+                try:
+                    from django.core.mail import send_mail
+                    from django.conf import settings
+                    
+                    verification_link = f"{request.build_absolute_uri('/verify-email/')}?user_id={user.id}&token={verification_token}"
+                    
+                    subject = 'تفعيل حسابك - دلال'
+                    message = f'''
+مرحباً {user.get_full_name() or user.username}،
+
+شكراً لتسجيلك في دلال. لتفعيل حسابك، يرجى الضغط على الرابط التالي:
+{verification_link}
+
+إذا لم تقم بالتسجيل، يرجى تجاهل هذا البريد الإلكتروني.
+
+رابط التفعيل صالح لمدة 24 ساعة.
+
+مع تحيات،
+فريق دلال
+                    '''
+                    
+                    send_mail(
+                        subject,
+                        message,
+                        settings.DEFAULT_FROM_EMAIL,
+                        [email],
+                        fail_silently=False,
+                    )
+                    
+                    messages.success(request, 'تم إنشاء الحساب بنجاح. يرجى فحص بريدك الإلكتروني لتفعيل الحساب')
+                    logger.info('Registration successful for user: %s, verification email sent', user.username)
+                    
+                except Exception as e:
+                    logger.error('Failed to send verification email: %s', str(e))
+                    # Allow registration even if email fails, but warn the user
+                    messages.warning(request, 'تم إنشاء الحساب ولكن لم نتمكن من إرسال بريد التفعيل. يرجى التواصل مع الإدارة.')
+                
                 return redirect('login')
     
     return render(request, 'properties/register.html')
 
 
+def verify_email(request):
+    """Handle email verification for new user accounts."""
+    user_id = request.GET.get('user_id')
+    token = request.GET.get('token')
+    
+    if not user_id or not token:
+        messages.error(request, 'رابط التفعيل غير صالح')
+        return redirect('login')
+    
+    try:
+        user = User.objects.get(id=user_id)
+        
+        # Check if user is already active
+        if user.is_active:
+            messages.info(request, 'حسابك مفعل بالفعل. يمكنك تسجيل الدخول')
+            return redirect('login')
+        
+        # Validate token from session
+        session_data = request.session.get(f'email_verification_{user_id}')
+        if not session_data:
+            messages.error(request, 'رابط التفعيل منتهي الصلاحية')
+            return redirect('login')
+        
+        stored_token = session_data.get('token')
+        stored_email = session_data.get('email')
+        created_at = session_data.get('created_at')
+        
+        if stored_token != token:
+            messages.error(request, 'رابط التفعيل غير صالح')
+            return redirect('login')
+        
+        # Check if token is expired (24 hours)
+        from datetime import datetime, timedelta
+        token_age = datetime.now() - datetime.fromisoformat(created_at)
+        if token_age > timedelta(hours=24):
+            messages.error(request, 'رابط التفعيل منتهي الصلاحية')
+            return redirect('login')
+        
+        # Verify email matches
+        if user.email != stored_email:
+            messages.error(request, 'رابط التفعيل غير صالح')
+            return redirect('login')
+        
+        # Activate user
+        user.is_active = True
+        user.save()
+        
+        # Clear verification token
+        del request.session[f'email_verification_{user_id}']
+        
+        # Log activation
+        from .models import ActivityLog
+        ActivityLog.log(
+            user=user,
+            action='update',
+            model_type='user',
+            object_id=user.id,
+            object_repr=user.username,
+            description=f'تفعيل حساب المستخدم: {user.username}',
+            ip_address=get_client_ip(request),
+            user_agent=request.META.get('HTTP_USER_AGENT', ''),
+            metadata={'method': 'email_verification'}
+        )
+        
+        # Create notification for admins
+        from .utils import create_notification
+        admins = User.objects.filter(is_superuser=True)
+        
+        for admin in admins:
+            create_notification(
+                user=admin,
+                notification_type='system',
+                title='تفعيل حساب جديد',
+                message=f'تم تفعيل حساب المستخدم: {user.get_full_name() or user.username}',
+                link=f'/admin/auth/user/{user.id}/change/',
+                metadata={'user_id': user.id}
+            )
+        
+        messages.success(request, 'تم تفعيل حسابك بنجاح. يمكنك الآن تسجيل الدخول')
+        return redirect('login')
+        
+    except User.DoesNotExist:
+        messages.error(request, 'رابط التفعيل غير صالح')
+        return redirect('login')
+
+
 def logout_view(request):
+    """Logout view with session cleanup"""
+    from django.contrib.auth import logout
+    # Log logout before logout
+    from .models import ActivityLog
+    ActivityLog.log(
+        user=request.user,
+        action='logout',
+        model_type='user',
+        object_id=request.user.id,
+        object_repr=request.user.username,
+        description=f'تسجيل خروج: {request.user.username}',
+        ip_address=get_client_ip(request),
+        user_agent=request.META.get('HTTP_USER_AGENT', ''),
+    )
+    
     logout(request)
     messages.info(request, 'تم تسجيل الخروج بنجاح')
     return redirect('home')
 
 
 def password_reset_request(request):
-    """Handle password reset request."""
+    """Handle password reset request with actual email sending."""
     if request.user.is_authenticated:
         return redirect('home')
     
@@ -1329,22 +1946,151 @@ def password_reset_request(request):
             messages.error(request, 'يرجى إدخال البريد الإلكتروني')
         else:
             from django.contrib.auth.models import User
+            from django.utils.crypto import get_random_string
+            from django.core.mail import send_mail
+            from django.conf import settings
+            from django.utils import timezone
+            import secrets
+            
             try:
                 user = User.objects.get(email=email)
-                # In a real application, send email with reset link
-                # For now, just show success message
-                messages.success(request, 'تم إرسال رابط إعادة تعيين كلمة المرور إلى بريدك الإلكتروني')
-                logger.info('Password reset requested for user: %s', user.username)
+                
+                # Generate secure token
+                token = secrets.token_urlsafe(32)
+                
+                # Store token in session (in production, use database with expiry)
+                request.session[f'password_reset_token_{user.id}'] = {
+                    'token': token,
+                    'created_at': timezone.now().isoformat(),
+                }
+                
+                # Create reset link
+                reset_link = f"{request.build_absolute_uri('/password-reset-confirm/')}?user_id={user.id}&token={token}"
+                
+                # Send email
+                subject = 'إعادة تعيين كلمة المرور - دلال'
+                message = f'''
+مرحباً {user.get_full_name() or user.username}،
+
+لقد طلبت إعادة تعيين كلمة المرور لحسابك في دلال.
+
+اضغط على الرابط التالي لإعادة تعيين كلمة المرور:
+{reset_link}
+
+إذا لم تطلب إعادة تعيين كلمة المرور، يرجى تجاهل هذا البريد الإلكتروني.
+
+رابط إعادة تعيين كلمة المرور صالح لمدة ساعة واحدة.
+
+مع تحيات،
+فريق دلال
+                '''
+                
+                try:
+                    send_mail(
+                        subject,
+                        message,
+                        settings.DEFAULT_FROM_EMAIL,
+                        [email],
+                        fail_silently=False,
+                    )
+                    messages.success(request, 'تم إرسال رابط إعادة تعيين كلمة المرور إلى بريدك الإلكتروني')
+                    logger.info('Password reset email sent to user: %s', user.username)
+                except Exception as e:
+                    logger.error('Failed to send password reset email: %s', str(e))
+                    messages.error(request, 'حدث خطأ في إرسال البريد الإلكتروني. يرجى المحاولة لاحقاً')
+                    
                 return redirect('login')
+                
             except User.DoesNotExist:
-                messages.error(request, 'البريد الإلكتروني غير مسجل في النظام')
+                # For security, don't reveal if email exists
+                messages.success(request, 'تم إرسال رابط إعادة تعيين كلمة المرور إلى بريدك الإلكتروني')
+                logger.info('Password reset requested for non-existent email: %s', email)
     
     return render(request, 'properties/password_reset.html')
 
 
+def password_reset_confirm(request):
+    """Handle password reset confirmation."""
+    if request.user.is_authenticated:
+        return redirect('home')
+    
+    user_id = request.GET.get('user_id')
+    token = request.GET.get('token')
+    
+    if not user_id or not token:
+        messages.error(request, 'رابط إعادة تعيين كلمة المرور غير صالح')
+        return redirect('login')
+    
+    try:
+        user = User.objects.get(id=user_id)
+        
+        # Validate token from session
+        session_data = request.session.get(f'password_reset_token_{user_id}')
+        if not session_data:
+            messages.error(request, 'رابط إعادة تعيين كلمة المرور منتهي الصلاحية')
+            return redirect('login')
+        
+        stored_token = session_data.get('token')
+        created_at = session_data.get('created_at')
+        
+        if stored_token != token:
+            messages.error(request, 'رابط إعادة تعيين كلمة المرور غير صالح')
+            return redirect('login')
+        
+        # Check if token is expired (1 hour)
+        from datetime import datetime, timedelta
+        token_age = datetime.now() - datetime.fromisoformat(created_at)
+        if token_age > timedelta(hours=1):
+            messages.error(request, 'رابط إعادة تعيين كلمة المرور منتهي الصلاحية')
+            return redirect('login')
+        
+        if request.method == 'POST':
+            new_password = request.POST.get('new_password', '')
+            confirm_password = request.POST.get('confirm_password', '')
+            
+            if not new_password or not confirm_password:
+                messages.error(request, 'يرجى ملء جميع الحقول')
+            elif new_password != confirm_password:
+                messages.error(request, 'كلمات المرور غير متطابقة')
+            elif len(new_password) < 8:
+                messages.error(request, 'كلمة المرور يجب أن تكون 8 أحرف على الأقل')
+            else:
+                user.set_password(new_password)
+                user.save()
+                
+                # Clear the token
+                del request.session[f'password_reset_token_{user_id}']
+                
+                # Log password reset
+                from .models import ActivityLog
+                ActivityLog.log(
+                    user=user,
+                    action='update',
+                    model_type='user',
+                    object_id=user.id,
+                    object_repr=user.username,
+                    description=f'إعادة تعيين كلمة المرور: {user.username}',
+                    ip_address=get_client_ip(request),
+                    user_agent=request.META.get('HTTP_USER_AGENT', ''),
+                    metadata={'method': 'email_reset'}
+                )
+                
+                messages.success(request, 'تم إعادة تعيين كلمة المرور بنجاح. يمكنك الآن تسجيل الدخول')
+                return redirect('login')
+        
+        return render(request, 'properties/password_reset_confirm.html', {
+            'user_id': user_id,
+            'token': token,
+        })
+        
+    except User.DoesNotExist:
+        messages.error(request, 'رابط إعادة تعيين كلمة المرور غير صالح')
+        return redirect('login')
+
+
 @login_required
 def password_change(request):
-    """Handle password change for logged in users."""
+    """Handle password change for logged in users with proper validation."""
     if request.method == 'POST':
         old_password = request.POST.get('old_password', '')
         new_password = request.POST.get('new_password', '')
@@ -1358,28 +2104,86 @@ def password_change(request):
             messages.error(request, 'كلمات المرور غير متطابقة')
         elif len(new_password) < 8:
             messages.error(request, 'كلمة المرور الجديدة يجب أن تكون 8 أحرف على الأقل')
+        elif old_password == new_password:
+            messages.error(request, 'كلمة المرور الجديدة يجب أن تكون مختلفة عن القديمة')
         else:
-            request.user.set_password(new_password)
-            request.user.save()
-            
-            # Log password change
+            # Validate password strength
+            import re
+            if not re.search(r'[A-Z]', new_password):
+                messages.error(request, 'كلمة المرور يجب أن تحتوي على حرف كبير واحد على الأقل')
+            elif not re.search(r'[a-z]', new_password):
+                messages.error(request, 'كلمة المرور يجب أن تحتوي على حرف صغير واحد على الأقل')
+            elif not re.search(r'[0-9]', new_password):
+                messages.error(request, 'كلمة المرور يجب أن تحتوي على رقم واحد على الأقل')
+            else:
+                request.user.set_password(new_password)
+                request.user.save()
+                
+                # Log password change
+                from .models import ActivityLog
+                ActivityLog.log(
+                    user=request.user,
+                    action='update',
+                    model_type='user',
+                    object_id=request.user.id,
+                    object_repr=request.user.username,
+                    description=f'تغيير كلمة المرور: {request.user.username}',
+                    ip_address=get_client_ip(request),
+                    user_agent=request.META.get('HTTP_USER_AGENT', ''),
+                    metadata={'method': 'self_change'}
+                )
+                
+                messages.success(request, 'تم تغيير كلمة المرور بنجاح')
+                return redirect('user_settings')
+    
+    return render(request, 'properties/password_change.html')
+
+
+@login_required
+def account_delete(request):
+    """Handle account deletion with proper confirmation and security."""
+    import secrets
+    
+    if request.method == 'POST':
+        password = request.POST.get('password', '')
+        confirmation = request.POST.get('confirmation', '')
+        
+        if not password:
+            messages.error(request, 'يرجى إدخال كلمة المرور للتأكيد')
+        elif not request.user.check_password(password):
+            messages.error(request, 'كلمة المرور غير صحيحة')
+        elif confirmation != 'DELETE':
+            messages.error(request, 'يرجى كتابة DELETE للتأكيد')
+        else:
+            # Log account deletion
             from .models import ActivityLog
             ActivityLog.log(
                 user=request.user,
-                action='update',
+                action='delete',
                 model_type='user',
                 object_id=request.user.id,
                 object_repr=request.user.username,
-                description=f'تغيير كلمة المرور: {request.user.username}',
+                description=f'حذف حساب المستخدم: {request.user.username}',
                 ip_address=get_client_ip(request),
                 user_agent=request.META.get('HTTP_USER_AGENT', ''),
-                metadata={'action': 'password_change'}
             )
             
-            messages.success(request, 'تم تغيير كلمة المرور بنجاح')
-            return redirect('login')
+            # Anonymize user data
+            username = f'deleted_user_{request.user.id}_{secrets.token_hex(8)}'
+            request.user.username = username
+            request.user.email = f'deleted_{request.user.id}@deleted.local'
+            request.user.first_name = 'Deleted'
+            request.user.last_name = 'User'
+            request.user.is_active = False
+            request.user.save()
+            
+            # Logout user
+            logout(request)
+            
+            messages.success(request, 'تم حذف حسابك بنجاح')
+            return redirect('home')
     
-    return render(request, 'properties/password_change.html')
+    return render(request, 'properties/account_delete.html')
 
 
 @login_required
@@ -1425,6 +2229,534 @@ def user_dashboard(request):
         'user_auctions': user_auctions,
         'activity_logs': activity_logs,
     })
+
+
+@login_required
+def user_dashboard_enhanced(request):
+    """لوحة تحكم المستخدمين المحسنة - تجربة عصرية"""
+    # Calculate statistics
+    stats = {
+        'saved_properties': 0,
+        'saved_searches': 0,
+        'viewed_properties': 0,
+        'unread_notifications': 0,
+        'unread_messages': 0,
+        'upcoming_viewings': 0,
+    }
+
+    try:
+        from .models import SavedProperty, SavedSearch, UserViewHistory, Notification, Conversation, ViewingRequest
+        
+        stats['saved_properties'] = SavedProperty.objects.filter(user=request.user).count()
+        stats['saved_searches'] = SavedSearch.objects.filter(user=request.user).count()
+        stats['viewed_properties'] = UserViewHistory.objects.filter(user=request.user).count()
+        stats['unread_notifications'] = Notification.objects.filter(user=request.user, is_read=False).count()
+        stats['unread_messages'] = Conversation.objects.filter(
+            participants=request.user,
+            messages__recipient=request.user,
+            messages__is_read=False
+        ).count()
+        stats['upcoming_viewings'] = ViewingRequest.objects.filter(
+            user=request.user,
+            status='confirmed',
+            viewing_date__gte=timezone.now()
+        ).count()
+    except Exception as e:
+        logger.error(f"Error calculating dashboard stats: {e}")
+        # Use fallback values if models don't exist yet
+        stats = {
+            'saved_properties': 0,
+            'saved_searches': 0,
+            'viewed_properties': 0,
+            'unread_notifications': 0,
+            'unread_messages': 0,
+            'upcoming_viewings': 0,
+        }
+
+    # Get recent activity
+    recent_activity = []
+    try:
+        recent_activity = ActivityLog.objects.filter(
+            user=request.user
+        ).order_by('-created_at')[:10]
+        
+        recent_activity = [
+            {
+                'icon': '📝',
+                'title': log.action,
+                'description': log.description,
+                'time': log.created_at.strftime('%Y-%m-%d %H:%M')
+            }
+            for log in recent_activity
+        ]
+    except Exception as e:
+        logger.error(f"Error loading recent activity: {e}")
+        recent_activity = []
+
+    return render(request, 'properties/user_dashboard_enhanced.html', {
+        'stats': stats,
+        'recent_activity': recent_activity,
+    })
+
+
+# ==================== USER DASHBOARD API ENDPOINTS ====================
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def user_dashboard_api(request):
+    """API مخصص للوحة المستخدم المحسنة"""
+    try:
+        # Calculate statistics
+        stats = {
+            'saved_properties': 0,
+            'saved_searches': 0,
+            'viewed_properties': 0,
+            'unread_notifications': 0,
+            'unread_messages': 0,
+            'upcoming_viewings': 0,
+        }
+
+        try:
+            from .models import SavedProperty, SavedSearch, UserViewHistory, Notification, Conversation, ViewingRequest
+            
+            stats['saved_properties'] = SavedProperty.objects.filter(user=request.user).count()
+            stats['saved_searches'] = SavedSearch.objects.filter(user=request.user).count()
+            stats['viewed_properties'] = UserViewHistory.objects.filter(user=request.user).count()
+            stats['unread_notifications'] = Notification.objects.filter(user=request.user, is_read=False).count()
+            stats['unread_messages'] = Conversation.objects.filter(
+                participants=request.user,
+                messages__recipient=request.user,
+                messages__is_read=False
+            ).count()
+            stats['upcoming_viewings'] = ViewingRequest.objects.filter(
+                user=request.user,
+                status='confirmed',
+                viewing_date__gte=timezone.now()
+            ).count()
+        except Exception as e:
+            logger.error(f"Error calculating dashboard stats: {e}")
+
+        # Get recent activity
+        recent_activity = []
+        try:
+            recent_activity = ActivityLog.objects.filter(
+                user=request.user
+            ).order_by('-created_at')[:10]
+            
+            recent_activity = [
+                {
+                    'icon': '📝',
+                    'title': log.action,
+                    'description': log.description,
+                    'time': log.created_at.strftime('%Y-%m-%d %H:%M')
+                }
+                for log in recent_activity
+            ]
+        except Exception as e:
+            logger.error(f"Error loading recent activity: {e}")
+
+        return Response({
+            'stats': stats,
+            'recent_activity': recent_activity
+        })
+    except Exception as e:
+        logger.error(f"Error in user_dashboard_api: {e}")
+        return Response({'error': str(e)}, status=500)
+
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def user_saved_items_api(request):
+    """API للحصول على العناصر المحفوظة"""
+    try:
+        from .models import SavedProperty
+        
+        saved_properties = SavedProperty.objects.filter(
+            user=request.user
+        ).select_related('property').order_by('-saved_at')[:20]
+        
+        items = []
+        for saved in saved_properties:
+            try:
+                items.append({
+                    'id': saved.property.id,
+                    'title': saved.property.title,
+                    'price': str(saved.property.price) if saved.property.price else 'غير محدد',
+                    'location': f"{saved.property.city}, {saved.property.governorate}" if saved.property.city else 'غير محدد',
+                    'image': saved.property.main_image.url if saved.property.main_image else '/static/img/placeholder.svg',
+                    'url': saved.property.get_absolute_url(),
+                    'saved_at': saved.saved_at.strftime('%Y-%m-%d %H:%M')
+                })
+            except Exception as e:
+                logger.error(f"Error processing saved property {saved.id}: {e}")
+                continue
+        
+        return Response({'items': items})
+    except Exception as e:
+        logger.error(f"Error in user_saved_items_api: {e}")
+        return Response({'items': []}, status=500)
+
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def user_saved_searches_api(request):
+    """API للحصول على عمليات البحث المحفوظة"""
+    try:
+        from .models import SavedSearch
+        
+        saved_searches = SavedSearch.objects.filter(
+            user=request.user
+        ).order_by('-created_at')[:20]
+        
+        searches = []
+        for search in saved_searches:
+            try:
+                searches.append({
+                    'id': search.id,
+                    'name': search.name,
+                    'filters_summary': str(search.filters)[:100] if search.filters else 'فلاتر عامة',
+                    'last_used': search.updated_at.strftime('%Y-%m-%d %H:%M'),
+                    'created_at': search.created_at.strftime('%Y-%m-%d')
+                })
+            except Exception as e:
+                logger.error(f"Error processing saved search {search.id}: {e}")
+                continue
+        
+        return Response({'searches': searches})
+    except Exception as e:
+        logger.error(f"Error in user_saved_searches_api: {e}")
+        return Response({'searches': []}, status=500)
+
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def user_viewed_items_api(request):
+    """API للحصول على العناصر المشاهدة"""
+    try:
+        from .models import UserViewHistory
+        
+        viewed_items = UserViewHistory.objects.filter(
+            user=request.user
+        ).order_by('-created_at')[:20]
+        
+        items = []
+        for viewed in viewed_items:
+            try:
+                items.append({
+                    'id': viewed.item_id,
+                    'title': viewed.item_title or 'عنصر',
+                    'price': 'غير محدد',
+                    'location': 'غير محدد',
+                    'image': viewed.item_image or '/static/img/placeholder.svg',
+                    'url': f'/property/{viewed.item_id}/',
+                    'viewed_at': viewed.created_at.strftime('%Y-%m-%d %H:%M')
+                })
+            except Exception as e:
+                logger.error(f"Error processing viewed item {viewed.id}: {e}")
+                continue
+        
+        return Response({'items': items})
+    except Exception as e:
+        logger.error(f"Error in user_viewed_items_api: {e}")
+        return Response({'items': []}, status=500)
+
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def user_viewings_api(request):
+    """API للحصول على طلبات المعاينة"""
+    try:
+        from .models import ViewingRequest
+        
+        viewings = ViewingRequest.objects.filter(
+            user=request.user
+        ).select_related('property').order_by('-viewing_date')[:20]
+        
+        items = []
+        for viewing in viewings:
+            try:
+                items.append({
+                    'id': viewing.id,
+                    'property_title': viewing.property.title if viewing.property else 'عقار محذوف',
+                    'property_url': viewing.property.get_absolute_url() if viewing.property else '#',
+                    'date': viewing.viewing_date.strftime('%Y-%m-%d'),
+                    'time': viewing.viewing_time.strftime('%H:%M'),
+                    'status': viewing.status,
+                    'status_display': viewing.get_status_display()
+                })
+            except Exception as e:
+                logger.error(f"Error processing viewing {viewing.id}: {e}")
+                continue
+        
+        return Response({'viewings': items})
+    except Exception as e:
+        logger.error(f"Error in user_viewings_api: {e}")
+        return Response({'viewings': []}, status=500)
+
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def user_bookings_api(request):
+    """API للحصول على الحجوزات"""
+    try:
+        from .models import HotelBooking
+        
+        bookings = HotelBooking.objects.filter(
+            user=request.user
+        ).select_related('hotel').order_by('-check_in')[:20]
+        
+        items = []
+        for booking in bookings:
+            try:
+                items.append({
+                    'id': booking.id,
+                    'hotel_name': booking.hotel.name if booking.hotel else 'فندق محذوف',
+                    'url': booking.hotel.get_absolute_url() if booking.hotel else '#',
+                    'check_in': booking.check_in.strftime('%Y-%m-%d'),
+                    'check_out': booking.check_out.strftime('%Y-%m-%d'),
+                    'total_price': str(booking.total_price),
+                    'status': booking.status,
+                    'status_display': booking.get_status_display()
+                })
+            except Exception as e:
+                logger.error(f"Error processing booking {booking.id}: {e}")
+                continue
+        
+        return Response({'bookings': items})
+    except Exception as e:
+        logger.error(f"Error in user_bookings_api: {e}")
+        return Response({'bookings': []}, status=500)
+
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def user_conversations_api(request):
+    """API للحصول على المحادثات"""
+    try:
+        from .models import Conversation
+        
+        conversations = Conversation.objects.filter(
+            participants=request.user
+        ).prefetch_related('participants', 'messages').order_by('-updated_at')[:20]
+        
+        items = []
+        for conv in conversations:
+            try:
+                other_user = conv.participants.exclude(id=request.user.id).first()
+                last_message = conv.messages.last() if conv.messages.exists() else None
+                
+                items.append({
+                    'id': conv.id,
+                    'other_user': other_user.username if other_user else 'مستخدم محذوف',
+                    'last_message': last_message.content[:100] if last_message else 'لا توجد رسائل',
+                    'last_message_time': last_message.created_at.strftime('%Y-%m-%d %H:%M') if last_message else '',
+                    'unread': not (last_message and last_message.is_read and last_message.sender == request.user),
+                    'url': f'/messages/{conv.id}/'
+                })
+            except Exception as e:
+                logger.error(f"Error processing conversation {conv.id}: {e}")
+                continue
+        
+        return Response({'conversations': items})
+    except Exception as e:
+        logger.error(f"Error in user_conversations_api: {e}")
+        return Response({'conversations': []}, status=500)
+
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def user_notifications_api(request):
+    """API للحصول على الإشعارات"""
+    try:
+        notifications = Notification.objects.filter(
+            user=request.user
+        ).order_by('-created_at')[:20]
+        
+        items = []
+        for notif in notifications:
+            try:
+                items.append({
+                    'id': notif.id,
+                    'title': notif.title,
+                    'message': notif.message[:200],
+                    'is_read': notif.is_read,
+                    'created_at': notif.created_at.strftime('%Y-%m-%d %H:%M'),
+                    'link': notif.link if hasattr(notif, 'link') else None
+                })
+            except Exception as e:
+                logger.error(f"Error processing notification {notif.id}: {e}")
+                continue
+        
+        return Response({'notifications': items})
+    except Exception as e:
+        logger.error(f"Error in user_notifications_api: {e}")
+        return Response({'notifications': []}, status=500)
+
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def user_alerts_api(request):
+    """API للحصول على التنبيهات"""
+    try:
+        from .models import PriceAlert, PropertyAlert
+        
+        price_alerts = PriceAlert.objects.filter(
+            user=request.user
+        ).order_by('-created_at')[:10]
+        
+        property_alerts = PropertyAlert.objects.filter(
+            user=request.user
+        ).order_by('-created_at')[:10]
+        
+        price_items = []
+        for alert in price_alerts:
+            try:
+                price_items.append({
+                    'id': alert.id,
+                    'title': f'تنبيه سعر - {alert.location or "الكل"}',
+                    'description': f'من {alert.min_price or 0} إلى {alert.max_price or "غير محدود"}',
+                    'is_active': alert.is_active,
+                    'created_at': alert.created_at.strftime('%Y-%m-%d')
+                })
+            except Exception as e:
+                logger.error(f"Error processing price alert {alert.id}: {e}")
+                continue
+        
+        property_items = []
+        for alert in property_alerts:
+            try:
+                property_items.append({
+                    'id': alert.id,
+                    'title': alert.name,
+                    'description': str(alert.filters)[:100] if alert.filters else 'فلاتر عامة',
+                    'is_active': alert.is_active,
+                    'created_at': alert.created_at.strftime('%Y-%m-%d')
+                })
+            except Exception as e:
+                logger.error(f"Error processing property alert {alert.id}: {e}")
+                continue
+        
+        return Response({
+            'price_alerts': price_items,
+            'property_alerts': property_items
+        })
+    except Exception as e:
+        logger.error(f"Error in user_alerts_api: {e}")
+        return Response({'price_alerts': [], 'property_alerts': []}, status=500)
+
+
+@login_required
+def user_dashboard_enhanced(request):
+    """لوحة تحكم المستخدمين المحسنة - تجربة عصرية"""
+    from .models import (
+        SavedProperty, SavedSearch, PropertyComparison, 
+        UserViewHistory, UserBehavior, SmartNotification
+    )
+    
+    # Calculate statistics
+    stats = {
+        'saved_properties': 0,
+        'saved_searches': 0,
+        'viewed_properties': 0,
+        'unread_notifications': 0,
+        'unread_messages': 0,
+        'upcoming_viewings': 0,
+    }
+    
+    try:
+        stats['saved_properties'] = SavedProperty.objects.filter(user=request.user).count()
+    except Exception:
+        pass
+    
+    try:
+        stats['saved_searches'] = SavedSearch.objects.filter(user=request.user).count()
+    except Exception:
+        pass
+    
+    try:
+        stats['viewed_properties'] = UserViewHistory.objects.filter(user=request.user).count()
+    except Exception:
+        pass
+    
+    try:
+        stats['unread_notifications'] = SmartNotification.objects.filter(
+            user=request.user, is_read=False
+        ).count()
+    except Exception:
+        pass
+    
+    try:
+        from .models import Conversation
+        stats['unread_messages'] = Conversation.objects.filter(
+            participants=request.user,
+            messages__recipient=request.user,
+            messages__is_read=False
+        ).count()
+    except Exception:
+        pass
+    
+    # Get recent activity
+    recent_activity = []
+    try:
+        recent_behaviors = UserBehavior.objects.filter(
+            user=request.user
+        ).order_by('-created_at')[:10]
+        
+        for behavior in recent_behaviors:
+            recent_activity.append({
+                'icon': self.get_behavior_icon(behavior.action),
+                'title': self.get_behavior_title(behavior.action),
+                'description': self.get_behavior_description(behavior),
+                'time': behavior.created_at.isoformat()
+            })
+    except Exception:
+        pass
+    
+    context = {
+        'stats': stats,
+        'recent_activity': recent_activity,
+    }
+    
+    return render(request, 'properties/user_dashboard_enhanced.html', context)
+
+
+def get_behavior_icon(action):
+    icons = {
+        'view': '👁️',
+        'save': '❤️',
+        'share': '📤',
+        'like': '👍',
+        'comment': '💬',
+        'search': '🔍',
+        'filter': '⚙️',
+    }
+    return icons.get(action, '📝')
+
+
+def get_behavior_title(action):
+    titles = {
+        'view': 'عرض عقار',
+        'save': 'حفظ عقار',
+        'share': 'مشاركة عقار',
+        'like': 'إعجاب بعقار',
+        'comment': 'تعليق على عقار',
+        'search': 'بحث',
+        'filter': 'فلترة',
+    }
+    return titles.get(action, 'نشاط')
+
+
+def get_behavior_description(behavior):
+    item_types = {
+        'property': 'عقار',
+        'hotel': 'فندق',
+        'resort': 'منتجع',
+        'job': 'وظيفة',
+        'service': 'خدمة',
+    }
+    
+    item_type = item_types.get(behavior.item_type, 'عنصر')
+    return f'{item_type} #{behavior.item_id}'
 
 
 @login_required
@@ -7027,10 +8359,9 @@ def delete_user_message(request, message_id):
     return redirect('user_messages')
 
 
-@csrf_exempt
 @login_required
 def send_message_view(request):
-    """إرسال رسالة - دالة منفصلة لتجنب مشاكل CSRF عبر المنافذ"""
+    """إرسال رسالة - دالة منفصلة لإدارة CSRF بشكل صحيح"""
     if request.method == 'POST':
         conversation_id = request.POST.get('conversation_id')
         message_content = request.POST.get('message_content')
@@ -10127,9 +11458,8 @@ def api_upload_attachments(request):
         return JsonResponse({'error': str(e)}, status=500)
 
 
-@csrf_exempt
 def api_search_properties(request):
-    """API endpoint to search properties"""
+    """API endpoint to search properties (GET only - CSRF not needed)"""
     from .models import Property
     
     query = request.GET.get('q', '')
@@ -13816,9 +15146,9 @@ def delete_service_advertisement(request, ad_id):
     })
 
 
-@csrf_exempt
+@require_GET
 def statistics_api(request):
-    """API endpoint للحصول على إحصاءات حقيقية"""
+    """API endpoint للحصول على إحصاءات حقيقية (GET only - CSRF not needed)"""
     from django.db.models import Count
     from django.db.models.functions import TruncMonth
     from datetime import datetime, timedelta
@@ -20045,9 +21375,9 @@ def analytics_user_activity(request):
         return JsonResponse({'success': False, 'error': str(e)}, status=500)
 
 
-@csrf_exempt
+@require_GET
 def analytics_performance(request):
-    """بيانات أداء النظام"""
+    """بيانات أداء النظام (GET only - CSRF not needed)"""
     # Allow unauthenticated users to receive basic metrics
     # Only show detailed metrics to admins/staff
     is_admin = request.user.is_authenticated and (request.user.is_superuser or request.user.is_staff)
@@ -23713,7 +25043,6 @@ def advanced_reports_management(request):
 
 
 @login_required
-@csrf_exempt
 def dashboard_stats(request):
     """إحصائيات لوحة التحكم الرئيسية - تقسم حسب نوع المستخدم"""
     try:
@@ -23917,7 +25246,6 @@ def dashboard_stats(request):
 
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
-@csrf_exempt
 def admin_dashboard_api(request):
     """API مخصص للوحة الإدارة - بيانات شاملة"""
     if not request.user.is_superuser and not request.user.is_staff:
@@ -24016,7 +25344,6 @@ def admin_dashboard_api(request):
 
 
 @api_view(['GET'])
-@csrf_exempt
 @permission_classes([IsAuthenticated])
 def broker_dashboard_api(request):
     """API مخصص للوحة الدلال - بيانات خاصة بالدلال"""
@@ -24170,147 +25497,7 @@ def broker_dashboard_api(request):
         return Response({'success': False, 'error': str(e)}, status=500)
 
 
-@csrf_exempt
-@api_view(['GET'])
-@permission_classes([IsAuthenticated])
-def user_dashboard_api(request):
-    """API مخصص للوحة المستخدم - بيانات خاصة بالمستخدم"""
-    try:
-        from django.utils import timezone
-        from django.db.models import Count
-        
-        # عقارات المستخدم المفضلة
-        try:
-            from .models import UserFavorite
-            favorites = UserFavorite.objects.filter(user=request.user).select_related('property')
-            total_favorites = favorites.count()
-            recent_favorites = favorites.order_by('-created_at')[:10]
-        except Exception:
-            total_favorites = 0
-            recent_favorites = []
-        
-        # المحادثات
-        try:
-            from .models import Conversation
-            user_conversations = Conversation.objects.filter(participants=request.user)
-            total_conversations = user_conversations.count()
-            unread_messages = user_conversations.filter(
-                messages__recipient=request.user,
-                messages__is_read=False
-            ).count()
-            recent_conversations = user_conversations.order_by('-updated_at')[:10]
-        except Exception:
-            total_conversations = 0
-            unread_messages = 0
-            recent_conversations = []
-        
-        # إحصائيات البحث
-        try:
-            from .models import UserSearchHistory
-            total_searches = UserSearchHistory.objects.filter(user=request.user).count()
-            recent_searches = UserSearchHistory.objects.filter(
-                user=request.user
-            ).order_by('-created_at')[:10]
-        except Exception:
-            total_searches = 0
-            recent_searches = []
-        
-        # العقارات المحفوظة
-        try:
-            from .models import PropertySave
-            saved_properties = PropertySave.objects.filter(user=request.user).select_related('property')
-            total_saved = saved_properties.count()
-            recent_saved = saved_properties.order_by('-created_at')[:10]
-        except Exception:
-            total_saved = 0
-            recent_saved = []
-        
-        # المزادات المشارك بها
-        try:
-            from .models import AuctionBid
-            user_auctions = AuctionBid.objects.filter(bidder=request.user).values('auction').distinct().count()
-        except Exception:
-            user_auctions = 0
-        
-        # النشاطات الأخيرة
-        try:
-            from .models import ActivityLog
-            activity_logs = ActivityLog.objects.filter(user=request.user).count()
-        except Exception:
-            activity_logs = 0
-        
-        # الإشعارات غير المقروءة
-        try:
-            from .models import Notification
-            unread_notifications = Notification.objects.filter(
-                user=request.user,
-                is_read=False
-            ).count()
-        except Exception:
-            unread_notifications = 0
-        
-        return Response({
-            'success': True,
-            'data': {
-                'favorites': {
-                    'total': total_favorites,
-                    'recent': [
-                        {
-                            'id': f.property.id,
-                            'title': f.property.title,
-                            'price': f.property.price,
-                            'location': f.property.city,
-                            'created_at': f.created_at.strftime('%Y-%m-%d')
-                        } for f in recent_favorites
-                    ]
-                },
-                'conversations': {
-                    'total': total_conversations,
-                    'unread': unread_messages,
-                    'recent': [
-                        {
-                            'id': c.id,
-                            'name': c.name,
-                            'updated_at': c.updated_at.strftime('%Y-%m-%d %H:%M')
-                        } for c in recent_conversations
-                    ]
-                },
-                'searches': {
-                    'total': total_searches,
-                    'recent': [
-                        {
-                            'id': s.id,
-                            'query': s.search_query,
-                            'created_at': s.created_at.strftime('%Y-%m-%d')
-                        } for s in recent_searches
-                    ]
-                },
-                'saved_properties': {
-                    'total': total_saved,
-                    'recent': [
-                        {
-                            'id': sp.property.id,
-                            'title': sp.property.title,
-                            'price': sp.property.price,
-                            'location': sp.property.city,
-                            'created_at': sp.created_at.strftime('%Y-%m-%d')
-                        } for sp in recent_saved
-                    ]
-                },
-                'auctions': {
-                    'total': user_auctions
-                },
-                'activity': {
-                    'total': activity_logs
-                },
-                'notifications': {
-                    'unread': unread_notifications
-                }
-            }
-        })
-    except Exception as e:
-        return Response({'success': False, 'error': str(e)}, status=500)
-
+# Duplicate user_dashboard_api removed - function already defined at line 2072
 
 @login_required
 def recent_activity(request):
@@ -26001,3 +27188,365 @@ def platform_comprehensive_stats(request):
 def smart_assistant_view(request):
     """Smart AI Assistant View - Intelligent search and guidance"""
     return render(request, 'properties/ai_smart_assistant.html')
+
+
+@login_required
+def budget_search(request):
+    """ماذا أستطيع شراء بميزانيتي - Budget Search"""
+    if request.method == 'POST':
+        form_data = {
+            'min_budget': request.POST.get('min_budget'),
+            'max_budget': request.POST.get('max_budget'),
+            'currency': request.POST.get('currency', 'د.ع'),
+            'search_type': request.POST.get('search_type', 'purchase'),
+            'property_type': request.POST.get('property_type', 'all'),
+            'governorate': request.POST.get('governorate', ''),
+            'city': request.POST.get('city', ''),
+            'include_all_iraq': request.POST.get('include_all_iraq', 'true') == 'true',
+            'min_area': request.POST.get('min_area'),
+            'max_area': request.POST.get('max_area'),
+            'min_bedrooms': request.POST.get('min_bedrooms'),
+            'max_bedrooms': request.POST.get('max_bedrooms'),
+        }
+        
+        # Create budget search record
+        budget_search = BudgetSearch.objects.create(
+            user=request.user,
+            min_budget=form_data['min_budget'],
+            max_budget=form_data['max_budget'],
+            currency=form_data['currency'],
+            search_type=form_data['search_type'],
+            property_type=form_data['property_type'],
+            governorate=form_data['governorate'],
+            city=form_data['city'],
+            include_all_iraq=form_data['include_all_iraq'],
+            min_area=form_data['min_area'] or None,
+            max_area=form_data['max_area'] or None,
+            min_bedrooms=form_data['min_bedrooms'] or None,
+            max_bedrooms=form_data['max_bedrooms'] or None,
+        )
+        
+        # Get matching properties
+        properties = budget_search.get_matching_properties()
+        
+        # Calculate affordability scores
+        for prop in properties:
+            affordability_score = budget_search.calculate_affordability_score(prop)
+        
+        return render(request, 'properties/budget_search_results.html', {
+            'budget_search': budget_search,
+            'properties': properties,
+        })
+    
+    return render(request, 'properties/budget_search.html')
+
+
+@login_required
+def investment_calculator(request):
+    """استثمر أموالك - Investment Calculator"""
+    if request.method == 'POST':
+        form_data = {
+            'capital': request.POST.get('capital'),
+            'currency': request.POST.get('currency', 'د.ع'),
+            'investment_type': request.POST.get('investment_type', 'rental'),
+            'investment_period': request.POST.get('investment_period', 5),
+            'expected_roi': request.POST.get('expected_roi', 10),
+            'risk_tolerance': request.POST.get('risk_tolerance', 'medium'),
+            'preferred_locations': request.POST.getlist('preferred_locations'),
+        }
+        
+        # Create investment calculator record
+        investment = InvestmentCalculator.objects.create(
+            user=request.user,
+            capital=form_data['capital'],
+            currency=form_data['currency'],
+            investment_type=form_data['investment_type'],
+            investment_period=form_data['investment_period'],
+            expected_roi=form_data['expected_roi'],
+            risk_tolerance=form_data['risk_tolerance'],
+            preferred_locations=form_data['preferred_locations'],
+        )
+        
+        # Calculate returns
+        returns = investment.calculate_returns()
+        
+        # Get investment properties
+        investment_properties = investment.get_investment_properties()
+        
+        return render(request, 'properties/investment_results.html', {
+            'investment': investment,
+            'returns': returns,
+            'properties': investment_properties,
+        })
+    
+    return render(request, 'properties/investment_calculator.html')
+
+
+@login_required
+def region_comparison(request):
+    """قارن منطقتين - Region Comparison"""
+    if request.method == 'POST':
+        form_data = {
+            'region1_governorate': request.POST.get('region1_governorate'),
+            'region1_city': request.POST.get('region1_city', ''),
+            'region2_governorate': request.POST.get('region2_governorate'),
+            'region2_city': request.POST.get('region2_city', ''),
+            'comparison_type': request.POST.get('comparison_type', 'all'),
+            'property_type': request.POST.get('property_type', ''),
+        }
+        
+        # Create region comparison record
+        comparison = RegionComparison.objects.create(
+            user=request.user,
+            region1_governorate=form_data['region1_governorate'],
+            region1_city=form_data['region1_city'],
+            region2_governorate=form_data['region2_governorate'],
+            region2_city=form_data['region2_city'],
+            comparison_type=form_data['comparison_type'],
+            property_type=form_data['property_type'],
+        )
+        
+        # Perform comparison
+        comparison_data = comparison.perform_comparison()
+        
+        return render(request, 'properties/region_comparison_results.html', {
+            'comparison': comparison,
+            'comparison_data': comparison_data,
+        })
+    
+    return render(request, 'properties/region_comparison.html')
+
+
+@login_required
+def smart_property_score(request, property_id):
+    """Smart Property Score - نظام التقييم الذكي"""
+    property = get_object_or_404(Property, id=property_id)
+    
+    # Get or create smart score
+    smart_score, created = SmartPropertyScore.objects.get_or_create(
+        property=property
+    )
+    
+    # Calculate score
+    score = smart_score.calculate_score()
+    
+    return JsonResponse({
+        'success': True,
+        'score': score,
+        'score_level': smart_score.score_level,
+        'breakdown': smart_score.score_breakdown,
+        'suggestions': smart_score.improvement_suggestions
+    })
+
+
+@login_required
+def ai_property_agent(request):
+    """AI Property Agent - وكلاء العقارات الذكي"""
+    if request.method == 'POST':
+        form_data = {
+            'search_criteria': request.POST.get('search_criteria'),
+            'preferences': request.POST.get('preferences'),
+            'budget_min': request.POST.get('budget_min'),
+            'budget_max': request.POST.get('budget_max'),
+            'locations': request.POST.getlist('locations'),
+            'property_types': request.POST.getlist('property_types'),
+            'min_area': request.POST.get('min_area'),
+            'max_area': request.POST.get('max_area'),
+            'bedrooms': request.POST.get('bedrooms'),
+            'notify_frequency': request.POST.get('notify_frequency', 'daily'),
+        }
+        
+        # Create AI agent subscription
+        agent = AIPropertyAgent.objects.create(
+            user=request.user,
+            search_criteria=form_data['search_criteria'],
+            preferences=form_data['preferences'],
+            budget_min=form_data['budget_min'] or None,
+            budget_max=form_data['budget_max'] or None,
+            locations=form_data['locations'],
+            property_types=form_data['property_types'],
+            min_area=form_data['min_area'] or None,
+            max_area=form_data['max_area'] or None,
+            bedrooms=form_data['bedrooms'] or None,
+            notify_frequency=form_data['notify_frequency'],
+        )
+        
+        # Check for immediate matches
+        matching_properties = agent.find_matching_properties()
+        
+        messages.success(request, 'تم إنشاء وكيل العقارات الذكي بنجاح')
+        return render(request, 'properties/ai_property_agent.html', {
+            'agent': agent,
+            'matching_properties': matching_properties,
+        })
+    
+    # Get user's active agents
+    user_agents = AIPropertyAgent.objects.filter(user=request.user, is_active=True)
+    
+    return render(request, 'properties/ai_property_agent.html', {
+        'user_agents': user_agents,
+    })
+
+
+@login_required
+def ai_price_watch(request):
+    """AI Price Watch - مراقبة الأسعار الذكية"""
+    if request.method == 'POST':
+        form_data = {
+            'property_id': request.POST.get('property_id'),
+            'target_price': request.POST.get('target_price'),
+            'notify_on_drop': request.POST.get('notify_on_drop', 'true') == 'true',
+            'notify_on_rise': request.POST.get('notify_on_rise', 'false') == 'true',
+            'threshold_percentage': request.POST.get('threshold_percentage', 5),
+        }
+        
+        property = get_object_or_404(Property, id=form_data['property_id'])
+        
+        # Create price watch
+        price_watch = AIPriceWatch.objects.create(
+            user=request.user,
+            property=property,
+            target_price=form_data['target_price'],
+            notify_on_drop=form_data['notify_on_drop'],
+            notify_on_rise=form_data['notify_on_rise'],
+            threshold_percentage=form_data['threshold_percentage'],
+        )
+        
+        messages.success(request, 'تم تفعيل مراقبة الأسعار لهذا العقار')
+        return redirect('property_detail', property_id=property.id)
+    
+    # Get user's active price watches
+    user_watches = AIPriceWatch.objects.filter(user=request.user, is_active=True)
+    
+    return render(request, 'properties/ai_price_watch.html', {
+        'user_watches': user_watches,
+    })
+
+
+@login_required
+def smart_alerts(request):
+    """Smart Alerts - التنبيهات الذكية"""
+    if request.method == 'POST':
+        form_data = {
+            'alert_type': request.POST.get('alert_type'),
+            'priority_threshold': request.POST.get('priority_threshold', 'high'),
+            'categories': request.POST.getlist('categories'),
+            'location_based': request.POST.get('location_based', 'true') == 'true',
+            'price_alerts': request.POST.get('price_alerts', 'true') == 'true',
+            'market_trends': request.POST.get('market_trends', 'true') == 'true',
+        }
+        
+        # Create smart alert configuration
+        alert_config = SmartAlert.objects.create(
+            user=request.user,
+            alert_type=form_data['alert_type'],
+            priority_threshold=form_data['priority_threshold'],
+            categories=form_data['categories'],
+            location_based=form_data['location_based'],
+            price_alerts=form_data['price_alerts'],
+            market_trends=form_data['market_trends'],
+        )
+        
+        messages.success(request, 'تم تفعيل التنبيهات الذكية')
+        return redirect('smart_alerts')
+    
+    # Get user's smart alerts
+    user_alerts = SmartAlert.objects.filter(user=request.user, is_active=True)
+    
+    # Get prioritized notifications
+    prioritized_notifications = SmartAlert.get_prioritized_notifications(request.user)
+    
+    return render(request, 'properties/smart_alerts.html', {
+        'user_alerts': user_alerts,
+        'prioritized_notifications': prioritized_notifications,
+    })
+
+
+@login_required
+def discover_map(request):
+    """خريطة اكتشف حولك - Interactive Discovery Map"""
+    if request.method == 'POST':
+        latitude = request.POST.get('latitude')
+        longitude = request.POST.get('longitude')
+        radius = request.POST.get('radius', 5)  # km
+        categories = request.POST.getlist('categories')
+        
+        context = {
+            'latitude': latitude,
+            'longitude': longitude,
+            'radius': radius,
+            'categories': categories,
+        }
+        
+        return render(request, 'properties/discover_map.html', context)
+    
+    return render(request, 'properties/discover_map.html')
+
+
+@login_required
+def unified_marketplace(request):
+    """Marketplace موحد للبحث - Unified Marketplace Search"""
+    search_query = request.GET.get('q', '')
+    category = request.GET.get('category', 'all')
+    location = request.GET.get('location', '')
+    min_price = request.GET.get('min_price')
+    max_price = request.GET.get('max_price')
+    
+    results = []
+    
+    if search_query:
+        # Search across all publication types
+        if category in ['all', 'properties']:
+            properties = Property.objects.filter(
+                Q(title__icontains=search_query) |
+                Q(description__icontains=search_query) |
+                Q(location__icontains=search_query)
+            )
+            if location:
+                properties = properties.filter(location__icontains=location)
+            if min_price:
+                properties = properties.filter(price__gte=min_price)
+            if max_price:
+                properties = properties.filter(price__lte=max_price)
+            results.extend([{'type': 'property', 'item': p} for p in properties])
+        
+        if category in ['all', 'hotels']:
+            hotels = Hotel.objects.filter(
+                Q(name__icontains=search_query) |
+                Q(description__icontains=search_query) |
+                Q(location__icontains=search_query)
+            )
+            if location:
+                hotels = hotels.filter(location__icontains=location)
+            if min_price:
+                hotels = hotels.filter(price_per_night__gte=min_price)
+            if max_price:
+                hotels = hotels.filter(price_per_night__lte=max_price)
+            results.extend([{'type': 'hotel', 'item': h} for h in hotels])
+        
+        if category in ['all', 'jobs']:
+            jobs = Job.objects.filter(
+                Q(title__icontains=search_query) |
+                Q(description__icontains=search_query) |
+                Q(location__icontains=search_query)
+            )
+            if location:
+                jobs = jobs.filter(location__icontains=location)
+            results.extend([{'type': 'job', 'item': j} for j in jobs])
+        
+        if category in ['all', 'services']:
+            services = Service.objects.filter(
+                Q(title__icontains=search_query) |
+                Q(description__icontains=search_query) |
+                Q(location__icontains=search_query)
+            )
+            if location:
+                services = services.filter(location__icontains=location)
+            results.extend([{'type': 'service', 'item': s} for s in services])
+    
+    return render(request, 'properties/unified_marketplace.html', {
+        'results': results,
+        'search_query': search_query,
+        'category': category,
+        'location': location,
+    })

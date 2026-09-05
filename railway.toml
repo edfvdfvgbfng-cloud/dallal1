@@ -18,3 +18,10 @@ DJANGO_SETTINGS_MODULE = "dalal_project.settings"
 ALLOW_SQLITE_FALLBACK = "False"
 GUNICORN_WORKERS = "2"
 GUNICORN_TIMEOUT = "120"
+
+# CRITICAL: Database Protection Settings
+# These settings ensure Railway PostgreSQL is never deleted or reset
+# - ALLOW_SQLITE_FALLBACK = False: Prevents SQLite in production
+# - settings.py validates DATABASE_URL and rejects SQLite in production
+# - run_server.py uses migrate --noinput only (never flush or reset)
+# - No makemigrations in production (only migrate existing migrations)

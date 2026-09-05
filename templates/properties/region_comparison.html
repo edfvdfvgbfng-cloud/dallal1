@@ -1,0 +1,144 @@
+{% extends "base.html" %}
+{% load static %}
+{% load i18n %}
+
+{% block title %}{% trans "قارن منطقتين" %} - {% trans "دلال" %}{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-lg-8 mx-auto">
+            <div class="card shadow">
+                <div class="card-header bg-info text-white">
+                    <h2 class="h4 mb-0">
+                        <i class="fas fa-balance-scale ml-2"></i>
+                        {% trans "قارن منطقتين" %}
+                    </h2>
+                </div>
+                <div class="card-body">
+                    <p class="text-muted mb-4">
+                        {% trans "اختر منطقتين للمقارنة بين الأسعار، الإيجارات، الخدمات، وإمكانيات الاستثمار" %}
+                    </p>
+                    
+                    <form method="post" class="region-comparison-form">
+                        {% csrf_token %}
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="card bg-light mb-3">
+                                    <div class="card-header">
+                                        <h5 class="mb-0">{% trans "المنطقة الأولى" %}</h5>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="form-group">
+                                            <label for="region1_governorate">{% trans "المحافظة" %}</label>
+                                            <select class="form-control" id="region1_governorate" name="region1_governorate" required>
+                                                <option value="">اختر المحافظة</option>
+                                                <option value="بغداد">بغداد</option>
+                                                <option value="البصرة">البصرة</option>
+                                                <option value="نينوى">نينوى</option>
+                                                <option value="أربيل">أربيل</option>
+                                                <option value="النجف">النجف</option>
+                                                <option value="كربلاء">كربلاء</option>
+                                                <option value="كركوك">كركوك</option>
+                                                <option value="السليمانية">السليمانية</option>
+                                                <option value="الديوانية">الديوانية</option>
+                                                <option value="القادسية">القادسية</option>
+                                                <option value="ميسان">ميسان</option>
+                                                <option value="ذي قار">ذي قار</option>
+                                                <option value="بابل">بابل</option>
+                                                <option value="واسط">واسط</option>
+                                                <option value="صلاح الدين">صلاح الدين</option>
+                                                <option value="ديالى">ديالى</option>
+                                                <option value="الأنبار">الأنبار</option>
+                                                <option value="المثنى">المثنى</option>
+                                                <option value="دهوك">دهوك</option>
+                                            </select>
+                                        </div>
+                                        <div class="form-group">
+                                            <label for="region1_city">{% trans "المدينة (اختياري)" %}</label>
+                                            <input type="text" class="form-control" id="region1_city" name="region1_city" placeholder="مثال: الكرادة">
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <div class="card bg-light mb-3">
+                                    <div class="card-header">
+                                        <h5 class="mb-0">{% trans "المنطقة الثانية" %}</h5>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="form-group">
+                                            <label for="region2_governorate">{% trans "المحافظة" %}</label>
+                                            <select class="form-control" id="region2_governorate" name="region2_governorate" required>
+                                                <option value="">اختر المحافظة</option>
+                                                <option value="بغداد">بغداد</option>
+                                                <option value="البصرة">البصرة</option>
+                                                <option value="نينوى">نينوى</option>
+                                                <option value="أربيل">أربيل</option>
+                                                <option value="النجف">النجف</option>
+                                                <option value="كربلاء">كربلاء</option>
+                                                <option value="كركوك">كركوك</option>
+                                                <option value="السليمانية">السليمانية</option>
+                                                <option value="الديوانية">الديوانية</option>
+                                                <option value="القادسية">القادسية</option>
+                                                <option value="ميسان">ميسان</option>
+                                                <option value="ذي قار">ذي قار</option>
+                                                <option value="بابل">بابل</option>
+                                                <option value="واسط">واسط</option>
+                                                <option value="صلاح الدين">صلاح الدين</option>
+                                                <option value="ديالى">ديالى</option>
+                                                <option value="الأنبار">الأنبار</option>
+                                                <option value="المثنى">المثنى</option>
+                                                <option value="دهوك">دهوك</option>
+                                            </select>
+                                        </div>
+                                        <div class="form-group">
+                                            <label for="region2_city">{% trans "المدينة (اختياري)" %}</label>
+                                            <input type="text" class="form-control" id="region2_city" name="region2_city" placeholder="مثال: المنصور">
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="comparison_type">{% trans "نوع المقارنة" %}</label>
+                                    <select class="form-control" id="comparison_type" name="comparison_type">
+                                        <option value="all">{% trans "جميع المعايير" %}</option>
+                                        <option value="prices">{% trans "الأسعار فقط" %}</option>
+                                        <option value="rents">{% trans "الإيجارات فقط" %}</option>
+                                        <option value="services">{% trans "الخدمات فقط" %}</option>
+                                        <option value="investment">{% trans "الاستثمار فقط" %}</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="property_type">{% trans "نوع العقار (اختياري)" %}</label>
+                                    <select class="form-control" id="property_type" name="property_type">
+                                        <option value="">{% trans "جميع أنواع العقارات" %}</option>
+                                        <option value="apartment">{% trans "شقة" %}</option>
+                                        <option value="house">{% trans "بيت" %}</option>
+                                        <option value="villa">{% trans "فيلا" %}</option>
+                                        <option value="land">{% trans "أرض" %}</option>
+                                        <option value="commercial">{% trans "تجاري" %}</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <button type="submit" class="btn btn-info btn-lg btn-block mt-4">
+                            <i class="fas fa-balance-scale ml-2"></i>
+                            {% trans "قارن المناطق" %}
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -5,15 +5,19 @@ Real-time messaging using Django Channels
 
 import json
 import uuid
+import logging
 from channels.generic.websocket import AsyncWebsocketConsumer
 from channels.db import database_sync_to_async
 from django.contrib.auth.models import User
 from django.utils import timezone
 
+logger = logging.getLogger(__name__)
+
 from .models import (
     Conversation, ConversationParticipant, ChatMessage,
-    MessageReadStatus, BlockedUser, ChatSettings
+    MessageReadStatus, BlockedUser, ChatSettings, UserOnlineStatus
 )
+from .message_service import MessageService, MessageServiceError
 
 
 class ChatConsumer(AsyncWebsocketConsumer):
@@ -22,34 +26,37 @@ class ChatConsumer(AsyncWebsocketConsumer):
     async def connect(self):
         """Handle WebSocket connection"""
         self.user = self.scope["user"]
-        
+
         if not self.user.is_authenticated:
             await self.close()
             return
-        
+
         self.conversation_id = self.scope["url_route"]["kwargs"]["conversation_id"]
         self.room_group_name = f"chat_{self.conversation_id}"
-        
+
         # Check if user is a participant in the conversation
         is_participant = await self.is_conversation_participant()
         if not is_participant:
             await self.close()
             return
-        
+
         # Check if user is blocked
         is_blocked = await self.is_user_blocked()
         if is_blocked:
             await self.close()
             return
-        
+
+        # Set user as online
+        await self.set_user_online()
+
         # Join room group
         await self.channel_layer.group_add(
             self.room_group_name,
             self.channel_name
         )
-        
+
         await self.accept()
-        
+
         # Send user joined notification
         await self.channel_layer.group_send(
             self.room_group_name,
@@ -64,12 +71,15 @@ class ChatConsumer(AsyncWebsocketConsumer):
     async def disconnect(self, close_code):
         """Handle WebSocket disconnection"""
         if hasattr(self, 'room_group_name'):
+            # Set user as offline
+            await self.set_user_offline()
+
             # Leave room group
             await self.channel_layer.group_discard(
                 self.room_group_name,
                 self.channel_name
             )
-            
+
             # Send user left notification
             await self.channel_layer.group_send(
                 self.room_group_name,
@@ -86,7 +96,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
         try:
             data = json.loads(text_data)
             message_type = data.get("type")
-            
+
             if message_type == "chat_message":
                 await self.handle_chat_message(data)
             elif message_type == "typing":
@@ -97,6 +107,10 @@ class ChatConsumer(AsyncWebsocketConsumer):
                 await self.handle_edit_message(data)
             elif message_type == "delete_message":
                 await self.handle_delete_message(data)
+            elif message_type == "add_reaction":
+                await self.handle_add_reaction(data)
+            elif message_type == "ping":
+                await self.handle_ping()
         except json.JSONDecodeError:
             await self.send_error("Invalid JSON format")
         except Exception as e:
@@ -106,17 +120,20 @@ class ChatConsumer(AsyncWebsocketConsumer):
         """Handle sending a chat message"""
         content = data.get("content", "")
         reply_to_id = data.get("reply_to")
-        
+
         if not content:
             await self.send_error("Message content is required")
             return
-        
+
         # Create message
         message = await self.create_message(content, reply_to_id)
-        
+
+        # Mark as delivered for other participants
+        await self.mark_message_as_delivered_for_others(message)
+
         # Serialize message
         message_data = await self.serialize_message(message)
-        
+
         # Send message to room group
         await self.channel_layer.group_send(
             self.room_group_name,
@@ -127,7 +144,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
                 "timestamp": timezone.now().isoformat()
             }
         )
-        
+
         # Update conversation last_message_at
         await self.update_conversation_timestamp()
     
@@ -188,11 +205,11 @@ class ChatConsumer(AsyncWebsocketConsumer):
     async def handle_delete_message(self, data):
         """Handle deleting a message"""
         message_id = data.get("message_id")
-        
+
         if not message_id:
             await self.send_error("message_id is required")
             return
-        
+
         success = await self.delete_message(message_id)
         if success:
             await self.channel_layer.group_send(
@@ -204,6 +221,36 @@ class ChatConsumer(AsyncWebsocketConsumer):
                     "timestamp": timezone.now().isoformat()
                 }
             )
+
+    async def handle_add_reaction(self, data):
+        """Handle adding a reaction to a message"""
+        message_id = data.get("message_id")
+        reaction_type = data.get("reaction_type")
+
+        if not message_id or not reaction_type:
+            await self.send_error("message_id and reaction_type are required")
+            return
+
+        # TODO: Implement reaction handling
+        # For now, just broadcast the reaction
+        await self.channel_layer.group_send(
+            self.room_group_name,
+            {
+                "type": "reaction",
+                "message_id": message_id,
+                "reaction": reaction_type,
+                "user_id": self.user.id,
+                "username": self.user.username,
+                "timestamp": timezone.now().isoformat()
+            }
+        )
+
+    async def handle_ping(self):
+        """Handle ping/heartbeat"""
+        # Update user activity
+        await self.update_user_activity()
+        # Send pong response
+        await self.send(text_data=json.dumps({"type": "pong"}))
     
     async def chat_message(self, event):
         """Send chat message to WebSocket"""
@@ -267,6 +314,26 @@ class ChatConsumer(AsyncWebsocketConsumer):
             "username": event["username"],
             "timestamp": event["timestamp"]
         }))
+
+    async def message_delivered(self, event):
+        """Send message delivered notification to WebSocket"""
+        await self.send(text_data=json.dumps({
+            "type": "message_delivered",
+            "message_id": event["message_id"],
+            "sender_id": event["sender_id"],
+            "timestamp": event["timestamp"]
+        }))
+
+    async def reaction(self, event):
+        """Send reaction notification to WebSocket"""
+        await self.send(text_data=json.dumps({
+            "type": "reaction",
+            "message_id": event["message_id"],
+            "reaction": event["reaction"],
+            "user_id": event["user_id"],
+            "username": event["username"],
+            "timestamp": event["timestamp"]
+        }))
     
     async def send_error(self, message):
         """Send error message to WebSocket"""
@@ -301,64 +368,65 @@ class ChatConsumer(AsyncWebsocketConsumer):
     
     @database_sync_to_async
     def create_message(self, content, reply_to_id=None):
-        """Create a new message"""
+        """Create a new message using MessageService"""
         try:
             conversation = Conversation.objects.get(conversation_id=self.conversation_id)
-            message = ChatMessage.objects.create(
-                conversation=conversation,
-                sender=self.user,
-                message_type=ChatMessage.TYPE_TEXT,
-                content=content
-            )
-            
+
+            # Handle reply_to
+            reply_to = None
             if reply_to_id:
                 try:
                     reply_to = ChatMessage.objects.get(message_id=reply_to_id)
-                    message.reply_to = reply_to
-                    message.save()
                 except ChatMessage.DoesNotExist:
                     pass
-            
+
+            # Use MessageService
+            message = MessageService.send_message(
+                sender=self.user,
+                conversation=conversation,
+                message_type=MessageService.TYPE_TEXT,
+                content=content,
+                reply_to=reply_to
+            )
+
             return message
         except Conversation.DoesNotExist:
+            return None
+        except MessageServiceError:
             return None
     
     @database_sync_to_async
     def mark_message_as_read(self, message_id):
-        """Mark a message as read"""
+        """Mark a message as read using MessageService"""
         try:
             message = ChatMessage.objects.get(message_id=message_id)
-            MessageReadStatus.objects.get_or_create(
-                message=message,
-                user=self.user,
-                defaults={'read_at': timezone.now()}
-            )
+            MessageService.mark_as_read(self.user, message)
         except ChatMessage.DoesNotExist:
             pass
-    
+        except MessageServiceError:
+            pass
+
     @database_sync_to_async
     def edit_message(self, message_id, new_content):
-        """Edit a message"""
+        """Edit a message using MessageService"""
         try:
             message = ChatMessage.objects.get(message_id=message_id)
-            if message.sender == self.user:
-                message.edit(new_content)
-                return message
+            return MessageService.edit_message(self.user, message, new_content)
         except ChatMessage.DoesNotExist:
             return None
-        return None
-    
+        except MessageServiceError:
+            return None
+
     @database_sync_to_async
     def delete_message(self, message_id):
-        """Delete a message (soft delete)"""
+        """Delete a message (soft delete) using MessageService"""
         try:
             message = ChatMessage.objects.get(message_id=message_id)
-            if message.sender == self.user:
-                message.soft_delete()
-                return True
+            return MessageService.delete_message(self.user, message)
         except ChatMessage.DoesNotExist:
             return False
-        return False
+        except MessageServiceError:
+            return False
     
     @database_sync_to_async
     def update_conversation_timestamp(self):
@@ -369,6 +437,52 @@ class ChatConsumer(AsyncWebsocketConsumer):
             conversation.save()
         except Conversation.DoesNotExist:
             pass
+
+    async def mark_message_as_delivered_for_others(self, message):
+        """Mark message as delivered for other participants"""
+        try:
+            # Mark as delivered in the message
+            await database_sync_to_async(message.mark_as_delivered)()
+
+            # Send delivery notification to sender
+            await self.channel_layer.group_send(
+                self.room_group_name,
+                {
+                    "type": "message_delivered",
+                    "message_id": str(message.message_id),
+                    "sender_id": self.user.id,
+                    "timestamp": timezone.now().isoformat()
+                }
+            )
+        except Exception as e:
+            logger.error(f"Error marking message as delivered: {e}")
+
+    @database_sync_to_async
+    def set_user_online(self):
+        """Set user as online"""
+        try:
+            status = UserOnlineStatus.get_user_status(self.user)
+            status.set_online()
+        except Exception as e:
+            logger.error(f"Error setting user online: {e}")
+
+    @database_sync_to_async
+    def set_user_offline(self):
+        """Set user as offline"""
+        try:
+            status = UserOnlineStatus.get_user_status(self.user)
+            status.set_offline()
+        except Exception as e:
+            logger.error(f"Error setting user offline: {e}")
+
+    @database_sync_to_async
+    def update_user_activity(self):
+        """Update user last activity"""
+        try:
+            status = UserOnlineStatus.get_user_status(self.user)
+            status.update_activity()
+        except Exception as e:
+            logger.error(f"Error updating user activity: {e}")
     
     @database_sync_to_async
     def serialize_message(self, message):

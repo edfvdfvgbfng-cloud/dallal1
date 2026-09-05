@@ -1,5 +1,6 @@
 # Production-ready Dockerfile for Dalal Platform
 # Force rebuild - 2026-08-28-19-15
+# Database Protection: No flush, no reset, only safe migrations
 FROM python:3.11-slim-bullseye
 
 ENV PYTHONUNBUFFERED=1 \
@@ -8,7 +9,10 @@ ENV PYTHONUNBUFFERED=1 \
     DJANGO_SETTINGS_MODULE=dalal_project.settings \
     USE_WEBSOCKETS=false \
     PYTHONPATH=/app \
-    RAILWAY_REBUILD_TIMESTAMP=202608281915
+    RAILWAY_REBUILD_TIMESTAMP=202608281915 \
+    # CRITICAL: Database Protection Settings
+    ALLOW_SQLITE_FALLBACK=False \
+    DATABASE_PROTECTION_ENABLED=True
 
 WORKDIR /app
 

@@ -1,5 +1,6 @@
-{% extends "base.html" %}
+{% extends "properties/base.html" %}
 {% load static %}
+{% load custom_filters %}
 
 {% block title %}{{ page.name }} - {{ site_name }}{% endblock %}
 
@@ -43,6 +44,16 @@
                 </div>
                 <div class="page-actions">
                     {% if user.is_authenticated %}
+                        {% if page.user == user %}
+                        <div class="owner-actions" style="display: flex; gap: 8px; margin-bottom: 10px;">
+                            <a href="{% if page.is_outside_iraq %}{% url 'dallal_resort_outside_edit' page.id %}{% else %}{% url 'dallal_resort_edit' page.id %}{% endif %}" class="btn btn-sm" style="background: #4CAF50; color: white; padding: 8px 12px; border-radius: 5px; text-decoration: none; font-size: 14px;">
+                                <i class="fas fa-edit"></i> تعديل
+                            </a>
+                            <a href="{% if page.is_outside_iraq %}{% url 'dallal_resort_outside_delete' page.id %}{% else %}{% url 'dallal_resort_delete' page.id %}{% endif %}" class="btn btn-sm" style="background: #f44336; color: white; padding: 8px 12px; border-radius: 5px; text-decoration: none; font-size: 14px;">
+                                <i class="fas fa-trash"></i> حذف
+                            </a>
+                        </div>
+                        {% endif %}
                         {% if is_following %}
                             <a href="{% url 'hotel_page_unfollow' page.slug %}" class="btn btn-secondary">
                                 <i class="fas fa-user-minus"></i> إلغاء المتابعة

@@ -8,6 +8,7 @@ const PRECACHE_URLS = [
   '/static/css/premium-ui.css',
   '/static/css/responsive.css',
   '/static/js/app.js',
+  '/static/js/push-notifications.js',
   '/static/images/favicon.svg',
   '/static/manifest.json'
 ];
@@ -24,6 +25,63 @@ self.addEventListener('activate', (event) => {
       Promise.all(keys.filter((k) => k !== CACHE_NAME).map((k) => caches.delete(k)))
     ).then(() => self.clients.claim())
   );
+});
+
+// Push Notification Handler
+self.addEventListener('push', (event) => {
+  if (!event.data) {
+    return;
+  }
+
+  const data = event.data.json();
+  const options = {
+    body: data.message || '',
+    icon: '/static/images/favicon.svg',
+    badge: '/static/images/favicon.svg',
+    vibrate: [200, 100, 200],
+    data: {
+      link: data.link || '/',
+      notificationId: data.notificationId
+    },
+    actions: [
+      {
+        action: 'view',
+        title: 'عرض',
+        icon: '/static/images/favicon.svg'
+      },
+      {
+        action: 'close',
+        title: 'إغلاق',
+        icon: '/static/images/favicon.svg'
+      }
+    ],
+    requireInteraction: true,
+    tag: data.notificationId || 'default'
+  };
+
+  event.waitUntil(
+    self.registration.showNotification(data.title || 'إشعار جديد', options)
+  );
+});
+
+// Notification Click Handler
+self.addEventListener('notificationclick', (event) => {
+  event.notification.close();
+
+  if (event.action === 'view') {
+    const link = event.notification.data.link || '/';
+    event.waitUntil(
+      clients.openWindow(link)
+    );
+  } else if (event.action === 'close') {
+    // Just close the notification
+  } else {
+    // Default click behavior
+    const link = event.notification.data.link || '/';
+    event.waitUntil(
+      clients.openWindow(link)
+    );
+  }
 });
 
 self.addEventListener('fetch', (event) => {

@@ -13,8 +13,9 @@ def create_superuser(apps, schema_editor):
 
 
 def reverse_create_superuser(apps, schema_editor):
-    """Reverse migration - delete the superuser"""
-    User.objects.filter(username='muqtada123').delete()
+    """Reverse migration - do nothing to protect data"""
+    # Do NOT delete the superuser to protect production data
+    pass
 
 
 class Migration(migrations.Migration):

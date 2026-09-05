@@ -1,6 +1,25 @@
-{% extends 'properties/base.html' %}
+{% extends 'properties/dashboard_base.html' %}
 {% load static %}
 {% block title %}نشر منتجع خارج العراق{% endblock %}
+
+{% block dashboard_title %}نشر منتجع <span>خارج العراق</span>{% endblock %}
+
+{% block dashboard_actions %}
+<div class="resort-outside-actions" style="display: flex; flex-direction: column; gap: 10px; margin-bottom: 15px; padding: 15px; background: rgba(76, 175, 80, 0.1); border: 2px solid rgba(76, 175, 80, 0.3); border-radius: 12px;">
+  <h4 style="margin: 0 0 10px 0; color: #4CAF50; font-size: 1rem;">🌍🏝️ صفحات المنتجعات خارج العراق</h4>
+  <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+    <a href="{% url 'dallal_resort_outside_create' %}" class="btn btn-primary btn-sm" style="background: linear-gradient(135deg, #4CAF50 0%, #8BC34A 100%); border: none;">
+      🟩 إنشاء صفحة منتجع خارج العراق
+    </a>
+    <a href="{% url 'broker_resorts_outside' %}" class="btn btn-secondary btn-sm" style="background: #388E3C; border: 1px solid #43A047;">
+      🟦 إنشاء منشور داخل منتجع
+    </a>
+    <a href="{% url 'broker_manage_resorts_outside' %}" class="btn btn-secondary btn-sm" style="background: #388E3C; border: 1px solid #43A047;">
+      🟪 إدارة صفحات المنتجعات
+    </a>
+  </div>
+</div>
+{% endblock %}
 
 {% block extra_css %}
 <!-- Leaflet CSS -->
@@ -9,17 +28,17 @@
 
 <style>
 .resort-form-container {
-    padding: 40px 20px;
-    background: #000000;
+    padding: 20px;
+    background: var(--bg);
     min-height: 100vh;
 }
 
 .form-card {
-    background-color: #000000;
+    background-color: var(--card-bg);
     border-radius: 20px;
-    padding: 40px;
+    padding: 30px;
     box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
-    border: 1px solid #333;
+    border: 1px solid var(--border);
 }
 
 .form-header {
@@ -34,7 +53,7 @@
     font-weight: bold;
     color: #ffffff;
     margin-bottom: 10px;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: linear-gradient(135deg, #FF7A00 0%, #FF9500 100%);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
@@ -59,7 +78,7 @@
 }
 
 .section-icon {
-    color: #667eea;
+    color: #FF7A00;
     font-size: 24px;
 }
 
@@ -101,7 +120,7 @@
 
 .form-control:focus {
     background-color: #111111 !important;
-    border-color: #667eea !important;
+    border-color: #FF7A00 !important;
     color: #ffffff !important;
     box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
     outline: none;
@@ -154,11 +173,11 @@ select.form-control option {
 </style>
 {% endblock %}
 
-{% block content %}
+{% block dashboard_content %}
 <div class="resort-form-container">
-    <div class="container">
+    <div class="container-fluid">
         <div class="row">
-            <div class="col-lg-12">
+            <div class="col-12">
                 <div class="form-card">
                     <div class="form-header">
                         <h1 class="form-title">نشر منتجع خارج العراق</h1>
@@ -559,6 +578,12 @@ function setManualLocationResortOutside(lat, lng) {
 // Initialize location preview map for Resort Outside Iraq
 function initLocationMapResortOutside() {
   if (document.getElementById('location-preview-map-resort-outside')) {
+    // Check if Leaflet Draw is loaded
+    if (typeof L.Control.Draw === 'undefined') {
+      console.error('Leaflet Draw is not loaded');
+      return;
+    }
+
     // Default center on a location outside Iraq (example: Dubai)
     const defaultCenter = [25.2048, 55.2708];
     
@@ -624,5 +649,4 @@ document.addEventListener('DOMContentLoaded', function() {
   initLocationMapResortOutside();
 });
 </script>
-
 {% endblock %}

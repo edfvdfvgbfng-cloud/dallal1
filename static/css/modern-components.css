@@ -250,7 +250,7 @@
 .alert-info {
   background: rgba(59, 130, 246, 0.1);
   border-color: rgba(59, 130, 246, 0.3);
-  color: #3B82F6;
+  color: #FF7A00;
 }
 
 /* ===== Enhanced Badge Styles ===== */
@@ -286,7 +286,7 @@
 }
 
 .badge-info {
-  background: linear-gradient(135deg, #3B82F6 0%, #2563EB 100%);
+  background: linear-gradient(135deg, #FF7A00 0%, #2563EB 100%);
   color: white;
 }
 

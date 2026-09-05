@@ -144,8 +144,8 @@
               </div>
             </div>
             <div class="item-actions">
-              <a href="{% url 'approve_property' property.id %}" class="btn btn-success btn-sm">✓ موافقة</a>
-              <a href="{% url 'reject_property' property.id %}" class="btn btn-danger btn-sm">✕ رفض</a>
+              <a href="{% url 'approve_property_api' property.id %}" class="btn btn-success btn-sm">✓ موافقة</a>
+              <a href="{% url 'reject_property_api' property.id %}" class="btn btn-danger btn-sm">✕ رفض</a>
             </div>
           </div>
           {% endfor %}

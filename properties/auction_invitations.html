@@ -22,11 +22,11 @@
             <p style="color: rgba(255,255,255,0.7); margin: 5px 0 0 0;">إجمالي الدعوات</p>
         </div>
         <div style="background: rgba(255,255,255,0.05); padding: 20px; border-radius: 12px; text-align: center;">
-            <h3 style="font-size: 32px; margin: 0; color: #38ef7d;">{{ invitations|filter:status:'accepted'|length }}</h3>
+            <h3 style="font-size: 32px; margin: 0; color: #38ef7d;">{{ invitations|filter_by:'status=accepted'|length }}</h3>
             <p style="color: rgba(255,255,255,0.7); margin: 5px 0 0 0;">مقبولة</p>
         </div>
         <div style="background: rgba(255,255,255,0.05); padding: 20px; border-radius: 12px; text-align: center;">
-            <h3 style="font-size: 32px; margin: 0; color: #f093fb;">{{ invitations|filter:status:'pending'|length }}</h3>
+            <h3 style="font-size: 32px; margin: 0; color: #f093fb;">{{ invitations|filter_by:'status=pending'|length }}</h3>
             <p style="color: rgba(255,255,255,0.7); margin: 5px 0 0 0;">قيد الانتظار</p>
         </div>
     </div>

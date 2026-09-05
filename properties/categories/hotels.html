@@ -230,41 +230,36 @@
   <div class="hotels-grid">
     {% for hotel in hotels %}
     <div class="hotel-card">
+      {% if hotel.cover_image %}
+      <img src="{{ hotel.cover_image.url }}" alt="{{ hotel.name }}" class="hotel-image">
+      {% else %}
       <div class="hotel-image-placeholder">🏨</div>
+      {% endif %}
       <div class="hotel-content">
-        <h3 class="hotel-name">{{ hotel.hotel_name }}</h3>
+        <h3 class="hotel-name">{{ hotel.name }}</h3>
         <div class="hotel-rating">
-          {% for i in hotel.star_rating|range %}
-          <span class="star">★</span>
-          {% endfor %}
-        </div>
-        <p class="hotel-price">{{ hotel.price_per_night }} {{ hotel.currency }}/ليلة</p>
-        <p class="hotel-details">{{ hotel.total_rooms }} غرفة {% if hotel.suites %}• {{ hotel.suites }} جناح{% endif %}</p>
-        <div class="hotel-features">
-          {% if hotel.has_restaurant %}
-          <span class="feature-tag">🍽️ مطعم</span>
-          {% endif %}
-          {% if hotel.has_cafe %}
-          <span class="feature-tag">☕ مقهى</span>
-          {% endif %}
-          {% if hotel.has_pool %}
-          <span class="feature-tag">🏊 مسبح</span>
-          {% endif %}
-          {% if hotel.has_gym %}
-          <span class="feature-tag">🏋️ نادي رياضي</span>
-          {% endif %}
-          {% if hotel.has_spa %}
-          <span class="feature-tag">💆 سبا</span>
-          {% endif %}
-          {% if hotel.has_conference_hall %}
-          <span class="feature-tag">🏢 قاعة مؤتمرات</span>
+          {% if hotel.additional_data.star_rating %}
+            {% for i in hotel.additional_data.star_rating|range %}
+            <span class="star">★</span>
+            {% endfor %}
           {% endif %}
         </div>
-        {% if hotel.direct_booking and hotel.booking_url %}
-        <a href="{{ hotel.booking_url }}" class="btn-book" target="_blank">احجز الآن</a>
-        {% else %}
-        <button class="btn-book" disabled>تواصل معنا</button>
-        {% endif %}
+        <p class="hotel-price">
+          {% if hotel.average_price_per_night %}
+            {{ hotel.average_price_per_night }} {{ hotel.currency }}/ليلة
+          {% elif hotel.price_start %}
+            من {{ hotel.price_start }} {{ hotel.currency }}
+          {% endif %}
+        </p>
+        <p class="hotel-details">
+          {% if hotel.total_rooms %}{{ hotel.total_rooms }} غرفة{% endif %}
+          {% if hotel.suites %} • {{ hotel.suites }} جناح{% endif %}
+        </p>
+        <p class="hotel-location">
+          {% if hotel.governorate %}{{ hotel.get_governorate_display }}{% endif %}
+          {% if hotel.city %}، {{ hotel.city }}{% endif %}
+        </p>
+        <a href="{% url 'hotel_page_detail' hotel.slug %}" class="btn-book">عرض التفاصيل</a>
       </div>
     </div>
     {% endfor %}

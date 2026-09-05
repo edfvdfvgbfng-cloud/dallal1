@@ -1,0 +1,145 @@
+{% extends "base.html" %}
+{% load static %}
+{% load i18n %}
+
+{% block title %}{% trans "نتائج الاستثمار" %} - {% trans "دلال" %}{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-12">
+            <div class="card shadow mb-4">
+                <div class="card-header bg-success text-white">
+                    <h2 class="h4 mb-0">
+                        <i class="fas fa-chart-pie ml-2"></i>
+                        {% trans "نتائج الاستثمار" %}
+                    </h2>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <p class="mb-1">
+                                <strong>{% trans "رأس المال:" %}</strong>
+                                {{ investment.capital }} {{ investment.currency }}
+                            </p>
+                            <p class="mb-1">
+                                <strong>{% trans "نوع الاستثمار:" %}</strong>
+                                {{ investment.get_investment_type_display }}
+                            </p>
+                            <p class="mb-1">
+                                <strong>{% trans "فترة الاستثمار:" %}</strong>
+                                {{ investment.investment_period }} {% trans "سنوات" %}
+                            </p>
+                        </div>
+                        <div class="col-md-6">
+                            <p class="mb-1">
+                                <strong>{% trans "العائد المتوقع:" %}</strong>
+                                {{ investment.expected_roi }}% {% trans "سنوياً" %}
+                            </p>
+                            <p class="mb-1">
+                                <strong>{% trans "تحمل المخاطر:" %}</strong>
+                                {{ investment.get_risk_tolerance_display }}
+                            </p>
+                        </div>
+                    </div>
+                    
+                    <hr>
+                    
+                    <div class="row">
+                        <div class="col-md-4">
+                            <div class="card bg-light">
+                                <div class="card-body text-center">
+                                    <h5 class="card-title">{% trans "العائد الإجمالي" %}</h5>
+                                    <h3 class="text-success">{{ returns.total_return|default:"--" }} {{ investment.currency }}</h3>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="card bg-light">
+                                <div class="card-body text-center">
+                                    <h5 class="card-title">{% trans "الدخل الشهري" %}</h5>
+                                    <h3 class="text-primary">{{ returns.monthly_income|default:"--" }} {{ investment.currency }}</h3>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="card bg-light">
+                                <div class="card-body text-center">
+                                    <h5 class="card-title">{% trans "نسبة الربح" %}</h5>
+                                    <h3 class="text-info">{{ returns.profit_percentage|default:"--" }}%</h3>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <hr>
+                    
+                    <a href="{% url 'investment_calculator' %}" class="btn btn-secondary">
+                        <i class="fas fa-redo ml-2"></i>
+                        {% trans "حساب جديد" %}
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="row">
+        <div class="col-12">
+            <h3 class="mb-3">{% trans "العقارات المناسبة للاستثمار" %}</h3>
+            
+            {% if properties %}
+                <div class="row">
+                    {% for property in properties %}
+                        <div class="col-md-6 col-lg-4 mb-4">
+                            <div class="card property-card h-100">
+                                {% if property.images.first %}
+                                    <img src="{{ property.images.first.image.url }}" class="card-img-top" alt="{{ property.title }}">
+                                {% else %}
+                                    <div class="card-img-top bg-light d-flex align-items-center justify-content-center" style="height: 200px;">
+                                        <i class="fas fa-home fa-3x text-muted"></i>
+                                    </div>
+                                {% endif %}
+                                
+                                <div class="card-body">
+                                    <h5 class="card-title">{{ property.title }}</h5>
+                                    <p class="card-text text-muted">{{ property.location }}</p>
+                                    
+                                    <div class="property-price">
+                                        <span class="h4 text-primary">{{ property.price }} {{ property.currency }}</span>
+                                    </div>
+                                    
+                                    <div class="property-details mt-2">
+                                        <small class="text-muted">
+                                            <i class="fas fa-bed ml-1"></i> {{ property.bedrooms }} |
+                                            <i class="fas fa-bath ml-1"></i> {{ property.bathrooms }} |
+                                            <i class="fas fa-ruler-combined ml-1"></i> {{ property.area }} م²
+                                        </small>
+                                    </div>
+                                    
+                                    <div class="investment-score mt-2">
+                                        <small class="badge badge-success">
+                                            {% trans "درجة الاستثمار:" %} {{ property.investment_score|default:"--" }}/100
+                                        </small>
+                                    </div>
+                                </div>
+                                
+                                <div class="card-footer">
+                                    <a href="{% url 'property_detail' property.id %}" class="btn btn-primary btn-block">
+                                        {% trans "عرض التفاصيل" %}
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <div class="alert alert-info text-center">
+                    <i class="fas fa-info-circle fa-2x mb-3"></i>
+                    <h4>{% trans "لا توجد عقارات مناسبة للاستثمار" %}</h4>
+                    <p>{% trans "جرب تغيير خيارات الاستثمار أو زيادة رأس المال" %}</p>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

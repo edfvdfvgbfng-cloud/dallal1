@@ -3377,7 +3377,7 @@ textarea.form-control {
 .gallery-main {
   position: relative;
   aspect-ratio: 16/9;
-  background: #1e293b;
+  background: #161616;
 /* Hero Stats */
 .hero-stats {
   display: flex;
@@ -6033,7 +6033,7 @@ table.data-table tr:hover td { background: #f8fafc; /* Hero Stats */
 /* Footer */
 .footer {
   margin-top: auto;
-  background: #0f172a;
+  background: #0B0B0B;
   color: #94a3b8;
   padding: 3rem 0 1.5rem;
 /* Hero Stats */

@@ -1,127 +1,451 @@
-{% extends 'base.html' %}
+{% extends 'properties/base.html' %}
 {% load static %}
 
 {% block title %}{{ company.name }} - دلال{% endblock %}
 
+{% block extra_css %}
+<style>
+.company-header {
+    background: linear-gradient(135deg, #FF7A00 0%, #FF9F1C 100%);
+    color: white;
+    padding: 40px 20px;
+    border-radius: 20px;
+    margin-bottom: 30px;
+}
+
+.company-cover {
+    position: relative;
+    height: 300px;
+    border-radius: 15px;
+    overflow: hidden;
+    margin-bottom: -50px;
+}
+
+.company-cover img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.company-logo-container {
+    position: absolute;
+    bottom: -40px;
+    right: 30px;
+    width: 100px;
+    height: 100px;
+    border-radius: 50%;
+    border: 4px solid #1a1a1a;
+    background: #1a1a1a;
+    overflow: hidden;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+}
+
+.company-logo-container img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.company-badge {
+    position: absolute;
+    top: 20px;
+    left: 20px;
+    background: rgba(0,0,0,0.7);
+    color: white;
+    padding: 8px 16px;
+    border-radius: 25px;
+    font-weight: 600;
+}
+
+.company-info {
+    padding: 60px 30px 30px;
+    background: #1a1a1a;
+    border-radius: 15px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+    margin-bottom: 30px;
+}
+
+.company-name {
+    font-size: 2rem;
+    font-weight: 700;
+    margin-bottom: 10px;
+    color: #ffffff;
+}
+
+.company-verified {
+    color: #28a745;
+    font-weight: 600;
+    margin-bottom: 15px;
+}
+
+.company-rating {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 20px;
+}
+
+.rating-stars {
+    color: #FFD700;
+    font-size: 1.5rem;
+}
+
+.rating-value {
+    font-size: 1.2rem;
+    font-weight: 700;
+    color: #ffffff;
+}
+
+.rating-count {
+    color: #ccc;
+}
+
+.contact-buttons {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 20px;
+}
+
+.contact-btn {
+    padding: 10px 20px;
+    border-radius: 25px;
+    font-weight: 600;
+    text-decoration: none;
+    transition: all 0.3s ease;
+}
+
+.contact-btn.call {
+    background: #007bff;
+    color: white;
+}
+
+.contact-btn.whatsapp {
+    background: #25D366;
+    color: white;
+}
+
+.contact-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+}
+
+.company-location {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: #ccc;
+    margin-bottom: 20px;
+}
+
+.company-description {
+    color: #ccc;
+    line-height: 1.6;
+    margin-bottom: 30px;
+}
+
+.services-section {
+    background: #2a2a2a;
+    padding: 20px;
+    border-radius: 15px;
+    margin-bottom: 30px;
+}
+
+.services-title {
+    font-size: 1.3rem;
+    font-weight: 700;
+    margin-bottom: 15px;
+    color: #ffffff;
+}
+
+.services-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.service-item {
+    background: #1a1a1a;
+    padding: 8px 16px;
+    border-radius: 20px;
+    font-size: 0.9rem;
+    color: #ffffff;
+    border: 1px solid #444;
+}
+
+.posts-section {
+    background: #1a1a1a;
+    padding: 30px;
+    border-radius: 15px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+}
+
+.posts-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    padding-bottom: 15px;
+    border-bottom: 2px solid #333;
+}
+
+.posts-title {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #ffffff;
+}
+
+.create-post-btn {
+    background: linear-gradient(135deg, #FF7A00 0%, #FF9F1C 100%);
+    color: white;
+    padding: 12px 24px;
+    border-radius: 25px;
+    font-weight: 600;
+    text-decoration: none;
+    transition: all 0.3s ease;
+}
+
+.create-post-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 15px rgba(255, 122, 0, 0.3);
+}
+
+.posts-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 20px;
+}
+
+.post-card {
+    background: #2a2a2a;
+    border-radius: 15px;
+    overflow: hidden;
+    transition: all 0.3s ease;
+    border: 1px solid #444;
+}
+
+.post-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 20px rgba(0,0,0,0.3);
+}
+
+.post-image {
+    height: 200px;
+    background: linear-gradient(135deg, #FF7A00 0%, #FF9F1C 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 3rem;
+}
+
+.post-image img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.post-content {
+    padding: 20px;
+}
+
+.post-type {
+    background: #FF7A00;
+    color: white;
+    padding: 4px 12px;
+    border-radius: 15px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    display: inline-block;
+    margin-bottom: 10px;
+}
+
+.post-title {
+    font-size: 1.2rem;
+    font-weight: 700;
+    margin-bottom: 10px;
+    color: #ffffff;
+}
+
+.post-details {
+    color: #ccc;
+    font-size: 0.9rem;
+    margin-bottom: 15px;
+}
+
+.post-price {
+    font-size: 1.3rem;
+    font-weight: 700;
+    color: #FF7A00;
+    margin-bottom: 15px;
+}
+
+.post-btn {
+    background: #007bff;
+    color: white;
+    padding: 10px 20px;
+    border-radius: 20px;
+    font-weight: 600;
+    text-decoration: none;
+    display: block;
+    text-align: center;
+    transition: all 0.3s ease;
+}
+
+.post-btn:hover {
+    background: #0056b3;
+    transform: translateY(-2px);
+}
+
+.no-posts {
+    text-align: center;
+    padding: 40px;
+    color: #999;
+}
+
+.no-posts-icon {
+    font-size: 4rem;
+    margin-bottom: 15px;
+}
+</style>
+{% endblock %}
+
 {% block content %}
 <div class="container py-5">
     <!-- Company Header -->
-    <div class="card mb-4">
-        <div class="card-body">
-            <div class="row align-items-center">
-                <div class="col-md-2">
-                    {% if company.logo %}
-                    <img src="{{ company.logo.url }}" alt="{{ company.name }}" class="img-fluid rounded">
-                    {% else %}
-                    <div class="text-center text-muted">
-                        <i class="fas fa-building fa-3x"></i>
-                    </div>
-                    {% endif %}
-                </div>
-                <div class="col-md-10">
-                    <h1 class="mb-2">{{ company.name }}</h1>
-                    {% if company.name_en %}
-                    <p class="text-muted mb-2">{{ company.name_en }}</p>
-                    {% endif %}
-                    <p class="mb-2">{{ company.description }}</p>
-                    <div class="d-flex align-items-center gap-3">
-                        <span class="badge bg-warning">
-                            <i class="fas fa-star"></i> {{ company.rating|floatformat:1 }}
-                        </span>
-                        <span class="text-muted">{{ company.reviews_count }} تقييم</span>
-                        {% if company.is_verified %}
-                        <span class="badge bg-success">موثقة</span>
-                        {% endif %}
-                        {% if company.is_featured %}
-                        <span class="badge bg-primary">مميزة</span>
-                        {% endif %}
-                    </div>
-                </div>
+    <div class="company-header">
+        <div class="company-cover">
+            {% if company.cover_image %}
+            <img src="{{ company.cover_image.url }}" alt="{{ company.name }}">
+            {% else %}
+            <div style="width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; background: linear-gradient(135deg, #FF7A00 0%, #FF9F1C 100%); color: white; font-size: 4rem;">✈️</div>
+            {% endif %}
+            {% if company.is_verified %}
+            <div class="company-badge">✓ شركة موثقة</div>
+            {% endif %}
+            <div class="company-logo-container">
+                {% if company.logo %}
+                <img src="{{ company.logo.url }}" alt="{{ company.name }}">
+                {% else %}
+                <div style="width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; background: #f0f0f0; color: #999; font-size: 2rem;">🏢</div>
+                {% endif %}
             </div>
         </div>
     </div>
 
     <!-- Company Info -->
-    <div class="row mb-4">
-        <div class="col-md-6">
-            <div class="card">
-                <div class="card-body">
-                    <h5 class="card-title">معلومات الاتصال</h5>
-                    <p><i class="fas fa-phone"></i> {{ company.phone }}</p>
-                    {% if company.whatsapp %}
-                    <p><i class="fab fa-whatsapp"></i> {{ company.whatsapp }}</p>
-                    {% endif %}
-                    <p><i class="fas fa-envelope"></i> {{ company.email }}</p>
-                    {% if company.website %}
-                    <p><i class="fas fa-globe"></i> <a href="{{ company.website }}" target="_blank">{{ company.website }}</a></p>
-                    {% endif %}
-                    <p><i class="fas fa-map-marker-alt"></i> {{ company.address }}, {{ company.city }}</p>
-                </div>
-            </div>
+    <div class="company-info">
+        <h1 class="company-name">🏢 {{ company.name }}</h1>
+        {% if company.is_verified %}
+        <div class="company-verified">✓ شركة موثقة</div>
+        {% endif %}
+
+        <div class="company-rating">
+            <span class="rating-stars">⭐</span>
+            <span class="rating-value">{{ company.rating }}</span>
+            <span class="rating-count">👥 {{ company.reviews_count }} تقييم</span>
         </div>
-        <div class="col-md-6">
-            <div class="card">
-                <div class="card-body">
-                    <h5 class="card-title">تفاصيل الشركة</h5>
-                    <p><strong>نوع الشركة:</strong> {{ company.get_company_type_display }}</p>
-                    <p><strong>نطاق السفر:</strong> {{ company.get_travel_scope_display }}</p>
-                    <p><strong>نوع السفر:</strong> {{ company.get_travel_type_display }}</p>
-                    {% if company.departure_time %}
-                    <p><strong>وقت الانطلاق:</strong> {{ company.departure_time }}</p>
-                    {% endif %}
-                </div>
+
+        <div class="contact-buttons">
+            <a href="tel:{{ company.phone }}" class="contact-btn call">
+                <i class="fas fa-phone"></i> اتصال
+            </a>
+            {% if company.whatsapp %}
+            <a href="https://wa.me/{{ company.whatsapp }}" class="contact-btn whatsapp" target="_blank">
+                <i class="fab fa-whatsapp"></i> واتساب
+            </a>
+            {% endif %}
+        </div>
+
+        <!-- Company Management Buttons -->
+        {% if request.user == company.user %}
+        <div style="display: flex; gap: 10px; margin-bottom: 20px;">
+            <a href="{% url 'dallal_travel_company_edit' company.id %}" class="contact-btn" style="background: #28a745;">
+                <i class="fas fa-edit"></i> تعديل الشركة
+            </a>
+            <a href="{% url 'dallal_travel_company_delete' company.id %}" class="contact-btn" style="background: #dc3545;">
+                <i class="fas fa-trash"></i> حذف الشركة
+            </a>
+        </div>
+        {% endif %}
+
+        <div class="company-location">
+            <i class="fas fa-map-marker-alt"></i>
+            <span>📍 {{ company.get_governorate_display }}</span>
+            {% if company.city %}
+            <span>- {{ company.city }}</span>
+            {% endif %}
+        </div>
+
+        <div class="company-description">
+            <strong>نبذة عن الشركة</strong>
+            <p>{{ company.description }}</p>
+        </div>
+
+        <!-- Services -->
+        <div class="services-section">
+            <h3 class="services-title">الخدمات:</h3>
+            <div class="services-list">
+                <span class="service-item">✈️ تذاكر طيران</span>
+                <span class="service-item">🌍 سفر وسياحة</span>
+                <span class="service-item">🛂 فيزا</span>
+                <span class="service-item">🏨 فنادق</span>
+                <span class="service-item">🚌 نقل سياحي</span>
+                <span class="service-item">🕋 عمرة</span>
             </div>
         </div>
     </div>
 
-    <!-- Travel Packages -->
-    <div class="card">
-        <div class="card-body">
-            <div class="d-flex justify-content-between align-items-center mb-4">
-                <h3 class="card-title mb-0">رحلات السفر</h3>
-                <a href="{% url 'travel_package_create' company.id %}" class="btn btn-primary">
-                    <i class="fas fa-plus"></i> إضافة رحلة
-                </a>
-            </div>
-            
-            {% if packages %}
-            <div class="row">
-                {% for package in packages %}
-                <div class="col-md-4 mb-4">
-                    <div class="card h-100">
-                        {% if package.cover_image %}
-                        <img src="{{ package.cover_image.url }}" alt="{{ package.title }}" class="card-img-top" style="height: 200px; object-fit: cover;">
-                        {% endif %}
-                        <div class="card-body">
-                            <h5 class="card-title">{{ package.title }}</h5>
-                            <p class="card-text text-muted">{{ package.destination }}</p>
-                            <p class="card-text">
-                                <strong>السعر:</strong> {{ package.price }} {{ package.price_currency }}
-                                {% if package.discount_price %}
-                                <span class="badge bg-danger">{{ package.discount_percentage }}% خصم</span>
-                                {% endif %}
-                            </p>
-                            <p class="card-text">
-                                <i class="fas fa-calendar"></i> {{ package.departure_date|date:"Y-m-d" }}
-                            </p>
-                            <p class="card-text">
-                                <i class="fas fa-users"></i> {{ package.available_seats }}/{{ package.max_participants }} مقاعد متاحة
-                            </p>
-                            <a href="{% url 'travel_package_detail' package.pk package.slug %}" class="btn btn-primary w-100">
-                                التفاصيل والحجز
-                            </a>
-                        </div>
+    <!-- Posts Section -->
+    <div class="posts-section">
+        <div class="posts-header">
+            <h2 class="posts-title">📢 منشورات الشركة</h2>
+            <a href="{% url 'travel_company_post_create' company.id %}" class="create-post-btn">
+                ➕ إنشاء منشور داخل الصفحة
+            </a>
+        </div>
+
+        {% if posts %}
+        <div class="posts-grid">
+            {% for post in posts %}
+            <div class="post-card">
+                <div class="post-image">
+                    {% if post.main_image %}
+                    <img src="{{ post.main_image.url }}" alt="{{ post.title }}">
+                    {% else %}
+                    <span>✈️</span>
+                    {% endif %}
+                </div>
+                <div class="post-content">
+                    <span class="post-type">✈️ {{ post.get_post_type_display }}</span>
+                    <h3 class="post-title">{{ post.title }}</h3>
+                    <div class="post-details">
+                        <p>{{ post.description|truncatewords:20 }}</p>
+                    </div>
+                    <div class="post-price">
+                        💰 {{ post.price }} {{ post.currency }}
+                    </div>
+                    <div style="display: flex; gap: 10px; margin-top: 15px;">
+                        <a href="#" class="post-btn" style="flex: 1;">
+                            التفاصيل والحجز
+                        </a>
+                        <a href="{% url 'travel_company_post_edit' company.id post.id %}" class="post-btn" style="background: #28a745; flex: 0 0 auto;">
+                            تعديل
+                        </a>
+                        <a href="{% url 'travel_company_post_delete' company.id post.id %}" class="post-btn" style="background: #dc3545; flex: 0 0 auto;">
+                            حذف
+                        </a>
                     </div>
                 </div>
-                {% endfor %}
             </div>
-            {% else %}
-            <div class="text-center py-5">
-                <i class="fas fa-plane fa-3x text-muted mb-3"></i>
-                <p class="text-muted">لا توجد رحلات حالياً</p>
-            </div>
-            {% endif %}
+            {% endfor %}
         </div>
+        {% else %}
+        <div class="no-posts">
+            <div class="no-posts-icon">📢</div>
+            <h3>لا توجد منشورات حالياً</h3>
+            <p>يمكنك إنشاء منشورات جديدة لعرض رحلاتك وخدماتك</p>
+        </div>
+        {% endif %}
     </div>
 </div>
 {% endblock %}

@@ -93,7 +93,7 @@
 /* Back to Top Button */
 .back-to-top {
   position: fixed;
-  bottom: 250px;
+  bottom: 20px;
   right: 20px;
   width: 50px;
   height: 50px;
@@ -106,16 +106,14 @@
   box-shadow: 0 4px 12px rgba(255, 122, 0, 0.4);
   z-index: 9997;
   transition: transform 0.3s, box-shadow 0.3s;
-  display: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .back-to-top:hover {
   transform: scale(1.1);
   box-shadow: 0 6px 16px rgba(255, 122, 0, 0.5);
-}
-
-.back-to-top.visible {
-  display: block;
 }
 
 @media (max-width: 768px) {
@@ -721,8 +719,8 @@
   width: 44px;
   height: 44px;
   border-radius: 50%;
-  border: 2px solid #667eea;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border: 2px solid #FF7A00;
+  background: linear-gradient(135deg, #FF7A00 0%, #FF9F1C 100%);
   color: white;
   font-size: 20px;
   cursor: pointer;
@@ -735,7 +733,7 @@
 
 .chatbot-voice:hover {
   transform: scale(1.1);
-  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+  box-shadow: 0 4px 12px rgba(255, 122, 0, 0.4);
 }
 
 .chatbot-voice.recording {
@@ -762,13 +760,13 @@
 
 /* Voice Status Indicator */
 .voice-status {
-  background: rgba(102, 126, 234, 0.1);
-  border-left: 3px solid #667eea;
+  background: rgba(255, 122, 0, 0.1);
+  border-left: 3px solid #FF7A00;
   padding: 8px 12px;
   margin: 8px 0;
   border-radius: 4px;
   font-size: 13px;
-  color: #667eea;
+  color: #FF7A00;
   animation: fadeIn 0.3s ease-in;
 }
 
@@ -804,8 +802,8 @@
 }
 
 .voice-mode-btn.active {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  border-color: #667eea;
+  background: linear-gradient(135deg, #FF7A00 0%, #FF9F1C 100%);
+  border-color: #FF7A00;
   color: white;
 }
 
@@ -818,7 +816,7 @@
   padding: 10px;
   background: rgba(102, 126, 234, 0.05);
   border-radius: 8px;
-  border: 1px solid rgba(102, 126, 234, 0.2);
+  border: 1px solid rgba(255, 122, 0, 0.2);
 }
 
 .voice-command-btn {
@@ -834,9 +832,9 @@
 }
 
 .voice-command-btn:hover {
-  background: #667eea;
+  background: #FF7A00;
   color: white;
-  border-color: #667eea;
+  border-color: #FF7A00;
 }
 
 /* Audio Wave Animation */
@@ -851,7 +849,7 @@
 .audio-wave-bar {
   width: 3px;
   height: 100%;
-  background: #667eea;
+  background: #FF7A00;
   border-radius: 2px;
   animation: wave 1s ease-in-out infinite;
 }
@@ -873,12 +871,12 @@
 
 /* Voice Button Dark Mode */
 .voice-button {
-  border-color: #667eea;
+  border-color: #FF7A00;
 }
 
 .voice-status {
-  background: rgba(102, 126, 234, 0.2);
-  border-color: #667eea;
+  background: rgba(255, 122, 0, 0.2);
+  border-color: #FF7A00;
   color: #a78bfa;
 }
 
@@ -894,8 +892,8 @@
 }
 
 .voice-commands {
-  background: rgba(102, 126, 234, 0.1);
-  border-color: rgba(102, 126, 234, 0.3);
+  background: rgba(255, 122, 0, 0.1);
+  border-color: rgba(255, 122, 0, 0.15);
 }
 
 .voice-command-btn {
@@ -905,7 +903,7 @@
 }
 
 .voice-command-btn:hover {
-  background: #667eea;
+  background: #FF7A00;
   color: white;
-  border-color: #667eea;
+  border-color: #FF7A00;
 }

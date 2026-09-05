@@ -1,0 +1,118 @@
+[
+  {
+    "file": "templates\\properties\\activity_log.html",
+    "error": "Invalid block tag on line 298: 'endif', expected 'endblock'. Did you forget to register or load this tag?"
+  },
+  {
+    "file": "templates\\properties\\admin_dashboard_enhanced.html",
+    "error": "Invalid filter: 'intcomma'"
+  },
+  {
+    "file": "templates\\properties\\admin_presence_dashboard.html",
+    "error": "Invalid block tag on line 205: 'if.is_online', expected 'empty' or 'endfor'. Did you forget to register or load this tag?"
+  },
+  {
+    "file": "templates\\properties\\advanced_reports.html",
+    "error": "Invalid filter: 'intcomma'"
+  },
+  {
+    "file": "templates\\properties\\agents_management.html",
+    "error": "Invalid filter: 'intcomma'"
+  },
+  {
+    "file": "templates\\properties\\agent_detail.html",
+    "error": "Invalid filter: 'intcomma'"
+  },
+  {
+    "file": "templates\\properties\\appointment_slots_management.html",
+    "error": "Invalid filter: 'groupby'"
+  },
+  {
+    "file": "templates\\properties\\auction_invitations.html",
+    "error": "Invalid filter: 'filter'"
+  },
+  {
+    "file": "templates\\properties\\broker_channel_management.html",
+    "error": "Invalid filter: 'range'"
+  },
+  {
+    "file": "templates\\properties\\broker_standalone_page.html",
+    "error": "Invalid filter: 'replace'"
+  },
+  {
+    "file": "templates\\properties\\channel_public.html",
+    "error": "Could not parse the remainder: ' * review.rating' from ''⭐' * review.rating'"
+  },
+  {
+    "file": "templates\\properties\\customers_management.html",
+    "error": "Invalid filter: 'intcomma'"
+  },
+  {
+    "file": "templates\\properties\\customer_detail.html",
+    "error": "Invalid filter: 'intcomma'"
+  },
+  {
+    "file": "templates\\properties\\hotel_page_detail.html",
+    "error": "Invalid filter: 'times'"
+  },
+  {
+    "file": "templates\\properties\\job_detail.html",
+    "error": "Could not parse the remainder: '(',')' from 'job.skills.split(',')'"
+  },
+  {
+    "file": "templates\\properties\\main_broker_panel.html",
+    "error": "Invalid filter: 'format_price'"
+  },
+  {
+    "file": "templates\\properties\\my_channel.html",
+    "error": "'block' tag with name 'dashboard_content' appears more than once"
+  },
+  {
+    "file": "templates\\properties\\property_detail.html",
+    "error": "Invalid block tag on line 2541: 'static', expected 'endblock'. Did you forget to register or load this tag?"
+  },
+  {
+    "file": "templates\\properties\\property_publication.html",
+    "error": "Invalid filter: 'multiply'"
+  },
+  {
+    "file": "templates\\properties\\real_estate_contracts.html",
+    "error": "Invalid filter: 'intcomma'"
+  },
+  {
+    "file": "properties\\admin_presence_dashboard.html",
+    "error": "Invalid block tag on line 205: 'if.is_online', expected 'empty' or 'endfor'. Did you forget to register or load this tag?"
+  },
+  {
+    "file": "properties\\auction_invitations.html",
+    "error": "Invalid filter: 'filter'"
+  },
+  {
+    "file": "properties\\broker_channel_management.html",
+    "error": "Invalid filter: 'range'"
+  },
+  {
+    "file": "properties\\channel_detail.html",
+    "error": "Invalid filter: 'intcomma'"
+  },
+  {
+    "file": "properties\\channel_public.html",
+    "error": "Could not parse the remainder: ' * review.rating' from ''⭐' * review.rating'"
+  },
+  {
+    "file": "properties\\hotel_page_detail.html",
+    "error": "Invalid filter: 'times'"
+  },
+  {
+    "file": "properties\\main_broker_panel.html",
+    "error": "Invalid filter: 'format_price'"
+  },
+  {
+    "file": "properties\\property_publication.html",
+    "error": "Invalid filter: 'multiply'"
+  },
+  {
+    "file": "properties\\categories\\hotels.html",
+    "error": "Invalid filter: 'range'"
+  }
+]

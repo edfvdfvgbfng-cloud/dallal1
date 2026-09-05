@@ -388,6 +388,9 @@ def broker_list(request):
 
     brokers = get_managed_brokers(request.user)
 
+    # Debug: Log the initial broker count
+    logger.info(f"Initial brokers count for user {request.user.username}: {brokers.count()}")
+
     # Filter to show only brokers created by current user
     if filter_type == 'my_brokers':
         current_broker = get_broker(request.user)
@@ -411,6 +414,8 @@ def broker_list(request):
     elif status_filter == 'expired':
         brokers = brokers.filter(subscription_end_date__lt=timezone.now().date())
 
+    logger.info(f"After status filter: {brokers.count()} brokers")
+
     # Verified filter
     if verified_filter == 'verified':
         brokers = brokers.filter(is_verified=True)
@@ -426,8 +431,12 @@ def broker_list(request):
         brokers = brokers.filter(role=Broker.ROLE_SUB)
 
     # Subscription filter
-    if subscription_filter:
+    if subscription_filter == 'no_subscription':
+        brokers = brokers.filter(subscription_plan__isnull=True)
+        logger.info(f"Filtering for no subscription: {brokers.count()} brokers")
+    elif subscription_filter:
         brokers = brokers.filter(subscription_plan__name__icontains=subscription_filter)
+        logger.info(f"Filtering for subscription '{subscription_filter}': {brokers.count()} brokers")
 
     # Governorate filter
     if governorate_filter:
@@ -441,13 +450,15 @@ def broker_list(request):
     elif sort_by == 'name':
         brokers = brokers.order_by('display_name')
     elif sort_by == 'properties':
-        brokers = brokers.annotate(prop_count=Count('property')).order_by('-prop_count')
+        brokers = brokers.annotate(prop_count=Count('properties')).order_by('-prop_count')
     elif sort_by == 'performance':
         brokers = brokers.order_by('-performance_score')
     elif sort_by == 'revenue':
         brokers = brokers.order_by('-total_revenue')
     else:
         brokers = brokers.order_by('-created_at')
+
+    logger.info(f"After sorting: {brokers.count()} brokers")
 
     # Calculate stats before pagination
     total_brokers_count = brokers.count()
@@ -552,8 +563,46 @@ def broker_list(request):
         is_active=True
     ).count()
     
-    # Calculate total revenue (this would need to be implemented based on your payment system)
-    total_revenue = 0  # Placeholder - implement based on your payment model
+    # Calculate total revenue from completed payments
+    from .models import PropertyPayment
+    total_revenue = PropertyPayment.objects.filter(
+        status=PropertyPayment.STATUS_COMPLETED,
+        created_at__gte=one_month_ago
+    ).aggregate(total=Sum('total_amount'))['total'] or 0
+
+    # Generate broker growth data for charts
+    broker_growth_data = []
+    for i in range(30):
+        date = timezone.now() - timedelta(days=29 - i)
+        count = brokers.filter(
+            created_at__date=date.date()
+        ).count()
+        broker_growth_data.append(count)
+
+    # Generate property status data
+    property_status_data = {
+        'published': Property.objects.filter(status='published').count(),
+        'pending': Property.objects.filter(status=Property.STATUS_PENDING_APPROVAL).count(),
+        'sold': Property.objects.filter(status='sold').count(),
+        'draft': Property.objects.filter(status=Property.STATUS_DRAFT).count(),
+    }
+
+    # Generate performance data (top 10 brokers)
+    performance_data = []
+    top_brokers = sorted(broker_data, key=lambda x: x['performance_score'], reverse=True)[:10]
+    for item in top_brokers:
+        performance_data.append({
+            'name': item['broker'].display_name,
+            'score': item['performance_score'] or 0
+        })
+
+    # Generate geographic data
+    from .constants import IRAQ_GOVERNORATES
+    geographic_data = []
+    for gov in IRAQ_GOVERNORATES:
+        count = brokers.filter(governorate=gov).count()
+        if count > 0:
+            geographic_data.append({'name': gov, 'count': count})
 
     return render(request, 'properties/broker_list.html', {
         'broker_data': broker_data,
@@ -577,6 +626,10 @@ def broker_list(request):
         'total_revenue': total_revenue,
         'plans': SubscriptionPlan.objects.filter(is_active=True),
         'brokers': brokers_page,  # Pass paginated brokers object
+        'broker_growth_data': broker_growth_data,
+        'property_status_data': property_status_data,
+        'performance_data': performance_data,
+        'geographic_data': geographic_data,
     })
 
 
@@ -2991,21 +3044,25 @@ def hotel_page_list(request):
 @login_required
 def hotel_page_detail(request, slug):
     """صفحة تفاصيل الفندق أو المنتجع"""
-    page = get_object_or_404(HotelPage, slug=slug, status='active')
-    
+    page = get_object_or_404(HotelPage, slug=slug)
+    # If status is not set, default to treating it as active
+    if not page.status:
+        page.status = 'active'
+        page.save()
+
     # Increment views
     page.increment_views()
-    
+
     # Get posts, rooms, offers
     posts = page.posts.filter(status='published').select_related('page')[:10]
     rooms = page.rooms.filter(status='available')[:10]
     offers = page.offers.filter(is_active=True)[:10]
-    
+
     # Check if user is following
     is_following = False
     if request.user.is_authenticated:
         is_following = HotelFollower.objects.filter(page=page, user=request.user).exists()
-    
+
     # Get user rating
     user_rating = None
     if request.user.is_authenticated:
@@ -3013,7 +3070,7 @@ def hotel_page_detail(request, slug):
             user_rating = HotelRating.objects.get(page=page, user=request.user)
         except HotelRating.DoesNotExist:
             pass
-    
+
     return render(request, 'properties/hotel_page_detail.html', {
         'page': page,
         'posts': posts,
@@ -3022,6 +3079,13 @@ def hotel_page_detail(request, slug):
         'is_following': is_following,
         'user_rating': user_rating,
     })
+
+
+def hotel_page_detail_by_id(request, pk):
+    """صفحة تفاصيل الفندق أو المنتجع باستخدام ID"""
+    page = get_object_or_404(HotelPage, pk=pk)
+    # Redirect to slug-based URL for better SEO
+    return redirect('hotel_page_detail', slug=page.slug)
 
 
 @login_required

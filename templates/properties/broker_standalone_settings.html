@@ -548,6 +548,12 @@
                 {{ request.get_host }}/d/<span class="slug-preview" id="slug-preview">{{ broker.slug|default:broker_slug_auto }}</span>
               </span>
             </small>
+            <div style="margin-top: 12px;">
+              <a href="/d/{{ broker.slug|default:broker_slug_auto }}/" target="_blank" class="btn btn-primary" style="display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.6rem 1.2rem; border-radius: 8px; text-decoration: none; font-weight: 600; background: var(--primary, #FF7A00); color: white; transition: all 0.3s ease;">
+                <i class="fas fa-external-link-alt"></i>
+                <span>عرض الصفحة المستقلة</span>
+              </a>
+            </div>
             <small class="field-help" style="color: var(--text-secondary, #b5b5b5); margin-top: 8px;">
               ⚠️ الرابط يتم توليده تلقائياً من اسمك ولا يمكن تغييره
             </small>

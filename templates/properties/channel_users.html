@@ -6,7 +6,7 @@
 {% block extra_css %}
 <style>
 .channel-header {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #FF7A00 0%, #FF9500 100%);
   padding: 40px 20px;
   text-align: center;
   color: white;
@@ -120,7 +120,7 @@
 
 .badge-user {
   background: rgba(102, 126, 234, 0.1);
-  color: #667eea;
+  color: #FF7A00;
 }
 
 .empty-state {
@@ -140,7 +140,7 @@
 <div class="channel-header">
   <h1>{{ channel_icon }} {{ channel_name }}</h1>
   <p>تصفح جميع العقارات المعروضة من قبل المستخدمين</p>
-  <a href="{% url 'channels' %}" class="btn" style="display: inline-block; margin-top: 15px; background: rgba(255,255,255,0.2); color: white; border: 1px solid rgba(255,255,255,0.3); text-decoration: none;">
+  <a href="{% url 'channels_list' %}" class="btn" style="display: inline-block; margin-top: 15px; background: rgba(255,255,255,0.2); color: white; border: 1px solid rgba(255,255,255,0.3); text-decoration: none;">
     📺 العودة للقنوات
   </a>
 </div>

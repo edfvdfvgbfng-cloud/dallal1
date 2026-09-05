@@ -10,7 +10,7 @@ from datetime import datetime
 import uuid
 
 from .ai_nlp_layer import nlp_manager
-from .ai_intent_detection import intent_detector, feature_extractor
+from .ai_intent_classifier import intent_classifier
 from .ai_entity_extraction import entity_extractor, entity_normalizer
 from .ai_context_engine import context_manager, question_generator, flow_manager
 from .ai_arabic_normalizer import arabic_normalizer, number_parser
@@ -184,15 +184,26 @@ class ConversationManager:
                 confidence = self.ai_agent.short_term_memory.get('last_confidence', 0.5)
             else:
                 # Fallback to basic detection
-                from .ai_intent_detection import intent_detector
+                from .ai_intent_classifier import intent_classifier
                 from .ai_entity_extraction import entity_extractor
                 from .ai_arabic_normalizer import arabic_normalizer
                 
                 normalized = arabic_normalizer.normalize_text(message)
-                intent_result = intent_detector.detect_intent(normalized)
-                intent = intent_result.get('intent', 'unknown')
-                confidence = intent_result.get('confidence', 0.5)
-                entities = entity_extractor.extract_entities(normalized, intent)
+                intent_result = intent_classifier.classify_intent(normalized)
+                intent = intent_result.category.value
+                confidence = intent_result.confidence
+                entities = {}  # Placeholder for entities extraction
+            
+            # Collect training example
+            if intent and intent != 'unknown':
+                try:
+                    self.data_collector.collect_training_example(
+                        message, intent, entities, confidence,
+                        source='conversation'
+                    )
+                except Exception as e:
+                    logger.error(f"Error collecting training example: {str(e)}")
+
             
             # Collect training example
             if intent and intent != 'unknown':
@@ -245,7 +256,7 @@ class ConversationManager:
         """Get conversation manager statistics"""
         return {
             'active_conversations': self.context_manager.get_active_contexts_count(),
-            'intent_stats': intent_detector.get_intent_statistics(),
+            'intent_stats': intent_classifier.get_classification_statistics(),
             'entity_stats': entity_extractor.get_extraction_statistics(),
             'agent_stats': self.ai_agent.get_agent_statistics(),
             'tool_stats': self._get_tool_statistics()

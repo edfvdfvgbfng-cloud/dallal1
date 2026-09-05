@@ -1,0 +1,475 @@
+{% extends 'properties/base.html' %}
+{% load static %}
+
+{% block title %}
+  {% if post %}تعديل المنشور{% else %}إنشاء منشور جديد{% endif %} - {{ company.name }}
+{% endblock %}
+
+{% block extra_css %}
+<style>
+:root { --primary: #FF7A00; --primary-dark: #cc6200; --bg: #0f0f0f; --bg-card: #1a1a1a; --border: #2a2a2a; --text: #e0e0e0; --text-muted: #888; }
+body { background: var(--bg); color: var(--text); font-family: 'Segoe UI', Arial, sans-serif; }
+.page-header { background: linear-gradient(135deg, #1a1a1a 0%, #0f0f0f 100%); border-bottom: 2px solid var(--primary); padding: 20px 30px; display: flex; align-items: center; gap: 15px; }
+.back-btn { background: transparent; border: 1px solid var(--border); color: var(--text); padding: 8px 15px; border-radius: 8px; text-decoration: none; font-size: 0.9rem; transition: all 0.3s; }
+.back-btn:hover { border-color: var(--primary); color: var(--primary); }
+.company-badge { background: rgba(255,122,0,0.1); border: 1px solid var(--primary); color: var(--primary); padding: 4px 12px; border-radius: 20px; font-size: 0.85rem; }
+.form-container { max-width: 900px; margin: 30px auto; padding: 0 20px; }
+.form-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 16px; padding: 30px; margin-bottom: 20px; }
+.form-card h3 { font-size: 1.1rem; font-weight: 700; color: var(--primary); margin-bottom: 20px; padding-bottom: 10px; border-bottom: 1px solid var(--border); }
+.form-group { margin-bottom: 20px; }
+.form-group label { display: block; font-size: 0.9rem; color: var(--text-muted); margin-bottom: 8px; font-weight: 500; }
+.required { color: var(--primary); }
+.form-control { width: 100%; background: #0f0f0f; border: 1px solid var(--border); border-radius: 10px; padding: 12px 16px; color: var(--text); font-size: 0.95rem; transition: border-color 0.3s; box-sizing: border-box; font-family: inherit; direction: rtl; }
+.form-control:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px rgba(255,122,0,0.1); }
+textarea.form-control { min-height: 120px; resize: vertical; }
+.form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+.form-row-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 15px; }
+.type-selector { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 10px; }
+.type-card { border: 2px solid var(--border); border-radius: 12px; padding: 12px 10px; text-align: center; cursor: pointer; transition: all 0.3s; background: #0f0f0f; }
+.type-card:hover { border-color: var(--primary); background: rgba(255,122,0,0.05); }
+.type-card.selected { border-color: var(--primary); background: rgba(255,122,0,0.15); }
+.type-card .type-icon { font-size: 1.8rem; margin-bottom: 6px; }
+.type-card .type-name { font-size: 0.8rem; color: var(--text-muted); font-weight: 500; }
+.type-card.selected .type-name { color: var(--primary); }
+.trip-fields { display: none; }
+.trip-fields.visible { display: block; }
+.image-upload-area { border: 2px dashed var(--border); border-radius: 12px; padding: 30px; text-align: center; cursor: pointer; transition: all 0.3s; background: #0f0f0f; }
+.image-upload-area:hover { border-color: var(--primary); }
+.image-preview { width: 100%; max-height: 250px; object-fit: cover; border-radius: 8px; margin-top: 10px; display: none; }
+.toggle-group { display: flex; align-items: center; justify-content: space-between; padding: 12px 16px; background: #0f0f0f; border: 1px solid var(--border); border-radius: 10px; }
+.toggle-group label { margin: 0; color: var(--text); font-size: 0.9rem; }
+.toggle-switch { position: relative; width: 44px; height: 24px; }
+.toggle-switch input { opacity: 0; width: 0; height: 0; }
+.toggle-slider { position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: var(--border); border-radius: 12px; cursor: pointer; transition: 0.4s; }
+.toggle-slider:before { content: ""; position: absolute; width: 18px; height: 18px; left: 3px; bottom: 3px; background: white; border-radius: 50%; transition: 0.4s; }
+.toggle-switch input:checked + .toggle-slider { background: var(--primary); }
+.toggle-switch input:checked + .toggle-slider:before { transform: translateX(20px); }
+.form-actions { display: flex; gap: 15px; justify-content: flex-end; padding: 20px 0; }
+.btn-primary { background: var(--primary); color: white; border: none; padding: 14px 30px; border-radius: 12px; font-size: 1rem; font-weight: 600; cursor: pointer; transition: all 0.3s; font-family: inherit; }
+.btn-primary:hover { background: var(--primary-dark); transform: translateY(-1px); }
+.btn-secondary { background: transparent; color: var(--text); border: 1px solid var(--border); padding: 14px 30px; border-radius: 12px; font-size: 1rem; cursor: pointer; transition: all 0.3s; font-family: inherit; text-decoration: none; display: inline-block; text-align: center; }
+.btn-secondary:hover { border-color: var(--primary); color: var(--primary); }
+.section-divider { border: none; border-top: 1px solid var(--border); margin: 25px 0; }
+.discount-badge { background: rgba(255,80,80,0.15); border: 1px solid #ff5050; color: #ff5050; padding: 4px 10px; border-radius: 20px; font-size: 0.8rem; display: none; margin-bottom: 15px; }
+@media (max-width: 640px) { .form-row, .form-row-3 { grid-template-columns: 1fr; } .type-selector { grid-template-columns: repeat(3, 1fr); } }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <a href="{% url 'travel_company_detail' company.pk %}" class="back-btn">&#8592; رجوع</a>
+  <h1 style="margin:0; font-size:1.4rem;">{% if post %}تعديل المنشور{% else %}&#10133; إنشاء منشور جديد{% endif %}</h1>
+  <span class="company-badge">&#9992;&#65039; {{ company.name }}</span>
+</div>
+
+<div class="form-container">
+  <form method="post" enctype="multipart/form-data">
+    {% csrf_token %}
+    <input type="hidden" name="post_type" id="post_type_input" value="{% if post %}{{ post.post_type }}{% else %}general{% endif %}">
+
+    <div class="form-card">
+      <h3>&#128204; نوع المنشور</h3>
+      <div class="type-selector">
+        <div class="type-card" data-type="trip" onclick="selectType(this,'trip')"><div class="type-icon">&#9992;&#65039;</div><div class="type-name">رحلة سفر</div></div>
+        <div class="type-card" data-type="ticket" onclick="selectType(this,'ticket')"><div class="type-icon">&#128748;&#65039;</div><div class="type-name">تذكرة طيران</div></div>
+        <div class="type-card" data-type="visa" onclick="selectType(this,'visa')"><div class="type-icon">&#128706;</div><div class="type-name">فيزا / تأشيرة</div></div>
+        <div class="type-card" data-type="hotel" onclick="selectType(this,'hotel')"><div class="type-icon">&#127976;</div><div class="type-name">فندق</div></div>
+        <div class="type-card" data-type="umrah" onclick="selectType(this,'umrah')"><div class="type-icon">&#128715;</div><div class="type-name">عمرة</div></div>
+        <div class="type-card" data-type="hajj" onclick="selectType(this,'hajj')"><div class="type-icon">&#129330;</div><div class="type-name">حج</div></div>
+        <div class="type-card" data-type="transport" onclick="selectType(this,'transport')"><div class="type-icon">&#128652;</div><div class="type-name">نقل سياحي</div></div>
+        <div class="type-card" data-type="tourism_offer" onclick="selectType(this,'tourism_offer')"><div class="type-icon">&#127915;</div><div class="type-name">عرض سياحي</div></div>
+        <div class="type-card" data-type="special_offer" onclick="selectType(this,'special_offer')"><div class="type-icon">&#11088;</div><div class="type-name">عرض خاص</div></div>
+        <div class="type-card" data-type="announcement" onclick="selectType(this,'announcement')"><div class="type-icon">&#128226;</div><div class="type-name">إعلان</div></div>
+        <div class="type-card" data-type="info" onclick="selectType(this,'info')"><div class="type-icon">&#8505;</div><div class="type-name">معلومات سفر</div></div>
+      </div>
+    </div>
+
+    <div class="form-card">
+      <h3>&#128221; معلومات المنشور</h3>
+      <div class="form-group">
+        <label>عنوان المنشور <span class="required">*</span></label>
+        <input type="text" name="title" class="form-control" placeholder="مثال: رحلة بغداد الى اسطنبول 5 أيام" value="{{ post.title|default:'' }}" required>
+      </div>
+      <div class="form-group">
+        <label>وصف المنشور <span class="required">*</span></label>
+        <textarea name="description" class="form-control" placeholder="اكتب وصفاً تفصيلياً..." required>{{ post.description|default:'' }}</textarea>
+      </div>
+      <div class="form-group">
+        <label>صورة المنشور</label>
+        <div class="image-upload-area" onclick="document.getElementById('mainImg').click()">
+          <input type="file" id="mainImg" name="main_image" accept="image/*" onchange="previewImg(this,'prevImg','imgPlaceholder')">
+          <div id="imgPlaceholder">
+            <div style="font-size:2rem;">&#128444;&#65039;</div>
+            <div style="color:var(--text-muted);">اضغط لاختيار صورة</div>
+          </div>
+          {% if post.main_image %}
+          <img src="{{ post.main_image.url }}" id="prevImg" class="image-preview" style="display:block">
+          {% else %}
+          <img id="prevImg" class="image-preview">
+          {% endif %}
+        </div>
+      </div>
+    </div>
+
+    <div class="form-card trip-fields" id="tripFields">
+      <h3>&#9992;&#65039; تفاصيل الرحلة</h3>
+      <div class="form-row">
+        <div class="form-group"><label>الدولة</label><input type="text" name="trip_country" class="form-control" placeholder="تركيا" value="{{ post.trip_country|default:'' }}"></div>
+        <div class="form-group"><label>المدينة</label><input type="text" name="trip_city" class="form-control" placeholder="إسطنبول" value="{{ post.trip_city|default:'' }}"></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label>مكان الانطلاق</label><input type="text" name="departure_location" class="form-control" placeholder="بغداد" value="{{ post.departure_location|default:'' }}"></div>
+        <div class="form-group"><label>مكان الوصول</label><input type="text" name="arrival_location" class="form-control" placeholder="إسطنبول" value="{{ post.arrival_location|default:'' }}"></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label>تاريخ المغادرة</label><input type="date" name="departure_date" class="form-control" value="{{ post.departure_date|date:'Y-m-d'|default:'' }}"></div>
+        <div class="form-group"><label>تاريخ العودة</label><input type="date" name="return_date" class="form-control" value="{{ post.return_date|date:'Y-m-d'|default:'' }}"></div>
+      </div>
+      <div class="form-row-3">
+        <div class="form-group"><label>عدد الأيام</label><input type="number" name="duration_days" class="form-control" placeholder="5" min="1" value="{{ post.duration_days|default:'' }}"></div>
+        <div class="form-group"><label>عدد الليالي</label><input type="number" name="duration_nights" class="form-control" placeholder="4" min="0" value="{{ post.duration_nights|default:'' }}"></div>
+        <div class="form-group"><label>عدد الأشخاص</label><input type="number" name="persons_count" class="form-control" placeholder="2" min="1" value="{{ post.persons_count|default:'' }}"></div>
+      </div>
+      <div class="form-group">
+        <label>السعر</label>
+        <input type="number" name="trip_price" class="form-control" placeholder="450000" value="{{ post.trip_price|default:'' }}">
+      </div>
+      <div class="form-group">
+        <label>العملة</label>
+        <select name="trip_currency" class="form-control">
+          <option value="IQD" {% if not post or post.trip_currency == 'IQD' %}selected{% endif %}>دينار عراقي</option>
+          <option value="USD" {% if post.trip_currency == 'USD' %}selected{% endif %}>دولار</option>
+          <option value="EUR" {% if post.trip_currency == 'EUR' %}selected{% endif %}>يورو</option>
+          <option value="TRY" {% if post.trip_currency == 'TRY' %}selected{% endif %}>ليرة تركية</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>المقاعد المتوفرة</label>
+        <input type="number" name="available_seats" class="form-control" placeholder="15" min="0" value="{{ post.available_seats|default:'' }}">
+      </div>
+      <hr class="section-divider">
+      <h3>&#127976; الفندق</h3>
+      <div class="form-row">
+        <div class="form-group"><label>اسم الفندق</label><input type="text" name="hotel_name" class="form-control" value="{{ post.hotel_name|default:'' }}"></div>
+        <div class="form-group"><label>عدد النجوم</label>
+          <select name="hotel_stars" class="form-control">
+            <option value="">-- اختر --</option>
+            <option value="3" {% if post.hotel_stars == 3 %}selected{% endif %}>3 نجوم</option>
+            <option value="4" {% if post.hotel_stars == 4 %}selected{% endif %}>4 نجوم</option>
+            <option value="5" {% if post.hotel_stars == 5 %}selected{% endif %}>5 نجوم</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label>نوع الغرفة</label><input type="text" name="hotel_room_type" class="form-control" value="{{ post.hotel_room_type|default:'' }}"></div>
+        <div class="form-group"><label>عدد الليالي</label><input type="number" name="hotel_nights" class="form-control" min="0" value="{{ post.hotel_nights|default:'' }}"></div>
+      </div>
+      <div class="form-row">
+        <div class="toggle-group"><label>وجبة الإفطار</label><label class="toggle-switch"><input type="checkbox" name="includes_breakfast" {% if post.includes_breakfast %}checked{% endif %}><span class="toggle-slider"></span></label></div>
+        <div class="toggle-group"><label>الإقامة مشمولة</label><label class="toggle-switch"><input type="checkbox" name="includes_accommodation" {% if post.includes_accommodation %}checked{% endif %}><span class="toggle-slider"></span></label></div>
+      </div>
+      <hr class="section-divider">
+      <h3>&#128748;&#65039; الطيران</h3>
+      <div class="form-row-3">
+        <div class="form-group"><label>شركة الطيران</label><input type="text" name="airline" class="form-control" value="{{ post.airline|default:'' }}"></div>
+        <div class="form-group"><label>رقم الرحلة</label><input type="text" name="flight_number" class="form-control" value="{{ post.flight_number|default:'' }}"></div>
+        <div class="form-group"><label>درجة السفر</label>
+          <select name="flight_class" class="form-control">
+            <option value="">-- اختر --</option>
+            <option value="economy" {% if post.flight_class == 'economy' %}selected{% endif %}>اقتصادية</option>
+            <option value="business" {% if post.flight_class == 'business' %}selected{% endif %}>رجال أعمال</option>
+            <option value="first" {% if post.flight_class == 'first' %}selected{% endif %}>أولى</option>
+          </select>
+        </div>
+      </div>
+      <hr class="section-divider">
+      <h3>&#128680; النقل</h3>
+      <div class="toggle-group"><label>النقل مشمول</label><label class="toggle-switch"><input type="checkbox" name="includes_transport" {% if post.includes_transport %}checked{% endif %}><span class="toggle-slider"></span></label></div>
+      <div class="form-group"><label>البرنامج السياحي</label><textarea name="tour_program" class="form-control" placeholder="وصف البرنامج السياحي">{{ post.tour_program|default:'' }}</textarea></div>
+    </div>
+
+    <!-- حقول الفيزا -->
+    <div class="form-card trip-fields" id="visaFields">
+      <h3>&#128706; تفاصيل الفيزا</h3>
+      <div class="form-row">
+        <div class="form-group"><label>الدولة</label><input type="text" name="visa_country" class="form-control" placeholder="تركيا" value="{{ post.visa_country|default:'' }}"></div>
+        <div class="form-group"><label>نوع الفيزا</label>
+          <select name="visa_type" class="form-control">
+            <option value="">-- اختر --</option>
+            <option value="tourist" {% if post.visa_type == 'tourist' %}selected{% endif %}>سياحية</option>
+            <option value="business" {% if post.visa_type == 'business' %}selected{% endif %}>أعمال</option>
+            <option value="student" {% if post.visa_type == 'student' %}selected{% endif %}>دراسة</option>
+            <option value="medical" {% if post.visa_type == 'medical' %}selected{% endif %}>علاجية</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label>مدة الفيزا</label><input type="text" name="visa_duration" class="form-control" placeholder="30 يوم" value="{{ post.visa_duration|default:'' }}"></div>
+        <div class="form-group"><label>مدة إنجاز المعاملة</label><input type="text" name="visa_processing_time" class="form-control" placeholder="7 أيام" value="{{ post.visa_processing_time|default:'' }}"></div>
+      </div>
+      <div class="form-group"><label>المستندات المطلوبة</label><textarea name="visa_required_documents" class="form-control" placeholder="المستندات المطلوبة">{{ post.visa_required_documents|default:'' }}</textarea></div>
+      <div class="form-row">
+        <div class="form-group"><label>السعر</label><input type="number" name="visa_price" class="form-control" placeholder="150000" value="{{ post.visa_price|default:'' }}"></div>
+        <div class="form-group"><label>العملة</label>
+          <select name="visa_currency" class="form-control">
+            <option value="IQD" {% if not post or post.visa_currency == 'IQD' %}selected{% endif %}>دينار عراقي</option>
+            <option value="USD" {% if post.visa_currency == 'USD' %}selected{% endif %}>دولار</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-group"><label>ملاحظات</label><textarea name="visa_notes" class="form-control" placeholder="ملاحظات إضافية">{{ post.visa_notes|default:'' }}</textarea></div>
+    </div>
+
+    <!-- حقول التذكرة -->
+    <div class="form-card trip-fields" id="ticketFields">
+      <h3>&#128748;&#65039; تفاصيل التذكرة</h3>
+      <div class="form-row">
+        <div class="form-group"><label>شركة الطيران</label><input type="text" name="ticket_airline" class="form-control" placeholder="Emirates" value="{{ post.ticket_airline|default:'' }}"></div>
+        <div class="form-group"><label>من</label><input type="text" name="ticket_from" class="form-control" placeholder="بغداد" value="{{ post.ticket_from|default:'' }}"></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label>إلى</label><input type="text" name="ticket_to" class="form-control" placeholder="دبي" value="{{ post.ticket_to|default:'' }}"></div>
+        <div class="form-group"><label>تاريخ المغادرة</label><input type="date" name="ticket_departure_date" class="form-control" value="{{ post.ticket_departure_date|date:'Y-m-d'|default:'' }}"></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label>تاريخ العودة</label><input type="date" name="ticket_return_date" class="form-control" value="{{ post.ticket_return_date|date:'Y-m-d'|default:'' }}"></div>
+        <div class="form-group"><label>درجة السفر</label>
+          <select name="ticket_class" class="form-control">
+            <option value="">-- اختر --</option>
+            <option value="economy" {% if post.ticket_class == 'economy' %}selected{% endif %}>اقتصادية</option>
+            <option value="business" {% if post.ticket_class == 'business' %}selected{% endif %}>رجال أعمال</option>
+            <option value="first" {% if post.ticket_class == 'first' %}selected{% endif %}>أولى</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-group"><label>الأمتعة</label><input type="text" name="ticket_baggage" class="form-control" placeholder="23 كجم" value="{{ post.ticket_baggage|default:'' }}"></div>
+      <div class="form-row">
+        <div class="form-group"><label>السعر</label><input type="number" name="ticket_price" class="form-control" placeholder="350000" value="{{ post.ticket_price|default:'' }}"></div>
+        <div class="form-group"><label>عدد المقاعد</label><input type="number" name="ticket_seats" class="form-control" placeholder="5" min="1" value="{{ post.ticket_seats|default:'' }}"></div>
+      </div>
+    </div>
+
+    <!-- حقول الفندق -->
+    <div class="form-card trip-fields" id="hotelFields">
+      <h3>&#127976; تفاصيل الفندق</h3>
+      <div class="form-row">
+        <div class="form-group"><label>اسم الفندق</label><input type="text" name="hotel_only_name" class="form-control" placeholder="فندق إسطنبول" value="{{ post.hotel_only_name|default:'' }}"></div>
+        <div class="form-group"><label>عدد النجوم</label>
+          <select name="hotel_only_stars" class="form-control">
+            <option value="">-- اختر --</option>
+            <option value="3" {% if post.hotel_only_stars == 3 %}selected{% endif %}>3 نجوم</option>
+            <option value="4" {% if post.hotel_only_stars == 4 %}selected{% endif %}>4 نجوم</option>
+            <option value="5" {% if post.hotel_only_stars == 5 %}selected{% endif %}>5 نجوم</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label>المدينة</label><input type="text" name="hotel_city" class="form-control" placeholder="إسطنبول" value="{{ post.hotel_city|default:'' }}"></div>
+        <div class="form-group"><label>نوع الغرفة</label><input type="text" name="hotel_only_room_type" class="form-control" placeholder="غرفة مزدوجة" value="{{ post.hotel_only_room_type|default:'' }}"></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label>السعر لليلة</label><input type="number" name="hotel_price_per_night" class="form-control" placeholder="80000" value="{{ post.hotel_price_per_night|default:'' }}"></div>
+        <div class="form-group"><label>العملة</label>
+          <select name="hotel_currency" class="form-control">
+            <option value="IQD" {% if not post or post.hotel_currency == 'IQD' %}selected{% endif %}>دينار عراقي</option>
+            <option value="USD" {% if post.hotel_currency == 'USD' %}selected{% endif %}>دولار</option>
+            <option value="EUR" {% if post.hotel_currency == 'EUR' %}selected{% endif %}>يورو</option>
+            <option value="TRY" {% if post.hotel_currency == 'TRY' %}selected{% endif %}>ليرة تركية</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="toggle-group"><label>وجبة الإفطار</label><label class="toggle-switch"><input type="checkbox" name="hotel_breakfast" {% if post.hotel_breakfast %}checked{% endif %}><span class="toggle-slider"></span></label></div>
+        <div class="toggle-group"><label>إلغاء مجاني</label><label class="toggle-switch"><input type="checkbox" name="hotel_free_cancellation" {% if post.hotel_free_cancellation %}checked{% endif %}><span class="toggle-slider"></span></label></div>
+      </div>
+    </div>
+
+    <!-- حقول العمرة والحج -->
+    <div class="form-card trip-fields" id="umrahFields">
+      <h3>&#128715; تفاصيل العمرة / الحج</h3>
+      <div class="form-group"><label>نوع الباقة</label>
+        <select name="umrah_package_type" class="form-control">
+          <option value="">-- اختر --</option>
+          <option value="economy" {% if post.umrah_package_type == 'economy' %}selected{% endif %}>اقتصادية</option>
+          <option value="standard" {% if post.umrah_package_type == 'standard' %}selected{% endif %}>قياسية</option>
+          <option value="premium" {% if post.umrah_package_type == 'premium' %}selected{% endif %}>مميزة</option>
+          <option value="vip" {% if post.umrah_package_type == 'vip' %}selected{% endif %}>VIP</option>
+        </select>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label>تاريخ المغادرة</label><input type="date" name="umrah_departure_date" class="form-control" value="{{ post.umrah_departure_date|date:'Y-m-d'|default:'' }}"></div>
+        <div class="form-group"><label>تاريخ العودة</label><input type="date" name="umrah_return_date" class="form-control" value="{{ post.umrah_return_date|date:'Y-m-d'|default:'' }}"></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label>عدد الأيام</label><input type="number" name="umrah_days" class="form-control" placeholder="10" min="1" value="{{ post.umrah_days|default:'' }}"></div>
+        <div class="form-group"><label>عدد الأشخاص</label><input type="number" name="umrah_persons" class="form-control" placeholder="2" min="1" value="{{ post.umrah_persons|default:'' }}"></div>
+      </div>
+      <div class="form-row">
+        <div class="toggle-group"><label>تذكرة الطيران</label><label class="toggle-switch"><input type="checkbox" name="umrah_includes_flight" {% if post.umrah_includes_flight %}checked{% endif %}><span class="toggle-slider"></span></label></div>
+        <div class="toggle-group"><label>فندق</label><label class="toggle-switch"><input type="checkbox" name="umrah_includes_hotel" {% if post.umrah_includes_hotel %}checked{% endif %}><span class="toggle-slider"></span></label></div>
+      </div>
+      <div class="form-row">
+        <div class="toggle-group"><label>نقل</label><label class="toggle-switch"><input type="checkbox" name="umrah_includes_transport" {% if post.umrah_includes_transport %}checked{% endif %}><span class="toggle-slider"></span></label></div>
+        <div class="toggle-group"><label>وجبات</label><label class="toggle-switch"><input type="checkbox" name="umrah_includes_meals" {% if post.umrah_includes_meals %}checked{% endif %}><span class="toggle-slider"></span></label></div>
+      </div>
+      <div class="form-group"><label>السعر</label><input type="number" name="umrah_price" class="form-control" placeholder="1200000" value="{{ post.umrah_price|default:'' }}"></div>
+    </div>
+
+    <!-- حقول النقل السياحي -->
+    <div class="form-card trip-fields" id="transportFields">
+      <h3>&#128652; تفاصيل النقل السياحي</h3>
+      <div class="form-row">
+        <div class="form-group"><label>نوع المركبة</label>
+          <select name="transport_vehicle_type" class="form-control">
+            <option value="">-- اختر --</option>
+            <option value="bus" {% if post.transport_vehicle_type == 'bus' %}selected{% endif %}>حافلة</option>
+            <option value="minibus" {% if post.transport_vehicle_type == 'minibus' %}selected{% endif %}>ميني باص</option>
+            <option value="van" {% if post.transport_vehicle_type == 'van' %}selected{% endif %}>شاحنة صغيرة</option>
+            <option value="car" {% if post.transport_vehicle_type == 'car' %}selected{% endif %}>سيارة</option>
+            <option value="suv" {% if post.transport_vehicle_type == 'suv' %}selected{% endif %}>سيارة دفع رباعي</option>
+          </select>
+        </div>
+        <div class="form-group"><label>السعة</label><input type="number" name="transport_capacity" class="form-control" placeholder="25" min="1" value="{{ post.transport_capacity|default:'' }}"></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label>من</label><input type="text" name="transport_from" class="form-control" placeholder="بغداد" value="{{ post.transport_from|default:'' }}"></div>
+        <div class="form-group"><label>إلى</label><input type="text" name="transport_to" class="form-control" placeholder="البصرة" value="{{ post.transport_to|default:'' }}"></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label>السعر للرحلة</label><input type="number" name="transport_price" class="form-control" placeholder="50000" value="{{ post.transport_price|default:'' }}"></div>
+        <div class="form-group"><label>العملة</label>
+          <select name="transport_currency" class="form-control">
+            <option value="IQD" {% if not post or post.transport_currency == 'IQD' %}selected{% endif %}>دينار عراقي</option>
+            <option value="USD" {% if post.transport_currency == 'USD' %}selected{% endif %}>دولار</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="toggle-group"><label>تكييف</label><label class="toggle-switch"><input type="checkbox" name="transport_ac" {% if post.transport_ac %}checked{% endif %}><span class="toggle-slider"></span></label></div>
+        <div class="toggle-group"><label>واي فاي</label><label class="toggle-switch"><input type="checkbox" name="transport_wifi" {% if post.transport_wifi %}checked{% endif %}><span class="toggle-slider"></span></label></div>
+      </div>
+    </div>
+
+    <div class="form-card">
+      <h3>&#128176; الأسعار</h3>
+      <div class="form-row">
+        <div class="form-group"><label>السعر</label><input type="number" name="price" class="form-control" placeholder="450000" step="0.01" min="0" value="{{ post.price|default:'' }}" oninput="calcDiscount()"></div>
+        <div class="form-group"><label>السعر قبل الخصم (اختياري)</label><input type="number" name="original_price" class="form-control" placeholder="600000" step="0.01" min="0" value="{{ post.original_price|default:'' }}" oninput="calcDiscount()"></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label>العملة</label>
+          <select name="currency" class="form-control">
+            <option value="IQD" {% if not post or post.currency == 'IQD' %}selected{% endif %}>دينار عراقي (IQD)</option>
+            <option value="USD" {% if post.currency == 'USD' %}selected{% endif %}>دولار (USD)</option>
+            <option value="EUR" {% if post.currency == 'EUR' %}selected{% endif %}>يورو (EUR)</option>
+            <option value="TRY" {% if post.currency == 'TRY' %}selected{% endif %}>ليرة تركية (TRY)</option>
+            <option value="SAR" {% if post.currency == 'SAR' %}selected{% endif %}>ريال سعودي (SAR)</option>
+          </select>
+        </div>
+        <div class="form-group"><label>السعر لـ</label>
+          <select name="price_per" class="form-control">
+            <option value="person" {% if not post or post.price_per == 'person' %}selected{% endif %}>للشخص الواحد</option>
+            <option value="family" {% if post.price_per == 'family' %}selected{% endif %}>للعائلة</option>
+            <option value="room" {% if post.price_per == 'room' %}selected{% endif %}>للغرفة</option>
+            <option value="group" {% if post.price_per == 'group' %}selected{% endif %}>للمجموعة</option>
+          </select>
+        </div>
+      </div>
+      <div class="discount-badge" id="discountBadge"></div>
+      <div class="form-row">
+        <div class="toggle-group"><label>السعر قابل للتفاوض</label><label class="toggle-switch"><input type="checkbox" name="is_negotiable" {% if post.is_negotiable %}checked{% endif %}><span class="toggle-slider"></span></label></div>
+        <div class="toggle-group"><label>عرض لفترة محدودة</label><label class="toggle-switch"><input type="checkbox" name="is_limited_offer" id="limitedOfferToggle" {% if post.is_limited_offer %}checked{% endif %} onchange="toggleExpiry()"><span class="toggle-slider"></span></label></div>
+      </div>
+      <div id="expiryGroup" style="{% if not post.is_limited_offer %}display:none{% endif %}; margin-top:15px;">
+        <div class="form-group"><label>تاريخ انتهاء العرض</label><input type="datetime-local" name="offer_expires_at" class="form-control" value="{{ post.offer_expires_at|date:'Y-m-d\TH:i'|default:'' }}"></div>
+      </div>
+    </div>
+
+    <div class="form-card">
+      <h3>&#128222; معلومات الحجز</h3>
+      <div class="form-group"><label>طريقة الحجز</label>
+        <select name="booking_method" class="form-control" id="bookingMethod" onchange="toggleBooking()">
+          <option value="call" {% if not post or post.booking_method == 'call' %}selected{% endif %}>اتصال</option>
+          <option value="whatsapp" {% if post.booking_method == 'whatsapp' %}selected{% endif %}>واتساب</option>
+          <option value="online" {% if post.booking_method == 'online' %}selected{% endif %}>داخل الموقع</option>
+          <option value="external" {% if post.booking_method == 'external' %}selected{% endif %}>رابط خارجي</option>
+        </select>
+      </div>
+      <div class="form-row" id="phoneFields">
+        <div class="form-group"><label>رقم الحجز</label><input type="text" name="booking_phone" class="form-control" value="{{ post.booking_phone|default:company.phone }}"></div>
+        <div class="form-group"><label>واتساب الحجز</label><input type="text" name="booking_whatsapp" class="form-control" value="{{ post.booking_whatsapp|default:company.whatsapp }}"></div>
+      </div>
+      <div id="linkField" style="display:none">
+        <div class="form-group"><label>رابط الحجز</label><input type="url" name="booking_link" class="form-control" value="{{ post.booking_link|default:'' }}"></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label>آخر موعد للحجز</label><input type="date" name="booking_deadline" class="form-control" value="{{ post.booking_deadline|date:'Y-m-d'|default:'' }}"></div>
+        <div class="form-group"><label>عدد المقاعد المتبقية</label><input type="number" name="seats_available" class="form-control" placeholder="15" min="0" value="{{ post.seats_available|default:'' }}"></div>
+      </div>
+    </div>
+
+    <div class="form-actions">
+      <a href="{% url 'travel_company_detail' company.pk %}" class="btn-secondary">إلغاء</a>
+      <button type="submit" class="btn-primary">{% if post %}حفظ التعديلات{% else %}نشر المنشور{% endif %}</button>
+    </div>
+  </form>
+</div>
+
+<script>
+function selectType(card, type) {
+  document.querySelectorAll('.type-card').forEach(c => c.classList.remove('selected'));
+  card.classList.add('selected');
+  document.getElementById('post_type_input').value = type;
+
+  // Hide all specialized fields
+  document.querySelectorAll('.trip-fields').forEach(field => {
+    field.classList.remove('visible');
+  });
+
+  // Show relevant fields based on type
+  if (type === 'trip') {
+    document.getElementById('tripFields').classList.add('visible');
+  } else if (type === 'visa') {
+    document.getElementById('visaFields').classList.add('visible');
+  } else if (type === 'ticket') {
+    document.getElementById('ticketFields').classList.add('visible');
+  } else if (type === 'hotel') {
+    document.getElementById('hotelFields').classList.add('visible');
+  } else if (type === 'umrah' || type === 'hajj') {
+    document.getElementById('umrahFields').classList.add('visible');
+  } else if (type === 'transport') {
+    document.getElementById('transportFields').classList.add('visible');
+  }
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+  const t = document.getElementById('post_type_input').value;
+  const card = document.querySelector('[data-type="' + t + '"]');
+  if (card) selectType(card, t);
+});
+
+function previewImg(input, previewId, placeholderId) {
+  const preview = document.getElementById(previewId);
+  const placeholder = document.getElementById(placeholderId);
+  if (input.files && input.files[0]) {
+    const reader = new FileReader();
+    reader.onload = e => { preview.src = e.target.result; preview.style.display = 'block'; if (placeholder) placeholder.style.display = 'none'; };
+    reader.readAsDataURL(input.files[0]);
+  }
+}
+function calcDiscount() {
+  const price = parseFloat(document.querySelector('[name="price"]').value) || 0;
+  const original = parseFloat(document.querySelector('[name="original_price"]').value) || 0;
+  const badge = document.getElementById('discountBadge');
+  if (original > price && price > 0) { badge.textContent = 'خصم ' + Math.round(((original-price)/original)*100) + '%'; badge.style.display = 'inline-block'; }
+  else badge.style.display = 'none';
+}
+function toggleExpiry() { document.getElementById('expiryGroup').style.display = document.getElementById('limitedOfferToggle').checked ? 'block' : 'none'; }
+function toggleBooking() {
+  const m = document.getElementById('bookingMethod').value;
+  document.getElementById('phoneFields').style.display = ['call','whatsapp'].includes(m) ? 'grid' : 'none';
+  document.getElementById('linkField').style.display = m === 'external' ? 'block' : 'none';
+}
+toggleBooking(); calcDiscount();
+</script>
+{% endblock %}

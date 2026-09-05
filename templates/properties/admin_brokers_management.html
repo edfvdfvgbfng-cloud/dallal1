@@ -471,7 +471,7 @@
 
   <!-- Stats Cards -->
   <div class="dashboard-stats">
-    <div class="stat-card" style="--card-color-1: #667eea; --card-color-2: #764ba2;">
+    <div class="stat-card" style="--card-color-1: #FF7A00; --card-color-2: #FF9500;">
       <div class="stat-icon">👥</div>
       <div class="stat-number">{{ total_brokers|intcomma }}</div>
       <div class="stat-label">إجمالي الدلالين</div>
@@ -483,7 +483,7 @@
       <div class="stat-label">الدلالين الموثقين</div>
       <div class="stat-trend">{% if total_brokers > 0 %}{{ verified_brokers|floatformat:1 }}%{% else %}0%{% endif %} من المجموع</div>
     </div>
-    <div class="stat-card" style="--card-color-1: #4299e1; --card-color-2: #3182ce;">
+    <div class="stat-card" style="--card-color-1: #FF7A00; --card-color-2: #FF7A00;">
       <div class="stat-icon">🏠</div>
       <div class="stat-number">{{ total_properties|intcomma }}</div>
       <div class="stat-label">إجمالي العقارات</div>
@@ -501,7 +501,7 @@
       <div class="stat-label">اشتراكات منتهية</div>
       <div class="stat-trend">تحتاج تجديد</div>
     </div>
-    <div class="stat-card" style="--card-color-1: #9f7aea; --card-color-2: #805ad5;">
+    <div class="stat-card" style="--card-color-1: #FF9500; --card-color-2: #FF9500;">
       <div class="stat-icon">💰</div>
       <div class="stat-number">{{ total_revenue|intcomma }}</div>
       <div class="stat-label">الإيرادات (د.ع)</div>
@@ -778,7 +778,7 @@ const iraqGovernorates = [
   { name: 'بغداد', code: 'BAG', color: '#4ecdc4' },
   { name: 'البصرة', code: 'BAS', color: '#44a08d' },
   { name: 'نينوى', code: 'NIN', color: '#6366f1' },
-  { name: 'أربيل', code: 'ERB', color: '#8b5cf6' },
+  { name: 'أربيل', code: 'ERB', color: '#FF7A00' },
   { name: 'النجف', code: 'NAJ', color: '#ec4899' },
   { name: 'كربلاء', code: 'KAR', color: '#f43f5e' },
   { name: 'بابل', code: 'BAB', color: '#f59e0b' },
@@ -792,7 +792,7 @@ const iraqGovernorates = [
   { name: 'القادسية', code: 'QAD', color: '#0ea5e9' },
   { name: 'صلاح الدين', code: 'SAL', color: '#3b82f6' },
   { name: 'دهوك', code: 'DUH', color: '#6366f1' },
-  { name: 'السليمانية', code: 'SUL', color: '#8b5cf6' },
+  { name: 'السليمانية', code: 'SUL', color: '#FF7A00' },
   { name: 'حلبجة', code: 'HAL', color: '#a855f7' }
 ];
 
@@ -813,7 +813,7 @@ function initCharts() {
       datasets: [{
         label: 'الدلالين الجدد',
         data: generateRandomData(30, 0, 10),
-        borderColor: '#667eea',
+        borderColor: '#FF7A00',
         backgroundColor: 'rgba(102, 126, 234, 0.1)',
         fill: true,
         tension: 0.4
@@ -839,7 +839,7 @@ function initCharts() {
       labels: ['جاهز', 'قيد البناء', 'مؤجر', 'مباع'],
       datasets: [{
         data: [45, 20, 25, 10],
-        backgroundColor: ['#48bb78', '#ed8936', '#4299e1', '#f56565'],
+        backgroundColor: ['#48bb78', '#ed8936', '#FF7A00', '#f56565'],
         borderWidth: 0
       }]
     },
@@ -861,7 +861,7 @@ function initCharts() {
       datasets: [{
         label: 'درجة الأداء',
         data: [85, 92, 78, 88, 95],
-        backgroundColor: '#667eea',
+        backgroundColor: '#FF7A00',
         borderRadius: 8
       }]
     },

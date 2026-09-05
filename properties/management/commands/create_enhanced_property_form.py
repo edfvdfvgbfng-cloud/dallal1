@@ -364,7 +364,7 @@ class Command(BaseCommand):
 <style>
 .enhanced-property-form-container {
     padding: 40px 20px;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: linear-gradient(135deg, #667eea 0%, #FF9500 100%);
     min-height: 100vh;
 }
 
@@ -387,7 +387,7 @@ class Command(BaseCommand):
     font-weight: bold;
     color: #333;
     margin-bottom: 10px;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: linear-gradient(135deg, #667eea 0%, #FF9500 100%);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
@@ -433,7 +433,7 @@ class Command(BaseCommand):
 }
 
 .progress-step.active .step-number {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: linear-gradient(135deg, #667eea 0%, #FF9500 100%);
     color: white;
 }
 
@@ -570,7 +570,7 @@ class Command(BaseCommand):
 }
 
 .btn-primary {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: linear-gradient(135deg, #667eea 0%, #FF9500 100%);
     color: white;
 }
 

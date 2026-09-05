@@ -3,7 +3,6 @@
 {% block extra_css %}
 <!-- Leaflet CSS -->
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-<link rel="stylesheet" href="https://unpkg.com/leaflet-draw@1.0.4/dist/leaflet.draw.css" />
 {% endblock %}
 
 {% block title %}إنشاء إعلان خدمة{% endblock %}
@@ -23,17 +22,19 @@
         <h3 style="color: var(--text); margin: 0 0 20px 0; border-bottom: 2px solid var(--border); padding-bottom: 10px;">معلومات الإعلان</h3>
         
         <div class="form-group" style="margin-bottom: 20px;">
-          <label style="display: block; margin-bottom: 8px; color: var(--text); font-weight: 600;">عنوان الإعلان *</label>
+          <label for="id_title" style="display: block; margin-bottom: 8px; color: var(--text); font-weight: 600;">عنوان الإعلان *</label>
           {{ form.title }}
+          <small style="color: #ff6b6b; font-size: 0.8rem;">مطلوب</small>
         </div>
         
         <div class="form-group" style="margin-bottom: 20px;">
-          <label style="display: block; margin-bottom: 8px; color: var(--text); font-weight: 600;">نوع الخدمة *</label>
+          <label for="id_service_type" style="display: block; margin-bottom: 8px; color: var(--text); font-weight: 600;">نوع الخدمة *</label>
           {{ form.service_type }}
+          <small style="color: #ff6b6b; font-size: 0.8rem;">مطلوب</small>
         </div>
         
         <div class="form-group" style="margin-bottom: 20px;">
-          <label style="display: block; margin-bottom: 8px; color: var(--text); font-weight: 600;">وصف الإعلان *</label>
+          <label for="id_description" style="display: block; margin-bottom: 8px; color: var(--text); font-weight: 600;">وصف الإعلان *</label>
           {{ form.description }}
         </div>
       </div>
@@ -42,129 +43,8 @@
         <h3 style="color: var(--text); margin: 0 0 20px 0; border-bottom: 2px solid var(--border); padding-bottom: 10px;">تفاصيل المشروع</h3>
         
         <div class="form-group" style="margin-bottom: 20px;">
-          <label style="display: block; margin-bottom: 8px; color: var(--text); font-weight: 600;">نوع المشروع</label>
+          <label for="id_project_type" style="display: block; margin-bottom: 8px; color: var(--text); font-weight: 600;">نوع المشروع</label>
           {{ form.project_type }}
-        </div>
-        
-        <div class="form-group" style="margin-bottom: 20px;">
-          <label style="display: block; margin-bottom: 8px; color: var(--text); font-weight: 600;">الموقع</label>
-          {{ form.location }}
-        </div>
-        
-        <div class="form-group" style="margin-bottom: 20px;">
-          <label style="display: block; margin-bottom: 8px; color: var(--text); font-weight: 600;">المحافظة</label>
-          {{ form.governorate }}
-        </div>
-        
-        <div class="form-group" style="margin-bottom: 20px;">
-          <label style="display: block; margin-bottom: 8px; color: var(--text); font-weight: 600;">المدينة</label>
-          <input type="text" name="city" class="form-control">
-        </div>
-        
-        <div class="form-group" style="margin-bottom: 20px;">
-          <label style="display: block; margin-bottom: 8px; color: var(--text); font-weight: 600;">القضاء</label>
-          <input type="text" name="district" class="form-control">
-        </div>
-        
-        <div class="form-group" style="margin-bottom: 20px;">
-          <label style="display: block; margin-bottom: 8px; color: var(--text); font-weight: 600;">الناحية</label>
-          <input type="text" name="subdistrict" class="form-control">
-        </div>
-        
-        <div class="form-group" style="margin-bottom: 20px;">
-          <label style="display: block; margin-bottom: 8px; color: var(--text); font-weight: 600;">المنطقة</label>
-          <input type="text" name="area" class="form-control">
-        </div>
-        
-        <div class="form-group" style="margin-bottom: 20px;">
-          <label style="display: block; margin-bottom: 8px; color: var(--text); font-weight: 600;">الحي</label>
-          <input type="text" name="neighborhood" class="form-control">
-        </div>
-        
-        <div class="form-group" style="margin-bottom: 20px;">
-          <label style="display: block; margin-bottom: 8px; color: var(--text); font-weight: 600;">المحلة</label>
-          <input type="text" name="mahalla" class="form-control">
-        </div>
-        
-        <div class="form-group" style="margin-bottom: 20px;">
-          <label style="display: block; margin-bottom: 8px; color: var(--text); font-weight: 600;">البلوك</label>
-          <input type="text" name="block" class="form-control">
-        </div>
-        
-        <div class="form-group" style="margin-bottom: 20px;">
-          <label style="display: block; margin-bottom: 8px; color: var(--text); font-weight: 600;">الشارع</label>
-          <input type="text" name="street" class="form-control">
-        </div>
-        
-        <div class="form-group" style="margin-bottom: 20px;">
-          <label style="display: block; margin-bottom: 8px; color: var(--text); font-weight: 600;">الزقاق</label>
-          <input type="text" name="alley" class="form-control">
-        </div>
-        
-        <div class="form-group" style="margin-bottom: 20px;">
-          <label style="display: block; margin-bottom: 8px; color: var(--text); font-weight: 600;">رقم الدار</label>
-          <input type="text" name="house_number" class="form-control">
-        </div>
-        
-        <div class="form-group" style="margin-bottom: 20px;">
-          <label style="display: block; margin-bottom: 8px; color: var(--text); font-weight: 600;">رقم العقار</label>
-          <input type="text" name="property_number" class="form-control">
-        </div>
-        
-        <div class="form-group" style="margin-bottom: 20px;">
-          <label style="display: block; margin-bottom: 8px; color: var(--text); font-weight: 600;">أقرب نقطة دالة</label>
-          <input type="text" name="landmark" class="form-control">
-        </div>
-        
-        <div class="form-group" style="margin-bottom: 20px;">
-          <label style="display: block; margin-bottom: 8px; color: var(--text); font-weight: 600;">العنوان التفصيلي</label>
-          {{ form.location }}
-        </div>
-      </div>
-
-      <div class="form-section" style="margin-bottom: 30px;">
-        <h3 style="color: var(--text); margin: 0 0 20px 0; border-bottom: 2px solid var(--border); padding-bottom: 10px;">الموقع الجغرافي</h3>
-        
-        <div class="form-group" style="margin-bottom: 20px;">
-          <label style="display: block; margin-bottom: 8px; color: var(--text); font-weight:600;">خط العرض</label>
-          <div style="display: flex; gap: 10px;">
-            <input type="number" step="any" name="latitude" class="form-control" placeholder="مثال: 33.3152" id="latitude-input-service">
-            <button type="button" onclick="getLocationGPSService()" class="btn btn-secondary" style="white-space: nowrap; padding: 12px 15px;">
-              📍 GPS
-            </button>
-          </div>
-        </div>
-        
-        <div class="form-group" style="margin-bottom: 20px;">
-          <label style="display: block; margin-bottom: 8px; color: var(--text); font-weight: 600;">خط الطول</label>
-          <input type="number" step="any" name="longitude" class="form-control" placeholder="مثال: 44.3661" id="longitude-input-service">
-        </div>
-        
-        <div class="form-group" style="margin-bottom: 20px;">
-          <label style="display: block; margin-bottom: 8px; color: var(--text); font-weight: 600;">معاينة الموقع على الخريطة</label>
-          <div style="position: relative;">
-            <div id="location-preview-map-service" style="height: 300px; border-radius: var(--radius); border: 1px solid var(--border);"></div>
-            <div style="position: absolute; top: 10px; right: 10px; z-index: 1000; display: flex; gap: 5px;">
-              <button type="button" class="btn btn-secondary" onclick="changeMapLayer('service', 'osm')" style="padding: 5px 10px; font-size: 12px;">OpenStreetMap</button>
-              <button type="button" class="btn btn-secondary" onclick="changeMapLayer('service', 'satellite')" style="padding: 5px 10px; font-size: 12px;">Satellite</button>
-              <button type="button" class="btn btn-secondary" onclick="changeMapLayer('service', 'terrain')" style="padding: 5px 10px; font-size: 12px;">Terrain</button>
-              <button type="button" class="btn btn-secondary" onclick="changeMapLayer('service', 'dark')" style="padding: 5px 10px; font-size: 12px;">Dark</button>
-              <button type="button" class="btn btn-secondary" onclick="toggleMapFullscreen('service')" style="padding: 5px 10px; font-size: 12px;">⛶</button>
-            </div>
-          </div>
-          <p style="font-size: 0.8rem; color: var(--text-light); margin-top: 5px;">
-            * اضغط على "GPS" لتحديد موقعك تلقائياً أو انقر على الخريطة لتحديد الموقع يدوياً
-          </p>
-        </div>
-        
-        <div class="form-group" style="margin-bottom: 20px;">
-          <label style="display: flex; align-items: center; gap: 10px; color: var(--text); font-weight: 600; cursor: pointer;">
-            <input type="checkbox" name="enable_gps" id="enable-gps-service" style="width: 20px; height: 20px;">
-            <span>📍 نشر GPS - إظهار الموقع على خريطة المنصة</span>
-          </label>
-          <p style="font-size: 0.8rem; color: var(--text-light); margin-top: 5px;">
-            عند تفعيل هذا الخيار، سيظهر موقع الخدمة على خريطة المنصة الرئيسية
-          </p>
         </div>
       </div>
 
@@ -172,17 +52,17 @@
         <h3 style="color: var(--text); margin: 0 0 20px 0; border-bottom: 2px solid var(--border); padding-bottom: 10px;">السعر والوقت</h3>
         
         <div class="form-group" style="margin-bottom: 20px;">
-          <label style="display: block; margin-bottom: 8px; color: var(--text); font-weight: 600;">السعر</label>
+          <label for="id_price" style="display: block; margin-bottom: 8px; color: var(--text); font-weight: 600;">السعر</label>
           {{ form.price }}
         </div>
         
         <div class="form-group" style="margin-bottom: 20px;">
-          <label style="display: block; margin-bottom: 8px; color: var(--text); font-weight: 600;">وصف السعر</label>
+          <label for="id_price_description" style="display: block; margin-bottom: 8px; color: var(--text); font-weight: 600;">وصف السعر</label>
           {{ form.price_description }}
         </div>
         
         <div class="form-group" style="margin-bottom: 20px;">
-          <label style="display: block; margin-bottom: 8px; color: var(--text); font-weight: 600;">وقت الإنجاز</label>
+          <label for="id_completion_time" style="display: block; margin-bottom: 8px; color: var(--text); font-weight: 600;">وقت الإنجاز</label>
           {{ form.completion_time }}
         </div>
       </div>
@@ -191,12 +71,12 @@
         <h3 style="color: var(--text); margin: 0 0 20px 0; border-bottom: 2px solid var(--border); padding-bottom: 10px;">التفاصيل</h3>
         
         <div class="form-group" style="margin-bottom: 20px;">
-          <label style="display: block; margin-bottom: 8px; color: var(--text); font-weight: 600;">ما يشمله العرض</label>
+          <label for="id_includes" style="display: block; margin-bottom: 8px; color: var(--text); font-weight: 600;">ما يشمله العرض</label>
           {{ form.includes }}
         </div>
         
         <div class="form-group" style="margin-bottom: 20px;">
-          <label style="display: block; margin-bottom: 8px; color: var(--text); font-weight: 600;">المتطلبات</label>
+          <label for="id_requirements" style="display: block; margin-bottom: 8px; color: var(--text); font-weight: 600;">المتطلبات</label>
           {{ form.requirements }}
         </div>
       </div>
@@ -205,16 +85,94 @@
         <h3 style="color: var(--text); margin: 0 0 20px 0; border-bottom: 2px solid var(--border); padding-bottom: 10px;">الوسائط</h3>
         
         <div class="form-group" style="margin-bottom: 20px;">
-          <label style="display: block; margin-bottom: 8px; color: var(--text); font-weight: 600;">صورة الغلاف</label>
+          <label for="id_cover_image" style="display: block; margin-bottom: 8px; color: var(--text); font-weight: 600;">صورة الغلاف</label>
           {{ form.cover_image }}
         </div>
         
         <div class="form-group" style="margin-bottom: 20px;">
-          <label style="display: flex; align-items: center; gap: 10px; color: var(--text); font-weight: 600;">
-            {{ form.is_featured }}
-            <span>جعل الإعلان مميزاً</span>
-          </label>
-          <small style="color: var(--text-light);">الإعلانات المميزة تظهر أولاً في نتائج البحث</small>
+          <label for="id_video_url" style="display: block; margin-bottom: 8px; color: var(--text); font-weight: 600;">رابط فيديو (YouTube, Vimeo, etc.)</label>
+          {{ form.video_url }}
+          <small style="color: var(--text-light);">يمكنك إضافة رابط فيديو من YouTube أو Vimeo</small>
+        </div>
+      </div>
+
+      <div class="form-section" style="margin-bottom: 30px;">
+        <h3 style="color: var(--text); margin: 0 0 20px 0; border-bottom: 2px solid var(--border); padding-bottom: 10px;">صور العمل (حتى 10 صور)</h3>
+        
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px;">
+          <div class="form-group" style="margin-bottom: 15px;">
+            <label for="id_work_image_1" style="display: block; margin-bottom: 8px; color: var(--text); font-weight: 600;">صورة العمل 1</label>
+            {{ form.work_image_1 }}
+          </div>
+          
+          <div class="form-group" style="margin-bottom: 15px;">
+            <label for="id_work_image_2" style="display: block; margin-bottom: 8px; color: var(--text); font-weight: 600;">صورة العمل 2</label>
+            {{ form.work_image_2 }}
+          </div>
+          
+          <div class="form-group" style="margin-bottom: 15px;">
+            <label for="id_work_image_3" style="display: block; margin-bottom: 8px; color: var(--text); font-weight: 600;">صورة العمل 3</label>
+            {{ form.work_image_3 }}
+          </div>
+          
+          <div class="form-group" style="margin-bottom: 15px;">
+            <label for="id_work_image_4" style="display: block; margin-bottom: 8px; color: var(--text); font-weight: 600;">صورة العمل 4</label>
+            {{ form.work_image_4 }}
+          </div>
+          
+          <div class="form-group" style="margin-bottom: 15px;">
+            <label for="id_work_image_5" style="display: block; margin-bottom: 8px; color: var(--text); font-weight: 600;">صورة العمل 5</label>
+            {{ form.work_image_5 }}
+          </div>
+          
+          <div class="form-group" style="margin-bottom: 15px;">
+            <label for="id_work_image_6" style="display: block; margin-bottom: 8px; color: var(--text); font-weight: 600;">صورة العمل 6</label>
+            {{ form.work_image_6 }}
+          </div>
+          
+          <div class="form-group" style="margin-bottom: 15px;">
+            <label for="id_work_image_7" style="display: block; margin-bottom: 8px; color: var(--text); font-weight: 600;">صورة العمل 7</label>
+            {{ form.work_image_7 }}
+          </div>
+          
+          <div class="form-group" style="margin-bottom: 15px;">
+            <label for="id_work_image_8" style="display: block; margin-bottom: 8px; color: var(--text); font-weight: 600;">صورة العمل 8</label>
+            {{ form.work_image_8 }}
+          </div>
+          
+          <div class="form-group" style="margin-bottom: 15px;">
+            <label for="id_work_image_9" style="display: block; margin-bottom: 8px; color: var(--text); font-weight: 600;">صورة العمل 9</label>
+            {{ form.work_image_9 }}
+          </div>
+          
+          <div class="form-group" style="margin-bottom: 15px;">
+            <label for="id_work_image_10" style="display: block; margin-bottom: 8px; color: var(--text); font-weight: 600;">صورة العمل 10</label>
+            {{ form.work_image_10 }}
+          </div>
+        </div>
+      </div>
+
+      <div class="form-section" style="margin-bottom: 30px;">
+        <h3 style="color: var(--text); margin: 0 0 20px 0; border-bottom: 2px solid var(--border); padding-bottom: 10px;">فيديوهات العمل (حتى 3 فيديوهات)</h3>
+        
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px;">
+          <div class="form-group" style="margin-bottom: 20px;">
+            <label for="id_work_video_1" style="display: block; margin-bottom: 8px; color: var(--text); font-weight: 600;">فيديو العمل 1</label>
+            {{ form.work_video_1 }}
+            <small style="color: var(--text-light);">يمكنك رفع فيديو يعرض أعمالك السابقة</small>
+          </div>
+          
+          <div class="form-group" style="margin-bottom: 20px;">
+            <label for="id_work_video_2" style="display: block; margin-bottom: 8px; color: var(--text); font-weight: 600;">فيديو العمل 2</label>
+            {{ form.work_video_2 }}
+            <small style="color: var(--text-light);">فيديو إضافي لعرض أعمالك</small>
+          </div>
+          
+          <div class="form-group" style="margin-bottom: 20px;">
+            <label for="id_work_video_3" style="display: block; margin-bottom: 8px; color: var(--text); font-weight: 600;">فيديو العمل 3</label>
+            {{ form.work_video_3 }}
+            <small style="color: var(--text-light);">فيديو إضافي لعرض أعمالك</small>
+          </div>
         </div>
       </div>
 
@@ -232,7 +190,7 @@
   padding: 12px 15px;
   border: 2px solid var(--border);
   border-radius: var(--radius);
-  background: white;
+  background: var(--card-bg);
   color: var(--text);
   font-size: 1rem;
 }
@@ -254,9 +212,7 @@
 }
 </style>
 
-<!-- Leaflet JS -->
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-<script src="https://unpkg.com/leaflet-draw@1.0.4/dist/leaflet.draw.js"></script>
+
 
 <script>
 // Global variables for service map
@@ -268,6 +224,12 @@ let isFullscreenService = false;
 
 // Initialize the service location preview map
 function initServiceMap() {
+    // Check if Leaflet Draw is loaded
+    if (typeof L.Control.Draw === 'undefined') {
+        console.error('Leaflet Draw is not loaded');
+        return;
+    }
+
     const lat = document.getElementById('latitude-input-service').value || 33.3152;
     const lng = document.getElementById('longitude-input-service').value || 44.3661;
     
@@ -480,34 +442,88 @@ function toggleMapFullscreen(prefix) {
 
 // Initialize map when page loads
 document.addEventListener('DOMContentLoaded', function() {
-    initServiceMap();
-    
-    // Update map when coordinates change manually
-    document.getElementById('latitude-input-service').addEventListener('change', function() {
-        const lat = parseFloat(this.value);
-        const lng = parseFloat(document.getElementById('longitude-input-service').value);
-        
-        if (lat && lng && mapService) {
-            mapService.setView([lat, lng], 16);
-            if (markerService) {
-                mapService.removeLayer(markerService);
+    // Add form submit listener with simple validation
+    const form = document.querySelector('.ad-form');
+    if (form) {
+        form.addEventListener('submit', function(e) {
+            console.log('Form submit event fired');
+            
+            // Basic validation - just check if required fields are empty
+            const title = document.getElementById('id_title');
+            const serviceType = document.getElementById('id_service_type');
+            const description = document.getElementById('id_description');
+            
+            let isValid = true;
+            
+            if (title && (!title.value || title.value.trim() === '')) {
+                isValid = false;
+                title.style.borderColor = 'red';
+            } else if (title) {
+                title.style.borderColor = '';
             }
-            markerService = L.marker([lat, lng]).addTo(mapService);
-        }
-    });
-    
-    document.getElementById('longitude-input-service').addEventListener('change', function() {
-        const lng = parseFloat(this.value);
-        const lat = parseFloat(document.getElementById('latitude-input-service').value);
-        
-        if (lat && lng && mapService) {
-            mapService.setView([lat, lng], 16);
-            if (markerService) {
-                mapService.removeLayer(markerService);
+            
+            if (serviceType && (!serviceType.value || serviceType.value.trim() === '')) {
+                isValid = false;
+                serviceType.style.borderColor = 'red';
+            } else if (serviceType) {
+                serviceType.style.borderColor = '';
             }
-            markerService = L.marker([lat, lng]).addTo(mapService);
-        }
-    });
+            
+            if (description && (!description.value || description.value.trim() === '')) {
+                description.style.borderColor = '';
+            } else if (description) {
+                description.style.borderColor = '';
+            }
+            
+            // Remove validation - allow empty fields
+            console.log('Form submitting without strict validation...');
+        });
+    }
+    
+    // Add event listeners with error handling
+    const latInput = document.getElementById('latitude-input-service');
+    const lngInput = document.getElementById('longitude-input-service');
+    
+    if (latInput && lngInput) {
+        latInput.addEventListener('change', function() {
+            const lat = parseFloat(this.value);
+            const lng = parseFloat(lngInput.value);
+            
+            if (lat && lng && mapService) {
+                mapService.setView([lat, lng], 16);
+                if (markerService) {
+                    mapService.removeLayer(markerService);
+                }
+                markerService = L.marker([lat, lng]).addTo(mapService);
+            }
+        });
+        
+        lngInput.addEventListener('change', function() {
+            const lng = parseFloat(this.value);
+            const lat = parseFloat(latInput.value);
+            
+            if (lat && lng && mapService) {
+                mapService.setView([lat, lng], 16);
+                if (markerService) {
+                    mapService.removeLayer(markerService);
+                }
+                markerService = L.marker([lat, lng]).addTo(mapService);
+            }
+        });
+    }
+    
+    // Initialize map with error handling
+    try {
+        initServiceMap();
+    } catch (error) {
+        console.error('Error initializing service map:', error);
+    }
+    
+    // Add GPS button event listener
+    const gpsButton = document.getElementById('gps-button-service');
+    if (gpsButton) {
+        gpsButton.addEventListener('click', getLocationGPSService);
+    }
 });
 </script>
 {% endblock %}

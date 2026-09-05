@@ -14,7 +14,7 @@ from django.utils.decorators import method_decorator
 from functools import wraps
 from django.contrib.auth.decorators import login_required
 
-from .models import Property, PropertyImage, PropertyVideo, PropertyDocument, SiteSettings
+from .models import Property, PropertyImage, PropertyVideo, PropertyDocument, SiteSettings, HotelPage, Job
 from .utils import get_public_properties, filter_properties, sort_properties
 from .services import SubscriptionService
 
@@ -437,33 +437,123 @@ def api_site_settings(request):
 
 
 @require_http_methods(["GET"])
-@rate_limit(limit=50, period=60)
+@rate_limit(limit=100, period=60)
 def api_search_suggestions(request):
-    """Get search suggestions for autocomplete."""
+    """Get search suggestions for autocomplete with multi-type support."""
     query = request.GET.get('q', '')
+    search_type = request.GET.get('type', 'all')  # all, properties, hotels, resorts, jobs
     if len(query) < 2:
         return JsonResponse({'suggestions': []})
     
     q = query.lower()
-    properties = [
-        p for p in get_public_properties()
-        if q in (p.title or '').lower()
-        or q in (p.district or '').lower()
-        or q in (p.street or '').lower()
-        or q in (p.location or '').lower()
-        or q in (getattr(p, 'region', None) or '').lower()
-    ][:10]
-    
     suggestions = []
-    for prop in properties:
-        suggestions.append({
-            'id': prop.id,
-            'title': prop.display_title,
-            'district': prop.district,
-            'type': prop.get_type_display(),
-            'slug': prop.slug,
-        })
     
+    # Normalize Arabic text for better matching
+    def normalize_arabic(text):
+        if not text:
+            return ''
+        text = text.replace('أ', 'ا').replace('إ', 'ا').replace('آ', 'ا')
+        text = text.replace('ة', 'ه')
+        return text
+    
+    q_normalized = normalize_arabic(q)
+    
+    # Properties suggestions
+    if search_type in ['all', 'properties']:
+        properties = Property.objects.filter(status='published').select_related('country').only('id', 'title', 'slug', 'district', 'governorate', 'type', 'price')[:10]
+        
+        for prop in properties:
+            title = (prop.title or '').lower()
+            district = (prop.district or '').lower()
+            governorate = (prop.governorate or '').lower()
+            location = (prop.location or '').lower()
+            
+            if (q in title or q_normalized in title or
+                q in district or q_normalized in district or
+                q in governorate or q_normalized in governorate or
+                q in location or q_normalized in location):
+                suggestions.append({
+                    'type': 'property',
+                    'id': prop.id,
+                    'title': prop.display_title,
+                    'district': prop.district,
+                    'governorate': prop.governorate,
+                    'property_type': prop.get_type_display,
+                    'slug': prop.slug,
+                    'price': prop.price_formatted if prop.price else None,
+                    'url': f"/property/{prop.slug}/",
+                })
+    
+    # Hotels suggestions
+    if search_type in ['all', 'hotels']:
+        hotels = HotelPage.objects.filter(status='active', page_type='hotel').only('id', 'title', 'slug', 'district', 'governorate', 'price_start')[:5]
+        
+        for hotel in hotels:
+            title = (hotel.title or '').lower()
+            district = (hotel.district or '').lower()
+            governorate = (hotel.governorate or '').lower()
+            
+            if (q in title or q_normalized in title or
+                q in district or q_normalized in district or
+                q in governorate or q_normalized in governorate):
+                suggestions.append({
+                    'type': 'hotel',
+                    'id': hotel.id,
+                    'title': hotel.title,
+                    'district': hotel.district,
+                    'governorate': hotel.governorate,
+                    'slug': hotel.slug,
+                    'price': hotel.price_start,
+                    'url': f"/hotels/{hotel.slug}/",
+                })
+    
+    # Resorts suggestions
+    if search_type in ['all', 'resorts']:
+        resorts = HotelPage.objects.filter(status='active', page_type='resort').only('id', 'title', 'slug', 'district', 'governorate', 'price_start')[:5]
+        
+        for resort in resorts:
+            title = (resort.title or '').lower()
+            district = (resort.district or '').lower()
+            governorate = (resort.governorate or '').lower()
+            
+            if (q in title or q_normalized in title or
+                q in district or q_normalized in district or
+                q in governorate or q_normalized in governorate):
+                suggestions.append({
+                    'type': 'resort',
+                    'id': resort.id,
+                    'title': resort.title,
+                    'district': resort.district,
+                    'governate': resort.governorate,
+                    'slug': resort.slug,
+                    'price': resort.price_start,
+                    'url': f"/resorts/{resort.slug}/",
+                })
+    
+    # Jobs suggestions
+    if search_type in ['all', 'jobs']:
+        jobs = Job.objects.filter(status='active').select_related('category').only('id', 'title', 'slug', 'company_name', 'location')[:5]
+        
+        for job in jobs:
+            title = (job.title or '').lower()
+            company = (job.company_name or '').lower()
+            location = (job.location or '').lower()
+            
+            if (q in title or q_normalized in title or
+                q in company or q_normalized in company or
+                q in location or q_normalized in location):
+                suggestions.append({
+                    'type': 'job',
+                    'id': job.id,
+                    'title': job.title,
+                    'company': job.company_name,
+                    'location': job.location,
+                    'slug': job.slug,
+                    'url': f"/jobs/{job.slug}/",
+                })
+    
+    # Limit suggestions and return
+    suggestions = suggestions[:10]
     return JsonResponse({'suggestions': suggestions})
 
 

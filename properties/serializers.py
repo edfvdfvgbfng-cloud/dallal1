@@ -214,27 +214,68 @@ class ChatMessageSerializer(serializers.ModelSerializer):
     attachments = MessageAttachmentSerializer(many=True, read_only=True)
     read_by_users = UserSerializer(many=True, source='read_by', read_only=True)
     is_read_by_current_user = serializers.SerializerMethodField()
-    
+    property_data = serializers.SerializerMethodField()
+    hotel_data = serializers.SerializerMethodField()
+    resort_data = serializers.SerializerMethodField()
+
     class Meta:
         model = ChatMessage
         fields = [
             'message_id', 'conversation', 'sender', 'message_type', 'content',
             'reply_to', 'is_edited', 'edited_at', 'is_deleted', 'deleted_at',
             'is_pinned', 'read_by_users', 'is_read_by_current_user',
+            'status', 'delivered_at',
+            'property', 'hotel', 'resort',
+            'property_data', 'hotel_data', 'resort_data',
             'created_at', 'updated_at', 'attachments'
         ]
-        read_only_fields = ['message_id', 'created_at', 'updated_at']
-    
+        read_only_fields = ['message_id', 'created_at', 'updated_at', 'delivered_at']
+
     def get_reply_to(self, obj):
         if obj.reply_to:
             return ChatMessageSerializer(obj.reply_to, context=self.context).data
         return None
-    
+
     def get_is_read_by_current_user(self, obj):
         request = self.context.get('request')
         if request and request.user.is_authenticated:
             return obj.is_read_by_user(request.user)
         return False
+
+    def get_property_data(self, obj):
+        if obj.property:
+            return {
+                'id': obj.property.id,
+                'display_title': obj.property.display_title,
+                'price': str(obj.property.price),
+                'location': obj.property.get_location_display(),
+                'image': obj.property.main_image.url if obj.property.main_image else None
+            }
+        return None
+
+    def get_hotel_data(self, obj):
+        if obj.hotel:
+            return {
+                'id': obj.hotel.id,
+                'name': obj.hotel.name,
+                'city': obj.hotel.city,
+                'country': obj.hotel.country,
+                'rating': obj.hotel.rating,
+                'price_per_night': str(obj.hotel.price_per_night) if obj.hotel.price_per_night else None
+            }
+        return None
+
+    def get_resort_data(self, obj):
+        if obj.resort:
+            return {
+                'id': obj.resort.id,
+                'name': obj.resort.name,
+                'city': obj.resort.city,
+                'country': obj.resort.country,
+                'rating': obj.resort.rating,
+                'price_per_night': str(obj.resort.price_per_night) if obj.resort.price_per_night else None
+            }
+        return None
 
 
 class MessageReportSerializer(serializers.ModelSerializer):

@@ -20,7 +20,7 @@ from .ai_training_models import (
     ConversationLog, KnowledgeBaseEntry, ToolUsageLog
 )
 from .ai_arabic_normalizer import arabic_normalizer
-from .ai_intent_detection import intent_detector
+from .ai_intent_classifier import intent_classifier
 from .ai_entity_extraction import entity_extractor
 from .ai_context_engine import context_manager
 from .ai_agent_tools import tool_registry
@@ -424,7 +424,7 @@ class DataCollector:
     
     def __init__(self):
         self.arabic_normalizer = arabic_normalizer
-        self.intent_detector = intent_detector
+        self.intent_classifier = intent_classifier
         self.entity_extractor = entity_extractor
         self.context_manager = context_manager
         self.money_parser = MoneyParser()
@@ -1276,7 +1276,7 @@ class Evaluator:
         
         for example in test_data:
             # Use current intent detector
-            result = intent_detector.detect_intent(example['text'])
+            result = intent_classifier.classify_intent(example['text'])
             predicted_intent = result['intent']
             
             predictions.append({
@@ -1448,14 +1448,14 @@ class AIHealthChecker:
             
             # Check intent detector
             try:
-                test_result = intent_detector.detect_intent("اختبار")
-                health_report['components']['intent_detector'] = {
+                test_result = intent_classifier.classify_intent("اختبار")
+                health_report['components']['intent_classifier'] = {
                     'status': 'operational',
                     'test_intent': test_result.get('intent'),
                     'confidence': test_result.get('confidence')
                 }
             except Exception as e:
-                health_report['components']['intent_detector'] = {
+                health_report['components']['intent_classifier'] = {
                     'status': 'error',
                     'error': str(e)
                 }

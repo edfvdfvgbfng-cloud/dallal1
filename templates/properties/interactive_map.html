@@ -1,0 +1,274 @@
+{% extends 'properties/base.html' %}
+{% load static %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<link rel="stylesheet" href="{% static 'css/interactive-map.css' %}" />
+{% endblock %}
+
+{% block content %}
+<div class="map-container">
+  <!-- Map Sidebar -->
+  <div class="map-sidebar">
+    <div class="sidebar-header">
+      <h2>🗺️ الخريطة التفاعلية</h2>
+      <button type="button" class="close-sidebar btn" id="close-sidebar">
+        <span>✕</span>
+      </button>
+    </div>
+
+    <!-- Search Section -->
+    <div class="sidebar-section">
+      <h3>🔍 البحث بالموقع</h3>
+      <div class="search-form">
+        <div class="form-group">
+          <label>المحافظة</label>
+          <select id="governorate-select" class="form-control">
+            <option value="">الكل</option>
+            <option value="بغداد">بغداد</option>
+            <option value="البصرة">البصرة</option>
+            <option value="نينوى">نينوى</option>
+            <option value="أربيل">أربيل</option>
+            <option value="النجف">النجف</option>
+            <option value="كربلاء">كربلاء</option>
+            <option value="بابل">بابل</option>
+            <option value="الأنبار">الأنبار</option>
+            <option value="ديالى">ديالى</option>
+            <option value="ذي قار">ذي قار</option>
+            <option value="ميسان">ميسان</option>
+            <option value="واسط">واسط</option>
+            <option value="صلاح الدين">صلاح الدين</option>
+            <option value="دهوك">دهوك</option>
+            <option value="كركوك">كركوك</option>
+            <option value="القادسية">القادسية</option>
+            <option value="المثنى">المثنى</option>
+            <option value="بابل">بابل</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>المدينة</label>
+          <input type="text" id="city-input" class="form-control" placeholder="أدخل اسم المدينة">
+        </div>
+        <div class="form-group">
+          <label>نوع العقار</label>
+          <select id="property-type-select" class="form-control">
+            <option value="">الكل</option>
+            <option value="apartment">شقة</option>
+            <option value="house">فيلا</option>
+            <option value="land">أرض</option>
+            <option value="commercial">تجاري</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>نوع المعاملة</label>
+          <select id="transaction-type-select" class="form-control">
+            <option value="">الكل</option>
+            <option value="sale">بيع</option>
+            <option value="rent">إيجار</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>السعر الأقصى</label>
+          <input type="number" id="max-price-input" class="form-control" placeholder="السعر بالدينار">
+        </div>
+        <div class="form-group">
+          <label>المساحة الدنيا (م²)</label>
+          <input type="number" id="min-area-input" class="form-control" placeholder="المساحة">
+        </div>
+        <button type="button" class="btn btn-primary" id="search-btn">
+          <span>🔍</span> بحث
+        </button>
+      </div>
+    </div>
+
+    <!-- Location Search -->
+    <div class="sidebar-section">
+      <h3>📍 البحث القرب من مكان</h3>
+      <div class="location-search">
+        <div class="form-group">
+          <label>استخدم موقعي الحالي</label>
+          <button type="button" class="btn btn-outline" id="use-location-btn">
+            <span>🎯</span> تحديد موقعي
+          </button>
+        </div>
+        <div class="form-group">
+          <label>أو أدخل الإحداثيات</label>
+          <div class="coordinate-inputs">
+            <input type="number" id="lat-input" class="form-control" placeholder="خط العرض" step="0.0001">
+            <input type="number" id="lng-input" class="form-control" placeholder="خط الطول" step="0.0001">
+          </div>
+        </div>
+        <div class="form-group">
+          <label>نصف القطر (كم)</label>
+          <input type="range" id="radius-slider" class="form-control" min="1" max="20" value="5">
+          <span id="radius-value">5 كم</span>
+        </div>
+        <button type="button" class="btn btn-primary" id="location-search-btn">
+          <span>🔍</span> بحث قرب الموقع
+        </button>
+      </div>
+    </div>
+
+    <!-- Map Layers -->
+    <div class="sidebar-section">
+      <h3>🗺️ طبقات الخريطة</h3>
+      <div class="map-layers">
+        <label class="layer-toggle">
+          <input type="checkbox" id="heatmap-toggle" checked>
+          <span>خريطة حرارية للأسعار</span>
+        </label>
+        <label class="layer-toggle">
+          <input type="checkbox" id="amenities-toggle" checked>
+          <span>الخدمات والمرافق</span>
+        </label>
+        <label class="layer-toggle">
+          <input type="checkbox" id="markers-toggle" checked>
+          <span>علامات العقارات</span>
+        </label>
+      </div>
+    </div>
+
+    <!-- Amenity Filters -->
+    <div class="sidebar-section">
+      <h3>🏫 المرافق القريبة</h3>
+      <div class="amenity-filters">
+        <label class="amenity-toggle">
+          <input type="checkbox" class="amenity-checkbox" value="school" checked>
+          <span>🏫 مدارس</span>
+        </label>
+        <label class="amenity-toggle">
+          <input type="checkbox" class="amenity-checkbox" value="hospital" checked>
+          <span>🏥 مستشفيات</span>
+        </label>
+        <label class="amenity-toggle">
+          <input type="checkbox" class="amenity-checkbox" value="market" checked>
+          <span>🏪 أسواق</span>
+        </label>
+        <label class="amenity-toggle">
+          <input type="checkbox" class="amenity-checkbox" value="mosque">
+          <span>🕌 مساجد</span>
+        </label>
+        <label class="amenity-toggle">
+          <input type="checkbox" class="amenity-checkbox" value="university">
+          <span>🎓 جامعات</span>
+        </label>
+        <label class="amenity-toggle">
+          <input type="checkbox" class="amenity-checkbox" value="park">
+          <span>🌳 حدائق</span>
+        </label>
+        <label class="amenity-toggle">
+          <input type="checkbox" class="amenity-checkbox" value="gas_station">
+          <span>⛽ محطات وقود</span>
+        </label>
+      </div>
+    </div>
+
+    <!-- Area Comparison -->
+    <div class="sidebar-section">
+      <h3>📊 مقارنة المناطق</h3>
+      <div class="area-comparison">
+        <button type="button" class="btn btn-outline" id="compare-areas-btn">
+          <span>📊</span> مقارنة المناطق المعروضة
+        </button>
+        <div id="comparison-results" class="comparison-results hidden">
+          <!-- Results will be loaded here -->
+        </div>
+      </div>
+    </div>
+
+    <!-- Statistics -->
+    <div class="sidebar-section">
+      <h3>📈 إحصائيات المنطقة</h3>
+      <div id="area-stats" class="area-stats">
+        <div class="stat-item">
+          <span class="stat-label">متوسط السعر:</span>
+          <span class="stat-value" id="avg-price">-</span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-label">عدد العقارات:</span>
+          <span class="stat-value" id="property-count">-</span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-label">اتجاه السعر:</span>
+          <span class="stat-value" id="price-trend">-</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Map View -->
+  <div class="map-view">
+    <div id="map" class="leaflet-map"></div>
+    
+    <!-- Map Controls -->
+    <div class="map-controls">
+      <button type="button" class="map-control-btn" id="toggle-sidebar" title="إظهار/إخفاء الشريط الجانبي">
+        <span>☰</span>
+      </button>
+      <button type="button" class="map-control-btn" id="clear-filters" title="مسح الفلاتر">
+        <span>🗑️</span>
+      </button>
+      <button type="button" class="map-control-btn" id="refresh-map" title="تحديث الخريطة">
+        <span>🔄</span>
+      </button>
+    </div>
+
+    <!-- Property Info Popup -->
+    <div id="property-popup" class="property-popup hidden">
+      <div class="popup-content">
+        <div class="popup-header">
+          <h3 id="popup-title">عنوان العقار</h3>
+          <button type="button" class="close-popup" id="close-popup">✕</button>
+        </div>
+        <div class="popup-body">
+          <div class="popup-image">
+            <img id="popup-image" src="" alt="صورة العقار">
+          </div>
+          <div class="popup-details">
+            <div class="popup-price">
+              <span id="popup-price">-</span>
+              <span id="popup-currency">-</span>
+            </div>
+            <div class="popup-info">
+              <span>📍</span>
+              <span id="popup-location">-</span>
+            </div>
+            <div class="popup-info">
+              <span>🏠</span>
+              <span id="popup-type">-</span>
+            </div>
+            <div class="popup-info">
+              <span>📐</span>
+              <span id="popup-area">-</span>
+            </div>
+            <div class="popup-info">
+              <span>🛏️</span>
+              <span id="popup-bedrooms">-</span>
+            </div>
+            <div class="popup-info">
+              <span>🚿</span>
+              <span id="popup-bathrooms">-</span>
+            </div>
+          </div>
+        </div>
+        <div class="popup-footer">
+          <a href="#" class="btn btn-primary" id="popup-view-btn">عرض التفاصيل</a>
+          <button type="button" class="btn btn-outline" id="popup-favorite-btn">❤️ حفظ</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Loading Indicator -->
+    <div id="map-loading" class="map-loading hidden">
+      <div class="loading-spinner"></div>
+      <p>جاري تحميل البيانات...</p>
+    </div>
+  </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="{% static 'js/interactive-map.js' %}"></script>
+{% endblock %}

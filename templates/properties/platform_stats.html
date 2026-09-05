@@ -165,7 +165,7 @@
 
   .activity-badge.month {
     background: rgba(139, 92, 246, 0.2);
-    color: #8b5cf6;
+    color: #FF7A00;
   }
 
   @media (max-width: 768px) {
@@ -717,7 +717,7 @@
         datasets: [{
           data: [{% for item in properties.by_type %}{{ item.count }}{% if not forloop.last %},{% endif %}{% endfor %}],
           backgroundColor: [
-            '#FF6B35', '#3B82F6', '#10B981', '#F59E0B', '#8B5CF6',
+            '#FF6B35', '#FF7A00', '#10B981', '#F59E0B', '#FF7A00',
             '#EC4899', '#06B6D4', '#84CC16', '#F97316', '#6366F1'
           ]
         }]

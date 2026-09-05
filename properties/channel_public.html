@@ -11,7 +11,7 @@
     {% if channel.cover_image %}
     <div style="height: 100%; background-image: url('{{ channel.cover_image.url }}'); background-size: cover; background-position: center;"></div>
     {% else %}
-    <div style="height: 100%; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);"></div>
+    <div style="height: 100%; background: linear-gradient(135deg, #667eea 0%, #FF9500 100%);"></div>
     {% endif %}
     
     <!-- Cover Actions -->
@@ -34,7 +34,7 @@
             {% if channel.logo %}
             <img src="{{ channel.logo.url }}" alt="{{ channel.name }}" style="width: 100%; height: 100%; object-fit: cover;">
             {% else %}
-            <div style="width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; font-size: 4rem; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+            <div style="width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; font-size: 4rem; background: linear-gradient(135deg, #667eea 0%, #FF9500 100%);">
               🏢
             </div>
             {% endif %}
@@ -285,7 +285,7 @@
               <h3 style="color: white; margin: 0 0 10px 0; font-size: 1.1rem;">{{ property.title|truncatechars:50 }}</h3>
               <div style="color: #667eea; font-size: 1.3rem; font-weight: 700; margin-bottom: 10px;">{{ property.price }} {{ property.currency }}</div>
               <div style="color: rgba(255,255,255,0.6); font-size: 0.9rem; margin-bottom: 15px;">📍 {{ property.get_governorate_display }}</div>
-              <a href="{% url 'property_detail' property.id %}" style="display: block; text-align: center; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 10px; border-radius: 10px; text-decoration: none;">
+              <a href="{% url 'property_detail' property.id %}" style="display: block; text-align: center; background: linear-gradient(135deg, #667eea 0%, #FF9500 100%); color: white; padding: 10px; border-radius: 10px; text-decoration: none;">
                 عرض التفاصيل
               </a>
             </div>
@@ -325,7 +325,7 @@
               <h3 style="color: white; margin: 0 0 10px 0; font-size: 1.1rem;">{{ property.title|truncatechars:50 }}</h3>
               <div style="color: #667eea; font-size: 1.3rem; font-weight: 700; margin-bottom: 10px;">{{ property.price }} {{ property.currency }}</div>
               <div style="color: rgba(255,255,255,0.6); font-size: 0.9rem; margin-bottom: 15px;">📍 {{ property.get_governorate_display }}</div>
-              <a href="{% url 'property_detail' property.id %}" style="display: block; text-align: center; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 10px; border-radius: 10px; text-decoration: none;">
+              <a href="{% url 'property_detail' property.id %}" style="display: block; text-align: center; background: linear-gradient(135deg, #667eea 0%, #FF9500 100%); color: white; padding: 10px; border-radius: 10px; text-decoration: none;">
                 عرض التفاصيل
               </a>
             </div>
@@ -524,7 +524,7 @@
                 <div style="color: white; font-weight: 600;">{{ review.user.get_full_name|default:review.user.username }}</div>
                 <div style="color: rgba(255,255,255,0.6); font-size: 0.85rem;">{{ review.created_at|timesince }}</div>
               </div>
-              <div style="margin-left: auto; color: #ff6b35;">{{ '⭐' * review.rating }}</div>
+              <div style="margin-left: auto; color: #ff6b35;">{{ '⭐'|repeat:review.rating }}</div>
             </div>
             <p style="color: rgba(255,255,255,0.8); margin: 0;">{{ review.comment }}</p>
           </div>
@@ -660,7 +660,7 @@
 }
 
 .tab-btn.active {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #667eea 0%, #FF9500 100%);
   color: white;
 }
 

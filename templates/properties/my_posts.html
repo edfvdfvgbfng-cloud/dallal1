@@ -23,7 +23,7 @@
     <span class="btn-icon">🏠</span>
     <span class="btn-text">عقارات داخل العراق</span>
   </a>
-  <a href="/properties-outside-iraq/add/" class="category-btn" style="text-decoration: none;">
+  <a href="{% url 'enhanced_add_outside_property' %}" class="category-btn" style="text-decoration: none;">
     <span class="btn-icon">🌍</span>
     <span class="btn-text">عقارات خارج العراق</span>
   </a>
@@ -42,6 +42,18 @@
   <a href="/resorts-outside-iraq/create/" class="category-btn" style="text-decoration: none;">
     <span class="btn-icon">🏝️🌍</span>
     <span class="btn-text">منتجعات خارج العراق</span>
+  </a>
+  <a href="/dashboard/dallal/hotels-outside/manage/" class="category-btn" style="text-decoration: none; background: rgba(0, 123, 255, 0.1); border-color: rgba(0, 123, 255, 0.3);">
+    <span class="btn-icon">🏨</span>
+    <span class="btn-text">إدارة فنادق خارج العراق</span>
+  </a>
+  <a href="/dashboard/dallal/resorts-outside/manage/" class="category-btn" style="text-decoration: none; background: rgba(255, 87, 34, 0.1); border-color: rgba(255, 87, 34, 0.3);">
+    <span class="btn-icon">🏝️</span>
+    <span class="btn-text">إدارة منتجعات خارج العراق</span>
+  </a>
+  <a href="/dashboard/dallal/properties/manage/" class="category-btn" style="text-decoration: none; background: rgba(76, 175, 80, 0.1); border-color: rgba(76, 175, 80, 0.3);">
+    <span class="btn-icon">🏠</span>
+    <span class="btn-text">إدارة منشورات عقارات داخل العراق</span>
   </a>
   <a href="/dashboard/dallal/travel-companies/create/" class="category-btn" style="text-decoration: none;">
     <span class="btn-icon">✈️</span>
@@ -382,7 +394,7 @@
   }
 
   .btn-view {
-    background: #3B82F6;
+    background: #FF7A00;
     color: white;
   }
 
@@ -516,6 +528,8 @@
         <option value="">جميع الأنواع</option>
         <option value="featured">مميز</option>
         <option value="promoted">ممول</option>
+        <option value="outside_iraq">عقارات خارج العراق</option>
+        <option value="inside_iraq">عقارات داخل العراق</option>
         <option value="normal">عادي</option>
       </select>
       <select id="sortFilter" class="filter-select">

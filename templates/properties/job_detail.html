@@ -1,186 +1,306 @@
 {% extends "properties/base.html" %}
 {% load static %}
+{% load custom_filters %}
 
 {% block title %}{{ job.title }} - دلال{% endblock %}
 
 {% block content %}
-<div class="container py-5">
+<div class="container py-5" style="background: #0a0a0a; min-height: 100vh;">
+    <!-- Header Section -->
+    <div class="job-header mb-5">
+        <div class="row align-items-center">
+            <div class="col-md-8">
+                <div class="d-flex align-items-center gap-3 mb-3">
+                    {% if job.company_logo %}
+                    <img src="{{ job.company_logo.url }}" alt="{{ job.company_name }}" class="company-logo-header">
+                    {% endif %}
+                    <div>
+                        <h1 class="h2 mb-1">{{ job.title }}</h1>
+                        <p class="text-muted mb-0">{{ job.company_name }}</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4 text-md-end">
+                <div class="job-badges">
+                    {% if job.is_featured %}
+                    <span class="badge badge-featured">⭐ مميز</span>
+                    {% endif %}
+                    {% if job.is_urgent %}
+                    <span class="badge badge-urgent">🔥 عاجل</span>
+                    {% endif %}
+                    {% if job.is_remote %}
+                    <span class="badge badge-remote">🏠 عمل عن بعد</span>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
     <div class="row">
         <div class="col-lg-8">
-            <!-- Job Details Card -->
-            <div class="card mb-4">
+            <!-- Main Job Card -->
+            <div class="card job-card mb-4">
                 <div class="card-body">
-                    <div class="d-flex justify-content-between align-items-start mb-4">
-                        <div>
-                            <h1 class="h3 mb-2">{{ job.title }}</h1>
-                            <p class="text-muted mb-0">{{ job.company_name }}</p>
+                    <!-- Quick Info -->
+                    <div class="quick-info-grid mb-4">
+                        <div class="quick-info-item">
+                            <div class="info-icon">
+                                <i class="fas fa-briefcase"></i>
+                            </div>
+                            <div class="info-content">
+                                <span class="info-label">نوع الوظيفة</span>
+                                <span class="info-value">{{ job.get_job_type_display }}</span>
+                            </div>
                         </div>
-                        {% if job.company_logo %}
-                        <img src="{{ job.company_logo.url }}" alt="{{ job.company_name }}" class="company-logo-large">
-                        {% endif %}
-                    </div>
-                    
-                    <div class="mb-4">
-                        <span class="badge bg-primary">{{ job.get_job_type_display }}</span>
-                        <span class="badge bg-info">{{ job.get_experience_level_display }}</span>
-                        {% if job.is_urgent %}
-                        <span class="badge bg-danger">عادية</span>
-                        {% endif %}
-                        {% if job.is_featured %}
-                        <span class="badge bg-warning">مميز</span>
-                        {% endif %}
-                        {% if job.is_remote %}
-                        <span class="badge bg-success">عمل عن بعد</span>
-                        {% endif %}
-                    </div>
-                    
-                    <div class="job-info-grid mb-4">
-                        <div class="info-item">
-                            <i class="fas fa-map-marker-alt"></i>
-                            <span>
-                                {% if job.location_type == 'inside_iraq' %}
-                                    {{ job.get_governorate_display }} - {{ job.city }}
-                                {% else %}
-                                    {% if job.country == 'other' %}
-                                        {{ job.outside_city }} - {{ job.outside_city }}
+                        <div class="quick-info-item">
+                            <div class="info-icon">
+                                <i class="fas fa-chart-line"></i>
+                            </div>
+                            <div class="info-content">
+                                <span class="info-label">مستوى الخبرة</span>
+                                <span class="info-value">{{ job.get_experience_level_display }}</span>
+                            </div>
+                        </div>
+                        <div class="quick-info-item">
+                            <div class="info-icon">
+                                <i class="fas fa-map-marker-alt"></i>
+                            </div>
+                            <div class="info-content">
+                                <span class="info-label">الموقع</span>
+                                <span class="info-value">
+                                    {% if job.location_type == 'inside_iraq' %}
+                                        {{ job.get_governorate_display }} - {{ job.city }}
                                     {% else %}
-                                        {{ job.get_country_display }} - {{ job.outside_city }}
+                                        {% if job.country == 'other' %}
+                                            {{ job.outside_city }}
+                                        {% else %}
+                                            {{ job.get_country_display }} - {{ job.outside_city }}
+                                        {% endif %}
                                     {% endif %}
-                                {% endif %}
-                            </span>
+                                </span>
+                            </div>
                         </div>
-                        <div class="info-item">
-                            <i class="fas fa-money-bill-wave"></i>
-                            <span>{{ job.salary_range }}</span>
-                        </div>
-                        <div class="info-item">
-                            <i class="fas fa-eye"></i>
-                            <span>{{ job.views_count }} مشاهدة</span>
-                        </div>
-                        <div class="info-item">
-                            <i class="fas fa-users"></i>
-                            <span>{{ job.applications_count }} متقدم</span>
+                        <div class="quick-info-item">
+                            <div class="info-icon">
+                                <i class="fas fa-money-bill-wave"></i>
+                            </div>
+                            <div class="info-content">
+                                <span class="info-label">الراتب</span>
+                                <span class="info-value">{{ job.salary_range }}</span>
+                            </div>
                         </div>
                     </div>
-                    
-                    <hr>
-                    
-                    <div class="mb-4">
-                        <h5>وصف الوظيفة</h5>
-                        <p>{{ job.description|linebreaks }}</p>
+
+                    <hr class="section-divider">
+
+                    <!-- Description -->
+                    <div class="job-section mb-4">
+                        <h3 class="section-title">
+                            <i class="fas fa-file-alt"></i>
+                            وصف الوظيفة
+                        </h3>
+                        <div class="section-content">
+                            {{ job.description|linebreaks }}
+                        </div>
                     </div>
-                    
-                    <div class="mb-4">
-                        <h5>المتطلبات</h5>
-                        <p>{{ job.requirements|linebreaks }}</p>
+
+                    <!-- Requirements -->
+                    <div class="job-section mb-4">
+                        <h3 class="section-title">
+                            <i class="fas fa-clipboard-check"></i>
+                            المتطلبات
+                        </h3>
+                        <div class="section-content">
+                            {{ job.requirements|linebreaks }}
+                        </div>
                     </div>
-                    
-                    <div class="mb-4">
-                        <h5>المسؤوليات</h5>
-                        <p>{{ job.responsibilities|linebreaks }}</p>
+
+                    <!-- Responsibilities -->
+                    <div class="job-section mb-4">
+                        <h3 class="section-title">
+                            <i class="fas fa-tasks"></i>
+                            المسؤوليات
+                        </h3>
+                        <div class="section-content">
+                            {{ job.responsibilities|linebreaks }}
+                        </div>
                     </div>
-                    
+
+                    <!-- Benefits -->
                     {% if job.benefits %}
-                    <div class="mb-4">
-                        <h5>المزايا</h5>
-                        <p>{{ job.benefits|linebreaks }}</p>
+                    <div class="job-section mb-4">
+                        <h3 class="section-title">
+                            <i class="fas fa-gift"></i>
+                            المزايا
+                        </h3>
+                        <div class="section-content">
+                            {{ job.benefits|linebreaks }}
+                        </div>
                     </div>
                     {% endif %}
-                    
-                    <div class="mb-4">
-                        <h5>المهارات المطلوبة</h5>
-                        <div class="skills-container">
-                            {% for skill in job.skills.split(',') %}
-                            <span class="skill-tag">{{ skill.strip }}</span>
+
+                    <!-- Skills -->
+                    <div class="job-section mb-4">
+                        <h3 class="section-title">
+                            <i class="fas fa-tools"></i>
+                            المهارات المطلوبة
+                        </h3>
+                        <div class="skills-wrapper">
+                            {% for skill in job.skills|split:',' %}
+                            <span class="skill-badge">{{ skill }}</span>
                             {% endfor %}
                         </div>
                     </div>
-                    
-                    <hr>
-                    
-                    <div class="contact-info">
-                        <h5>معلومات الاتصال</h5>
-                        <p><strong>الاسم:</strong> {{ job.contact_name }}</p>
-                        <p><strong>البريد الإلكتروني:</strong> {{ job.contact_email }}</p>
-                        <p><strong>الهاتف:</strong> {{ job.contact_phone }}</p>
+
+                    <hr class="section-divider">
+
+                    <!-- Stats -->
+                    <div class="job-stats">
+                        <div class="stat-item">
+                            <i class="fas fa-eye"></i>
+                            <span>{{ job.views_count }} مشاهدة</span>
+                        </div>
+                        <div class="stat-item">
+                            <i class="fas fa-users"></i>
+                            <span>{{ job.applications_count }} متقدم</span>
+                        </div>
+                        <div class="stat-item">
+                            <i class="fas fa-calendar"></i>
+                            <span>نشرت {{ job.created_at|date:"Y-m-d" }}</span>
+                        </div>
                     </div>
                 </div>
             </div>
-            
-            <!-- Apply Button -->
-            {% if user.is_authenticated %}
-            <button class="btn btn-primary btn-lg w-100 mb-4" data-bs-toggle="modal" data-bs-target="#applyModal">
-                التقديم على هذه الوظيفة
-            </button>
-            {% else %}
-            <a href="/login/?next={% url 'job_detail' job.slug %}" class="btn btn-primary btn-lg w-100 mb-4">
-                سجل دخول للتقديم
-            </a>
-            {% endif %}
+
+            <!-- Apply Buttons -->
+            <div class="apply-section">
+                <div class="apply-buttons-grid">
+                    {% if job.contact_phone %}
+                    <a href="tel:{{ job.contact_phone }}" class="btn btn-apply btn-call">
+                        <i class="fas fa-phone"></i>
+                        اتصل الآن
+                    </a>
+                    <a href="https://wa.me/{{ job.contact_phone }}?text=مرحباً، أريد التقديم على وظيفة {{ job.title }}" target="_blank" class="btn btn-apply btn-whatsapp">
+                        <i class="fab fa-whatsapp"></i>
+                        واتساب
+                    </a>
+                    {% endif %}
+                    {% if user.is_authenticated %}
+                    <button class="btn btn-apply btn-apply-modal" data-bs-toggle="modal" data-bs-target="#applyModal">
+                        <i class="fas fa-paper-plane"></i>
+                        نموذج التقديم
+                    </button>
+                    {% else %}
+                    <a href="/login/?next={% url 'job_detail' job.slug %}" class="btn btn-apply btn-login">
+                        <i class="fas fa-sign-in-alt"></i>
+                        سجل دخول
+                    </a>
+                    {% endif %}
+                </div>
+
+                <!-- Owner Actions -->
+                {% if user.is_authenticated and job.posted_by == user %}
+                <div class="owner-actions mt-4">
+                    <h6 class="owner-actions-title">
+                        <i class="fas fa-tools"></i>
+                        إدارة الوظيفة
+                    </h6>
+                    <div class="owner-actions-buttons">
+                        <a href="{% url 'job_edit' job.id %}" class="btn btn-owner btn-edit">
+                            <i class="fas fa-edit"></i>
+                            تعديل
+                        </a>
+                        <button onclick="deleteJob({{ job.id }})" class="btn btn-owner btn-delete">
+                            <i class="fas fa-trash"></i>
+                            حذف
+                        </button>
+                    </div>
+                </div>
+                {% endif %}
+            </div>
         </div>
-        
+
         <div class="col-lg-4">
-            <!-- Company Info Card -->
-            <div class="card mb-4">
+            <!-- Company Card -->
+            <div class="card company-card mb-4">
                 <div class="card-body">
-                    <h5 class="card-title mb-3">معلومات الشركة</h5>
+                    <h4 class="card-title mb-3">
+                        <i class="fas fa-building"></i>
+                        معلومات الشركة
+                    </h4>
                     {% if job.company_logo %}
                     <div class="text-center mb-3">
-                        <img src="{{ job.company_logo.url }}" alt="{{ job.company_name }}" class="company-logo-medium">
+                        <img src="{{ job.company_logo.url }}" alt="{{ job.company_name }}" class="company-logo-card">
                     </div>
                     {% endif %}
-                    <h6>{{ job.company_name }}</h6>
+                    <h5 class="company-name">{{ job.company_name }}</h5>
                     {% if job.company_description %}
-                    <p class="text-muted small">{{ job.company_description|truncatewords:30 }}</p>
+                    <p class="company-description">{{ job.company_description|truncatewords:30 }}</p>
                     {% endif %}
                 </div>
             </div>
-            
-            <!-- Job Info Card -->
-            <div class="card mb-4">
+
+            <!-- Quick Details Card -->
+            <div class="card details-card mb-4">
                 <div class="card-body">
-                    <h5 class="card-title mb-3">تفاصيل الوظيفة</h5>
-                    <ul class="list-unstyled">
-                        <li class="mb-2">
-                            <strong>نوع الوظيفة:</strong> {{ job.get_job_type_display }}
+                    <h4 class="card-title mb-3">
+                        <i class="fas fa-info-circle"></i>
+                        تفاصيل إضافية
+                    </h4>
+                    <ul class="details-list">
+                        <li>
+                            <span class="detail-label">نوع الوظيفة:</span>
+                            <span class="detail-value">{{ job.get_job_type_display }}</span>
                         </li>
-                        <li class="mb-2">
-                            <strong>مستوى الخبرة:</strong> {{ job.get_experience_level_display }}
+                        <li>
+                            <span class="detail-label">مستوى الخبرة:</span>
+                            <span class="detail-value">{{ job.get_experience_level_display }}</span>
                         </li>
-                        <li class="mb-2">
-                            <strong>الموقع:</strong> {{ job.governorate }} - {{ job.city }}
+                        <li>
+                            <span class="detail-label">المجال:</span>
+                            <span class="detail-value">{{ job.field }}</span>
                         </li>
-                        <li class="mb-2">
-                            <strong>الراتب:</strong> {{ job.salary_range }}
+                        <li>
+                            <span class="detail-label">التعليم:</span>
+                            <span class="detail-value">{{ job.education }}</span>
                         </li>
-                        <li class="mb-2">
-                            <strong>تاريخ النشر:</strong> {{ job.created_at|date:"Y-m-d" }}
+                        <li>
+                            <span class="detail-label">تاريخ النشر:</span>
+                            <span class="detail-value">{{ job.created_at|date:"Y-m-d" }}</span>
                         </li>
                         {% if job.expiry_date %}
-                        <li class="mb-2">
-                            <strong>تاريخ الانتهاء:</strong> {{ job.expiry_date|date:"Y-m-d" }}
+                        <li>
+                            <span class="detail-label">تاريخ الانتهاء:</span>
+                            <span class="detail-value">{{ job.expiry_date|date:"Y-m-d" }}</span>
                         </li>
                         {% endif %}
                     </ul>
                 </div>
             </div>
-            
+
             <!-- Share Card -->
-            <div class="card">
+            <div class="card share-card">
                 <div class="card-body">
-                    <h5 class="card-title mb-3">مشاركة الوظيفة</h5>
-                    <div class="d-flex gap-2">
-                        <button class="btn btn-outline-primary btn-sm" onclick="shareJob('facebook')">
+                    <h4 class="card-title mb-3">
+                        <i class="fas fa-share-alt"></i>
+                        مشاركة الوظيفة
+                    </h4>
+                    <div class="share-buttons">
+                        <button class="share-btn share-facebook" onclick="shareJob('facebook')">
                             <i class="fab fa-facebook-f"></i>
+                            فيسبوك
                         </button>
-                        <button class="btn btn-outline-info btn-sm" onclick="shareJob('twitter')">
+                        <button class="share-btn share-twitter" onclick="shareJob('twitter')">
                             <i class="fab fa-twitter"></i>
+                            تويتر
                         </button>
-                        <button class="btn btn-outline-success btn-sm" onclick="shareJob('whatsapp')">
+                        <button class="share-btn share-whatsapp" onclick="shareJob('whatsapp')">
                             <i class="fab fa-whatsapp"></i>
+                            واتساب
                         </button>
-                        <button class="btn btn-outline-secondary btn-sm" onclick="copyLink()">
+                        <button class="share-btn share-link" onclick="copyLink()">
                             <i class="fas fa-link"></i>
+                            نسخ الرابط
                         </button>
                     </div>
                 </div>
@@ -195,11 +315,14 @@
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title">التقديم على {{ job.title }}</h5>
+                <h5 class="modal-title">
+                    <i class="fas fa-paper-plane"></i>
+                    التقديم على {{ job.title }}
+                </h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body">
-                <form id="applyForm" method="POST" action="{% url 'job_apply' job.slug %}" enctype="multipart/form-data">
+                <form id="applyForm" method="POST" action="{% url 'job_apply' job.slug %}" enctype="multipart/form-data" onsubmit="return submitApplyForm(event)">
                     {% csrf_token %}
                     <div class="row g-3">
                         <div class="col-md-6">
@@ -252,7 +375,10 @@
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">إلغاء</button>
-                <button type="submit" form="applyForm" class="btn btn-primary">إرسال الطلب</button>
+                <button type="submit" form="applyForm" class="btn btn-primary">
+                    <i class="fas fa-paper-plane"></i>
+                    إرسال الطلب
+                </button>
             </div>
         </div>
     </div>
@@ -260,48 +386,417 @@
 {% endif %}
 
 <style>
-.company-logo-large {
-    width: 80px;
-    height: 80px;
-    object-fit: contain;
-    border-radius: 8px;
+/* Dark Theme Professional Job Detail Styles */
+body {
+    background: #0a0a0a !important;
 }
 
-.company-logo-medium {
+.job-header {
+    background: linear-gradient(135deg, #0d0d0d 0%, #1a1a1a 100%);
+    padding: 2rem;
+    border-radius: 16px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.company-logo-header {
     width: 100px;
     height: 100px;
     object-fit: contain;
-    border-radius: 8px;
+    border-radius: 12px;
+    border: 3px solid rgba(255, 255, 255, 0.1);
 }
 
-.job-info-grid {
+.job-badges {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+}
+
+.badge-featured {
+    background: linear-gradient(135deg, #f5af19 0%, #f12711 100%);
+    color: white;
+    padding: 0.5rem 1rem;
+    border-radius: 20px;
+    font-weight: bold;
+}
+
+.badge-urgent {
+    background: linear-gradient(135deg, #ff416c 0%, #ff4b2b 100%);
+    color: white;
+    padding: 0.5rem 1rem;
+    border-radius: 20px;
+    font-weight: bold;
+}
+
+.badge-remote {
+    background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+    color: white;
+    padding: 0.5rem 1rem;
+    border-radius: 20px;
+    font-weight: bold;
+}
+
+.job-card {
+    background: #0d0d0d;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    border-radius: 16px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+}
+
+.quick-info-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-    gap: 1rem;
+    gap: 1.5rem;
 }
 
-.info-item {
+.quick-info-item {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1rem;
+    background: #151515;
+    border-radius: 12px;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.info-icon {
+    width: 50px;
+    height: 50px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-radius: 12px;
+    color: white;
+    font-size: 1.2rem;
+}
+
+.info-content {
+    display: flex;
+    flex-direction: column;
+}
+
+.info-label {
+    font-size: 0.85rem;
+    color: rgba(255, 255, 255, 0.6);
+    margin-bottom: 0.25rem;
+}
+
+.info-value {
+    font-weight: 600;
+    color: white;
+}
+
+.section-divider {
+    border-color: rgba(255, 255, 255, 0.1);
+    margin: 2rem 0;
+}
+
+.job-section {
+    padding: 1.5rem;
+    background: #151515;
+    border-radius: 12px;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.section-title {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: white;
+    margin-bottom: 1rem;
     display: flex;
     align-items: center;
     gap: 0.5rem;
 }
 
-.info-item i {
-    color: #0d9488;
-    font-size: 1.2rem;
+.section-title i {
+    color: #667eea;
 }
 
-.skills-container {
+.section-content {
+    color: rgba(255, 255, 255, 0.8);
+    line-height: 1.8;
+}
+
+.skills-wrapper {
     display: flex;
     flex-wrap: wrap;
+    gap: 0.75rem;
+}
+
+.skill-badge {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 0.5rem 1.25rem;
+    border-radius: 25px;
+    font-size: 0.9rem;
+    font-weight: 500;
+}
+
+.job-stats {
+    display: flex;
+    gap: 2rem;
+    padding: 1.5rem;
+    background: #151515;
+    border-radius: 12px;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.stat-item {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: rgba(255, 255, 255, 0.7);
+}
+
+.stat-item i {
+    color: #667eea;
+}
+
+.btn-apply {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border: none;
+    border-radius: 12px;
+    padding: 1rem 2rem;
+    font-weight: 600;
+    box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+    transition: all 0.3s ease;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
     gap: 0.5rem;
 }
 
-.skill-tag {
-    background: #e9ecef;
-    padding: 0.25rem 0.75rem;
-    border-radius: 20px;
+.btn-apply:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(102, 126, 234, 0.6);
+}
+
+.apply-section {
+    padding: 1.5rem;
+    background: #151515;
+    border-radius: 12px;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.apply-buttons-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 1rem;
+}
+
+.btn-call {
+    background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+}
+
+.btn-whatsapp {
+    background: linear-gradient(135deg, #25d366 0%, #128c7e 100%);
+}
+
+.btn-apply-modal {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+.btn-login {
+    background: linear-gradient(135deg, #f5af19 0%, #f12711 100%);
+}
+
+/* Owner Actions */
+.owner-actions {
+    padding: 1.5rem;
+    background: #151515;
+    border-radius: 12px;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    margin-top: 1.5rem;
+}
+
+.owner-actions-title {
+    color: white;
+    font-weight: 600;
+    margin-bottom: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.owner-actions-title i {
+    color: #667eea;
+}
+
+.owner-actions-buttons {
+    display: flex;
+    gap: 1rem;
+}
+
+.btn-owner {
+    flex: 1;
+    padding: 0.75rem 1.5rem;
+    border: none;
+    border-radius: 8px;
+    color: white;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    text-decoration: none;
+}
+
+.btn-owner:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+}
+
+.btn-edit {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+.btn-delete {
+    background: linear-gradient(135deg, #ff416c 0%, #ff4b2b 100%);
+}
+
+.company-card,
+.details-card,
+.share-card {
+    background: #0d0d0d;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    border-radius: 16px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+}
+
+.company-card .card-title,
+.details-card .card-title,
+.share-card .card-title {
+    color: white;
+    font-weight: 600;
+}
+
+.company-card .card-title i,
+.details-card .card-title i,
+.share-card .card-title i {
+    color: #667eea;
+}
+
+.company-logo-card {
+    width: 120px;
+    height: 120px;
+    object-fit: contain;
+    border-radius: 12px;
+    border: 3px solid rgba(255, 255, 255, 0.1);
+}
+
+.company-name {
+    color: white;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+}
+
+.company-description {
+    color: rgba(255, 255, 255, 0.7);
     font-size: 0.9rem;
+    line-height: 1.6;
+}
+
+.details-list {
+    list-style: none;
+    padding: 0;
+}
+
+.details-list li {
+    display: flex;
+    justify-content: space-between;
+    padding: 0.75rem 0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.details-list li:last-child {
+    border-bottom: none;
+}
+
+.detail-label {
+    color: rgba(255, 255, 255, 0.6);
+}
+
+.detail-value {
+    color: white;
+    font-weight: 500;
+}
+
+.share-buttons {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.75rem;
+}
+
+.share-btn {
+    padding: 0.75rem 1rem;
+    border: none;
+    border-radius: 8px;
+    color: white;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+}
+
+.share-facebook {
+    background: linear-gradient(135deg, #1877f2 0%, #42b72a 100%);
+}
+
+.share-twitter {
+    background: linear-gradient(135deg, #1da1f2 0%, #14171a 100%);
+}
+
+.share-whatsapp {
+    background: linear-gradient(135deg, #25d366 0%, #128c7e 100%);
+}
+
+.share-link {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+.share-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+}
+
+.modal-content {
+    background: #0d0d0d;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.modal-header,
+.modal-footer {
+    border-color: rgba(255, 255, 255, 0.1);
+}
+
+.modal-title {
+    color: white;
+}
+
+.form-control {
+    background: #151515;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: white;
+}
+
+.form-control:focus {
+    background: #1a1a1a;
+    border-color: #667eea;
+    color: white;
+}
+
+.form-label {
+    color: rgba(255, 255, 255, 0.8);
 }
 </style>
 
@@ -309,7 +804,7 @@
 function shareJob(platform) {
     const url = encodeURIComponent(window.location.href);
     const title = encodeURIComponent('{{ job.title }}');
-    
+
     let shareUrl;
     switch(platform) {
         case 'facebook':
@@ -322,7 +817,7 @@ function shareJob(platform) {
             shareUrl = `https://wa.me/?text=${title}%20${url}`;
             break;
     }
-    
+
     if (shareUrl) {
         window.open(shareUrl, '_blank', 'width=600,height=400');
     }
@@ -330,8 +825,78 @@ function shareJob(platform) {
 
 function copyLink() {
     navigator.clipboard.writeText(window.location.href).then(() => {
-        alert('تم نسخ الرابط!');
+        toastManager.show('تم النسخ', 'تم نسخ رابط الوظيفة بنجاح!', 'success');
     });
+}
+
+function deleteJob(jobId) {
+    if (confirm('هل أنت متأكد من حذف هذه الوظيفة؟ لا يمكن التراجع عن هذا الإجراء.')) {
+        fetch(`/jobs/${jobId}/delete/`, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': getCsrfToken()
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                toastManager.show('تم الحذف', 'تم حذف الوظيفة بنجاح', 'success');
+                setTimeout(() => {
+                    window.location.href = '/jobs/my/';
+                }, 2000);
+            } else {
+                toastManager.show('خطأ', data.error || 'فشل حذف الوظيفة', 'error');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            toastManager.show('خطأ', 'حدث خطأ أثناء حذف الوظيفة', 'error');
+        });
+    }
+}
+
+function getCsrfToken() {
+    const cookies = document.cookie.split(';');
+    for (let cookie of cookies) {
+        const [name, value] = cookie.trim().split('=');
+        if (name === 'csrftoken') {
+            return decodeURIComponent(value);
+        }
+    }
+    return '';
+}
+
+function submitApplyForm(event) {
+    event.preventDefault();
+    const form = document.getElementById('applyForm');
+    const formData = new FormData(form);
+
+    fetch(form.action, {
+        method: 'POST',
+        body: formData,
+        headers: {
+            'X-CSRFToken': getCsrfToken()
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            toastManager.show('تم الإرسال', 'تم إرسال طلبك بنجاح! سنتواصل معك قريباً', 'success');
+            // Close modal
+            const modal = bootstrap.Modal.getInstance(document.getElementById('applyModal'));
+            modal.hide();
+            // Reset form
+            form.reset();
+        } else {
+            toastManager.show('خطأ', data.error || 'فشل إرسال الطلب', 'error');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        toastManager.show('خطأ', 'حدث خطأ أثناء إرسال الطلب', 'error');
+    });
+
+    return false;
 }
 </script>
 {% endblock %}

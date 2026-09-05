@@ -1,496 +1,250 @@
 {% extends 'properties/base.html' %}
+{% load static %}
 
-{% block title %}{{ category_title }}{% endblock %}
+{% block title %}فنادق خارج العراق 🏨🌍{% endblock %}
 
 {% block extra_css %}
-<style>
-.hero-quick-search {
-  position: relative;
-  z-index: 10;
-  margin-top: -30px;
-  padding: 0 20px;
-}
+<link rel="stylesheet" href="{% static 'css/listing-pages.css' %}">
+{% endblock %}
 
-.quick-search-box {
-  background: var(--card-bg);
-  border: 2px solid var(--border);
-  border-radius: var(--radius-lg);
-  padding: 32px;
-  box-shadow: var(--shadow-lg);
-  max-width: 1200px;
-  margin: 0 auto;
-}
-
-.search-header {
-  text-align: center;
-  margin-bottom: 24px;
-}
-
-.search-icon {
-  font-size: 2.5rem;
-  margin-bottom: 12px;
-}
-
-.search-header h3 {
-  font-size: 1.8rem;
-  font-weight: 800;
-  margin-bottom: 8px;
-  background: var(--gradient-primary);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-}
-
-.search-header p {
-  color: var(--text-light);
-  font-size: 0.95rem;
-}
-
-.search-inputs {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 16px;
-  margin-bottom: 24px;
-}
-
-.search-inputs .form-group {
-  margin-bottom: 0;
-}
-
-.search-inputs .form-group label {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  color: var(--text);
-  font-weight: 600;
-  margin-bottom: 8px;
-  font-size: 0.9rem;
-}
-
-.label-icon {
-  font-size: 1.1rem;
-}
-
-.search-inputs .form-control {
-  background: var(--bg-alt);
-  border: 2px solid var(--border);
-  border-radius: var(--radius-sm);
-  padding: 12px 14px;
-  color: var(--text);
-  font-size: 0.95rem;
-  transition: all 0.3s ease;
-  width: 100%;
-}
-
-.search-inputs .form-control:focus {
-  outline: none;
-  border-color: var(--primary);
-  box-shadow: 0 0 0 3px rgba(255, 107, 53, 0.1);
-}
-
-.search-inputs .form-control::placeholder {
-  color: var(--text-light);
-}
-
-.search-btn {
-  width: 100%;
-  padding: 16px;
-  font-size: 1.1rem;
-  font-weight: 700;
-  background: var(--gradient-primary);
-  border: none;
-  border-radius: var(--radius-sm);
-  color: #fff;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 10px;
-  box-shadow: 0 4px 15px rgba(255, 107, 53, 0.3);
-}
-
-.search-btn:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 25px rgba(255, 107, 53, 0.4);
-}
-
-.search-btn:active {
-  transform: translateY(0);
-}
-
-.btn-icon {
-  font-size: 1.2rem;
-}
-
-.category-header {
-  background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
-  padding: 60px 20px;
-  text-align: center;
-  color: white;
-  border-radius: 0 0 30px 30px;
-  margin-bottom: 30px;
-}
-
-.category-icon {
-  font-size: 4rem;
-  margin-bottom: 15px;
-}
-
-.category-title {
-  font-size: 2.5rem;
-  font-weight: 700;
-  margin-bottom: 10px;
-}
-
-.category-subtitle {
-  font-size: 1.1rem;
-  opacity: 0.9;
-}
-
-.filter-section {
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 15px;
-  padding: 25px;
-  margin-bottom: 30px;
-}
-
-.filter-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 20px;
-}
-
-.form-group label {
-  display: block;
-  margin-bottom: 8px;
-  color: rgba(255, 255, 255, 0.8);
-  font-weight: 500;
-}
-
-.form-control {
-  width: 100%;
-  padding: 12px 15px;
-  background: rgba(255, 255, 255, 0.1);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  border-radius: 8px;
-  color: white;
-  font-size: 1rem;
-}
-
-.form-control option {
-  background: #1a1a1a;
-  color: white;
-}
-
-.btn-filter {
-  background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
-  color: white;
-  border: none;
-  padding: 12px 30px;
-  border-radius: 8px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.3s ease;
-}
-
-.btn-filter:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 5px 20px rgba(240, 147, 251, 0.4);
-}
-
-.hotels-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
-  gap: 25px;
-  padding: 0 20px;
-}
-
-.hotel-card {
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 15px;
-  overflow: hidden;
-  transition: all 0.3s ease;
-}
-
-.hotel-card:hover {
-  transform: translateY(-5px);
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
-}
-
-.hotel-image {
-  width: 100%;
-  height: 200px;
-  object-fit: cover;
-  background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
-}
-
-.hotel-image-placeholder {
-  width: 100%;
-  height: 200px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 4rem;
-  background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
-}
-
-.hotel-details {
-  color: rgba(255, 255, 255, 0.7);
-  font-size: 0.9rem;
-  margin-bottom: 15px;
-}
-
-.hotel-content {
-  padding: 20px;
-}
-
-.hotel-name {
-  font-size: 1.3rem;
-  font-weight: 700;
-  margin-bottom: 10px;
-  color: white;
-}
-
-.hotel-rating {
-  display: flex;
-  gap: 5px;
-  margin-bottom: 10px;
-}
-
-.star {
-  color: #ffd700;
-  font-size: 1.2rem;
-}
-
-.hotel-price {
-  font-size: 1.1rem;
-  color: #f093fb;
-  font-weight: 600;
-  margin-bottom: 15px;
-}
-
-.hotel-location {
-  color: rgba(255, 255, 255, 0.6);
-  font-size: 0.9rem;
-  margin-bottom: 15px;
-}
-
-.btn-book {
-  background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
-  color: white;
-  border: none;
-  padding: 10px 20px;
-  border-radius: 8px;
-  font-weight: 600;
-  cursor: pointer;
-  width: 100%;
-  transition: all 0.3s ease;
-}
-
-.btn-book:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 5px 15px rgba(240, 147, 251, 0.4);
-}
-
-.no-results {
-  text-align: center;
-  padding: 60px 20px;
-  color: rgba(255, 255, 255, 0.6);
-  font-size: 1.2rem;
-}
-</style>
+{% block extra_js %}
+<script src="{% static 'js/listing-pages.js' %}" defer></script>
 {% endblock %}
 
 {% block content %}
-<div class="category-header">
-  <div class="category-icon">{{ category_icon }}</div>
-  <h1 class="category-title">{{ category_title }} خارج العراق</h1>
-  <p class="category-subtitle">تصفح الفنادق خارج العراق مع خيارات فلترة متقدمة</p>
-  {% if can_create_hotel %}
-  <div style="margin-top: 20px;">
-    <a href="{% url 'hotel_create_outside_iraq' %}" class="btn-filter" style="display: inline-flex; align-items: center; gap: 8px;">
-      <i class="fas fa-plus"></i>
-      نشر فندق خارج العراق
-    </a>
-  </div>
-  {% endif %}
-</div>
+<div class="listing-page">
+    <!-- Skip to content for accessibility -->
+    <a href="#listings-container" class="skip-to-content">انتقل إلى المحتوى الرئيسي</a>
 
-<!-- Quick Search Section -->
-<div class="hero-quick-search">
-  <form class="quick-search-box container" method="get" action="{% url 'category_hotels_outside' %}">
-    <div class="search-header">
-      <div class="search-icon">🔍</div>
-      <h3>ابحث عن فندقك</h3>
-      <p>اكتشف الفنادق المميزة خارج العراق</p>
-    </div>
-    <div class="search-inputs">
-      <div class="form-group">
-        <label>
-          <span class="label-icon">💰</span>
-          نوع الإيجار
-        </label>
-        <select name="rent_type" class="form-control">
-          <option value="">الكل</option>
-          <option value="daily" {% if request.GET.rent_type == 'daily' %}selected{% endif %}>إيجار يومي</option>
-          <option value="collective" {% if request.GET.rent_type == 'collective' %}selected{% endif %}>إيجار سكن جماعي</option>
-        </select>
-      </div>
-      <div class="form-group">
-        <label>
-          <span class="label-icon">⭐</span>
-          تصنيف النجوم
-        </label>
-        <select name="star_rating" class="form-control">
-          <option value="">الكل</option>
-          <option value="5" {% if request.GET.star_rating == '5' %}selected{% endif %}>5 نجوم</option>
-          <option value="4" {% if request.GET.star_rating == '4' %}selected{% endif %}>4 نجوم</option>
-          <option value="3" {% if request.GET.star_rating == '3' %}selected{% endif %}>3 نجوم</option>
-          <option value="2" {% if request.GET.star_rating == '2' %}selected{% endif %}>2 نجوم</option>
-          <option value="1" {% if request.GET.star_rating == '1' %}selected{% endif %}>نجمة واحدة</option>
-        </select>
-      </div>
-      <div class="form-group">
-        <label>
-          <span class="label-icon">🌍</span>
-          الدولة
-        </label>
-        <select name="country" class="form-control">
-          <option value="">كل الدول</option>
-          {% for country in countries %}
-          <option value="{{ country.id }}" {% if request.GET.country == country.id|stringformat:"s" %}selected{% endif %}>
-            {{ country.flag_emoji }} {{ country.name_ar }}
-          </option>
-          {% endfor %}
-        </select>
-      </div>
-      <div class="form-group">
-        <label>
-          <span class="label-icon">📍</span>
-          المنطقة
-        </label>
-        <input type="text" name="district" class="form-control" placeholder="اكتب اسم المنطقة..." value="{{ request.GET.district|default:'' }}">
-      </div>
-      <div class="form-group">
-        <label>
-          <span class="label-icon">💵</span>
-          السعر لليلة من
-        </label>
-        <input type="number" name="price_min" class="form-control" placeholder="السعر الأدنى" value="{{ request.GET.price_min|default:'' }}">
-      </div>
-      <div class="form-group">
-        <label>
-          <span class="label-icon">💰</span>
-          السعر لليلة إلى
-        </label>
-        <input type="number" name="price_max" class="form-control" placeholder="السعر الأعلى" value="{{ request.GET.price_max|default:'' }}">
-      </div>
-    </div>
-    <button type="submit" class="btn btn-primary btn-lg search-btn">
-      <span class="btn-icon">🔍</span>
-      <span>بحث</span>
-    </button>
-  </form>
-</div>
-
-<div class="container">
-  <!-- Filter Section -->
-  <div class="filter-section">
-    <form method="get" class="filter-grid">
-      <div class="form-group">
-        <label>تصنيف النجوم</label>
-        <select name="star_rating" class="form-control">
-          <option value="" {% if not star_rating %}selected{% endif %}>الكل</option>
-          <option value="5" {% if star_rating == '5' %}selected{% endif %}>5 نجوم</option>
-          <option value="4" {% if star_rating == '4' %}selected{% endif %}>4 نجوم</option>
-          <option value="3" {% if star_rating == '3' %}selected{% endif %}>3 نجوم</option>
-          <option value="2" {% if star_rating == '2' %}selected{% endif %}>2 نجوم</option>
-          <option value="1" {% if star_rating == '1' %}selected{% endif %}>نجمة واحدة</option>
-        </select>
-      </div>
-
-      <div class="form-group">
-        <label>الدولة</label>
-        <select name="country" class="form-control">
-          <option value="" {% if not country_id %}selected{% endif %}>الكل</option>
-          {% for country in countries %}
-          <option value="{{ country.id }}" {% if country_id == country.id|stringformat:"s" %}selected{% endif %}>
-            {{ country.flag_emoji }} {{ country.name_ar }}
-          </option>
-          {% endfor %}
-        </select>
-      </div>
-
-      <div class="form-group">
-        <label>السعر لليلة من</label>
-        <input type="number" name="price_min" class="form-control" placeholder="السعر الأدنى" value="{{ price_min }}">
-      </div>
-
-      <div class="form-group">
-        <label>السعر لليلة إلى</label>
-        <input type="number" name="price_max" class="form-control" placeholder="السعر الأعلى" value="{{ price_max }}">
-      </div>
-
-      <div class="form-group">
-        <label>&nbsp;</label>
-        <button type="submit" class="btn-filter">تصفية النتائج</button>
-      </div>
-    </form>
-  </div>
-
-  <!-- Hotels Grid -->
-  {% if hotels %}
-  <div class="hotels-grid">
-    {% for hotel in hotels %}
-    <div class="hotel-card">
-      <div class="hotel-image-placeholder">🏨</div>
-      <div class="hotel-content">
-        <h3 class="hotel-name">{{ hotel.hotel_name }}</h3>
-        <div class="hotel-rating">
-          {% if hotel.star_rating == 1 %}★{% endif %}
-          {% if hotel.star_rating == 2 %}★★{% endif %}
-          {% if hotel.star_rating == 3 %}★★★{% endif %}
-          {% if hotel.star_rating == 4 %}★★★★{% endif %}
-          {% if hotel.star_rating == 5 %}★★★★★{% endif %}
+    <!-- Hero Section -->
+    <section class="listing-hero">
+        <div class="listing-hero-content">
+            <span class="listing-hero-icon">🏨🌍</span>
+            <h1 class="listing-hero-title">فنادق خارج العراق</h1>
+            <p class="listing-hero-subtitle">اكتشف أفضل الفنادق والمنتجعات في مختلف دول العالم</p>
         </div>
-        <p class="hotel-price">{{ hotel.price_per_night }} {{ hotel.currency }}/ليلة</p>
-        <p class="hotel-details">{{ hotel.total_rooms }} غرفة {% if hotel.suites %}• {{ hotel.suites }} جناح{% endif %}</p>
-        <div class="hotel-features">
-          {% if hotel.has_restaurant %}
-          <span class="feature-tag">🍽️ مطعم</span>
-          {% endif %}
-          {% if hotel.has_cafe %}
-          <span class="feature-tag">☕ مقهى</span>
-          {% endif %}
-          {% if hotel.has_pool %}
-          <span class="feature-tag">🏊 مسبح</span>
-          {% endif %}
-          {% if hotel.has_gym %}
-          <span class="feature-tag">🏋️ نادي رياضي</span>
-          {% endif %}
-          {% if hotel.has_spa %}
-          <span class="feature-tag">💆 سبا</span>
-          {% endif %}
-          {% if hotel.has_conference_hall %}
-          <span class="feature-tag">🏢 قاعة مؤتمرات</span>
-          {% endif %}
+    </section>
+
+    <!-- Search & Filters Toolbar -->
+    <div class="listing-toolbar">
+        <div class="listing-toolbar-content">
+            <!-- Search Box -->
+            <div class="listing-search-box">
+                <input type="text" 
+                       class="listing-search-input" 
+                       placeholder="ابحث عن فندقك..." 
+                       name="search"
+                       value="{{ request.GET.search|default:'' }}">
+                <span class="listing-search-icon">🔍</span>
+            </div>
+
+            <!-- Actions -->
+            <div class="listing-actions">
+                <!-- View Toggle -->
+                <div class="listing-view-toggle">
+                    <button class="listing-view-btn active" data-view="grid" aria-label="عرض شبكي">
+                        ▦
+                    </button>
+                    <button class="listing-view-btn" data-view="list" aria-label="عرض قائمة">
+                        ☰
+                    </button>
+                </div>
+
+                <!-- Filter Button (Mobile) -->
+                <button class="listing-filter-btn" aria-label="الفلاتر">
+                    <span>🔍</span>
+                    <span>الفلاتر</span>
+                </button>
+
+                <!-- Sort -->
+                <select class="listing-sort-select" name="sort">
+                    <option value="newest" {% if request.GET.sort == 'newest' %}selected{% endif %}>الأحدث</option>
+                    <option value="price_low" {% if request.GET.sort == 'price_low' %}selected{% endif %}>الأقل سعرًا</option>
+                    <option value="price_high" {% if request.GET.sort == 'price_high' %}selected{% endif %}>الأعلى سعرًا</option>
+                    <option value="rating" {% if request.GET.sort == 'rating' %}selected{% endif %}>الأعلى تقييمًا</option>
+                    <option value="featured" {% if request.GET.sort == 'featured' %}selected{% endif %}>المميز أولًا</option>
+                </select>
+            </div>
         </div>
-        {% if hotel.direct_booking and hotel.booking_url %}
-        <a href="{{ hotel.booking_url }}" class="btn-book" target="_blank">احجز الآن</a>
-        {% else %}
-        <button class="btn-book" disabled>تواصل معنا</button>
-        {% endif %}
-      </div>
     </div>
-    {% endfor %}
-  </div>
-  {% else %}
-  <div class="no-results">
-    <p>لا توجد فنادق مطابقة لمعايير البحث</p>
-  </div>
-  {% endif %}
+
+    <!-- Main Layout -->
+    <div class="listing-layout" id="listings-container">
+        <!-- Filters Sidebar -->
+        <aside class="listing-filters">
+            <div class="listing-filters-header">
+                <h2 class="listing-filters-title">الفلاتر</h2>
+                <button class="listing-filters-clear" type="button">مسح الكل</button>
+            </div>
+
+            <form class="listing-filters-form" method="get" action="{% url 'category_hotels_outside' %}">
+                <!-- Country -->
+                <div class="listing-filter-group">
+                    <label class="listing-filter-label">الدولة</label>
+                    <select name="country" class="listing-filter-select" id="country-select">
+                        <option value="">كل الدول</option>
+                        {% for country in countries %}
+                        <option value="{{ country.id }}" {% if country_id|add:0 == country.id %}selected{% endif %}>{{ country.name_ar }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <!-- City -->
+                <div class="listing-filter-group">
+                    <label class="listing-filter-label">المدينة</label>
+                    <select name="city" class="listing-filter-select" id="city-select">
+                        <option value="">كل المدن</option>
+                        {% for city in cities %}
+                        <option value="{{ city.id }}" {% if city_id|add:0 == city.id %}selected{% endif %}>{{ city.name_ar }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <!-- District/Area -->
+                <div class="listing-filter-group">
+                    <label class="listing-filter-label">المنطقة</label>
+                    <input type="text" 
+                           name="district" 
+                           class="listing-filter-input" 
+                           placeholder="اكتب اسم المنطقة..."
+                           value="{{ request.GET.district|default:'' }}">
+                </div>
+
+                <!-- Star Rating -->
+                <div class="listing-filter-group">
+                    <label class="listing-filter-label">تصنيف النجوم</label>
+                    <select name="star_rating" class="listing-filter-select">
+                        <option value="">الكل</option>
+                        <option value="5" {% if request.GET.star_rating == '5' %}selected{% endif %}>⭐⭐⭐⭐⭐ 5 نجوم</option>
+                        <option value="4" {% if request.GET.star_rating == '4' %}selected{% endif %}>⭐⭐⭐⭐ 4 نجوم</option>
+                        <option value="3" {% if request.GET.star_rating == '3' %}selected{% endif %}>⭐⭐⭐ 3 نجوم</option>
+                        <option value="2" {% if request.GET.star_rating == '2' %}selected{% endif %}>⭐⭐ 2 نجوم</option>
+                        <option value="1" {% if request.GET.star_rating == '1' %}selected{% endif %}>⭐ نجمة واحدة</option>
+                    </select>
+                </div>
+
+                <!-- Currency -->
+                <div class="listing-filter-group">
+                    <label class="listing-filter-label">العملة</label>
+                    <select name="currency" class="listing-filter-select">
+                        <option value="">كل العملات</option>
+                        {% for currency_code, currency_name in currencies %}
+                        <option value="{{ currency_code }}" {% if request.GET.currency == currency_code %}selected{% endif %}>{{ currency_name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <!-- Price Range -->
+                <div class="listing-filter-group">
+                    <label class="listing-filter-label">السعر</label>
+                    <div class="listing-filter-range">
+                        <input type="number" 
+                               name="price_min" 
+                               class="listing-filter-input" 
+                               placeholder="من"
+                               value="{{ request.GET.price_min|default:'' }}">
+                        <span class="listing-filter-range-separator">—</span>
+                        <input type="number" 
+                               name="price_max" 
+                               class="listing-filter-input" 
+                               placeholder="إلى"
+                               value="{{ request.GET.price_max|default:'' }}">
+                    </div>
+                </div>
+
+                <!-- Apply Button -->
+                <button type="submit" class="listing-filter-apply">
+                    <span>🔍</span>
+                    <span>تصفية النتائج</span>
+                </button>
+            </form>
+        </aside>
+
+        <!-- Listings Container -->
+        <div class="listings-container">
+            <!-- Header -->
+            <div class="listings-header">
+                <span class="listings-count">
+                    {% if hotels %}
+                    {{ hotels|length }} فندق
+                    {% else %}
+                    لا توجد نتائج
+                    {% endif %}
+                </span>
+            </div>
+
+            <!-- Hotels Grid -->
+            {% if hotels %}
+            <div class="listings-grid">
+                {% for hotel in hotels %}
+                {% include 'properties/_hotel_card.html' with hotel=hotel %}
+                {% endfor %}
+            </div>
+
+            <!-- Pagination -->
+            {% if is_paginated %}
+            <div class="listing-pagination">
+                {% if page_obj.has_previous %}
+                <a href="?page={{ page_obj.previous_page_number }}" class="listing-pagination-btn">→</a>
+                {% endif %}
+
+                {% for num in page_obj.paginator.page_range %}
+                {% if page_obj.number == num %}
+                <span class="listing-pagination-btn active">{{ num }}</span>
+                {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                <a href="?page={{ num }}" class="listing-pagination-btn">{{ num }}</a>
+                {% endif %}
+                {% endfor %}
+
+                {% if page_obj.has_next %}
+                <a href="?page={{ page_obj.next_page_number }}" class="listing-pagination-btn">←</a>
+                {% endif %}
+            </div>
+            {% endif %}
+
+            {% else %}
+            <!-- Empty State -->
+            <div class="listing-empty-state">
+                <div class="listing-empty-icon">🏨</div>
+                <h3 class="listing-empty-title">لا توجد فنادق مطابقة</h3>
+                <p class="listing-empty-text">جرّب تغيير الفلاتر أو البحث عن موقع مختلف</p>
+                <button class="listing-empty-action" onclick="window.location.href='{% url 'category_hotels_outside' %}'">
+                    <span>🔄</span>
+                    <span>مسح الفلاتر</span>
+                </button>
+            </div>
+            {% endif %}
+        </div>
+    </div>
 </div>
+
+<!-- Mobile Filters Overlay -->
+<div class="listing-filters-overlay"></div>
+
+<!-- Dynamic City Loading Script -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const countrySelect = document.getElementById('country-select');
+    const citySelect = document.getElementById('city-select');
+
+    if (countrySelect) {
+        countrySelect.addEventListener('change', function() {
+            const countryId = this.value;
+            if (countryId) {
+                // Load cities for selected country
+                fetch(`/api/cities/?country=${countryId}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        citySelect.innerHTML = '<option value="">كل المدن</option>';
+                        data.cities.forEach(city => {
+                            citySelect.innerHTML += `<option value="${city.id}">${city.name_ar}</option>`;
+                        });
+                    });
+            } else {
+                citySelect.innerHTML = '<option value="">كل المدن</option>';
+            }
+        });
+    }
+});
+</script>
 {% endblock %}

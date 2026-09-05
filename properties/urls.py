@@ -35,6 +35,7 @@ urlpatterns = [
     path('about/', views.about_page, name='about'),
     path('contact/', views.contact_page, name='contact'),
     path('explore/', views.explore_view, name='explore'),
+    path('map/', views.interactive_map_view, name='interactive_map'),
     path('properties-outside-iraq/', views.properties_outside_iraq_view, name='properties_outside_iraq'),
     path('search/', views.unified_search_view, name='unified_search'),
     path('services-categories/', views.service_categories_view, name='service_categories'),
@@ -85,7 +86,9 @@ urlpatterns = [
     path('register/', views.register_view, name='register'),
     path('logout/', views.logout_view, name='logout'),
     path('password-reset/', views.password_reset_request, name='password_reset'),
+    path('password-reset-confirm/', views.password_reset_confirm, name='password_reset_confirm'),
     path('password-change/', views.password_change, name='password_change'),
+    path('account-delete/', views.account_delete, name='account_delete'),
     # OTP Verification
     path('otp/send/', otp_views.send_otp_view, name='send_otp'),
     path('otp/verify/', otp_views.verify_otp_view, name='verify_otp'),
@@ -836,6 +839,12 @@ urlpatterns = [
     path('contracts/statistics/', contract_views.contract_statistics, name='contract_statistics'),
     path('property/<int:property_id>/contracts/', contract_views.property_contracts, name='property_contracts'),
     
+    # New Contract Features
+    path('contracts/<int:contract_id>/copy/', contract_views.contract_copy, name='contract_copy'),
+    path('contracts/bulk-actions/', contract_views.contract_bulk_actions, name='contract_bulk_actions'),
+    path('contracts/<int:contract_id>/timeline/', contract_views.contract_timeline, name='contract_timeline'),
+    path('contracts/<int:contract_id>/reminders/', contract_views.contract_reminders, name='contract_reminders'),
+    
     # Contract API
     path('api/contracts/', contract_api_views.api_contracts_list, name='api_contracts_list'),
     path('api/contracts/<int:contract_id>/', contract_api_views.api_contract_detail, name='api_contract_detail'),
@@ -848,7 +857,13 @@ urlpatterns = [
 ]
 
 # Enterprise API endpoints (only if available)
-if api_enterprise:
+try:
+    from . import api_enterprise
+    api_enterprise_available = True
+except ImportError:
+    api_enterprise_available = False
+
+if api_enterprise_available:
     urlpatterns += [
         path('api/v1/system/status/', api_enterprise.api_system_status, name='api_system_status'),
         path('api/v1/system/errors/', api_enterprise.api_error_logs, name='api_error_logs'),
@@ -888,4 +903,34 @@ urlpatterns += [
     path('channels/<int:channel_id>/advertisement/create/', channel_views.create_channel_advertisement, name='create_channel_advertisement'),
     path('channels/<int:channel_id>/follow/', channel_views.follow_channel, name='follow_channel'),
     path('channels/content/<int:content_id>/like/', channel_views.like_channel_content, name='like_channel_content'),
+]
+
+# AI-Powered Features
+urlpatterns += [
+    # Budget Search - ماذا أستطيع شراء بميزانيتي
+    path('ai/budget-search/', views.budget_search, name='budget_search'),
+    
+    # Investment Calculator - استثمر أموالك
+    path('ai/investment-calculator/', views.investment_calculator, name='investment_calculator'),
+    
+    # Region Comparison - قارن منطقتين
+    path('ai/region-comparison/', views.region_comparison, name='region_comparison'),
+    
+    # Smart Property Score - نظام التقييم الذكي
+    path('ai/property-score/<int:property_id>/', views.smart_property_score, name='smart_property_score'),
+    
+    # AI Property Agent - وكلاء العقارات الذكي
+    path('ai/property-agent/', views.ai_property_agent, name='ai_property_agent'),
+    
+    # AI Price Watch - مراقبة الأسعار الذكية
+    path('ai/price-watch/', views.ai_price_watch, name='ai_price_watch'),
+    
+    # Smart Alerts - التنبيهات الذكية
+    path('ai/smart-alerts/', views.smart_alerts, name='smart_alerts'),
+    
+    # Discover Map - خريطة اكتشف حولك
+    path('discover-map/', views.discover_map, name='discover_map'),
+    
+    # Unified Marketplace - Marketplace موحد للبحث
+    path('marketplace/', views.unified_marketplace, name='unified_marketplace'),
 ]

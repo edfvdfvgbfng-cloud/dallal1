@@ -62,33 +62,33 @@
       
       <!-- Advertisement Info - Read Only -->
       <div style="background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(102, 126, 234, 0.05) 100%); padding: 25px; border-radius: 12px; margin-bottom: 30px; border: 2px solid rgba(102, 126, 234, 0.3);">
-        <h3 style="margin-bottom: 20px; color: #667eea; font-size: 1.3rem; font-weight: 700;">📋 تفاصيل الإعلان</h3>
+        <h3 style="margin-bottom: 20px; color: #FF7A00; font-size: 1.3rem; font-weight: 700;">📋 تفاصيل الإعلان</h3>
         
         <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px;">
           <div>
-            <label style="display: block; margin-bottom: 8px; font-weight: 600; color: #667eea;">عنوان الإعلان</label>
-            <div style="padding: 12px; background: rgba(255,255,255,0.9); border-radius: 8px; border: 2px solid #667eea; font-weight: 700; font-size: 1.1rem;">
+            <label style="display: block; margin-bottom: 8px; font-weight: 600; color: #FF7A00;">عنوان الإعلان</label>
+            <div style="padding: 12px; background: rgba(255,255,255,0.9); border-radius: 8px; border: 2px solid #FF7A00; font-weight: 700; font-size: 1.1rem;">
               {{ service_ad.title }}
             </div>
           </div>
           
           <div>
-            <label style="display: block; margin-bottom: 8px; font-weight: 600; color: #667eea;">السعر</label>
-            <div style="padding: 12px; background: rgba(255,255,255,0.9); border-radius: 8px; border: 2px solid #667eea; font-weight: 700; font-size: 1.1rem;">
+            <label style="display: block; margin-bottom: 8px; font-weight: 600; color: #FF7A00;">السعر</label>
+            <div style="padding: 12px; background: rgba(255,255,255,0.9); border-radius: 8px; border: 2px solid #FF7A00; font-weight: 700; font-size: 1.1rem;">
               {% if service_ad.price %}{{ service_ad.price }} د.ع{% else %}غير محدد{% endif %}
             </div>
           </div>
           
           <div>
-            <label style="display: block; margin-bottom: 8px; font-weight: 600; color: #667eea;">وقت الإنجاز</label>
-            <div style="padding: 12px; background: rgba(255,255,255,0.9); border-radius: 8px; border: 2px solid #667eea; font-weight: 700; font-size: 1.1rem;">
+            <label style="display: block; margin-bottom: 8px; font-weight: 600; color: #FF7A00;">وقت الإنجاز</label>
+            <div style="padding: 12px; background: rgba(255,255,255,0.9); border-radius: 8px; border: 2px solid #FF7A00; font-weight: 700; font-size: 1.1rem;">
               {{ service_ad.completion_time|default:"غير محدد" }}
             </div>
           </div>
           
           <div>
-            <label style="display: block; margin-bottom: 8px; font-weight: 600; color: #667eea;">الموقع</label>
-            <div style="padding: 12px; background: rgba(255,255,255,0.9); border-radius: 8px; border: 2px solid #667eea; font-weight: 700; font-size: 1.1rem;">
+            <label style="display: block; margin-bottom: 8px; font-weight: 600; color: #FF7A00;">الموقع</label>
+            <div style="padding: 12px; background: rgba(255,255,255,0.9); border-radius: 8px; border: 2px solid #FF7A00; font-weight: 700; font-size: 1.1rem;">
               {{ service_ad.location|default:"غير محدد" }}
             </div>
           </div>

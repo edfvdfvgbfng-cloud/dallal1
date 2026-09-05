@@ -6,8 +6,8 @@
   --admin-success: #22c55e;
   --admin-warning: #f59e0b;
   --admin-danger: #ef4444;
-  --admin-info: #3b82f6;
-  --admin-purple: #8b5cf6;
+  --admin-info: #FF7A00;
+  --admin-orange: #FF7A00;
   --admin-pink: #ec4899;
   --admin-bg: #0f0f23;
   --admin-card-bg: rgba(255, 255, 255, 0.05);
@@ -20,7 +20,7 @@
 
 /* Base Styles */
 .admin-container {
-  background: linear-gradient(135deg, #0f0f23 0%, #1a1a2e 50%, #16213e 100%);
+  background: linear-gradient(135deg, #0f0f23 0%, #0B0B0B 50%, #161616 100%);
   min-height: 100vh;
   padding: 2rem;
 }
@@ -160,7 +160,7 @@
 
 .admin-badge.info {
   background: rgba(59, 130, 246, 0.2);
-  color: #3b82f6;
+  color: #FF7A00;
 }
 
 .admin-badge.primary {

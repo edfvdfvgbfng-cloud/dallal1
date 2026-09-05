@@ -3,7 +3,7 @@ import sys
 import django
 
 # Add the project directory to Python path
-sys.path.insert(0, r'c:\Users\zbxhh\OneDrive\Desktop\acakar11\acakar')
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'dalal_project.settings')
 django.setup()

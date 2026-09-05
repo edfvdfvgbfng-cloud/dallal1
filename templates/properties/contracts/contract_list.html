@@ -1,0 +1,885 @@
+{% extends 'properties/base.html' %}
+{% load static %}
+{% load custom_filters %}
+
+{% block title %}العقود العقارية{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <div>
+                        <h2 class="mb-0">📚 أرشيف العقود</h2>
+                        <p class="text-muted mb-0">إدارة جميع العقود والاتفاقيات العقارية</p>
+                    </div>
+                    <div class="d-flex gap-2">
+                        <div class="dropdown">
+                            <button class="btn btn-success dropdown-toggle" type="button" id="exportDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                                <span class="btn-icon">📊</span>
+                                تصدير
+                            </button>
+                            <ul class="dropdown-menu" aria-labelledby="exportDropdown">
+                                <li><a class="dropdown-item" href="{% url 'contract_statistics' %}"><span class="dropdown-icon">📈</span> التقرير الإحصائي</a></li>
+                                <li><a class="dropdown-item" href="#" onclick="exportToExcel()"><span class="dropdown-icon">📋</span> تصدير Excel</a></li>
+                                <li><a class="dropdown-item" href="#" onclick="exportToPDF()"><span class="dropdown-icon">📄</span> تصدير PDF</a></li>
+                            </ul>
+                        </div>
+                        <div class="dropdown">
+                            <button class="btn btn-primary dropdown-toggle" type="button" id="createDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                                <span class="btn-icon">➕</span>
+                                إنشاء جديد
+                            </button>
+                            <ul class="dropdown-menu" aria-labelledby="createDropdown">
+                                <li><h6 class="dropdown-header">العقارات</h6></li>
+                                <li><a class="dropdown-item" href="{% url 'contract_create' %}?type=sale"><span class="dropdown-icon">🏠</span> عقد بيع</a></li>
+                                <li><a class="dropdown-item" href="{% url 'contract_create' %}?type=rent"><span class="dropdown-icon">🔑</span> عقد إيجار</a></li>
+                                <li><a class="dropdown-item" href="{% url 'contract_create' %}?type=investment"><span class="dropdown-icon">💰</span> عقد استثمار</a></li>
+                                <li><h6 class="dropdown-header">الفنادق</h6></li>
+                                <li><a class="dropdown-item" href="{% url 'contract_create' %}?type=hotel_local"><span class="dropdown-icon">🏨🇮🇶</span> فنادق داخل العراق</a></li>
+                                <li><a class="dropdown-item" href="{% url 'contract_create' %}?type=hotel_international"><span class="dropdown-icon">🏨🌍</span> فنادق خارج العراق</a></li>
+                                <li><h6 class="dropdown-header">المنتجعات</h6></li>
+                                <li><a class="dropdown-item" href="{% url 'contract_create' %}?type=resort_local"><span class="dropdown-icon">🏝️🇮🇶</span> منتجعات داخل العراق</a></li>
+                                <li><a class="dropdown-item" href="{% url 'contract_create' %}?type=resort_international"><span class="dropdown-icon">🏝️🌍</span> منتجعات خارج العراق</a></li>
+                                <li><h6 class="dropdown-header">الخدمات</h6></li>
+                                <li><a class="dropdown-item" href="/travel/create/"><span class="dropdown-icon">✈️</span> نشر شركة سفر</a></li>
+                                <li><a class="dropdown-item" href="/jobs/create/"><span class="dropdown-icon">➕</span> نشر وظيفة</a></li>
+                                <li><a class="dropdown-item" href="/services/create/"><span class="dropdown-icon">🔧</span> نشر خدمة</a></li>
+                                <li><a class="dropdown-item" href="/auctions/create/"><span class="dropdown-icon">🔨</span> نشر مزاد</a></li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="card-body">
+                    <!-- إحصائيات سريعة -->
+                    <div class="row mb-4">
+                        <div class="col-md-2">
+                            <div class="stat-card">
+                                <div class="stat-icon">📄</div>
+                                <div class="stat-number">{{ stats.total }}</div>
+                                <div class="stat-label">إجمالي العقود</div>
+                            </div>
+                        </div>
+                        <div class="col-md-2">
+                            <div class="stat-card">
+                                <div class="stat-icon">✅</div>
+                                <div class="stat-number">{{ stats.active }}</div>
+                                <div class="stat-label">عقود فعالة</div>
+                            </div>
+                        </div>
+                        <div class="col-md-2">
+                            <div class="stat-card">
+                                <div class="stat-icon">🏁</div>
+                                <div class="stat-number">{{ stats.completed }}</div>
+                                <div class="stat-label">مكتملة</div>
+                            </div>
+                        </div>
+                        <div class="col-md-2">
+                            <div class="stat-card">
+                                <div class="stat-icon">⚠️</div>
+                                <div class="stat-number">{{ stats.expiring_soon }}</div>
+                                <div class="stat-label">قريبة من الانتهاء</div>
+                            </div>
+                        </div>
+                        <div class="col-md-2">
+                            <div class="stat-card">
+                                <div class="stat-icon">💰</div>
+                                <div class="stat-number">{{ stats.total_value|floatformat:0 }}</div>
+                                <div class="stat-label">إجمالي القيمة</div>
+                            </div>
+                        </div>
+                        <div class="col-md-2">
+                            <div class="stat-card">
+                                <div class="stat-icon">📈</div>
+                                <div class="stat-number">{{ stats.total_value|floatformat:0|divide:stats.total|default:"0" }}</div>
+                                <div class="stat-label">متوسط القيمة</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- تنبيهات سريعة -->
+                    {% if stats.expiring_soon > 0 %}
+                    <div class="alert alert-warning alert-dismissible fade show" role="alert">
+                        <strong>⚠️ تنبيه:</strong> لديك {{ stats.expiring_soon }} عقد/عقود تنتهي خلال 7 أيام!
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                    {% endif %}
+                    
+                    <!-- نموذج البحث المتقدم -->
+                    <div class="search-form mb-4">
+                        <button class="btn btn-outline-primary mb-3" type="button" data-bs-toggle="collapse" data-bs-target="#advancedSearch">
+                            <span class="btn-icon">🔍</span>
+                            البحث المتقدم
+                        </button>
+                        
+                        <div class="collapse {% if search_form.is_bound %}show{% endif %}" id="advancedSearch">
+                            <form method="get" class="card bg-dark border-secondary p-3">
+                                <div class="row">
+                                    <div class="col-md-3 mb-2">
+                                        <label class="form-label text-white">البحث النصي</label>
+                                        {{ search_form.q }}
+                                    </div>
+                                    <div class="col-md-3 mb-2">
+                                        <label class="form-label text-white">نوع العقد</label>
+                                        {{ search_form.contract_type }}
+                                    </div>
+                                    <div class="col-md-3 mb-2">
+                                        <label class="form-label text-white">مدة العقد</label>
+                                        {{ search_form.duration_type }}
+                                    </div>
+                                    <div class="col-md-3 mb-2">
+                                        <label class="form-label text-white">الحالة</label>
+                                        {{ search_form.status }}
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="col-md-3 mb-2">
+                                        <label class="form-label text-white">العملة</label>
+                                        {{ search_form.currency }}
+                                    </div>
+                                    <div class="col-md-3 mb-2">
+                                        <label class="form-label text-white">المحافظة</label>
+                                        {{ search_form.governorate }}
+                                    </div>
+                                    <div class="col-md-3 mb-2">
+                                        <label class="form-label text-white">من تاريخ البدء</label>
+                                        {{ search_form.start_date_from }}
+                                    </div>
+                                    <div class="col-md-3 mb-2">
+                                        <label class="form-label text-white">إلى تاريخ البدء</label>
+                                        {{ search_form.start_date_to }}
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="col-md-3 mb-2">
+                                        <label class="form-label text-white">من تاريخ الانتهاء</label>
+                                        {{ search_form.end_date_from }}
+                                    </div>
+                                    <div class="col-md-3 mb-2">
+                                        <label class="form-label text-white">إلى تاريخ الانتهاء</label>
+                                        {{ search_form.end_date_to }}
+                                    </div>
+                                    <div class="col-md-3 mb-2">
+                                        <label class="form-label text-white">أقل قيمة</label>
+                                        {{ search_form.amount_min }}
+                                    </div>
+                                    <div class="col-md-3 mb-2">
+                                        <label class="form-label text-white">أقصى قيمة</label>
+                                        {{ search_form.amount_max }}
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="col-md-6 mb-2">
+                                        <div class="form-check">
+                                            {{ search_form.is_archived }}
+                                            <label class="form-check-label text-white" for="{{ search_form.is_archived.id_for_label }}">
+                                                عرض العقود المؤرشفة
+                                            </label>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-3 mb-2">
+                                        <button type="submit" class="btn btn-primary w-100">
+                                            <span class="btn-icon">🔍</span>
+                                            بحث
+                                        </button>
+                                    </div>
+                                    <div class="col-md-3 mb-2">
+                                        <a href="{% url 'contract_list' %}" class="btn btn-outline-secondary w-100">
+                                            إعادة تعيين
+                                        </a>
+                                    </div>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                    
+                    <!-- جدول العقود المحسن -->
+                    <div class="table-responsive">
+                        <table class="table table-hover" id="contractsTable">
+                            <thead>
+                                <tr>
+                                    <th class="sortable" data-sort="contract_number">رقم العقد</th>
+                                    <th class="sortable" data-sort="contract_title">العنوان</th>
+                                    <th class="sortable" data-sort="contract_type">النوع</th>
+                                    <th class="sortable" data-sort="duration_type">المدة</th>
+                                    <th class="sortable" data-sort="status">الحالة</th>
+                                    <th class="sortable" data-sort="property">العقار</th>
+                                    <th class="sortable" data-sort="amount">القيمة</th>
+                                    <th class="sortable" data-sort="start_date">تاريخ البدء</th>
+                                    <th class="sortable" data-sort="end_date">تاريخ الانتهاء</th>
+                                    <th>الأيام المتبقية</th>
+                                    <th>الإجراءات</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for contract in page_obj %}
+                                <tr class="contract-row" data-contract-id="{{ contract.id }}">
+                                    <td>
+                                        <strong>{{ contract.contract_number }}</strong>
+                                        <br>
+                                        <small class="text-muted">{{ contract.created_at|date:"Y-m-d" }}</small>
+                                    </td>
+                                    <td>
+                                        {{ contract.contract_title|default:"-" }}
+                                        {% if contract.is_archived %}
+                                        <span class="badge bg-secondary">مؤرشف</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-{{ contract.contract_type|contract_type_color }}">
+                                            {{ contract.get_contract_type_display }}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <span class="badge {% if contract.duration_type == 'permanent' %}bg-primary{% else %}bg-info{% endif %}">
+                                            {{ contract.get_duration_type_display }}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-{{ contract.status|status_color }}">
+                                            {{ contract.get_status_display }}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        {% if contract.property %}
+                                        <a href="{% url 'property_detail' contract.property.id %}" class="text-white">
+                                            {{ contract.property.title }}
+                                        </a>
+                                        {% else %}
+                                        -
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <strong>{{ contract.amount|floatformat:0 }}</strong> {{ contract.currency }}
+                                        {% if contract.commission_amount > 0 %}
+                                        <br>
+                                        <small class="text-muted">العمولة: {{ contract.commission_amount|floatformat:0 }}</small>
+                                        {% endif %}
+                                    </td>
+                                    <td>{{ contract.start_date|date:"Y-m-d" }}</td>
+                                    <td>{{ contract.end_date|date:"Y-m-d"|default:"-" }}</td>
+                                    <td>
+                                        {% if contract.days_remaining %}
+                                        <span class="badge bg-{{ contract.days_remaining|days_remaining_color }}">
+                                            {{ contract.days_remaining }} يوم
+                                        </span>
+                                        {% else %}
+                                        -
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <div class="btn-group">
+                                            <a href="{% url 'contract_detail' contract.id %}" class="btn btn-sm btn-info" title="عرض">
+                                                👁️
+                                            </a>
+                                            {% if contract|can_edit_contract:request.user %}
+                                            <a href="{% url 'contract_edit' contract.id %}" class="btn btn-sm btn-warning" title="تعديل">
+                                                ✏️
+                                            </a>
+                                            <button class="btn btn-sm btn-secondary" title="أرشفة" onclick="archiveContract({{ contract.id }})">
+                                                📚
+                                            </button>
+                                            <button class="btn btn-sm btn-success" title="نسخ" onclick="copyContract({{ contract.id }})">
+                                                �
+                                            </button>
+                                            {% endif %}
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="11" class="text-center py-4">
+                                        <div class="empty-state">
+                                            <div class="empty-icon">📭</div>
+                                            <h4>لا توجد عقود</h4>
+                                            <p>ابدأ بإنشاء عقد جديد أو قم بتعديل معايير البحث</p>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    
+                    <!-- Pagination -->
+                    {% if page_obj.has_other_pages %}
+                    <nav aria-label="Page navigation">
+                        <ul class="pagination justify-content-center">
+                            {% if page_obj.has_previous %}
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ page_obj.previous_page_number }}">السابق</a>
+                            </li>
+                            {% endif %}
+                            
+                            {% for num in page_obj.paginator.page_range %}
+                            {% if page_obj.number == num %}
+                            <li class="page-item active">
+                                <span class="page-link">{{ num }}</span>
+                            </li>
+                            {% else %}
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ num }}">{{ num }}</a>
+                            </li>
+                            {% endif %}
+                            {% endfor %}
+                            
+                            {% if page_obj.has_next %}
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ page_obj.next_page_number }}">التالي</a>
+                            </li>
+                            {% endif %}
+                        </ul>
+                    </nav>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.card {
+    background: #0A0A0A;
+    border: 1px solid #333;
+    border-radius: 10px;
+    margin-bottom: 20px;
+}
+
+.card-header {
+    background: #0A0A0A;
+    border-bottom: 1px solid #333;
+    padding: 20px;
+    border-radius: 10px 10px 0 0;
+}
+
+.card-header h2 {
+    color: #e67e22;
+    margin: 0;
+}
+
+.card-header p {
+    color: #888;
+    margin: 5px 0 0 0;
+}
+
+.card-body {
+    padding: 20px;
+    color: #fff;
+}
+
+.stat-card {
+    background: linear-gradient(135deg, #0A0A0A 0%, #0A0A0A 100%);
+    border: 1px solid #e67e22;
+    border-radius: 12px;
+    padding: 20px;
+    text-align: center;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    cursor: pointer;
+}
+
+.stat-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 30px rgba(230, 126, 34, 0.3);
+}
+
+.stat-icon {
+    font-size: 2.5rem;
+    margin-bottom: 10px;
+}
+
+.stat-number {
+    font-size: 2rem;
+    font-weight: bold;
+    color: #fff;
+    margin-bottom: 5px;
+}
+
+.stat-label {
+    font-size: 0.9rem;
+    color: #e67e22;
+    font-weight: 600;
+}
+
+.search-form input,
+.search-form select {
+    background: #0A0A0A;
+    border: 1px solid #333;
+    color: #fff;
+    padding: 12px;
+    border-radius: 6px;
+    width: 100%;
+}
+
+.search-form input:focus,
+.search-form select:focus {
+    border-color: #e67e22;
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(230, 126, 34, 0.2);
+}
+
+.search-form input::placeholder {
+    color: #888;
+}
+
+.search-form select option {
+    background: #0A0A0A;
+    color: #fff;
+}
+
+.search-form .form-label {
+    font-size: 0.85rem;
+    color: #888;
+    margin-bottom: 5px;
+}
+
+.table {
+    background: #0A0A0A;
+    border-radius: 10px;
+    overflow: hidden;
+}
+
+.table thead {
+    background: #0A0A0A;
+    border-bottom: 2px solid #e67e22;
+}
+
+.table th {
+    color: #e67e22;
+    font-weight: 600;
+    padding: 15px;
+    text-align: right;
+    cursor: pointer;
+    user-select: none;
+    position: relative;
+}
+
+.table th:hover {
+    background: #1a1a1a;
+}
+
+.table th.sortable::after {
+    content: '↕';
+    position: absolute;
+    left: 10px;
+    opacity: 0.5;
+}
+
+.table th.sortable.ascending::after {
+    content: '↑';
+    opacity: 1;
+}
+
+.table th.sortable.descending::after {
+    content: '↓';
+    opacity: 1;
+}
+
+.table td {
+    padding: 15px;
+    border-bottom: 1px solid #333;
+    color: #fff;
+    vertical-align: middle;
+}
+
+.table tbody tr:hover {
+    background: #1a1a1a;
+}
+
+.contract-row {
+    transition: background-color 0.2s ease;
+}
+
+.badge {
+    padding: 5px 10px;
+    border-radius: 4px;
+    font-size: 0.85rem;
+}
+
+.btn-icon {
+    margin-left: 5px;
+}
+
+.btn-sm {
+    padding: 5px 10px;
+    font-size: 0.85rem;
+}
+
+.pagination .page-link {
+    background: #0A0A0A;
+    border: 1px solid #333;
+    color: #fff;
+}
+
+.pagination .page-link:hover {
+    background: #e67e22;
+    border-color: #e67e22;
+    color: #fff;
+}
+
+.pagination .page-item.active .page-link {
+    background: #e67e22;
+    border-color: #e67e22;
+    color: #fff;
+}
+
+/* Dropdown Styles */
+.dropdown {
+    position: relative;
+}
+
+.dropdown-toggle {
+    cursor: pointer;
+}
+
+.dropdown-menu {
+    background: #0A0A0A;
+    border: 1px solid #333;
+    border-radius: 8px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+    min-width: 250px;
+    padding: 10px 0;
+    display: none;
+    position: absolute;
+    top: 100%;
+    left: 0;
+    z-index: 1000;
+    margin-top: 5px;
+}
+
+.dropdown.show .dropdown-menu {
+    display: block;
+}
+
+.dropdown-header {
+    color: #e67e22;
+    font-weight: 600;
+    padding: 8px 20px;
+    font-size: 0.85rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.dropdown-item {
+    color: #fff;
+    padding: 10px 20px;
+    display: flex;
+    align-items: center;
+    transition: all 0.3s ease;
+    text-decoration: none;
+}
+
+.dropdown-item:hover {
+    background: #e67e22;
+    color: #fff;
+}
+
+.dropdown-icon {
+    margin-left: 10px;
+    font-size: 1.1rem;
+}
+
+.dropdown-divider {
+    border-color: #333;
+    margin: 5px 0;
+}
+
+/* Empty State */
+.empty-state {
+    text-align: center;
+    padding: 40px 20px;
+}
+
+.empty-icon {
+    font-size: 4rem;
+    margin-bottom: 20px;
+    opacity: 0.5;
+}
+
+.empty-state h4 {
+    color: #888;
+    margin-bottom: 10px;
+}
+
+.empty-state p {
+    color: #666;
+}
+
+/* Alert Styles */
+.alert {
+    background: #1a1a1a;
+    border: 1px solid #333;
+    color: #fff;
+    border-radius: 8px;
+    padding: 15px;
+    margin-bottom: 20px;
+}
+
+.alert-warning {
+    background: #3a2a0a;
+    border-color: #e67e22;
+}
+
+.alert-success {
+    background: #0a3a0a;
+    border-color: #28a745;
+}
+
+.alert-info {
+    background: #0a2a3a;
+    border-color: #17a2b8;
+}
+
+.alert-danger {
+    background: #3a0a0a;
+    border-color: #dc3545;
+}
+
+/* Responsive Table */
+@media (max-width: 768px) {
+    .table-responsive {
+        border: 0;
+    }
+    
+    .table thead {
+        display: none;
+    }
+    
+    .table tbody tr {
+        display: block;
+        margin-bottom: 15px;
+        border: 1px solid #333;
+        border-radius: 8px;
+        padding: 10px;
+    }
+    
+    .table tbody td {
+        display: flex;
+        justify-content: space-between;
+        text-align: right;
+        border-bottom: 1px solid #333;
+        padding: 8px 0;
+    }
+    
+    .table tbody td:last-child {
+        border-bottom: none;
+    }
+    
+    .table tbody td::before {
+        content: attr(data-label);
+        font-weight: bold;
+        color: #e67e22;
+        margin-left: 10px;
+    }
+}
+
+/* Badge Colors */
+.bg-success { background-color: #28a745; }
+.bg-primary { background-color: #007bff; }
+.bg-info { background-color: #17a2b8; }
+.bg-warning { background-color: #ffc107; color: #000; }
+.bg-danger { background-color: #dc3545; }
+.bg-secondary { background-color: #6c757d; }
+
+/* Button Styles */
+.btn-outline {
+    background: transparent;
+    border: 1px solid #333;
+    color: #fff;
+    padding: 8px 16px;
+    border-radius: 6px;
+    transition: all 0.3s ease;
+}
+
+.btn-outline:hover {
+    background: #e67e22;
+    border-color: #e67e22;
+    color: #fff;
+}
+
+.btn-outline-secondary {
+    border-color: #333;
+    color: #888;
+}
+
+.btn-outline-secondary:hover {
+    background: #333;
+    border-color: #333;
+    color: #fff;
+}
+
+.gap-2 {
+    gap: 8px;
+}
+
+.btn-group {
+    display: flex;
+    gap: 4px;
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialize dropdowns
+    const dropdowns = document.querySelectorAll('.dropdown');
+    dropdowns.forEach(dropdown => {
+        const dropdownToggle = dropdown.querySelector('.dropdown-toggle');
+        
+        dropdownToggle.addEventListener('click', function(e) {
+            e.preventDefault();
+            dropdown.classList.toggle('show');
+        });
+    });
+    
+    // Close dropdowns when clicking outside
+    document.addEventListener('click', function(e) {
+        dropdowns.forEach(dropdown => {
+            if (!dropdown.contains(e.target)) {
+                dropdown.classList.remove('show');
+            }
+        });
+    });
+    
+    // Table sorting
+    const sortableHeaders = document.querySelectorAll('.sortable');
+    sortableHeaders.forEach(header => {
+        header.addEventListener('click', function() {
+            const table = this.closest('table');
+            const tbody = table.querySelector('tbody');
+            const rows = Array.from(tbody.querySelectorAll('tr:not(.empty-row)'));
+            const sortField = this.dataset.sort;
+            const isAscending = this.classList.toggle('ascending');
+            
+            // Update all headers
+            sortableHeaders.forEach(h => {
+                if (h !== this) {
+                    h.classList.remove('ascending', 'descending');
+                }
+            });
+            
+            rows.sort((a, b) => {
+                let aVal, bVal;
+                
+                if (sortField === 'amount') {
+                    aVal = parseFloat(a.querySelector('td:nth-child(7)').textContent.replace(/,/g, ''));
+                    bVal = parseFloat(b.querySelector('td:nth-child(7)').textContent.replace(/,/g, ''));
+                } else if (sortField === 'start_date' || sortField === 'end_date') {
+                    const colIndex = sortField === 'start_date' ? 8 : 9;
+                    aVal = new Date(a.querySelector(`td:nth-child(${colIndex})`).textContent);
+                    bVal = new Date(b.querySelector(`td:nth-child(${colIndex})`).textContent);
+                } else {
+                    aVal = a.querySelector(`td:nth-child(${getColumnIndex(sortField)})`).textContent.trim();
+                    bVal = b.querySelector(`td:nth-child(${getColumnIndex(sortField)})`).textContent.trim();
+                }
+                
+                if (aVal < bVal) return isAscending ? -1 : 1;
+                if (aVal > bVal) return isAscending ? 1 : -1;
+                return 0;
+            });
+            
+            rows.forEach(row => tbody.appendChild(row));
+        });
+    });
+    
+    // Search functionality
+    const searchInput = document.querySelector('input[name="q"]');
+    if (searchInput) {
+        searchInput.addEventListener('input', function() {
+            const searchTerm = this.value.toLowerCase();
+            const rows = document.querySelectorAll('#contractsTable tbody tr:not(.empty-row)');
+            
+            rows.forEach(row => {
+                const text = row.textContent.toLowerCase();
+                row.style.display = text.includes(searchTerm) ? '' : 'none';
+            });
+        });
+    }
+    
+    // Status filter
+    const statusFilter = document.querySelector('select[name="status"]');
+    if (statusFilter) {
+        statusFilter.addEventListener('change', function() {
+            const status = this.value;
+            const rows = document.querySelectorAll('#contractsTable tbody tr:not(.empty-row)');
+            
+            rows.forEach(row => {
+                if (!status) {
+                    row.style.display = '';
+                } else {
+                    const statusBadge = row.querySelector('td:nth-child(5) .badge');
+                    const rowStatus = statusBadge ? statusBadge.textContent.trim() : '';
+                    row.style.display = rowStatus === getStatusText(status) ? '' : 'none';
+                }
+            });
+        });
+    }
+});
+
+function getColumnIndex(field) {
+    const fieldMap = {
+        'contract_number': 1,
+        'contract_title': 2,
+        'contract_type': 3,
+        'duration_type': 4,
+        'status': 5,
+        'property': 6,
+        'amount': 7,
+        'start_date': 8,
+        'end_date': 9
+    };
+    return fieldMap[field] || 1;
+}
+
+function getStatusText(status) {
+    const statusMap = {
+        'draft': 'مسودة',
+        'pending': 'قيد الانتظار',
+        'active': 'نشط',
+        'completed': 'مكتمل',
+        'terminated': 'منهي',
+        'expired': 'منتهي',
+        'cancelled': 'ملغي'
+    };
+    return statusMap[status] || status;
+}
+
+function archiveContract(contractId) {
+    if (confirm('هل أنت متأكد من أرشفة هذا العقد؟')) {
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = `/contracts/${contractId}/archive/`;
+        
+        const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]');
+        if (csrfToken) {
+            form.appendChild(csrfToken.cloneNode(true));
+        }
+        
+        const reasonInput = document.createElement('input');
+        reasonInput.type = 'text';
+        reasonInput.name = 'reason';
+        reasonInput.value = prompt('سبب الأرشفة (اختياري):') || '';
+        form.appendChild(reasonInput);
+        
+        document.body.appendChild(form);
+        form.submit();
+    }
+}
+
+function copyContract(contractId) {
+    if (confirm('هل تريد نسخ هذا العقد لإنشاء عقد جديد مشابه؟')) {
+        window.location.href = `/contracts/${contractId}/copy/`;
+    }
+}
+
+function exportToExcel() {
+    alert('سيتم تحميل ملف Excel shortly...');
+    // Implement actual Excel export
+}
+
+function exportToPDF() {
+    alert('سيتم تحميل ملف PDF shortly...');
+    // Implement actual PDF export
+}
+</script>
+{% endblock %}

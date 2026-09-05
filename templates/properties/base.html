@@ -29,6 +29,7 @@
   <link rel="stylesheet" href="{% static 'css/enhanced-ui.css' %}">
   <link rel="stylesheet" href="{% static 'css/ai_chatbot_styles.css' %}">
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet-draw@1.0.4/dist/leaflet.draw.css" crossorigin="">
   <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css" crossorigin="">
   <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css" crossorigin="">
   {% block extra_css %}
@@ -477,7 +478,7 @@
     }
 
     .user-message .message-content {
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      background: linear-gradient(135deg, #FF7A00 0%, #FF9500 100%);
       color: white;
     }
 
@@ -502,7 +503,7 @@
 
     .quick-option:hover {
       background: #333;
-      border-color: #667eea;
+      border-color: #FF7A00;
       transform: translateY(-2px);
     }
 
@@ -531,12 +532,12 @@
 
     .chatbot-input:focus {
       outline: none;
-      border-color: #667eea;
+      border-color: #FF7A00;
     }
 
     .chatbot-send {
       padding: 12px 20px;
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      background: linear-gradient(135deg, #FF7A00 0%, #FF9500 100%);
       border: none;
       border-radius: 8px;
       color: white;
@@ -564,7 +565,7 @@
 
     .chatbot-new-chat:hover {
       background: #444;
-      border-color: #667eea;
+      border-color: #FF7A00;
     }
 
     .chatbot-actions {
@@ -587,7 +588,7 @@
 
     .chatbot-actions button:hover {
       background: #444;
-      border-color: #667eea;
+      border-color: #FF7A00;
     }
 
     .chatbot-attach,
@@ -605,7 +606,7 @@
     .chatbot-attach:hover,
     .chatbot-voice:hover {
       background: #444;
-      border-color: #667eea;
+      border-color: #FF7A00;
     }
 
     .chatbot-voice.recording {
@@ -659,7 +660,7 @@
 
     .suggestion-chip {
       padding: 6px 12px;
-      background: #667eea;
+      background: #FF7A00;
       border: none;
       border-radius: 16px;
       color: white;
@@ -669,7 +670,7 @@
     }
 
     .suggestion-chip:hover {
-      background: #764ba2;
+      background: #FF9500;
       transform: translateY(-2px);
     }
 
@@ -788,7 +789,7 @@
 
     .history-load {
       padding: 6px 12px;
-      background: #667eea;
+      background: #FF7A00;
       border: none;
       border-radius: 4px;
       color: white;
@@ -836,7 +837,7 @@
     .typing-indicator span {
       width: 8px;
       height: 8px;
-      background: #667eea;
+      background: #FF7A00;
       border-radius: 50%;
       animation: typing 1.4s infinite;
     }
@@ -876,7 +877,7 @@
     }
 
     .result-card:hover {
-      border-color: #667eea;
+      border-color: #FF7A00;
       transform: translateY(-2px);
     }
 
@@ -919,7 +920,7 @@
     }
 
     .result-price {
-      color: #667eea !important;
+      color: #FF7A00 !important;
       font-weight: 600;
     }
 
@@ -972,6 +973,11 @@
         <span>{% if site_settings %}{{ site_settings.site_name }}{% else %}دلال{% endif %}</span>
       </a>
       <ul class="nav-links">
+        <li><a href="{% url 'home' %}">الرئيسية</a></li>
+        <li><a href="{% url 'interactive_map' %}">🗺️ الخريطة التفاعلية</a></li>
+        <li><a href="{% url 'category_inside_iraq' %}">عقارات داخل العراق</a></li>
+        <li><a href="{% url 'category_outside_iraq' %}">عقارات خارج العراق</a></li>
+        <li><a href="{% url 'contact' %}">اتصل بنا</a></li>
       </ul>
     </div>
   </nav>
@@ -1020,13 +1026,13 @@
           <ul class="footer-links">
             <li><a href="{% url 'public_broker_search' %}">🔍 البحث عن دلال</a></li>
             <li><a href="{% url 'channels_list' %}">📺 قنوات الدلالين</a></li>
+            <li><a href="{% url 'broker_join' %}">👤 انضم كدلال</a></li>
             {% if request.user.is_authenticated %}
             <li><a href="{% url 'broker_conversation_list' %}">💬 مراسلة الدلالين</a></li>
             <li><a href="{% url 'appointment_booking_landing' %}">📅 حجز موعد</a></li>
             {% else %}
             <li><a href="/login/?next={% url 'broker_conversation_list' %}">💬 مراسلة الدلالين</a></li>
             <li><a href="/login/?next={% url 'appointment_booking_landing' %}">📅 حجز موعد</a></li>
-            <li><a href="{% url 'broker_join' %}">👤 انضم كدلال</a></li>
             {% endif %}
           </ul>
         </div>
@@ -1048,6 +1054,9 @@
             </button>
             <button type="button" id="ai-chatbot-btn" class="btn btn-primary btn-sm" style="margin-top: 10px; display: inline-block;">
               🤖 مساعد ذكي
+            </button>
+            <button type="button" id="push-permission-btn" class="btn btn-primary btn-sm" style="margin-top: 10px; display: inline-block; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border: none;">
+              🔔 تفعيل الإشعارات
             </button>
             {% if site_settings %}
               {% if site_settings.whatsapp or site_settings.broker_phone %}
@@ -1071,6 +1080,10 @@
     <a href="{% url 'home' %}" class="bottom-nav-item" data-nav="home">
       <span class="bottom-nav-icon">🏠</span>
       <span class="bottom-nav-label">الرئيسية</span>
+    </a>
+    <a href="{% url 'interactive_map' %}" class="bottom-nav-item" data-nav="map">
+      <span class="bottom-nav-icon">🗺️</span>
+      <span class="bottom-nav-label">الخريطة</span>
     </a>
     {% if request.user.is_authenticated %}
     <a href="{% url 'dashboard' %}" class="bottom-nav-item" data-nav="dashboard">
@@ -1100,8 +1113,6 @@
   <!-- Floating WhatsApp button removed - now in footer -->
 
 
-  <button type="button" class="back-to-top" id="back-to-top" aria-label="أعلى">↑</button>
-
   <div id="toast-container" class="toast-container" aria-live="polite"></div>
 
   <!-- AI Chatbot -->
@@ -1118,7 +1129,7 @@
       <div class="message bot-message">
         <div class="message-content">
           <p>السلام عليكم 👋</p>
-          <p>أهلاً بك، شلون أگدر أساعدك اليوم؟</p>
+          <p>أهلاً بك، شلون أقدر أساعدك اليوم؟</p>
         </div>
       </div>
       
@@ -1167,29 +1178,24 @@
       localStorage.setItem('theme', 'dark');
     })();
   </script>
-  <script type="application/json" id="site-data">
-    {
-      "governorate_cities": {{ governorate_cities_json|safe|default:"{}" }},
-      "site_phone": "{% if site_settings %}{{ site_settings.broker_phone }}{% endif %}"
-    }
-  </script>
   <script>
-    (function() {
-      const siteData = JSON.parse(document.getElementById('site-data').textContent);
-      window.GOVERNORATE_CITIES = siteData.governorate_cities;
-      window.SITE_PHONE = siteData.site_phone;
-    })();
+    // Site data
+    window.GOVERNORATE_CITIES = {};
+    window.SITE_PHONE = "";
   </script>
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
   <script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js" crossorigin=""></script>
+  <script src="https://unpkg.com/leaflet-draw@1.0.4/dist/leaflet.draw.js" crossorigin=""></script>
   <script src="{% static 'js/app.js' %}" defer></script>
   <script src="{% static 'js/countdown.js' %}" defer></script>
   <script src="{% static 'js/enhanced-features.js' %}" defer></script>
   <script src="{% static 'js/navigation.js' %}" defer></script>
+  <script src="{% static 'js/ai_chatbot.js' %}" defer></script>
+  <script src="{% static 'js/push-notifications.js' %}" defer></script>
   <script>
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', function () {
-        navigator.serviceWorker.register('/sw.js', { scope: '/' }).catch(function () {});
+        navigator.serviceWorker.register('/static/js/sw.js', { scope: '/' }).catch(function () {});
       });
     }
     let deferredInstallPrompt = null;
@@ -1212,267 +1218,7 @@
     });
   </script>
   {% block extra_js %}
-  <script>
-    // AI Chatbot - Full Functionality
-    document.addEventListener('DOMContentLoaded', function() {
-      console.log('[AI Chatbot] Initializing...');
-      
-      const chatbotBtn = document.getElementById('ai-chatbot-btn');
-      const chatbot = document.getElementById('ai-chatbot');
-      const chatbotClose = document.getElementById('chatbot-close');
-      const chatbotInput = document.getElementById('chatbot-input');
-      const chatbotSend = document.getElementById('chatbot-send');
-      const chatbotMessages = document.getElementById('chatbot-messages');
-      const quickOptions = document.querySelectorAll('.quick-option');
-      
-      console.log('[AI Chatbot] chatbotBtn:', chatbotBtn);
-      console.log('[AI Chatbot] chatbot:', chatbot);
-      console.log('[AI Chatbot] chatbotClose:', chatbotClose);
-      console.log('[AI Chatbot] chatbotInput:', chatbotInput);
-      console.log('[AI Chatbot] chatbotSend:', chatbotSend);
-      console.log('[AI Chatbot] chatbotMessages:', chatbotMessages);
-      
-      // Generate conversation ID
-      const conversationId = 'conv_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
-      let conversationState = { intent: null, data: {}, step: 0 };
-      
-      // Toggle chatbot
-      if (chatbotBtn && chatbot) {
-        chatbotBtn.addEventListener('click', function() {
-          console.log('[AI Chatbot] Button clicked!');
-          chatbot.classList.toggle('active');
-          console.log('[AI Chatbot] Active class toggled');
-        });
-        console.log('[AI Chatbot] Event listener added to button');
-      } else {
-        console.error('[AI Chatbot] Elements not found!');
-      }
-      
-      // Close chatbot
-      if (chatbotClose && chatbot) {
-        chatbotClose.addEventListener('click', function() {
-          console.log('[AI Chatbot] Close clicked!');
-          chatbot.classList.remove('active');
-        });
-      }
-      
-      // Quick options
-      quickOptions.forEach(option => {
-        option.addEventListener('click', function() {
-          const intent = this.getAttribute('data-intent');
-          addUserMessage(this.textContent);
-          
-          // Direct response without API call
-          const responses = {
-            'buy_property': `حسناً، تريد شراء عقار. في أي محافظة تبحث؟
-
-📍 جميع المحافظات العراقية:
-
-• بغداد (العاصمة)
-• البصرة
-• نينوى
-• أربيل
-• السليمانية
-• دهوك
-• كركوك
-• الأنبار
-• صلاح الدين
-• ديالى
-• واسط
-• بابل
-• كربلاء
-• النجف
-• القادسية
-• المثنى
-• ذي قار
-• ميسان
-• حلبجة
-
-اكتب اسم المحافظة 👆`,
-            'sell_property': 'حسناً، تريد بيع عقار. يرجى تزويدني بتفاصيل العقار (الموقع، المساحة، السعر، النوع).',
-            'broker': 'أهلاً بك يا دلال! كيف أگدر أساعدك في إدارة عقاراتك؟',
-            'job': 'حسناً، تبحث عن وظيفة. في أي مجال تبحث؟',
-            'visit': 'حسناً، تريد حجز زيارة. أي عقار تريد زيارته؟',
-            'compare': 'حسناً، تريد مقارنة عقارات. حدد العقارات التي تريد مقارنتها.',
-            'iraq_property': 'حسناً، تبحث عن عقارات داخل العراق. في أي محافظة؟',
-            'foreign_property': 'حسناً، تبحث عن عقارات خارج العراق. في أي دولة؟',
-            'iraq_hotel': 'حسناً، تبحث عن فنادق داخل العراق. في أي مدينة؟',
-            'foreign_hotel': 'حسناً، تبحث عن فنادق خارج العراق. في أي دولة؟',
-            'iraq_resort': 'حسناً، تبحث عن منتجعات داخل العراق. في أي منطقة؟',
-            'foreign_resort': 'حسناً، تبحث عن منتجعات خارج العراق. في أي دولة؟',
-            'travel_company': 'حسناً، تريد نشر شركة سفر. يرجى تزويدني بتفاصيل الشركة.',
-            'post_job': 'حسناً، تريد نشر وظيفة. يرجى تزويدني بتفاصيل الوظيفة.',
-            'post_building': 'حسناً، تريد نشر طلب بناء. يرجى تزويدني بتفاصيل المشروع.',
-            'post_service': 'حسناً، تريد نشر خدمة. يرجى تزويدني بتفاصيل الخدمة.',
-            'post_auction': 'حسناً، تريد نشر مزاد. يرجى تزويدني بتفاصيل المزاد.',
-            'default': 'فهمت طلبك. شلون أگدر أساعدك بعد؟\n\nيمكنني مساعدتك في:\n- البحث عن عقارات\n- تحليل السوق\n- استشارات'
-          };
-          
-          addBotMessage(responses[intent] || responses['default']);
-        });
-      });
-      
-      // Send message
-      if (chatbotSend && chatbotInput) {
-        chatbotSend.addEventListener('click', sendMessage);
-        chatbotInput.addEventListener('keypress', function(e) {
-          if (e.key === 'Enter') {
-            sendMessage();
-          }
-        });
-      }
-      
-      // Functions
-      async function sendMessage() {
-        const message = chatbotInput.value.trim();
-        if (!message) return;
-        
-        addUserMessage(message);
-        chatbotInput.value = '';
-        
-        // Send to API
-        await sendToChatbotAPI(message);
-      }
-      
-      async function sendToChatbotAPI(message) {
-        showTypingIndicator();
-        
-        try {
-          const response = await fetch('/api/statistics/');
-          const data = await response.json();
-          
-          hideTypingIndicator();
-          
-          // Generate response based on real statistics
-          let botResponse = '';
-          
-          if (message.includes('عقار') || message.includes('شقة') || message.includes('فيلا')) {
-            botResponse = `🏠 الإحصائيات الحقيقية للعقارات:
-            
-🇮🇶 عقارات داخل العراق: ${data.properties.iraq}
-🌍 عقارات خارج العراق: ${data.properties.foreign}
-📊 المجموع الكلي: ${data.properties.total}
-
-أكثر أنواع العقارات:
-${data.properties.by_type.slice(0, 3).map(item => `• ${item.type}: ${item.count}`).join('\n')}
-
-أكثر المحافظات:
-${data.properties.by_governorate.slice(0, 3).map(item => `• ${item.governorate}: ${item.count}`).join('\n')}
-
-هل تريد البحث في محافظة معينة؟`;
-          } else if (message.includes('فندق') || message.includes('hotel')) {
-            botResponse = `🏨 إحصائيات الفنادق الحقيقية:
-
-📊 المجموع الكلي: ${data.hotels.total}
-
-هل تبحث عن فندق في مدينة معينة؟`;
-          } else if (message.includes('منتجع') || message.includes('resort')) {
-            botResponse = `🏝️ إحصائيات المنتجعات الحقيقية:
-
-📊 المجموع الكلي: ${data.resorts.total}
-
-هل تبحث عن منتجع في منطقة معينة؟`;
-          } else if (message.includes('وظيفة') || message.includes('job')) {
-            botResponse = `💼 إحصائيات الوظائف الحقيقية:
-            
-📊 الوظائف المتاحة: ${data.jobs.total}
-
-هل تبحث عن وظيفة في مجال معين؟`;
-          } else if (message.includes('دلال') || message.includes('broker')) {
-            botResponse = `👔 إحصائيات الدلالين الحقيقية:
-            
-📊 الدلالين النشطين: ${data.brokers.total}
-📺 القنوات المتاحة: ${data.channels.total}
-
-كيف أگدر مساعدك كدلال؟`;
-
-          } else if (message.includes('خدمة') || message.includes('service')) {
-            botResponse = `🔧 إحصائيات الخدمات الحقيقية:
-            
-👷 مقدمي الخدمات: ${data.services.providers}
-📋 إعلانات الخدمات: ${data.services.advertisements}
-
-هل تريد البحث عن خدمة معينة؟`;
-          } else if (message.includes('مزاد') || message.includes('auction')) {
-            botResponse = `🔨 إحصائيات المزادات الحقيقية:
-            
-📊 المزادات المتاحة: ${data.auctions.total}
-
-هل تريد البحث عن مزاد معين؟`;
-          } else {
-            botResponse = `📊 إحصائيات النظام الحقيقية:
-
-🏠 العقارات: ${data.properties.total} (${data.properties.iraq} داخل العراق، ${data.properties.foreign} خارج العراق)
-🏨 الفنادق: ${data.hotels.total}
-🏝️ المنتجعات: ${data.resorts.total}
-💼 الوظائف: ${data.jobs.total}
-🔧 مقدمي الخدمات: ${data.services.providers}
-👔 الدلالين: ${data.brokers.total}
-👥 المستخدمين: ${data.users.total} (نشط: ${data.users.active})
-📺 القنوات: ${data.channels.total}
-🔨 المزادات: ${data.auctions.total}
-
-كيف أگدر مساعدك بعد؟`;
-          }
-          
-          addBotMessage(botResponse);
-        } catch (error) {
-          hideTypingIndicator();
-          addBotMessage('حدث خطأ في الاتصال بالخادم. يرجى المحاولة لاحقاً.');
-          console.error('Chatbot API Error:', error);
-        }
-      }
-      
-      function addUserMessage(text) {
-        const messageDiv = document.createElement('div');
-        messageDiv.className = 'message user-message';
-        const contentDiv = document.createElement('div');
-        contentDiv.className = 'message-content';
-        contentDiv.textContent = text;
-        messageDiv.appendChild(contentDiv);
-        chatbotMessages.appendChild(messageDiv);
-        scrollToBottom();
-      }
-
-      function addBotMessage(text) {
-        const messageDiv = document.createElement('div');
-        messageDiv.className = 'message bot-message';
-        const contentDiv = document.createElement('div');
-        contentDiv.className = 'message-content';
-        contentDiv.textContent = text;
-        messageDiv.appendChild(contentDiv);
-        chatbotMessages.appendChild(messageDiv);
-        scrollToBottom();
-      }
-      
-      function showTypingIndicator() {
-        const typingDiv = document.createElement('div');
-        typingDiv.className = 'typing-indicator';
-        typingDiv.id = 'typing-indicator';
-        typingDiv.innerHTML = '<span></span><span></span><span></span>';
-        chatbotMessages.appendChild(typingDiv);
-        scrollToBottom();
-      }
-      
-      function hideTypingIndicator() {
-        const typingIndicator = document.getElementById('typing-indicator');
-        if (typingIndicator) {
-          typingIndicator.remove();
-        }
-      }
-      
-      function scrollToBottom() {
-        chatbotMessages.scrollTop = chatbotMessages.scrollHeight;
-      }
-      
-      function getCSRFToken() {
-        const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]');
-        return csrfToken ? csrfToken.value : '';
-      }
-      
-      console.log('[AI Chatbot] Initialization complete');
-    });
-  </script>
+  <script src="{% static 'js/ai_chatbot.js' %}" defer></script>
   {% endblock %}
 </body>
 </html>

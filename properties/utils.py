@@ -3,7 +3,7 @@ from django.db.models import Q
 from django.utils import timezone
 
 from .models import Property, PropertyImage, PropertyVideo, Notification
-from .cache_utils import cache_result
+from .cache_utils import cache_query_result
 
 logger = logging.getLogger(__name__)
 
@@ -11,7 +11,7 @@ logger = logging.getLogger(__name__)
 PUBLIC_STATUSES = ['draft', 'paid', 'pending_approval', 'published', 'renewed', 'ready', 'under-construction', 'rent']
 
 
-@cache_result(timeout=300, key_prefix='public_properties')
+@cache_query_result(timeout=300, key_prefix='public_properties')
 def get_public_properties():
     """Get public properties, excluding suspended brokers and expired listings."""
     from .models import Broker
@@ -30,11 +30,11 @@ def get_public_properties():
             .exclude(is_frozen=True)
             .filter(Q(publication_end_date__isnull=True) | Q(publication_end_date__gt=now))
             .filter(Q(expiry_date__isnull=True) | Q(expiry_date__gt=now))
-            .select_related('broker', 'owner', 'country', 'city_outside', 'area_outside')
-            .prefetch_related('gallery_images')
+            .select_related('broker', 'owner')
+            .prefetch_related('gallery_images', 'outside_details')
             .order_by('-is_pinned', '-is_featured', '-is_promoted', '-created_at')
         )
-        
+
         return list(qs)
     except Exception as e:
         logger.error(f"Error in get_public_properties: {e}")

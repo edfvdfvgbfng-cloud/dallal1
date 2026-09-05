@@ -9684,7 +9684,7 @@ class ConversationParticipant(models.Model):
 
 class ChatMessage(models.Model):
     """رسالة المحادثة"""
-    
+
     TYPE_TEXT = 'text'
     TYPE_IMAGE = 'image'
     TYPE_VIDEO = 'video'
@@ -9692,8 +9692,10 @@ class ChatMessage(models.Model):
     TYPE_FILE = 'file'
     TYPE_LOCATION = 'location'
     TYPE_PROPERTY = 'property'
+    TYPE_HOTEL = 'hotel'
+    TYPE_RESORT = 'resort'
     TYPE_SYSTEM = 'system'
-    
+
     TYPE_CHOICES = [
         (TYPE_TEXT, 'نص'),
         (TYPE_IMAGE, 'صورة'),
@@ -9702,7 +9704,21 @@ class ChatMessage(models.Model):
         (TYPE_FILE, 'ملف'),
         (TYPE_LOCATION, 'موقع'),
         (TYPE_PROPERTY, 'عقار'),
+        (TYPE_HOTEL, 'فندق'),
+        (TYPE_RESORT, 'منتجع'),
         (TYPE_SYSTEM, 'نظام'),
+    ]
+
+    STATUS_SENT = 'sent'
+    STATUS_DELIVERED = 'delivered'
+    STATUS_READ = 'read'
+    STATUS_FAILED = 'failed'
+
+    STATUS_CHOICES = [
+        (STATUS_SENT, 'مرسلة'),
+        (STATUS_DELIVERED, 'مستلمة'),
+        (STATUS_READ, 'مقروءة'),
+        (STATUS_FAILED, 'فشلت'),
     ]
     
     message_id = models.UUIDField(
@@ -9733,6 +9749,17 @@ class ChatMessage(models.Model):
     content = models.TextField(
         blank=True,
         verbose_name='المحتوى'
+    )
+    status = models.CharField(
+        max_length=20,
+        choices=STATUS_CHOICES,
+        default=STATUS_SENT,
+        verbose_name='حالة الرسالة'
+    )
+    delivered_at = models.DateTimeField(
+        null=True,
+        blank=True,
+        verbose_name='وقت الاستلام'
     )
     reply_to = models.ForeignKey(
         'self',
@@ -9814,6 +9841,7 @@ class ChatMessage(models.Model):
             models.Index(fields=['sender', '-created_at']),
             models.Index(fields=['is_deleted', '-created_at']),
             models.Index(fields=['is_pinned', '-created_at']),
+            models.Index(fields=['status', '-created_at']),
         ]
     
     def __str__(self):
@@ -9826,22 +9854,31 @@ class ChatMessage(models.Model):
             user=user,
             defaults={'read_at': timezone.now()}
         )
-    
+        # Update message status
+        self.status = self.STATUS_READ
+        self.save(update_fields=['status'])
+
     def is_read_by_user(self, user):
         """Check if message is read by user"""
         return self.read_by.filter(id=user.id).exists()
-    
+
     def get_read_users(self):
         """Get list of users who read this message"""
         return self.read_by.all()
-    
+
+    def mark_as_delivered(self):
+        """Mark message as delivered"""
+        self.status = self.STATUS_DELIVERED
+        self.delivered_at = timezone.now()
+        self.save(update_fields=['status', 'delivered_at'])
+
     def edit(self, new_content):
         """Edit message content"""
         self.content = new_content
         self.is_edited = True
         self.edited_at = timezone.now()
         self.save()
-    
+
     def soft_delete(self):
         """Soft delete message"""
         self.is_deleted = True
@@ -9880,6 +9917,120 @@ class MessageReadStatus(models.Model):
     
     def __str__(self):
         return f'{self.user.username} قرأ {self.message}'
+
+
+class UserOnlineStatus(models.Model):
+    """تتبع حالة المستخدم المتصلة (Online/Offline)"""
+
+    STATUS_ONLINE = 'online'
+    STATUS_OFFLINE = 'offline'
+    STATUS_AWAY = 'away'
+    STATUS_BUSY = 'busy'
+
+    STATUS_CHOICES = [
+        (STATUS_ONLINE, 'متصل'),
+        (STATUS_OFFLINE, 'غير متصل'),
+        (STATUS_AWAY, 'غير متاح'),
+        (STATUS_BUSY, 'مشغول'),
+    ]
+
+    user = models.OneToOneField(
+        User,
+        on_delete=models.CASCADE,
+        related_name='online_status',
+        verbose_name='المستخدم'
+    )
+    status = models.CharField(
+        max_length=20,
+        choices=STATUS_CHOICES,
+        default=STATUS_OFFLINE,
+        verbose_name='الحالة'
+    )
+    last_seen = models.DateTimeField(
+        null=True,
+        blank=True,
+        verbose_name='آخر ظهور'
+    )
+    last_activity = models.DateTimeField(
+        auto_now=True,
+        verbose_name='آخر نشاط'
+    )
+    is_typing = models.BooleanField(
+        default=False,
+        verbose_name='يكتب حالياً'
+    )
+    typing_conversation = models.ForeignKey(
+        Conversation,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='typing_users',
+        verbose_name='المحادثة التي يكتب فيها'
+    )
+
+    class Meta:
+        verbose_name = 'حالة المستخدم المتصلة'
+        verbose_name_plural = 'حالات المستخدمين المتصلة'
+        indexes = [
+            models.Index(fields=['status', '-last_activity']),
+            models.Index(fields=['-last_activity']),
+        ]
+
+    def __str__(self):
+        return f'{self.user.username} - {self.get_status_display()}'
+
+    def set_online(self):
+        """Set user as online"""
+        self.status = self.STATUS_ONLINE
+        self.last_seen = None
+        self.save(update_fields=['status', 'last_seen'])
+
+    def set_offline(self):
+        """Set user as offline"""
+        self.status = self.STATUS_OFFLINE
+        self.last_seen = timezone.now()
+        self.is_typing = False
+        self.typing_conversation = None
+        self.save(update_fields=['status', 'last_seen', 'is_typing', 'typing_conversation'])
+
+    def set_typing(self, conversation):
+        """Set user as typing in a conversation"""
+        self.is_typing = True
+        self.typing_conversation = conversation
+        self.status = self.STATUS_ONLINE
+        self.save(update_fields=['is_typing', 'typing_conversation', 'status'])
+
+    def stop_typing(self):
+        """Stop typing indicator"""
+        self.is_typing = False
+        self.typing_conversation = None
+        self.save(update_fields=['is_typing', 'typing_conversation'])
+
+    def update_activity(self):
+        """Update last activity timestamp"""
+        self.save(update_fields=['last_activity'])
+
+    @classmethod
+    def get_user_status(cls, user):
+        """Get or create user online status"""
+        status, created = cls.objects.get_or_create(user=user)
+        return status
+
+    @classmethod
+    def get_online_users(cls):
+        """Get all online users"""
+        return cls.objects.filter(status=cls.STATUS_ONLINE).select_related('user')
+
+    @classmethod
+    def cleanup_inactive_users(cls, minutes=5):
+        """Mark inactive users as offline"""
+        threshold = timezone.now() - timezone.timedelta(minutes=minutes)
+        inactive_users = cls.objects.filter(
+            status__in=[cls.STATUS_ONLINE, cls.STATUS_AWAY],
+            last_activity__lt=threshold
+        )
+        count = inactive_users.update(status=cls.STATUS_OFFLINE, last_seen=timezone.now())
+        return count
 
 
 class Rating(models.Model):
@@ -17376,6 +17527,1184 @@ class Agent(models.Model):
             self.save()
         self.save()
 
+
+class BudgetSearch(models.Model):
+    """بحث حسب الميزانية - ماذا أستطيع شراء بميزانيتي"""
+    
+    SEARCH_TYPE_CHOICES = [
+        ('purchase', 'شراء'),
+        ('rent', 'إيجار'),
+        ('investment', 'استثمار'),
+    ]
+    
+    PROPERTY_TYPE_CHOICES = [
+        ('all', 'الكل'),
+        ('residential', 'سكني'),
+        ('commercial', 'تجاري'),
+        ('land', 'أرض'),
+        ('villa', 'فيلا'),
+        ('apartment', 'شقة'),
+        ('shop', 'محل'),
+        ('office', 'مكتب'),
+    ]
+    
+    user = models.ForeignKey(
+        'auth.User', on_delete=models.CASCADE, related_name='budget_searches', verbose_name='المستخدم'
+    )
+    
+    # Budget
+    min_budget = models.DecimalField(max_digits=15, decimal_places=2, default=0, verbose_name='الحد الأدنى للميزانية')
+    max_budget = models.DecimalField(max_digits=15, decimal_places=2, default=0, verbose_name='الحد الأقصى للميزانية')
+    currency = models.CharField(max_length=10, default='د.ع', verbose_name='العملة')
+    
+    # Search preferences
+    search_type = models.CharField(max_length=20, choices=SEARCH_TYPE_CHOICES, default='purchase', verbose_name='نوع البحث')
+    property_type = models.CharField(max_length=20, choices=PROPERTY_TYPE_CHOICES, default='all', verbose_name='نوع العقار')
+    
+    # Location preferences
+    governorate = models.CharField(max_length=100, default='', blank=True, verbose_name='المحافظة')
+    city = models.CharField(max_length=100, default='', blank=True, verbose_name='المدينة')
+    include_all_iraq = models.BooleanField(default=True, verbose_name='شمل كل العراق')
+    
+    # Property features
+    min_area = models.IntegerField(null=True, blank=True, verbose_name='الحد الأدنى للمساحة')
+    max_area = models.IntegerField(null=True, blank=True, verbose_name='الحد الأقصى للمساحة')
+    min_bedrooms = models.IntegerField(null=True, blank=True, verbose_name='الحد الأدنى للغرف')
+    max_bedrooms = models.IntegerField(null=True, blank=True, verbose_name='الحد الأقصى للغرف')
+    
+    # Investment specific
+    expected_roi = models.DecimalField(max_digits=5, decimal_places=2, null=True, blank=True, default=0, verbose_name='العائد المتوقع %')
+    investment_period = models.IntegerField(null=True, blank=True, default=0, verbose_name='فترة الاستثمار (سنوات)')
+    
+    # Search results
+    results_count = models.IntegerField(default=0, verbose_name='عدد النتائج')
+    recommended_properties = models.JSONField(default=list, blank=True, verbose_name='العقارات الموصى بها')
+    
+    # Status
+    is_saved = models.BooleanField(default=False, verbose_name='محفوظ')
+    is_favorite = models.BooleanField(default=False, verbose_name='مفضل')
+    
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name='تاريخ البحث')
+    updated_at = models.DateTimeField(auto_now=True, verbose_name='تاريخ التحديث')
+    
+    class Meta:
+        verbose_name = 'بحث ميزانية'
+        verbose_name_plural = 'عمليات البحث بالميزانية'
+        ordering = ['-created_at']
+        indexes = [
+            models.Index(fields=['user', '-created_at']),
+            models.Index(fields=['search_type']),
+            models.Index(fields=['min_budget', 'max_budget']),
+        ]
+    
+    def __str__(self):
+        return f'{self.user.username} - {self.min_budget} - {self.max_budget}'
+    
+    def get_matching_properties(self):
+        """Get properties that match the budget criteria"""
+        from django.db.models import Q
+        
+        # Base query
+        query = Q(price__gte=self.min_budget, price__lte=self.max_budget)
+        
+        # Add property type filter
+        if self.property_type != 'all':
+            if self.property_type == 'residential':
+                query &= Q(type__in=['villa', 'apartment', 'house'])
+            elif self.property_type == 'commercial':
+                query &= Q(type__in=['shop', 'office', 'warehouse'])
+            else:
+                query &= Q(type=self.property_type)
+        
+        # Add location filter
+        if not self.include_all_iraq:
+            if self.governorate:
+                query &= Q(governorate=self.governorate)
+            if self.city:
+                query &= Q(city=self.city)
+        
+        # Add area filter
+        if self.min_area:
+            query &= Q(area__gte=self.min_area)
+        if self.max_area:
+            query &= Q(area__lte=self.max_area)
+        
+        # Add bedrooms filter
+        if self.min_bedrooms:
+            query &= Q(bedrooms__gte=self.min_bedrooms)
+        if self.max_bedrooms:
+            query &= Q(bedrooms__lte=self.max_bedrooms)
+        
+        # Get matching properties
+        properties = Property.objects.filter(query).select_related('owner')
+        
+        # Update results count
+        self.results_count = properties.count()
+        self.save(update_fields=['results_count'])
+        
+        return properties
+    
+    def calculate_affordability_score(self, property):
+        """Calculate how well a property fits the budget (0-100)"""
+        try:
+            property_price = float(property.price)
+            min_budget = float(self.min_budget)
+            max_budget = float(self.max_budget)
+            
+            # Calculate position in budget range
+            if min_budget <= property_price <= max_budget:
+                # Perfect fit - give higher score for properties in the middle of range
+                range_size = max_budget - min_budget
+                if range_size > 0:
+                    position = (property_price - min_budget) / range_size
+                    # Prefer properties at 60-80% of budget
+                    ideal_position = 0.7
+                    score = 100 - abs(position - ideal_position) * 100
+                    return max(0, min(100, score))
+                return 100
+            elif property_price < min_budget:
+                # Below budget - still good but might be lower quality
+                score = 80
+            else:
+                # Above budget - not affordable
+                score = 0
+                
+            return score
+        except (ValueError, TypeError):
+            return 0
+
+
+class InvestmentCalculator(models.Model):
+    """حاسبة الاستثمار - استثمر أموالك"""
+    
+    INVESTMENT_TYPE_CHOICES = [
+        ('rental', 'إيجاري'),
+        ('flip', 'شراء وبيع'),
+        ('development', 'تطوير'),
+        ('commercial', 'تجاري'),
+    ]
+    
+    user = models.ForeignKey(
+        'auth.User', on_delete=models.CASCADE, related_name='investment_calculations', verbose_name='المستخدم'
+    )
+    
+    # Investment details
+    capital = models.DecimalField(max_digits=15, decimal_places=2, default=0, verbose_name='رأس المال')
+    currency = models.CharField(max_length=10, default='د.ع', verbose_name='العملة')
+    investment_type = models.CharField(max_length=20, choices=INVESTMENT_TYPE_CHOICES, verbose_name='نوع الاستثمار')
+    
+    # Timeline
+    investment_period = models.IntegerField(default=1, verbose_name='فترة الاستثمار (سنوات)')
+    expected_roi = models.DecimalField(max_digits=5, decimal_places=2, default=0, verbose_name='العائد المتوقع %')
+    
+    # Risk tolerance
+    risk_tolerance = models.CharField(max_length=20, choices=[
+        ('low', 'منخفض'),
+        ('medium', 'متوسط'),
+        ('high', 'عالي'),
+    ], default='medium', verbose_name='تحمل المخاطرة')
+    
+    # Location preference
+    preferred_locations = models.JSONField(default=list, blank=True, verbose_name='المناطق المفضلة')
+    
+    # Calculation results
+    estimated_return = models.DecimalField(max_digits=15, decimal_places=2, null=True, blank=True, default=0, verbose_name='العائد المقدر')
+    monthly_income = models.DecimalField(max_digits=15, decimal_places=2, null=True, blank=True, default=0, verbose_name='الدخل الشهري المقدر')
+    recommended_properties = models.JSONField(default=list, blank=True, verbose_name='العقارات الموصى بها')
+    
+    # Status
+    is_saved = models.BooleanField(default=False, verbose_name='محفوظ')
+    
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name='تاريخ الحساب')
+    updated_at = models.DateTimeField(auto_now=True, verbose_name='تاريخ التحديث')
+    
+    class Meta:
+        verbose_name = 'حاسبة استثمار'
+        verbose_name_plural = 'حاسبات الاستثمار'
+        ordering = ['-created_at']
+        indexes = [
+            models.Index(fields=['user', '-created_at']),
+            models.Index(fields=['investment_type']),
+        ]
+    
+    def __str__(self):
+        return f'{self.user.username} - {self.capital} - {self.investment_type}'
+    
+    def calculate_returns(self):
+        """Calculate investment returns based on type"""
+        capital = float(self.capital)
+        years = self.investment_period
+        annual_roi = float(self.expected_roi) / 100
+        
+        if self.investment_type == 'rental':
+            # Rental income calculation
+            monthly_return = (capital * annual_roi) / 12
+            total_return = capital * (1 + annual_roi * years)
+            
+        elif self.investment_type == 'flip':
+            # Flip calculation - higher risk, higher reward
+            annual_roi *= 1.5  # Higher expected return for flipping
+            monthly_return = 0  # No monthly income
+            total_return = capital * (1 + annual_roi * years)
+            
+        elif self.investment_type == 'development':
+            # Development calculation - longer timeline
+            annual_roi *= 1.2
+            monthly_return = 0
+            total_return = capital * (1 + annual_roi * years)
+            
+        else:  # commercial
+            monthly_return = (capital * annual_roi) / 12
+            total_return = capital * (1 + annual_roi * years)
+        
+        # Adjust for risk tolerance
+        risk_multiplier = {
+            'low': 0.8,
+            'medium': 1.0,
+            'high': 1.2
+        }.get(self.risk_tolerance, 1.0)
+        
+        total_return *= risk_multiplier
+        
+        self.estimated_return = total_return
+        self.monthly_income = monthly_return
+        self.save(update_fields=['estimated_return', 'monthly_income'])
+        
+        return {
+            'estimated_return': total_return,
+            'monthly_income': monthly_return,
+            'roi_percentage': ((total_return - capital) / capital) * 100
+        }
+    
+    def get_investment_properties(self):
+        """Get properties suitable for this investment"""
+        capital = float(self.capital)
+        
+        # Get properties within budget range (allowing some leverage)
+        min_price = capital * 0.7  # Can use 30% down payment
+        max_price = capital * 1.2  # Allow some over-budget with financing
+        
+        properties = Property.objects.filter(
+            price__gte=min_price,
+            price__lte=max_price,
+            status='published'
+        ).select_related('owner')
+        
+        # Filter by location preferences
+        if self.preferred_locations:
+            properties = properties.filter(governorate__in=self.preferred_locations)
+        
+        # Calculate investment score for each property
+        scored_properties = []
+        for prop in properties:
+            score = self.calculate_investment_score(prop)
+            scored_properties.append({
+                'property': prop,
+                'score': score,
+                'estimated_monthly_income': self.calculate_property_income(prop, capital)
+            })
+        
+        # Sort by score and return top results
+        scored_properties.sort(key=lambda x: x['score'], reverse=True)
+        
+        self.recommended_properties = [
+            {
+                'property_id': item['property'].id,
+                'score': item['score'],
+                'estimated_income': str(item['estimated_monthly_income'])
+            }
+            for item in scored_properties[:10]
+        ]
+        self.save(update_fields=['recommended_properties'])
+        
+        return scored_properties[:10]
+    
+    def calculate_investment_score(self, property):
+        """Calculate investment score for a property (0-100)"""
+        score = 50  # Base score
+        
+        # Price alignment
+        try:
+            price = float(property.price)
+            capital = float(self.capital)
+            price_ratio = price / capital
+            
+            if 0.8 <= price_ratio <= 1.0:
+                score += 20  # Perfect price range
+            elif 0.6 <= price_ratio < 0.8:
+                score += 15  # Good deal
+            elif 1.0 < price_ratio <= 1.2:
+                score += 10  # Slightly over budget
+            else:
+                score -= 10  # Not ideal
+        except (ValueError, TypeError):
+            pass
+        
+        # Location score
+        if self.preferred_locations and property.governorate in self.preferred_locations:
+            score += 15
+        
+        # Property type alignment
+        if self.investment_type == 'rental' and property.type in ['apartment', 'villa']:
+            score += 10
+        elif self.investment_type == 'commercial' and property.type in ['shop', 'office']:
+            score += 10
+        
+        # Verified properties get bonus
+        if hasattr(property, 'verification_status') and property.verification_status == 'verified':
+            score += 5
+        
+        return max(0, min(100, score))
+    
+    def calculate_property_income(self, property, capital):
+        """Calculate estimated monthly income for a property"""
+        try:
+            price = float(property.price)
+            annual_roi = float(self.expected_roi) / 100
+            monthly_income = (price * annual_roi) / 12
+            return monthly_income
+        except (ValueError, TypeError):
+            return 0
+
+
+class RegionComparison(models.Model):
+    """مقارنة المناطق - قارن منطقتين"""
+    
+    user = models.ForeignKey(
+        'auth.User', on_delete=models.CASCADE, related_name='region_comparisons', verbose_name='المستخدم'
+    )
+    
+    # Regions to compare
+    region1_governorate = models.CharField(max_length=100, default='', verbose_name='المحافظة الأولى')
+    region1_city = models.CharField(max_length=100, default='', blank=True, verbose_name='المدينة الأولى')
+    
+    region2_governorate = models.CharField(max_length=100, default='', verbose_name='المحافظة الثانية')
+    region2_city = models.CharField(max_length=100, default='', blank=True, verbose_name='المدينة الثانية')
+    
+    # Comparison criteria
+    comparison_type = models.CharField(max_length=20, choices=[
+        ('prices', 'الأسعار'),
+        ('rentals', 'الإيجارات'),
+        ('services', 'الخدمات'),
+        ('investment', 'الاستثمار'),
+        ('all', 'الكل'),
+    ], default='all', verbose_name='نوع المقارنة')
+    
+    # Property type for comparison
+    property_type = models.CharField(max_length=20, default='', blank=True, verbose_name='نوع العقار')
+    
+    # Comparison results
+    comparison_data = models.JSONField(default=dict, blank=True, verbose_name='بيانات المقارنة')
+    recommendation = models.TextField(default='', blank=True, verbose_name='التوصية')
+    
+    # Status
+    is_saved = models.BooleanField(default=False, verbose_name='محفوظ')
+    
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name='تاريخ المقارنة')
+    updated_at = models.DateTimeField(auto_now=True, verbose_name='تاريخ التحديث')
+    
+    class Meta:
+        verbose_name = 'مقارنة مناطق'
+        verbose_name_plural = 'مقارنات المناطق'
+        ordering = ['-created_at']
+        indexes = [
+            models.Index(fields=['user', '-created_at']),
+            models.Index(fields=['region1_governorate', 'region2_governorate']),
+        ]
+    
+    def __str__(self):
+        return f'{self.region1_governorate} vs {self.region2_governorate}'
+    
+    def perform_comparison(self):
+        """Perform detailed comparison between regions"""
+        from django.db.models import Avg, Count, Q, Min
+        
+        # Build queries for both regions
+        query1 = Q(governorate=self.region1_governorate)
+        query2 = Q(governorate=self.region2_governorate)
+        
+        if self.region1_city:
+            query1 &= Q(city=self.region1_city)
+        if self.region2_city:
+            query2 &= Q(city=self.region2_city)
+        
+        if self.property_type:
+            query1 &= Q(type=self.property_type)
+            query2 &= Q(type=self.property_type)
+        
+        # Get statistics for both regions
+        region1_stats = self.get_region_stats(query1)
+        region2_stats = self.get_region_stats(query2)
+        
+        # Build comparison data
+        comparison = {
+            'region1': {
+                'name': f"{self.region1_governorate}" + (f" - {self.region1_city}" if self.region1_city else ""),
+                'stats': region1_stats
+            },
+            'region2': {
+                'name': f"{self.region2_governorate}" + (f" - {self.region2_city}" if self.region2_city else ""),
+                'stats': region2_stats
+            },
+            'comparison': {
+                'price_difference': region1_stats['avg_price'] - region2_stats['avg_price'],
+                'count_difference': region1_stats['count'] - region2_stats['count'],
+                'better_value': 'region1' if region1_stats['avg_price'] < region2_stats['avg_price'] else 'region2'
+            }
+        }
+        
+        self.comparison_data = comparison
+        self.recommendation = self.generate_recommendation(comparison)
+        self.save(update_fields=['comparison_data', 'recommendation'])
+        
+        return comparison
+    
+    def get_region_stats(self, query):
+        """Get statistics for a region"""
+        properties = Property.objects.filter(query, status='published')
+        
+        if not properties.exists():
+            return {
+                'count': 0,
+                'avg_price': 0,
+                'min_price': 0,
+                'max_price': 0,
+                'avg_area': 0
+            }
+        
+        stats = properties.aggregate(
+            count=Count('id'),
+            avg_price=Avg('price'),
+            min_price=Min('price'),
+            max_price=Max('price'),
+            avg_area=Avg('area')
+        )
+        
+        return stats
+    
+    def generate_recommendation(self, comparison):
+        """Generate recommendation based on comparison"""
+        region1_name = comparison['region1']['name']
+        region2_name = comparison['region2']['name']
+        region1_stats = comparison['region1']['stats']
+        region2_stats = comparison['region2']['stats']
+        
+        if region1_stats['count'] == 0:
+            return f"لا توجد بيانات كافية للمقارنة في {region1_name}"
+        if region2_stats['count'] == 0:
+            return f"لا توجد بيانات كافية للمقارنة في {region2_name}"
+        
+        price_diff = comparison['comparison']['price_difference']
+        count_diff = comparison['comparison']['count_difference']
+        
+        recommendation_parts = []
+        
+        # Price comparison
+        if abs(price_diff) > 0:
+            cheaper_region = region1_name if price_diff < 0 else region2_name
+            price_percent = abs(price_diff / max(region1_stats['avg_price'], region2_stats['avg_price'])) * 100
+            recommendation_parts.append(f"{cheaper_region} أرخص بنسبة {price_percent:.1f}%")
+        
+        # Availability comparison
+        if abs(count_diff) > 0:
+            more_available = region1_name if count_diff > 0 else region2_name
+            recommendation_parts.append(f"{more_available} لديها خيارات أكثر")
+        
+        # Overall recommendation
+        if region1_stats['avg_price'] < region2_stats['avg_price']:
+            recommendation_parts.append(f"نوصي بـ {region1_name} للقيمة المالية")
+
+
+# ==================== PROPERTY OFFER & NEGOTIATION MODELS ====================
+
+class PropertyOffer(models.Model):
+    """عروض المستخدمين على العقارات"""
+    
+    STATUS_CHOICES = [
+        ('pending', 'قيد المراجعة'),
+        ('accepted', 'مقبول'),
+        ('rejected', 'مرفوض'),
+        ('countered', 'عرض مضاد'),
+        ('expired', 'منتهي الصلاحية'),
+        ('withdrawn', 'مسحوب'),
+    ]
+    
+    property_obj = models.ForeignKey('Property', on_delete=models.CASCADE, related_name='offers', verbose_name='العقار')
+    buyer = models.ForeignKey('auth.User', on_delete=models.CASCADE, related_name='property_offers', verbose_name='المشتري')
+    
+    # Offer Details
+    offered_price = models.DecimalField(max_digits=15, decimal_places=2, verbose_name='السعر المقدم')
+    currency = models.CharField(max_length=3, default='IQD', verbose_name='العملة')
+    message = models.TextField(blank=True, verbose_name='رسالة العرض')
+    
+    # Offer Conditions
+    financing_method = models.CharField(max_length=50, blank=True, verbose_name='طريقة التمويل')
+    down_payment_percent = models.DecimalField(max_digits=5, decimal_places=2, null=True, blank=True, verbose_name='نسبة الدفعة المقدمة')
+    payment_timeline = models.CharField(max_length=100, blank=True, verbose_name='الجدول الزمني للدفع')
+    contingencies = models.JSONField(default=list, blank=True, verbose_name='الشروط الخاصة')
+    
+    # Validity
+    valid_until = models.DateTimeField(verbose_name='صالح حتى')
+    is_exclusive = models.BooleanField(default=False, verbose_name='عرض حصري')
+    
+    # Status
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending', verbose_name='الحالة')
+    responded_at = models.DateTimeField(null=True, blank=True, verbose_name='تاريخ الرد')
+    response_message = models.TextField(blank=True, verbose_name='رسالة الرد')
+    
+    # Timestamps
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name='تاريخ العرض')
+    updated_at = models.DateTimeField(auto_now=True, verbose_name='آخر تحديث')
+    
+    class Meta:
+        verbose_name = 'عرض عقار'
+        verbose_name_plural = 'عروض العقارات'
+        ordering = ['-created_at']
+        indexes = [
+            models.Index(fields=['property_obj', '-created_at']),
+            models.Index(fields=['buyer', '-created_at']),
+            models.Index(fields=['status', '-created_at']),
+            models.Index(fields=['valid_until']),
+        ]
+    
+    def __str__(self):
+        return f'عرض {self.offered_price} على {self.property_obj.display_title}'
+    
+    @property
+    def is_expired(self):
+        """Check if offer has expired"""
+        from django.utils import timezone
+        return timezone.now() > self.valid_until
+    
+    @property
+    def is_active(self):
+        """Check if offer is still active for consideration"""
+        return self.status == 'pending' and not self.is_expired
+    
+    def accept(self, response_message=''):
+        """Accept the offer"""
+        from django.utils import timezone
+        self.status = 'accepted'
+        self.responded_at = timezone.now()
+        self.response_message = response_message
+        self.save()
+    
+    def reject(self, response_message=''):
+        """Reject the offer"""
+        from django.utils import timezone
+        self.status = 'rejected'
+        self.responded_at = timezone.now()
+        self.response_message = response_message
+        self.save()
+    
+    def withdraw(self):
+        """Withdraw the offer"""
+        from django.utils import timezone
+        self.status = 'withdrawn'
+        self.updated_at = timezone.now()
+        self.save()
+
+
+class PropertyNegotiation(models.Model):
+    """مفاوضات أسعار العقارات"""
+    
+    STATUS_CHOICES = [
+        ('active', 'نشط'),
+        ('completed', 'مكتمل'),
+        ('failed', 'فشل'),
+        ('cancelled', 'ملغي'),
+    ]
+    
+    property_obj = models.ForeignKey('Property', on_delete=models.CASCADE, related_name='negotiations', verbose_name='العقار')
+    buyer = models.ForeignKey('auth.User', on_delete=models.CASCADE, related_name='negotiations', verbose_name='المشتري')
+    seller = models.ForeignKey('auth.User', on_delete=models.CASCADE, related_name='seller_negotiations', verbose_name='البائع')
+    
+    # Initial details
+    initial_price = models.DecimalField(max_digits=15, decimal_places=2, verbose_name='السعر الابتدائي')
+    currency = models.CharField(max_length=3, default='IQD', verbose_name='العملة')
+    
+    # Current state
+    current_buyer_price = models.DecimalField(max_digits=15, decimal_places=2, verbose_name='سعر المشتري الحالي')
+    current_seller_price = models.DecimalField(max_digits=15, decimal_places=2, verbose_name='سعر البائع الحالي')
+    
+    # Negotiation terms
+    price_gap = models.DecimalField(max_digits=15, decimal_places=2, verbose_name='فجوة السعر')
+    target_price = models.DecimalField(max_digits=15, decimal_places=2, null=True, blank=True, verbose_name='السعر المستهدف')
+    
+    # Status
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='active', verbose_name='الحالة')
+    rounds = models.PositiveIntegerField(default=1, verbose_name='جولات المفاوضة')
+    
+    # Final details
+    final_price = models.DecimalField(max_digits=15, decimal_places=2, null=True, blank=True, verbose_name='السعر النهائي')
+    completion_date = models.DateTimeField(null=True, blank=True, verbose_name='تاريخ الإتمام')
+    
+    # Timestamps
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name='تاريخ البدء')
+    updated_at = models.DateTimeField(auto_now=True, verbose_name='آخر تحديث')
+    
+    class Meta:
+        verbose_name = 'مفاوضة عقار'
+        verbose_name_plural = 'مفاوضات العقارات'
+        ordering = ['-updated_at']
+        indexes = [
+            models.Index(fields=['property_obj', '-created_at']),
+            models.Index(fields=['buyer', '-created_at']),
+            models.Index(fields=['seller', '-created_at']),
+            models.Index(fields=['status', '-updated_at']),
+        ]
+    
+    def __str__(self):
+        return f'مفاوضة {self.property_obj.display_title} - {self.buyer.username}'
+    
+    @property
+    def is_active(self):
+        """Check if negotiation is still active"""
+        return self.status == 'active'
+    
+    @property
+    def price_difference(self):
+        """Calculate price difference"""
+        return abs(self.current_buyer_price - self.current_seller_price)
+    
+    def add_buyer_offer(self, price, message=''):
+        """Add buyer offer to negotiation"""
+        from django.utils import timezone
+        self.current_buyer_price = price
+        self.rounds += 1
+        self.updated_at = timezone.now()
+        self.price_gap = abs(price - self.current_seller_price)
+        self.save()
+        
+        # Create negotiation message
+        NegotiationMessage.objects.create(
+            negotiation=self,
+            sender=self.buyer,
+            message_type='offer',
+            content=message,
+            offered_price=price
+        )
+    
+    def add_seller_offer(self, price, message=''):
+        """Add seller offer to negotiation"""
+        from django.utils import timezone
+        self.current_seller_price = price
+        self.rounds += 1
+        self.updated_at = timezone.now()
+        self.price_gap = abs(price - self.current_buyer_price)
+        self.save()
+        
+        # Create negotiation message
+        NegotiationMessage.objects.create(
+            negotiation=self,
+            sender=self.seller,
+            message_type='offer',
+            content=message,
+            offered_price=price
+        )
+    
+    def complete(self, final_price):
+        """Complete negotiation successfully"""
+        from django.utils import timezone
+        self.status = 'completed'
+        self.final_price = final_price
+        self.completion_date = timezone.now()
+        self.current_buyer_price = final_price
+        self.current_seller_price = final_price
+        self.price_gap = 0
+        self.save()
+    
+    def fail(self, reason=''):
+        """Mark negotiation as failed"""
+        from django.utils import timezone
+        self.status = 'failed'
+        self.updated_at = timezone.now()
+        self.save()
+        
+        # Add failure message
+        NegotiationMessage.objects.create(
+            negotiation=self,
+            sender=self.seller,
+            message_type='system',
+            content=f'المفاوضة فشلت: {reason}'
+        )
+
+
+class NegotiationMessage(models.Model):
+    """رسائل المفاوضات"""
+    
+    MESSAGE_TYPE_CHOICES = [
+        ('offer', 'عرض سعر'),
+        ('counter', 'عرض مضاد'),
+        ('info', 'معلومات'),
+        ('question', 'سؤال'),
+        ('system', 'نظام'),
+    ]
+    
+    negotiation = models.ForeignKey(PropertyNegotiation, on_delete=models.CASCADE, related_name='messages', verbose_name='المفاوضة')
+    sender = models.ForeignKey('auth.User', on_delete=models.CASCADE, related_name='negotiation_messages', verbose_name='المرسل')
+    
+    message_type = models.CharField(max_length=20, choices=MESSAGE_TYPE_CHOICES, verbose_name='نوع الرسالة')
+    content = models.TextField(verbose_name='المحتوى')
+    
+    # Price info for offer messages
+    offered_price = models.DecimalField(max_digits=15, decimal_places=2, null=True, blank=True, verbose_name='السعر المقدم')
+    
+    # Read status
+    is_read = models.BooleanField(default=False, verbose_name='مقروء')
+    read_at = models.DateTimeField(null=True, blank=True, verbose_name='تاريخ القراءة')
+    
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name='تاريخ الإرسال')
+    
+    class Meta:
+        verbose_name = 'رسالة مفاوضة'
+        verbose_name_plural = 'رسائل المفاوضات'
+        ordering = ['created_at']
+        indexes = [
+            models.Index(fields=['negotiation', '-created_at']),
+            models.Index(fields=['sender', '-created_at']),
+            models.Index(fields=['is_read']),
+        ]
+    
+    def __str__(self):
+        return f'{self.get_message_type_display()} - {self.negotiation}'
+    
+    def mark_as_read(self):
+        """Mark message as read"""
+        from django.utils import timezone
+        self.is_read = True
+        self.read_at = timezone.now()
+        self.save()
+
+
+class PropertyReservation(models.Model):
+    """حجز مؤقت للعقارات"""
+    
+    STATUS_CHOICES = [
+        ('pending', 'قيد المراجعة'),
+        ('confirmed', 'مؤكد'),
+        ('cancelled', 'ملغي'),
+        ('expired', 'منتهي الصلاحية'),
+        ('converted', 'محول لعرض'),
+    ]
+    
+    property_obj = models.ForeignKey('Property', on_delete=models.CASCADE, related_name='reservations', verbose_name='العقار')
+    user = models.ForeignKey('auth.User', on_delete=models.CASCADE, related_name='property_reservations', verbose_name='المستخدم')
+    
+    # Reservation Details
+    reservation_type = models.CharField(max_length=50, default='viewing', verbose_name='نوع الحجز')
+    duration_hours = models.PositiveIntegerField(default=24, verbose_name='مدة الحجز بالساعات')
+    
+    # Contact Information
+    contact_phone = models.CharField(max_length=20, verbose_name='رقم الهاتف')
+    contact_email = models.EmailField(verbose_name='البريد الإلكتروني')
+    
+    # Purpose
+    visit_purpose = models.TextField(verbose_name='غرض الزيارة')
+    preferred_date = models.DateField(verbose_name='التاريخ المفضل')
+    preferred_time = models.TimeField(verbose_name='الوقت المفضل')
+    
+    # Additional Info
+    number_of_visitors = models.PositiveIntegerField(default=1, verbose_name='عدد الزوار')
+    special_requirements = models.TextField(blank=True, verbose_name='متطلبات خاصة')
+    
+    # Status
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending', verbose_name='الحالة')
+    
+    # Timestamps
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name='تاريخ الحجز')
+    expires_at = models.DateTimeField(verbose_name='تاريخ الانتهاء')
+    confirmed_at = models.DateTimeField(null=True, blank=True, verbose_name='تاريخ التأكيد')
+    
+    # Payment (optional reservation fee)
+    reservation_fee = models.DecimalField(max_digits=15, decimal_places=2, default=0, verbose_name='رسوم الحجز')
+    fee_paid = models.BooleanField(default=False, verbose_name='تم دفع الرسوم')
+    
+    class Meta:
+        verbose_name = 'حجز عقار'
+        verbose_name_plural = 'حجوزات العقارات'
+        ordering = ['-created_at']
+        indexes = [
+            models.Index(fields=['property_obj', '-created_at']),
+            models.Index(fields=['user', '-created_at']),
+            models.Index(fields=['status', '-created_at']),
+            models.Index(fields=['expires_at']),
+        ]
+    
+    def __str__(self):
+        return f'حجز {self.property_obj.display_title} - {self.user.username}'
+    
+    @property
+    def is_expired(self):
+        """Check if reservation has expired"""
+        from django.utils import timezone
+        return timezone.now() > self.expires_at
+    
+    @property
+    def is_active(self):
+        """Check if reservation is still active"""
+        return self.status == 'confirmed' and not self.is_expired
+    
+    def confirm(self):
+        """Confirm the reservation"""
+        from django.utils import timezone
+        self.status = 'confirmed'
+        self.confirmed_at = timezone.now()
+        self.save()
+    
+    def cancel(self, reason=''):
+        """Cancel the reservation"""
+        from django.utils import timezone
+        self.status = 'cancelled'
+        self.save()
+        
+        # Add cancellation note
+        ReservationNote.objects.create(
+            reservation=self,
+            note_type='cancellation',
+            content=reason
+        )
+    
+    def convert_to_offer(self, offer_price, message=''):
+        """Convert reservation to property offer"""
+        from django.utils import timezone
+        self.status = 'converted'
+        self.save()
+        
+        # Create property offer
+        PropertyOffer.objects.create(
+            property_obj=self.property_obj,
+            buyer=self.user,
+            offered_price=offer_price,
+            message=message,
+            valid_until=timezone.now() + timezone.timedelta(days=7)
+        )
+    
+    def extend(self, additional_hours):
+        """Extend reservation duration"""
+        from django.utils import timezone
+        self.expires_at = self.expires_at + timezone.timedelta(hours=additional_hours)
+        self.save()
+
+
+class ReservationNote(models.Model):
+    """ملاحظات الحجوزات"""
+    
+    NOTE_TYPE_CHOICES = [
+        ('info', 'معلومات'),
+        ('reminder', 'تذكير'),
+        ('cancellation', 'إلغاء'),
+        ('change', 'تغيير'),
+        ('followup', 'متابعة'),
+    ]
+    
+    reservation = models.ForeignKey(PropertyReservation, on_delete=models.CASCADE, related_name='notes', verbose_name='الحجز')
+    note_type = models.CharField(max_length=20, choices=NOTE_TYPE_CHOICES, verbose_name='نوع الملاحظة')
+    content = models.TextField(verbose_name='المحتوى')
+    
+    created_by = models.ForeignKey('auth.User', on_delete=models.SET_NULL, null=True, blank=True, verbose_name='أضيف بواسطة')
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name='تاريخ الإضافة')
+    
+    class Meta:
+        verbose_name = 'ملاحظة حجز'
+        verbose_name_plural = 'ملاحظات الحجوزات'
+        ordering = ['-created_at']
+    
+    def __str__(self):
+        return f'{self.get_note_type_display()} - {self.reservation}'
+
+
+class SmartPropertyScore(models.Model):
+    """نظام التقييم الذكي للعقارات - Smart Property Score"""
+    
+    property = models.OneToOneField(
+        Property, on_delete=models.CASCADE, related_name='smart_score', verbose_name='العقار'
+    )
+    
+    # Overall score (0-100)
+    overall_score = models.DecimalField(max_digits=5, decimal_places=2, default=0, verbose_name='الدرجة الكلية')
+    score_level = models.CharField(max_length=20, choices=[
+        ('excellent', 'ممتاز (90-100)'),
+        ('very_good', 'جيد جداً (80-89)'),
+        ('good', 'جيد (70-79)'),
+        ('fair', 'مقبول (60-69)'),
+        ('poor', 'ضعيف (أقل من 60)'),
+    ], default='fair', verbose_name='مستوى التقييم')
+    
+    # Component scores
+    price_score = models.DecimalField(max_digits=5, decimal_places=2, default=0, verbose_name='درجة السعر')
+    location_score = models.DecimalField(max_digits=5, decimal_places=2, default=0, verbose_name='درجة الموقع')
+    area_score = models.DecimalField(max_digits=5, decimal_places=2, default=0, verbose_name='درجة المساحة')
+    amenities_score = models.DecimalField(max_digits=5, decimal_places=2, default=0, verbose_name='درجة المميزات')
+    condition_score = models.DecimalField(max_digits=5, decimal_places=2, default=0, verbose_name='درجة الحالة')
+    
+    # Additional factors
+    verification_bonus = models.DecimalField(max_digits=5, decimal_places=2, default=0, verbose_name='مكافأة التحقق')
+    popularity_score = models.DecimalField(max_digits=5, decimal_places=2, default=0, verbose_name='درجة الشعبية')
+    
+    # Detailed breakdown
+    score_breakdown = models.JSONField(default=dict, blank=True, verbose_name='تفاصيل التقييم')
+    improvement_suggestions = models.JSONField(default=list, blank=True, verbose_name='اقتراحات التحسين')
+    
+    # Metadata
+    last_calculated = models.DateTimeField(auto_now=True, verbose_name='تاريخ آخر حساب')
+    calculation_version = models.CharField(max_length=10, default='1.0', verbose_name='إصدار الحساب')
+    
+    class Meta:
+        verbose_name = 'تقييم ذكي'
+        verbose_name_plural = 'التقييمات الذكية'
+        indexes = [
+            models.Index(fields=['overall_score']),
+            models.Index(fields=['score_level']),
+        ]
+    
+    def __str__(self):
+        return f'{self.property.display_title} - {self.overall_score}/100'
+    
+    def calculate_score(self):
+        """Calculate comprehensive smart score for the property"""
+        property = self.property
+        
+        # Calculate component scores
+        self.price_score = self.calculate_price_score(property)
+        self.location_score = self.calculate_location_score(property)
+        self.area_score = self.calculate_area_score(property)
+        self.amenities_score = self.calculate_amenities_score(property)
+        self.condition_score = self.calculate_condition_score(property)
+        
+        # Calculate bonus scores
+        self.verification_bonus = self.calculate_verification_bonus(property)
+        self.popularity_score = self.calculate_popularity_score(property)
+        
+        # Calculate overall score (weighted average)
+        weights = {
+            'price': 0.25,
+            'location': 0.20,
+            'area': 0.15,
+            'amenities': 0.20,
+            'condition': 0.10,
+            'verification': 0.05,
+            'popularity': 0.05
+        }
+        
+        overall = (
+            self.price_score * weights['price'] +
+            self.location_score * weights['location'] +
+            self.area_score * weights['area'] +
+            self.amenities_score * weights['amenities'] +
+            self.condition_score * weights['condition'] +
+            self.verification_bonus * weights['verification'] +
+            self.popularity_score * weights['popularity']
+        )
+        
+        self.overall_score = min(100, max(0, overall))
+        
+        # Determine score level
+        if self.overall_score >= 90:
+            self.score_level = 'excellent'
+        elif self.overall_score >= 80:
+            self.score_level = 'very_good'
+        elif self.overall_score >= 70:
+            self.score_level = 'good'
+        elif self.overall_score >= 60:
+            self.score_level = 'fair'
+        else:
+            self.score_level = 'poor'
+        
+        # Generate breakdown and suggestions
+        self.score_breakdown = {
+            'price': float(self.price_score),
+            'location': float(self.location_score),
+            'area': float(self.area_score),
+            'amenities': float(self.amenities_score),
+            'condition': float(self.condition_score),
+            'verification': float(self.verification_bonus),
+            'popularity': float(self.popularity_score)
+        }
+        
+        self.improvement_suggestions = self.generate_improvement_suggestions()
+        
+        self.save()
+        
+        return self.overall_score
+    
+    def calculate_price_score(self, property):
+        """Calculate price score based on market comparison"""
+        try:
+            # Get average price for similar properties in the same area
+            similar_properties = Property.objects.filter(
+                governorate=property.governorate,
+                type=property.type,
+                status='published'
+            ).exclude(id=property.id)
+            
+            if similar_properties.exists():
+                avg_price = similar_properties.aggregate(Avg('price'))['price__avg']
+                if avg_price and avg_price > 0:
+                    price_ratio = float(property.price) / float(avg_price)
+                    # Below average = higher score
+                    if price_ratio <= 0.8:
+                        return 100
+                    elif price_ratio <= 0.9:
+                        return 90
+                    elif price_ratio <= 1.0:
+                        return 80
+                    elif price_ratio <= 1.1:
+                        return 70
+                    elif price_ratio <= 1.2:
+                        return 60
+                    else:
+                        return max(0, 50 - (price_ratio - 1.2) * 50)
+            
+            return 70  # Default score if no comparison data
+        except (ValueError, TypeError):
+            return 50
+    
+    def calculate_location_score(self, property):
+        """Calculate location score based on desirability"""
+        score = 70  # Base score
+        
+        # Governorate desirability (simplified)
+        desirable_governorates = ['بغداد', 'بابل', 'بصرة', 'أربيل', 'دهوك', 'النجف', 'كربلاء']
+        if property.governorate in desirable_governorates:
+            score += 20
+        
+        # Capital city bonus
+        if property.governorate == 'بغداد':
+            score += 10
+        
+        return min(100, score)
+    
+    def calculate_area_score(self, property):
+        """Calculate area score based on property type and size"""
+        try:
+            area = float(property.area) if property.area else 0
+            
+            if area == 0:
+                return 50
+            
+            # Score based on property type and appropriate area
+            ideal_areas = {
+                'apartment': (80, 150),  # 80-150 sqm is ideal
+                'villa': (200, 500),      # 200-500 sqm is ideal
+                'land': (500, 2000),      # 500-2000 sqm is ideal
+                'shop': (50, 200),        # 50-200 sqm is ideal
+                'office': (100, 300),     # 100-300 sqm is ideal
+            }
+            
+            if property.type in ideal_areas:
+                min_ideal, max_ideal = ideal_areas[property.type]
+                if min_ideal <= area <= max_ideal:
+                    return 100
+                elif area < min_ideal:
+                    return max(0, 70 - (min_ideal - area) / 10)
+                else:
+                    return max(0, 70 - (area - max_ideal) / 50)
+            
+            return 70  # Default score
+        except (ValueError, TypeError):
+            return 50
+    
+    def calculate_amenities_score(self, property):
+        """Calculate amenities score based on available features"""
+        score = 0
+        total_possible = 0
+        
+        # Common amenities to check
+        important_amenities = [
+            'has_elevator', 'has_garage', 'has_security_system',
+            'has_generator', 'has_central_ac', 'has_fiber_internet'
+        ]
+        
+        for amenity in important_amenities:
+            total_possible += 1
+            if getattr(property, amenity, False):
+                score += 1
+        
+        # Check for other valuable features
+        if hasattr(property, 'has_swimming_pool') and property.has_swimming_pool:
+            score += 2
+            total_possible += 2
+        if hasattr(property, 'has_garden') and property.has_garden:
+            score += 1
+            total_possible += 1
+        
+        if total_possible > 0:
+            return (score / total_possible) * 100
+        
+        return 50  # Default score
+    
+    def calculate_condition_score(self, property):
+        """Calculate condition score based on property condition"""
+        if hasattr(property, 'property_condition'):
+            condition_scores = {
+                'new': 100,
+                'excellent': 90,
+                'good': 80,
+                'fair': 60,
+                'needs_renovation': 40,
+                'poor': 20
+            }
+            return condition_scores.get(property.property_condition, 50)
+        
+        return 70  # Default score
+    
+    def calculate_verification_bonus(self, property):
+        """Calculate verification bonus"""
+        if hasattr(property, 'verification_status') and property.verification_status == 'verified':
+            return 100
+        return 0
+    
+    def calculate_popularity_score(self, property):
+        """Calculate popularity score based on views and interactions"""
+        try:
+            # Normalize based on property age
+            days_since_creation = (timezone.now() - property.created_at).days
+            if days_since_creation < 1:
+                days_since_creation = 1
+            
+            # Calculate views per day
+            views_per_day = property.views_count / days_since_creation
+            
+            # Score based on views per day
+            if views_per_day >= 10:
+                return 100
+            elif views_per_day >= 5:
+                return 80
+            elif views_per_day >= 2:
+                return 60
+            elif views_per_day >= 1:
+                return 40
+            else:
+                return 20
+        except (ValueError, TypeError, AttributeError):
+            return 50
+    
+    def generate_improvement_suggestions(self):
+        """Generate suggestions for improving the property score"""
+        suggestions = []
+        
+        if self.price_score < 70:
+            suggestions.append('مراجعة السعر مقارنة بالسوق')
+        
+        if self.location_score < 70:
+            suggestions.append('تسليط الضوء على مميزات الموقع الفريدة')
+        
+        if self.area_score < 70:
+            suggestions.append('توضيح المساحة الفعلية القابلة للاستخدام')
+        
+        if self.amenities_score < 70:
+            suggestions.append('إضافة المزيد من المميزات والخدمات')
+        
+        if self.condition_score < 70:
+            suggestions.append('تحسين حالة العقار أو إصلاحات')
+        
+        if self.verification_bonus == 0:
+            suggestions.append('إتمال عملية التحقق والوثائق')
+        
+        return suggestions
+
+
 class CRMContact(models.Model):
     STAGES = (
         ('lead', 'عميل محتمل'),
@@ -17456,6 +18785,287 @@ class CRMContact(models.Model):
 
     def __str__(self):
         return self.name
+
+
+# ==================== MAP & LOCATION MODELS ====================
+
+class AreaStats(models.Model):
+    """إحصائيات المنطقة للخرائط التفاعلية"""
+    
+    governorate = models.CharField(max_length=50, choices=IRAQ_GOVERNORATES, verbose_name='المحافظة')
+    city = models.CharField(max_length=100, verbose_name='المدينة')
+    district = models.CharField(max_length=100, blank=True, verbose_name='القضاء')
+    area = models.CharField(max_length=100, blank=True, verbose_name='المنطقة')
+    
+    # Bounding box for map visualization
+    bounds_south = models.DecimalField(max_digits=10, decimal_places=7, null=True, blank=True, verbose_name='الحد الجنوبي')
+    bounds_north = models.DecimalField(max_digits=10, decimal_places=7, null=True, blank=True, verbose_name='الحد الشمالي')
+    bounds_west = models.DecimalField(max_digits=10, decimal_places=7, null=True, blank=True, verbose_name='الحد الغربي')
+    bounds_east = models.DecimalField(max_digits=10, decimal_places=7, null=True, blank=True, verbose_name='الحد الشرقي')
+    
+    # Price statistics
+    avg_price_per_sqm = models.DecimalField(max_digits=15, decimal_places=2, null=True, blank=True, verbose_name='متوسط السعر لكل م²')
+    avg_price = models.DecimalField(max_digits=15, decimal_places=2, null=True, blank=True, verbose_name='متوسط السعر')
+    min_price = models.DecimalField(max_digits=15, decimal_places=2, null=True, blank=True, verbose_name='أقل سعر')
+    max_price = models.DecimalField(max_digits=15, decimal_places=2, null=True, blank=True, verbose_name='أعلى سعر')
+    
+    # Property counts
+    total_properties = models.PositiveIntegerField(default=0, verbose_name='إجمالي العقارات')
+    sale_properties = models.PositiveIntegerField(default=0, verbose_name='عقارات البيع')
+    rent_properties = models.PositiveIntegerField(default=0, verbose_name='عقارات الإيجار')
+    
+    # Price trends
+    price_trend = models.CharField(max_length=20, choices=[('rising', 'ارتفاع'), ('falling', 'انخفاض'), ('stable', 'مستقر')], 
+                                    default='stable', verbose_name='اتجاه السعر')
+    price_change_percent = models.DecimalField(max_digits=5, decimal_places=2, null=True, blank=True, verbose_name='نسبة تغير السعر')
+    
+    # Popularity
+    view_count = models.PositiveIntegerField(default=0, verbose_name='عدد المشاهدات')
+    favorite_count = models.PositiveIntegerField(default=0, verbose_name='عدد المفضلات')
+    
+    updated_at = models.DateTimeField(auto_now=True, verbose_name='آخر تحديث')
+    
+    class Meta:
+        verbose_name = 'إحصائيات المنطقة'
+        verbose_name_plural = 'إحصائيات المناطق'
+        unique_together = [['governorate', 'city', 'district', 'area']]
+        indexes = [
+            models.Index(fields=['governorate', 'city']),
+            models.Index(fields=['avg_price']),
+            models.Index(fields=['price_trend']),
+            models.Index(fields=['-updated_at']),
+        ]
+    
+    def __str__(self):
+        location = f"{self.governorate} - {self.city}"
+        if self.district:
+            location += f" - {self.district}"
+        if self.area:
+            location += f" - {self.area}"
+        return location
+    
+    def update_stats(self):
+        """تحديث الإحصائيات من العقارات الحالية"""
+        from django.db.models import Avg, Min, Max, Count, Q
+        
+        # Build location filter
+        location_filter = Q(governorate=self.governorate, city=self.city)
+        if self.district:
+            location_filter &= Q(district=self.district)
+        if self.area:
+            location_filter &= Q(region=self.area)
+        
+        properties = Property.objects.filter(location_filter, status='available')
+        
+        # Update counts
+        self.total_properties = properties.count()
+        self.sale_properties = properties.filter(transaction_type='sale').count()
+        self.rent_properties = properties.filter(transaction_type='rent').count()
+        
+        # Update price statistics
+        if properties.exists():
+            self.avg_price = properties.aggregate(Avg('price'))['price__avg']
+            self.min_price = properties.aggregate(Min('price'))['price__min']
+            self.max_price = properties.aggregate(Max('price'))['price__max']
+            
+            # Calculate price per sqm
+            properties_with_area = properties.exclude(total_area__isnull=True)
+            if properties_with_area.exists():
+                avg_sqm = properties_with_area.annotate(
+                    price_per_sqm=models.F('price') / models.F('total_area')
+                ).aggregate(Avg('price_per_sqm'))['price_per_sqm__avg']
+                self.avg_price_per_sqm = avg_sqm
+        
+        self.save()
+
+
+class Amenity(models.Model):
+    """الخدمات والمرافق القريبة (مدارس، مستشفيات، أسواق)"""
+    
+    AMENITY_TYPES = [
+        ('school', 'مدرسة'),
+        ('hospital', 'مستشفى'),
+        ('clinic', 'عيادة'),
+        ('university', 'جامعة'),
+        ('market', 'سوق'),
+        ('mall', 'مول تجاري'),
+        ('supermarket', 'سوبرماركت'),
+        ('mosque', 'مسجد'),
+        ('church', 'كنيسة'),
+        ('park', 'حديقة'),
+        ('gas_station', 'محطة وقود'),
+        ('bank', 'بنك'),
+        ('atm', 'صراف آلي'),
+        ('pharmacy', 'صيدلية'),
+        ('restaurant', 'مطعم'),
+        ('cafe', 'مقهى'),
+        ('gym', 'نادي رياضي'),
+        ('airport', 'مطار'),
+        ('train_station', 'محطة قطار'),
+        ('bus_station', 'محطة حافلات'),
+        ('other', 'أخرى'),
+    ]
+    
+    name = models.CharField(max_length=200, verbose_name='اسم المرفق')
+    amenity_type = models.CharField(max_length=30, choices=AMENITY_TYPES, verbose_name='نوع المرفق')
+    
+    # Location
+    governorate = models.CharField(max_length=50, choices=IRAQ_GOVERNORATES, verbose_name='المحافظة')
+    city = models.CharField(max_length=100, verbose_name='المدينة')
+    district = models.CharField(max_length=100, blank=True, verbose_name='القضاء')
+    area = models.CharField(max_length=100, blank=True, verbose_name='المنطقة')
+    address = models.TextField(blank=True, verbose_name='العنوان')
+    
+    # GPS coordinates
+    latitude = models.DecimalField(max_digits=10, decimal_places=7, verbose_name='خط العرض')
+    longitude = models.DecimalField(max_digits=10, decimal_places=7, verbose_name='خط الطول')
+    
+    # Additional details
+    phone = models.CharField(max_length=20, blank=True, verbose_name='رقم الهاتف')
+    website = models.URLField(blank=True, verbose_name='الموقع الإلكتروني')
+    rating = models.DecimalField(max_digits=2, decimal_places=1, null=True, blank=True, verbose_name='التقييم')
+    opening_hours = models.JSONField(default=dict, blank=True, verbose_name='ساعات العمل')
+    
+    # For schools/universities
+    education_level = models.CharField(max_length=50, blank=True, verbose_name='المستوى التعليمي')
+    student_count = models.PositiveIntegerField(null=True, blank=True, verbose_name='عدد الطلاب')
+    
+    # For hospitals
+    bed_count = models.PositiveIntegerField(null=True, blank=True, verbose_name='عدد الأسرة')
+    emergency_services = models.BooleanField(default=False, verbose_name='خدمات الطوارئ')
+    
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name='تاريخ الإضافة')
+    updated_at = models.DateTimeField(auto_now=True, verbose_name='آخر تحديث')
+    
+    class Meta:
+        verbose_name = 'مرفق'
+        verbose_name_plural = 'المرافق والخدمات'
+        indexes = [
+            models.Index(fields=['amenity_type']),
+            models.Index(fields=['governorate', 'city']),
+            models.Index(fields=['latitude', 'longitude']),
+        ]
+    
+    def __str__(self):
+        return f"{self.get_amenity_type_display()} - {self.name}"
+    
+    def calculate_distance_to_property(self, property_lat, property_lng):
+        """حساب المسافة من العقار بالكيلومتر"""
+        from math import radians, cos, sin, asin, sqrt
+        
+        # Haversine formula
+        lat1, lng1 = radians(float(property_lat)), radians(float(property_lng))
+        lat2, lng2 = radians(float(self.latitude)), radians(float(self.longitude))
+        
+        dlat = lat2 - lat1
+        dlng = lng2 - lng1
+        
+        a = sin(dlat/2)**2 + cos(lat1) * cos(lat2) * sin(dlng/2)**2
+        c = 2 * asin(sqrt(a))
+        
+        # Earth's radius in km
+        r = 6371
+        return c * r
+
+
+class HeatmapData(models.Model):
+    """بيانات الخريطة الحرارية للأسعار"""
+    
+    governorate = models.CharField(max_length=50, choices=IRAQ_GOVERNORATES, verbose_name='المحافظة')
+    city = models.CharField(max_length=100, verbose_name='المدينة')
+    
+    # Grid cell coordinates
+    lat_min = models.DecimalField(max_digits=10, decimal_places=7, verbose_name='خط العرض الأدنى')
+    lat_max = models.DecimalField(max_digits=10, decimal_places=7, verbose_name='خط العرض الأقصى')
+    lng_min = models.DecimalField(max_digits=10, decimal_places=7, verbose_name='خط الطول الأدنى')
+    lng_max = models.DecimalField(max_digits=10, decimal_places=7, verbose_name='خط الطول الأقصى')
+    
+    # Heatmap value (price density)
+    value = models.DecimalField(max_digits=15, decimal_places=2, verbose_name='قيمة الكثافة')
+    property_count = models.PositiveIntegerField(default=0, verbose_name='عدد العقارات')
+    
+    # Property type filter
+    property_type = models.CharField(max_length=50, blank=True, verbose_name='نوع العقار')
+    
+    updated_at = models.DateTimeField(auto_now=True, verbose_name='آخر تحديث')
+    
+    class Meta:
+        verbose_name = 'بيانات الخريطة الحرارية'
+        verbose_name_plural = 'بيانات الخرائط الحرارية'
+        indexes = [
+            models.Index(fields=['governorate', 'city']),
+            models.Index(fields=['lat_min', 'lat_max', 'lng_min', 'lng_max']),
+            models.Index(fields=['-value']),
+        ]
+    
+    def __str__(self):
+        return f"{self.governorate} - {self.city} (Value: {self.value})"
+    
+    @classmethod
+    def generate_heatmap(cls, governorate, city, property_type=None, grid_size=0.01):
+        """توليد بيانات الخريطة الحرارية لمنطقة معينة"""
+        from django.db.models import Avg, Count, Min, Max
+        
+        # Get all properties in the area
+        properties = Property.objects.filter(
+            governorate=governorate,
+            city=city,
+            latitude__isnull=False,
+            longitude__isnull=False,
+            status='available'
+        )
+        
+        if property_type:
+            properties = properties.filter(type=property_type)
+        
+        if not properties.exists():
+            return []
+        
+        # Determine grid bounds
+        lat_min = properties.aggregate(Min('latitude'))['latitude__min']
+        lat_max = properties.aggregate(Max('latitude'))['latitude__max']
+        lng_min = properties.aggregate(Min('longitude'))['longitude__min']
+        lng_max = properties.aggregate(Max('longitude'))['longitude__max']
+        
+        # Create grid cells
+        heatmap_data = []
+        lat = lat_min
+        while lat < lat_max:
+            lng = lng_min
+            while lng < lng_max:
+                # Count properties in this cell
+                cell_properties = properties.filter(
+                    latitude__gte=lat,
+                    latitude__lt=lat + grid_size,
+                    longitude__gte=lng,
+                    longitude__lt=lng + grid_size
+                )
+                
+                if cell_properties.exists():
+                    # Calculate density (average price in this cell)
+                    avg_price = cell_properties.aggregate(Avg('price'))['price__avg']
+                    cell_count = cell_properties.count()
+                    
+                    # Create or update heatmap data
+                    heatmap_cell, created = cls.objects.update_or_create(
+                        governorate=governorate,
+                        city=city,
+                        lat_min=lat,
+                        lat_max=lat + grid_size,
+                        lng_min=lng,
+                        lng_max=lng + grid_size,
+                        property_type=property_type or '',
+                        defaults={
+                            'value': avg_price or 0,
+                            'property_count': cell_count
+                        }
+                    )
+                    heatmap_data.append(heatmap_cell)
+                
+                lng += grid_size
+            lat += grid_size
+        
+        return heatmap_data
     
     def update_interaction_count(self):
         """تحديث عدد التفاعلات"""

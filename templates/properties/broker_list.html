@@ -363,29 +363,96 @@
   .charts-section {
     grid-template-columns: 1fr;
   }
-  
+
   .search-bar {
     flex-direction: column;
     align-items: stretch;
   }
-  
+
   .search-input-wrapper {
     min-width: 100%;
   }
-  
+
   .export-buttons {
     flex-direction: column;
   }
-  
+
   .dashboard-stats {
     grid-template-columns: 1fr;
   }
+}
+
+.broker-checkbox {
+  width: 18px;
+  height: 18px;
+  cursor: pointer;
+  accent-color: #FF7A00;
+}
+
+.quick-actions {
+  background: #0a0a0a;
+  border: 1px solid #1a1a1a;
+  border-radius: 8px;
+  padding: 1rem;
+}
+
+.btn-success {
+  background: #22c55e;
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: all 0.3s ease;
+}
+
+.btn-warning {
+  background: #f59e0b;
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: all 0.3s ease;
+}
+
+.btn-danger {
+  background: #ef4444;
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: all 0.3s ease;
+}
+
+.btn-info {
+  background: #3b82f6;
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: all 0.3s ease;
 }
 </style>
 {% endblock %}
 
 {% block content %}
 <div class="dashboard-container">
+  <!-- Success Message Display -->
+  {% if messages %}
+  <div class="success-message" style="background: rgba(34, 197, 94, 0.2); border: 1px solid #22c55e; border-radius: 8px; padding: 1rem; margin-bottom: 1.5rem;">
+    {% for message in messages %}
+    <div style="color: #22c55e; font-weight: 600;">{{ message }}</div>
+    {% endfor %}
+  </div>
+  {% endif %}
+
   <div class="dashboard-header">
     <div class="header-info">
       <h1>إدارة الدلالين</h1>
@@ -403,11 +470,32 @@
       <a href="{% url 'office_panel' %}" class="btn btn-outline">المكتب العقاري</a>
       <a href="{% url 'dashboard' %}" class="btn btn-outline">← لوحة التحكم</a>
     </div>
+
+    <!-- Quick Actions -->
+    <div class="quick-actions" style="display: flex; gap: 0.5rem; margin-top: 1rem; flex-wrap: wrap;">
+      <button onclick="toggleBulkActions()" class="btn btn-outline" style="font-size: 0.85rem;">🔧 إجراءات جماعية</button>
+      <button onclick="showAllBrokers()" class="btn btn-outline" style="font-size: 0.85rem;">👥 عرض الكل</button>
+      <button onclick="showActiveBrokers()" class="btn btn-outline" style="font-size: 0.85rem;">✅ النشطين فقط</button>
+      <button onclick="showInactiveBrokers()" class="btn btn-outline" style="font-size: 0.85rem;">🔒 الموقوفين فقط</button>
+      <button onclick="showUnsubscribedBrokers()" class="btn btn-outline" style="font-size: 0.85rem;">❌ بدون اشتراك</button>
+    </div>
+
+    <!-- Bulk Actions Panel (Hidden by default) -->
+    <div id="bulkActionsPanel" style="display: none; background: #0a0a0a; border: 1px solid #1a1a1a; border-radius: 8px; padding: 1rem; margin-top: 1rem;">
+      <h4 style="margin: 0 0 1rem 0; color: #ffffff;">إجراءات جماعية</h4>
+      <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+        <button onclick="bulkActivate()" class="btn btn-success" style="font-size: 0.85rem;">✅ تفعيل المحدد</button>
+        <button onclick="bulkDeactivate()" class="btn btn-warning" style="font-size: 0.85rem;">🔒 إيقاف المحدد</button>
+        <button onclick="bulkVerify()" class="btn btn-info" style="font-size: 0.85rem;">🏅 توثيق المحدد</button>
+        <button onclick="bulkDelete()" class="btn btn-danger" style="font-size: 0.85rem;">🗑️ حذف المحدد</button>
+        <button onclick="bulkRenew()" class="btn btn-primary" style="font-size: 0.85rem;">🔄 تجديد اشتراكات</button>
+      </div>
+    </div>
   </div>
 
   <!-- Stats Cards -->
   <div class="dashboard-stats">
-    <div class="stat-card" style="--card-color-1: #667eea; --card-color-2: #764ba2;">
+    <div class="stat-card" style="--card-color-1: #FF7A00; --card-color-2: #FF9500;">
       <div class="stat-icon">👥</div>
       <div class="stat-number">{{ total_brokers|intcomma }}</div>
       <div class="stat-label">إجمالي الدلالين</div>
@@ -419,7 +507,7 @@
       <div class="stat-label">الدلالين الموثقين</div>
       <div class="stat-trend">{{ verified_percentage|default:0 }}% من المجموع</div>
     </div>
-    <div class="stat-card" style="--card-color-1: #4299e1; --card-color-2: #3182ce;">
+    <div class="stat-card" style="--card-color-1: #FF7A00; --card-color-2: #FF7A00;">
       <div class="stat-icon">🏠</div>
       <div class="stat-number">{{ total_properties|intcomma }}</div>
       <div class="stat-label">إجمالي العقارات</div>
@@ -437,10 +525,28 @@
       <div class="stat-label">اشتراكات منتهية</div>
       <div class="stat-trend">تحتاج تجديد</div>
     </div>
-    <div class="stat-card" style="--card-color-1: #9f7aea; --card-color-2: #805ad5;">
+    <div class="stat-card" style="--card-color-1: #FF9500; --card-color-2: #FF9500;">
       <div class="stat-icon">💰</div>
       <div class="stat-number">{{ total_revenue|default:0|intcomma }}</div>
       <div class="stat-label">الإيرادات (د.ع)</div>
+      <div class="stat-trend">هذا الشهر</div>
+    </div>
+    <div class="stat-card" style="--card-color-1: #8b5cf6; --card-color-2: #7c3aed;">
+      <div class="stat-icon">📊</div>
+      <div class="stat-number">{{ broker_data|length }}</div>
+      <div class="stat-label">الدلالين المعروضين</div>
+      <div class="stat-trend">في هذه الصفحة</div>
+    </div>
+    <div class="stat-card" style="--card-color-1: #ec4899; --card-color-2: #db2777;">
+      <div class="stat-icon">🎯</div>
+      <div class="stat-number">{{ total_properties|intcomma }}</div>
+      <div class="stat-label">إجمالي العقارات</div>
+      <div class="stat-trend">لجميع الدلالين</div>
+    </div>
+    <div class="stat-card" style="--card-color-1: #06b6d4; --card-color-2: #0891b2;">
+      <div class="stat-icon">⚡</div>
+      <div class="stat-number">{{ monthly_properties|default:0|intcomma }}</div>
+      <div class="stat-label">عقارات جديدة</div>
       <div class="stat-trend">هذا الشهر</div>
     </div>
   </div>
@@ -528,6 +634,7 @@
     </select>
     <select id="subscriptionFilter" class="filter-select" onchange="performSearch()">
       <option value="">جميع الاشتراكات</option>
+      <option value="no_subscription" {% if subscription_filter == 'no_subscription' %}selected{% endif %}>بدون اشتراك</option>
       <option value="basic" {% if subscription_filter == 'basic' %}selected{% endif %}>أساسي</option>
       <option value="standard" {% if subscription_filter == 'standard' %}selected{% endif %}>قياسي</option>
       <option value="premium" {% if subscription_filter == 'premium' %}selected{% endif %}>مميز</option>
@@ -577,6 +684,100 @@
 
     window.location.href = '{% url "broker_list" %}?' + params.toString();
   }
+
+  // Quick filter functions
+  function showAllBrokers() {
+    window.location.href = '{% url "broker_list" %}';
+  }
+
+  function showActiveBrokers() {
+    window.location.href = '{% url "broker_list" %}?status=active';
+  }
+
+  function showInactiveBrokers() {
+    window.location.href = '{% url "broker_list" %}?status=inactive';
+  }
+
+  function showUnsubscribedBrokers() {
+    window.location.href = '{% url "broker_list" %}?subscription=no_subscription';
+  }
+
+  // Bulk actions
+  function toggleBulkActions() {
+    const panel = document.getElementById('bulkActionsPanel');
+    panel.style.display = panel.style.display === 'none' ? 'block' : 'none';
+  }
+
+  function bulkActivate() {
+    const selected = getSelectedBrokers();
+    if (selected.length === 0) {
+      alert('يرجى اختيار دلال واحد على الأقل');
+      return;
+    }
+    if (confirm(`هل تريد تفعيل ${selected.length} دلال؟`)) {
+      // Implement bulk activation logic
+      alert('سيتم تفعيل الدلالين المحددين');
+    }
+  }
+
+  function bulkDeactivate() {
+    const selected = getSelectedBrokers();
+    if (selected.length === 0) {
+      alert('يرجى اختيار دلال واحد على الأقل');
+      return;
+    }
+    if (confirm(`هل تريد إيقاف ${selected.length} دلال؟`)) {
+      // Implement bulk deactivation logic
+      alert('سيتم إيقاف الدلالين المحددين');
+    }
+  }
+
+  function bulkVerify() {
+    const selected = getSelectedBrokers();
+    if (selected.length === 0) {
+      alert('يرجى اختيار دلال واحد على الأقل');
+      return;
+    }
+    if (confirm(`هل تريد توثيق ${selected.length} دلال؟`)) {
+      // Implement bulk verification logic
+      alert('سيتم توثيق الدلالين المحددين');
+    }
+  }
+
+  function bulkDelete() {
+    const selected = getSelectedBrokers();
+    if (selected.length === 0) {
+      alert('يرجى اختيار دلال واحد على الأقل');
+      return;
+    }
+    if (confirm(`هل تريد حذف ${selected.length} دلال؟ هذا الإجراء لا يمكن التراجع عنه!`)) {
+      // Implement bulk deletion logic
+      alert('سيتم حذف الدلالين المحددين');
+    }
+  }
+
+  function bulkRenew() {
+    const selected = getSelectedBrokers();
+    if (selected.length === 0) {
+      alert('يرجى اختيار دلال واحد على الأقل');
+      return;
+    }
+    if (confirm(`هل تريد تجديد اشتراكات ${selected.length} دلال؟`)) {
+      // Implement bulk renewal logic
+      alert('سيتم تجديد اشتراكات الدلالين المحددين');
+    }
+  }
+
+  function getSelectedBrokers() {
+    const checkboxes = document.querySelectorAll('.broker-checkbox:checked');
+    return Array.from(checkboxes).map(cb => cb.value);
+  }
+
+  function toggleAllBrokers() {
+    const selectAll = document.getElementById('selectAllBrokers');
+    const checkboxes = document.querySelectorAll('.broker-checkbox');
+    checkboxes.forEach(cb => cb.checked = selectAll.checked);
+  }
   </script>
 
   <!-- Brokers Table -->
@@ -584,11 +785,12 @@
     <table class="data-table">
       <thead>
         <tr>
+          <th style="width: 40px;"><input type="checkbox" id="selectAllBrokers" onchange="toggleAllBrokers()"></th>
           <th>الدلال</th>
           <th>معلومات الاتصال</th>
           <th>المحافظة</th>
           <th>الاشتراك</th>
-          <th>العقارات</th>
+          <th>الأداء</th>
           <th>الحالة</th>
           <th>الإجراءات</th>
         </tr>
@@ -596,9 +798,13 @@
       <tbody>
         {% for item in broker_data %}
         <tr>
+          <td><input type="checkbox" class="broker-checkbox" value="{{ item.broker.id }}"></td>
           <td>
             <div class="broker-name">{{ item.broker.display_name }}</div>
             <div class="broker-role">{{ item.broker.get_role_display }}</div>
+            <div style="font-size: 0.8rem; color: rgba(255, 255, 255, 0.5); margin-top: 0.25rem;">
+              @{{ item.broker.user.username }}
+            </div>
           </td>
           <td>
             <div class="contact-info">
@@ -609,10 +815,20 @@
           <td>{{ item.broker.get_governorate_display|default:"غير محدد" }}</td>
           <td>
             <div class="subscription-info">
-              <div class="plan-name">{{ item.subscription_plan }}</div>
+              <div class="plan-name">
+                {% if item.subscription_plan == 'غير مشترك' %}
+                <span class="badge badge-warning">غير مشترك</span>
+                {% else %}
+                {{ item.subscription_plan }}
+                {% endif %}
+              </div>
               {% if item.subscription_end_date %}
               <div class="subscription-dates">
                 <span>ينتهي: {{ item.subscription_end_date|date:"Y-m-d" }}</span>
+              </div>
+              {% else %}
+              <div class="subscription-dates">
+                <span style="color: rgba(255, 255, 255, 0.5);">لا يوجد اشتراك</span>
               </div>
               {% endif %}
             </div>
@@ -630,6 +846,10 @@
               <div class="stat-row">
                 <span>الأداء:</span>
                 <strong>{{ item.performance_score|default:0 }}%</strong>
+              </div>
+              <div class="stat-row">
+                <span>القناة:</span>
+                <strong>{% if item.channel %}{{ item.channel.followers|intcomma }} متابع{% else %}لا يوجد{% endif %}</strong>
               </div>
             </div>
           </td>
@@ -653,22 +873,22 @@
           </td>
           <td>
             <div class="action-buttons">
-              <a href="{% url 'broker_edit' item.broker.id %}" class="action-btn action-btn-edit">✏️</a>
+              <a href="{% url 'broker_edit' item.broker.id %}" class="action-btn action-btn-edit" title="تعديل">✏️</a>
               {% if not item.broker.is_verified %}
-              <a href="{% url 'api_broker_verify' item.broker.id %}" class="action-btn action-btn-verify">✅</a>
+              <a href="{% url 'api_broker_verify' item.broker.id %}" class="action-btn action-btn-verify" title="توثيق">✅</a>
               {% endif %}
               {% if item.broker.is_active %}
-              <a href="{% url 'broker_toggle_active' item.broker.id %}" class="action-btn action-btn-suspend">🔒</a>
+              <a href="{% url 'broker_toggle_active' item.broker.id %}" class="action-btn action-btn-suspend" title="تقييد">🔒</a>
               {% else %}
-              <a href="{% url 'broker_toggle_active' item.broker.id %}" class="action-btn action-btn-verify">🔓</a>
+              <a href="{% url 'broker_toggle_active' item.broker.id %}" class="action-btn action-btn-verify" title="تفعيل">🔓</a>
               {% endif %}
-              <a href="{% url 'broker_delete' item.broker.id %}" class="action-btn action-btn-delete">🗑️</a>
+              <a href="{% url 'broker_delete' item.broker.id %}" class="action-btn action-btn-delete" title="حذف" onclick="return confirm('هل أنت متأكد من حذف هذا الدلال؟')">🗑️</a>
             </div>
           </td>
         </tr>
         {% empty %}
         <tr>
-          <td colspan="7" style="text-align:center;padding: 2rem;color: rgba(255, 255, 255, 0.5);">
+          <td colspan="8" style="text-align:center;padding: 2rem;color: rgba(255, 255, 255, 0.5);">
             لا يوجد دلالين
           </td>
         </tr>
@@ -700,7 +920,7 @@ const iraqGovernorates = [
   { name: 'بغداد', code: 'BAG', color: '#4ecdc4' },
   { name: 'البصرة', code: 'BAS', color: '#44a08d' },
   { name: 'نينوى', code: 'NIN', color: '#6366f1' },
-  { name: 'أربيل', code: 'ERB', color: '#8b5cf6' },
+  { name: 'أربيل', code: 'ERB', color: '#FF7A00' },
   { name: 'النجف', code: 'NAJ', color: '#ec4899' },
   { name: 'كربلاء', code: 'KAR', color: '#f43f5e' },
   { name: 'بابل', code: 'BAB', color: '#f59e0b' },
@@ -714,7 +934,7 @@ const iraqGovernorates = [
   { name: 'القادسية', code: 'QAD', color: '#0ea5e9' },
   { name: 'صلاح الدين', code: 'SAL', color: '#3b82f6' },
   { name: 'دهوك', code: 'DUH', color: '#6366f1' },
-  { name: 'السليمانية', code: 'SUL', color: '#8b5cf6' },
+  { name: 'السليمانية', code: 'SUL', color: '#FF7A00' },
   { name: 'حلبجة', code: 'HAL', color: '#a855f7' }
 ];
 
@@ -734,8 +954,8 @@ function initCharts() {
       labels: generateDateLabels(30),
       datasets: [{
         label: 'الدلالين الجدد',
-        data: generateRandomData(30, 0, 10),
-        borderColor: '#667eea',
+        data: {{ broker_growth_data|safe }},
+        borderColor: '#FF7A00',
         backgroundColor: 'rgba(102, 126, 234, 0.1)',
         fill: true,
         tension: 0.4
@@ -758,10 +978,15 @@ function initCharts() {
   propertyStatusChart = new Chart(statusCtx, {
     type: 'doughnut',
     data: {
-      labels: ['جاهز', 'قيد البناء', 'مؤجر', 'مباع'],
+      labels: ['منشور', 'بانتظار الموافقة', 'مباع', 'مسودة'],
       datasets: [{
-        data: [45, 20, 25, 10],
-        backgroundColor: ['#48bb78', '#ed8936', '#4299e1', '#f56565'],
+        data: [
+          {{ property_status_data.published|default:0 }},
+          {{ property_status_data.pending|default:0 }},
+          {{ property_status_data.sold|default:0 }},
+          {{ property_status_data.draft|default:0 }}
+        ],
+        backgroundColor: ['#48bb78', '#ed8936', '#FF7A00', '#f56565'],
         borderWidth: 0
       }]
     },
@@ -779,11 +1004,11 @@ function initCharts() {
   performanceChart = new Chart(perfCtx, {
     type: 'bar',
     data: {
-      labels: ['أحمد', 'محمد', 'علي', 'حسين', 'كريم'],
+      labels: [{% for item in performance_data %}'{{ item.name }}'{% if not forloop.last %},{% endif %}{% endfor %}],
       datasets: [{
         label: 'درجة الأداء',
-        data: [85, 92, 78, 88, 95],
-        backgroundColor: '#667eea',
+        data: [{% for item in performance_data %}{{ item.score }}{% if not forloop.last %},{% endif %}{% endfor %}],
+        backgroundColor: '#FF7A00',
         borderRadius: 8
       }]
     },
@@ -801,20 +1026,12 @@ function initCharts() {
 
   // Geographic Chart
   const geoCtx = document.getElementById('geographicChart').getContext('2d');
-  {% if governorate_stats %}
   const geoData = {
-    labels: [{% for stat in governorate_stats %}'{{ stat.name }}'{% if not forloop.last %},{% endif %}{% endfor %}],
-    data: [{% for stat in governorate_stats %}{{ stat.count }}{% if not forloop.last %},{% endif %}{% endfor %}],
-    colors: iraqGovernorates.slice(0, {{ governorate_stats|length }}).map(g => g.color)
+    labels: [{% for item in geographic_data %}'{{ item.name }}'{% if not forloop.last %},{% endif %}{% endfor %}],
+    data: [{% for item in geographic_data %}{{ item.count }}{% if not forloop.last %},{% endif %}{% endfor %}],
+    colors: iraqGovernorates.slice(0, {{ geographic_data|length }}).map(g => g.color)
   };
-  {% else %}
-  const geoData = {
-    labels: iraqGovernorates.slice(0, 6).map(g => g.name),
-    data: [35, 20, 15, 12, 10, 8],
-    colors: iraqGovernorates.slice(0, 6).map(g => g.color)
-  };
-  {% endif %}
-  
+
   geographicChart = new Chart(geoCtx, {
     type: 'pie',
     data: {

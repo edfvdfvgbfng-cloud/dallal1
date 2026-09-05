@@ -1,5 +1,6 @@
 {% extends 'properties/base.html' %}
 {% load static %}
+{% load custom_filters %}
 
 {% block title %}العقود العقارية المتقدمة{% endblock %}
 
@@ -706,7 +707,7 @@
 }
 
 .search-input-wrapper:focus-within {
-  border-color: #667eea;
+  border-color: #FF7A00;
 }
 
 .search-icon {
@@ -751,7 +752,7 @@
 }
 
 .tab-btn.active {
-  background: #667eea;
+  background: #FF7A00;
   color: #ffffff;
 }
 
@@ -780,7 +781,7 @@
 
 .contract-item.active {
   background: #3d3d3d;
-  border-color: #667eea;
+  border-color: #FF7A00;
 }
 
 .contract-icon {
@@ -826,7 +827,7 @@
 }
 
 .contract-status-badge.completed {
-  background: #3b82f6;
+  background: #FF7A00;
   color: #ffffff;
 }
 
@@ -836,7 +837,7 @@
 }
 
 .contract-status-badge.expired {
-  background: #8b5cf6;
+  background: #FF7A00;
   color: #ffffff;
 }
 
@@ -881,7 +882,7 @@
 
 .contract-amount {
   font-weight: 600;
-  color: #667eea;
+  color: #FF7A00;
 }
 
 .contract-parties {
@@ -959,7 +960,7 @@
 }
 
 .contract-tab-btn.active {
-  background: #667eea;
+  background: #FF7A00;
   color: #ffffff;
 }
 
@@ -1007,7 +1008,7 @@
 }
 
 .summary-value {
-  color: #667eea;
+  color: #FF7A00;
   font-size: 1.2rem;
   font-weight: 700;
 }
@@ -1072,7 +1073,7 @@
 }
 
 .payment-status.partial {
-  background: #3b82f6;
+  background: #FF7A00;
   color: #ffffff;
 }
 
@@ -1264,7 +1265,7 @@
 .analytics-value {
   font-size: 1.5rem;
   font-weight: 700;
-  color: #667eea;
+  color: #FF7A00;
   margin-bottom: 8px;
 }
 
@@ -1296,7 +1297,7 @@
 
 .progress-fill {
   height: 100%;
-  background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(90deg, #FF7A00 0%, #FF9500 100%);
   border-radius: 10px;
   transition: width 0.3s ease;
 }
@@ -1316,7 +1317,7 @@
 .contract-number {
   font-size: 1.2rem;
   font-weight: 700;
-  color: #667eea;
+  color: #FF7A00;
 }
 
 .contract-title {
@@ -1422,7 +1423,7 @@
 }
 
 .contract-status.completed {
-  background: #3b82f6;
+  background: #FF7A00;
   color: #ffffff;
 }
 
@@ -1432,7 +1433,7 @@
 }
 
 .contract-status.expired {
-  background: #8b5cf6;
+  background: #FF7A00;
   color: #ffffff;
 }
 
@@ -1471,7 +1472,7 @@
 }
 
 .party-avatar .avatar-placeholder {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #FF7A00 0%, #FF9500 100%);
   color: white;
   display: flex;
   align-items: center;
@@ -1492,7 +1493,7 @@
 
 .party-role {
   font-size: 0.85rem;
-  color: #667eea;
+  color: #FF7A00;
   margin-bottom: 4px;
 }
 
@@ -1518,7 +1519,7 @@
 
 .timeline-date {
   font-weight: 600;
-  color: #667eea;
+  color: #FF7A00;
   font-size: 1.1rem;
   margin-bottom: 4px;
 }
@@ -1630,11 +1631,11 @@
 }
 
 .bottom-nav-item:hover {
-  color: #667eea;
+  color: #FF7A00;
 }
 
 .bottom-nav-item.active {
-  color: #667eea;
+  color: #FF7A00;
 }
 
 .nav-icon {
@@ -1753,7 +1754,7 @@
 .form-group select:focus,
 .form-group textarea:focus {
   outline: none;
-  border-color: #667eea;
+  border-color: #FF7A00;
 }
 
 .form-group textarea {
@@ -1772,12 +1773,12 @@
 }
 
 .btn-primary {
-  background: #667eea;
+  background: #FF7A00;
   color: #ffffff;
 }
 
 .btn-primary:hover {
-  background: #5568d3;
+  background: #FF7A00;
 }
 
 .btn-secondary {
@@ -2406,3 +2407,4 @@ document.getElementById('contracts-search').addEventListener('input', function(e
   });
 });
 </script>
+{% endblock %}

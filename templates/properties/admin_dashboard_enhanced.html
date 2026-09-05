@@ -1,5 +1,6 @@
 {% extends 'properties/base.html' %}
 {% load static %}
+{% load custom_filters %}
 
 {% block title %}لوحة تحكم الإدارة{% endblock %}
 
@@ -285,7 +286,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #FF7A00 0%, #FF9500 100%);
   border-radius: 50%;
 }
 
@@ -359,7 +360,7 @@
   border-radius: 8px;
 }
 
-.customers-card .stat-icon { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
+.customers-card .stat-icon { background: linear-gradient(135deg, #FF7A00 0%, #FF9500 100%); }
 .agents-card .stat-icon { background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); }
 .properties-card .stat-icon { background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); }
 .users-card .stat-icon { background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%); }
@@ -389,7 +390,7 @@
 }
 
 .action-card {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #FF7A00 0%, #FF9500 100%);
   color: white;
   padding: 20px;
   border-radius: 10px;
@@ -497,7 +498,7 @@
 }
 
 .btn-primary {
-  background: #667eea;
+  background: #FF7A00;
   color: white;
 }
 

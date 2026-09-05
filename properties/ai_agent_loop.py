@@ -13,7 +13,7 @@ from django.contrib.auth.models import User
 
 from .ai_agent_tools import tool_registry, ToolResult, ToolPermission
 from .ai_arabic_normalizer import arabic_normalizer
-from .ai_intent_detection import intent_detector
+from .ai_intent_classifier import intent_classifier
 from .ai_entity_extraction import entity_extractor
 from .ai_context_engine import context_manager
 from .ai_semantic_search import hybrid_search_engine
@@ -64,7 +64,7 @@ class AIAgent:
     def __init__(self):
         self.tool_registry = tool_registry
         self.arabic_normalizer = arabic_normalizer
-        self.intent_detector = intent_detector
+        self.intent_classifier = intent_classifier
         self.entity_extractor = entity_extractor
         self.context_manager = context_manager
         self.semantic_search = hybrid_search_engine
@@ -152,7 +152,7 @@ class AIAgent:
             normalized_message = self.arabic_normalizer.normalize_text(message)
             
             # Detect intent
-            intent_result = self.intent_detector.detect_intent(normalized_message)
+            intent_result = self.intent_classifier.classify_intent(normalized_message)
             intent = intent_result['intent']
             confidence = intent_result.get('confidence', 0.5)
 

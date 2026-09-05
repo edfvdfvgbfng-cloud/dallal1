@@ -1,0 +1,40 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}حذف المنشور{% endblock %}
+
+{% block content %}
+<div class="container" style="max-width: 600px; margin: 50px auto; padding: 30px; background: #1a1a1a; border-radius: 15px; border: 1px solid #333;">
+    <div class="text-center">
+        <div style="font-size: 60px; margin-bottom: 20px;">⚠️</div>
+        <h2 style="color: #ff6b6b; margin-bottom: 20px;">تأكيد حذف المنشور</h2>
+        
+        <div style="background: #2a2a2a; padding: 20px; border-radius: 10px; margin-bottom: 25px; text-align: right;">
+            <h3 style="color: #fff; margin-bottom: 10px;">{{ post.title }}</h3>
+            <p style="color: #888; margin: 0;">{{ post.content|truncatewords:20 }}</p>
+            {% if post.price %}
+            <p style="color: #888; margin: 5px 0 0 0;">💰 {{ post.price }} {{ post.currency }}</p>
+            {% endif %}
+        </div>
+        
+        <div style="background: rgba(255, 107, 107, 0.1); border: 1px solid #ff6b6b; padding: 15px; border-radius: 8px; margin-bottom: 25px;">
+            <p style="color: #ff6b6b; margin: 0; font-weight: bold;">
+                ⚠️ هل أنت متأكد من حذف هذا المنشور؟
+            </p>
+            <p style="color: #888; margin: 10px 0 0 0; font-size: 14px;">
+                لا يمكن التراجع عن هذا الإجراء
+            </p>
+        </div>
+        
+        <form method="post" style="display: flex; gap: 15px; justify-content: center;">
+            {% csrf_token %}
+            <a href="{% url 'hotel_page_detail' post.page.slug %}" class="btn" style="background: #333; color: #fff; padding: 12px 30px; border-radius: 8px; text-decoration: none; border: none; cursor: pointer;">
+                إلغاء
+            </a>
+            <button type="submit" class="btn" style="background: #ff6b6b; color: #fff; padding: 12px 30px; border-radius: 8px; border: none; cursor: pointer;">
+                نعم، احذف المنشور
+            </button>
+        </form>
+    </div>
+</div>
+{% endblock %}

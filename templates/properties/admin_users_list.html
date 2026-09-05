@@ -41,7 +41,7 @@
       <tr data-type="{{ user.user_type }}" data-name="{{ user.get_full_name|default:user.username }}" data-email="{{ user.email }}">
         <td>
           <div class="d-flex align-items-center">
-            <div class="user-avatar" style="width:40px; height:40px; border-radius:50%; background:linear-gradient(135deg, #667eea 0%, #764ba2 100%); display:flex; align-items:center; justify-content:center; color:white; font-weight:bold; margin-left:10px;">
+            <div class="user-avatar" style="width:40px; height:40px; border-radius:50%; background:linear-gradient(135deg, #FF7A00 0%, #FF9500 100%); display:flex; align-items:center; justify-content:center; color:white; font-weight:bold; margin-left:10px;">
               {{ user.get_full_name|default:user.username|slice:":1"|upper }}
             </div>
             <div>

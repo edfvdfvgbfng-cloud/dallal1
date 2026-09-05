@@ -1,0 +1,259 @@
+{% extends "base.html" %}
+{% load static %}
+{% load i18n %}
+
+{% block title %}{% trans "نتائج المقارنة" %} - {% trans "دلال" %}{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-12">
+            <div class="card shadow mb-4">
+                <div class="card-header bg-info text-white">
+                    <h2 class="h4 mb-0">
+                        <i class="fas fa-balance-scale ml-2"></i>
+                        {% trans "نتائج المقارنة" %}
+                    </h2>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h5 class="mb-3 text-primary">{% trans "المنطقة الأولى" %}</h5>
+                            <p class="mb-1">
+                                <strong>{% trans "المحافظة:" %}</strong>
+                                {{ comparison.region1_governorate }}
+                            </p>
+                            {% if comparison.region1_city %}
+                                <p class="mb-1">
+                                    <strong>{% trans "المدينة:" %}</strong>
+                                    {{ comparison.region1_city }}
+                                </p>
+                            {% endif %}
+                        </div>
+                        <div class="col-md-6">
+                            <h5 class="mb-3 text-success">{% trans "المنطقة الثانية" %}</h5>
+                            <p class="mb-1">
+                                <strong>{% trans "المحافظة:" %}</strong>
+                                {{ comparison.region2_governorate }}
+                            </p>
+                            {% if comparison.region2_city %}
+                                <p class="mb-1">
+                                    <strong>{% trans "المدينة:" %}</strong>
+                                    {{ comparison.region2_city }}
+                                </p>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <hr>
+                    
+                    <a href="{% url 'region_comparison' %}" class="btn btn-secondary">
+                        <i class="fas fa-redo ml-2"></i>
+                        {% trans "مقارنة جديدة" %}
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="row">
+        <div class="col-12">
+            <div class="card shadow mb-4">
+                <div class="card-header">
+                    <h3 class="h5 mb-0">{% trans "مقارنة الأسعار" %}</h3>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h5 class="text-primary">{{ comparison.region1_governorate }}</h5>
+                            <table class="table table-sm">
+                                <tr>
+                                    <td>{% trans "متوسط السعر" %}</td>
+                                    <td class="text-right">{{ comparison_data.region1_prices.average_price|default:"--" }} د.ع</td>
+                                </tr>
+                                <tr>
+                                    <td>{% trans "أقل سعر" %}</td>
+                                    <td class="text-right">{{ comparison_data.region1_prices.min_price|default:"--" }} د.ع</td>
+                                </tr>
+                                <tr>
+                                    <td>{% trans "أعلى سعر" %}</td>
+                                    <td class="text-right">{{ comparison_data.region1_prices.max_price|default:"--" }} د.ع</td>
+                                </tr>
+                            </table>
+                        </div>
+                        <div class="col-md-6">
+                            <h5 class="text-success">{{ comparison.region2_governorate }}</h5>
+                            <table class="table table-sm">
+                                <tr>
+                                    <td>{% trans "متوسط السعر" %}</td>
+                                    <td class="text-right">{{ comparison_data.region2_prices.average_price|default:"--" }} د.ع</td>
+                                </tr>
+                                <tr>
+                                    <td>{% trans "أقل سعر" %}</td>
+                                    <td class="text-right">{{ comparison_data.region2_prices.min_price|default:"--" }} د.ع</td>
+                                </tr>
+                                <tr>
+                                    <td>{% trans "أعلى سعر" %}</td>
+                                    <td class="text-right">{{ comparison_data.region2_prices.max_price|default:"--" }} د.ع</td>
+                                </tr>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="row">
+        <div class="col-12">
+            <div class="card shadow mb-4">
+                <div class="card-header">
+                    <h3 class="h5 mb-0">{% trans "مقارنة الإيجارات" %}</h3>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h5 class="text-primary">{{ comparison.region1_governorate }}</h5>
+                            <table class="table table-sm">
+                                <tr>
+                                    <td>{% trans "متوسط الإيجار الشهري" %}</td>
+                                    <td class="text-right">{{ comparison_data.region1_rents.average_rent|default:"--" }} د.ع</td>
+                                </tr>
+                                <tr>
+                                    <td>{% trans "أقل إيجار" %}</td>
+                                    <td class="text-right">{{ comparison_data.region1_rents.min_rent|default:"--" }} د.ع</td>
+                                </tr>
+                                <tr>
+                                    <td>{% trans "أعلى إيجار" %}</td>
+                                    <td class="text-right">{{ comparison_data.region1_rents.max_rent|default:"--" }} د.ع</td>
+                                </tr>
+                            </table>
+                        </div>
+                        <div class="col-md-6">
+                            <h5 class="text-success">{{ comparison.region2_governorate }}</h5>
+                            <table class="table table-sm">
+                                <tr>
+                                    <td>{% trans "متوسط الإيجار الشهري" %}</td>
+                                    <td class="text-right">{{ comparison_data.region2_rents.average_rent|default:"--" }} د.ع</td>
+                                </tr>
+                                <tr>
+                                    <td>{% trans "أقل إيجار" %}</td>
+                                    <td class="text-right">{{ comparison_data.region2_rents.min_rent|default:"--" }} د.ع</td>
+                                </tr>
+                                <tr>
+                                    <td>{% trans "أعلى إيجار" %}</td>
+                                    <td class="text-right">{{ comparison_data.region2_rents.max_rent|default:"--" }} د.ع</td>
+                                </tr>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="row">
+        <div class="col-12">
+            <div class="card shadow mb-4">
+                <div class="card-header">
+                    <h3 class="h5 mb-0">{% trans "مقارنة الخدمات" %}</h3>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h5 class="text-primary">{{ comparison.region1_governorate }}</h5>
+                            <table class="table table-sm">
+                                <tr>
+                                    <td>{% trans "المدارس" %}</td>
+                                    <td class="text-right">{{ comparison_data.region1_services.schools|default:"--" }}</td>
+                                </tr>
+                                <tr>
+                                    <td>{% trans "المستشفيات" %}</td>
+                                    <td class="text-right">{{ comparison_data.region1_services.hospitals|default:"--" }}</td>
+                                </tr>
+                                <tr>
+                                    <td>{% trans "المولات" %}</td>
+                                    <td class="text-right">{{ comparison_data.region1_services.malls|default:"--" }}</td>
+                                </tr>
+                                <tr>
+                                    <td>{% trans "المطاعم" %}</td>
+                                    <td class="text-right">{{ comparison_data.region1_services.restaurants|default:"--" }}</td>
+                                </tr>
+                            </table>
+                        </div>
+                        <div class="col-md-6">
+                            <h5 class="text-success">{{ comparison.region2_governorate }}</h5>
+                            <table class="table table-sm">
+                                <tr>
+                                    <td>{% trans "المدارس" %}</td>
+                                    <td class="text-right">{{ comparison_data.region2_services.schools|default:"--" }}</td>
+                                </tr>
+                                <tr>
+                                    <td>{% trans "المستشفيات" %}</td>
+                                    <td class="text-right">{{ comparison_data.region2_services.hospitals|default:"--" }}</td>
+                                </tr>
+                                <tr>
+                                    <td>{% trans "المولات" %}</td>
+                                    <td class="text-right">{{ comparison_data.region2_services.malls|default:"--" }}</td>
+                                </tr>
+                                <tr>
+                                    <td>{% trans "المطاعم" %}</td>
+                                    <td class="text-right">{{ comparison_data.region2_services.restaurants|default:"--" }}</td>
+                                </tr>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="row">
+        <div class="col-12">
+            <div class="card shadow mb-4">
+                <div class="card-header">
+                    <h3 class="h5 mb-0">{% trans "مقارنة الاستثمار" %}</h3>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h5 class="text-primary">{{ comparison.region1_governorate }}</h5>
+                            <table class="table table-sm">
+                                <tr>
+                                    <td>{% trans "العائد على الاستثمار" %}</td>
+                                    <td class="text-right">{{ comparison_data.region1_investment.roi|default:"--" }}%</td>
+                                </tr>
+                                <tr>
+                                    <td>{% trans "نمو الأسعار" %}</td>
+                                    <td class="text-right">{{ comparison_data.region1_investment.price_growth|default:"--" }}%</td>
+                                </tr>
+                                <tr>
+                                    <td>{% trans "فرص الاستثمار" %}</td>
+                                    <td class="text-right">{{ comparison_data.region1_investment.opportunities|default:"--" }}</td>
+                                </tr>
+                            </table>
+                        </div>
+                        <div class="col-md-6">
+                            <h5 class="text-success">{{ comparison.region2_governorate }}</h5>
+                            <table class="table table-sm">
+                                <tr>
+                                    <td>{% trans "العائد على الاستثمار" %}</td>
+                                    <td class="text-right">{{ comparison_data.region2_investment.roi|default:"--" }}%</td>
+                                </tr>
+                                <tr>
+                                    <td>{% trans "نمو الأسعار" %}</td>
+                                    <td class="text-right">{{ comparison_data.region2_investment.price_growth|default:"--" }}%</td>
+                                </tr>
+                                <tr>
+                                    <td>{% trans "فرص الاستثمار" %}</td>
+                                    <td class="text-right">{{ comparison_data.region2_investment.opportunities|default:"--" }}</td>
+                                </tr>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

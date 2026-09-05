@@ -8,14 +8,14 @@
     toggle.addEventListener('click', () => navLinks.classList.toggle('open'));
   }
 
-  // Auto-dismiss alerts
-  document.querySelectorAll('.alert').forEach((el) => {
-    setTimeout(() => {
-      el.style.opacity = '0';
-      el.style.transform = 'translateY(-8px)';
-      setTimeout(() => el.remove(), 300);
-    }, 5000);
-  });
+  // Auto-dismiss alerts - commented out to prevent premature disappearance
+  // document.querySelectorAll('.alert').forEach((el) => {
+  //   setTimeout(() => {
+  //     el.style.opacity = '0';
+  //     el.style.transform = 'translateY(-8px)';
+  //     setTimeout(() => el.remove(), 300);
+  //   }, 5000);
+  // });
 
   // Active nav link
   const path = window.location.pathname;

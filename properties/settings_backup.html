@@ -99,9 +99,263 @@
 
         <button type="submit" class="btn btn-primary">حفظ الإعدادات</button>
       </form>
+
+      <div class="form-section" style="margin-top: 2rem;">
+        <h2>إدارة النسخ الاحتياطية</h2>
+        
+        <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:1rem;">
+          <button type="button" class="btn btn-primary" onclick="createBackup('full')">🔄 إنشاء نسخة كاملة</button>
+          <button type="button" class="btn btn-outline" onclick="createBackup('database')">💾 نسخة قاعدة البيانات</button>
+          <button type="button" class="btn btn-outline" onclick="createBackup('files')">📁 نسخة الملفات</button>
+        </div>
+        
+        <div class="form-section" style="margin-top: 2rem; border: 2px solid var(--primary); border-radius: var(--radius-lg); padding: 20px; background: rgba(0, 150, 136, 0.05);">
+          <h2 style="color: var(--primary);">⬇️ تحميل نسخة احتياطية</h2>
+          <p style="color: var(--text-muted); margin-bottom: 15px;">تحميل نسخة احتياطية كاملة إلى جهازك</p>
+          <button type="button" class="btn btn-primary" onclick="downloadFullBackup()">⬇️ تنزيل نسخة احتياطية كاملة</button>
+        </div>
+        
+        <div class="form-section" style="margin-top: 2rem; border: 2px solid var(--primary); border-radius: var(--radius-lg); padding: 20px; background: rgba(0, 150, 136, 0.05);">
+          <h2 style="color: var(--primary);">⬆️ رفع واستعادة نسخة احتياطية</h2>
+          <p style="color: var(--text-muted); margin-bottom: 15px;">رفع نسخة احتياطية من جهازك واستعادتها</p>
+          
+          <div class="form-group">
+            <label>اختر ملف النسخة الاحتياطية</label>
+            <input type="file" id="backup_file" accept=".zip,.sql,.dump" class="form-control">
+          </div>
+          
+          <div id="backup_info" style="display: none; margin: 15px 0; padding: 15px; background: var(--bg-alt); border-radius: var(--radius-sm); border: 1px solid var(--border);">
+            <p><strong>📋 معلومات النسخة:</strong></p>
+            <p>التاريخ: <span id="backup_date">-</span></p>
+            <p>الحجم: <span id="backup_size">-</span></p>
+            <p>النوع: <span id="backup_type">-</span></p>
+          </div>
+          
+          <div style="display: flex; gap: 10px;">
+            <button type="button" class="btn btn-outline" onclick="validateBackup()">✅ فحص النسخة</button>
+            <button type="button" class="btn btn-danger" onclick="restoreBackup()">🔄 استعادة النسخة</button>
+          </div>
+        </div>
+        
+        <div class="table-responsive" style="margin-top: 2rem;">
+          <table class="table" style="width:100%;border-collapse:collapse;">
+            <thead>
+              <tr>
+                <th>الاسم</th>
+                <th>النوع</th>
+                <th>الحجم</th>
+                <th>التاريخ</th>
+                <th>بواسطة</th>
+                <th>إجراءات</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% if backups %}
+                {% for backup in backups %}
+                <tr>
+                  <td>{{ backup.name }}</td>
+                  <td>{{ backup.get_backup_type_display }}</td>
+                  <td>{{ backup.size|filesizeformat }}</td>
+                  <td>{{ backup.created_at|date:"Y-m-d H:i" }}</td>
+                  <td>{{ backup.created_by.username }}</td>
+                  <td>
+                    <button type="button" class="btn btn-sm btn-outline" onclick="downloadBackup({{ backup.id }})">⬇️</button>
+                    <button type="button" class="btn btn-sm btn-danger" onclick="deleteBackup({{ backup.id }})">🗑️</button>
+                  </td>
+                </tr>
+                {% endfor %}
+              {% else %}
+                <tr><td colspan="6">لا توجد نسخ احتياطية بعد</td></tr>
+              {% endif %}
+            </tbody>
+          </table>
+        </div>
+      </div>
     </div>
   </div>
 </div>
+
+<script>
+function createBackup(type) {
+  if (!confirm('هل أنت متأكد من إنشاء نسخة احتياطية ' + (type === 'full' ? 'كاملة' : type === 'database' ? 'قاعدة البيانات' : 'الملفات') + '؟')) {
+    return;
+  }
+  
+  fetch('{% url "create_backup" %}', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+    },
+    body: JSON.stringify({ type: type })
+  })
+  .then(response => response.json())
+  .then(data => {
+    if (data.success) {
+      alert('تم إنشاء النسخة الاحتياطية بنجاح');
+      location.reload();
+    } else {
+      alert('حدث خطأ: ' + data.error);
+    }
+  })
+  .catch(error => {
+    alert('حدث خطأ: ' + error);
+  });
+}
+
+function downloadFullBackup() {
+  fetch('{% url "download_full_backup" %}', {
+    method: 'POST',
+    headers: {
+      'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+    }
+  })
+  .then(response => {
+    if (response.ok) {
+      return response.blob();
+    }
+    throw new Error('فشل تحميل النسخة');
+  })
+  .then(blob => {
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+    a.download = 'backup_' + timestamp + '.zip';
+    document.body.appendChild(a);
+    a.click();
+    window.URL.revokeObjectURL(url);
+    document.body.removeChild(a);
+  })
+  .catch(error => {
+    alert('حدث خطأ: ' + error);
+  });
+}
+
+function validateBackup() {
+  const fileInput = document.getElementById('backup_file');
+  if (!fileInput.files.length) {
+    alert('يرجى اختيار ملف النسخة الاحتياطية');
+    return;
+  }
+  
+  const file = fileInput.files[0];
+  const formData = new FormData();
+  formData.append('backup_file', file);
+  
+  fetch('{% url "validate_backup" %}', {
+    method: 'POST',
+    headers: {
+      'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+    },
+    body: formData
+  })
+  .then(response => response.json())
+  .then(data => {
+    if (data.success) {
+      document.getElementById('backup_info').style.display = 'block';
+      document.getElementById('backup_date').textContent = data.date;
+      document.getElementById('backup_size').textContent = data.size;
+      document.getElementById('backup_type').textContent = data.type;
+      alert('النسخة صالحة');
+    } else {
+      alert('النسخة غير صالحة: ' + data.error);
+    }
+  })
+  .catch(error => {
+    alert('حدث خطأ: ' + error);
+  });
+}
+
+function restoreBackup() {
+  const fileInput = document.getElementById('backup_file');
+  if (!fileInput.files.length) {
+    alert('يرجى اختيار ملف النسخة الاحتياطية');
+    return;
+  }
+  
+  if (!confirm('هل أنت متأكد من استعادة النسخة الاحتياطية؟\n\n⚠️ سيتم استبدال جميع البيانات الحالية بالبيانات من النسخة.\nسيتم إنشاء نسخة احتياطية تلقائية قبل الاستعادة.')) {
+    return;
+  }
+  
+  const file = fileInput.files[0];
+  const formData = new FormData();
+  formData.append('backup_file', file);
+  
+  fetch('{% url "restore_backup" %}', {
+    method: 'POST',
+    headers: {
+      'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+    },
+    body: formData
+  })
+  .then(response => response.json())
+  .then(data => {
+    if (data.success) {
+      alert('تم استعادة النسخة الاحتياطية بنجاح');
+      location.reload();
+    } else {
+      alert('حدث خطأ: ' + data.error);
+    }
+  })
+  .catch(error => {
+    alert('حدث خطأ: ' + error);
+  });
+}
+
+function downloadBackup(backupId) {
+  fetch('{% url "download_backup" %}?id=' + backupId, {
+    method: 'GET',
+    headers: {
+      'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+    }
+  })
+  .then(response => {
+    if (response.ok) {
+      return response.blob();
+    }
+    throw new Error('فشل تحميل النسخة');
+  })
+  .then(blob => {
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'backup.zip';
+    document.body.appendChild(a);
+    a.click();
+    window.URL.revokeObjectURL(url);
+    document.body.removeChild(a);
+  })
+  .catch(error => {
+    alert('حدث خطأ: ' + error);
+  });
+}
+
+function deleteBackup(backupId) {
+  if (!confirm('هل أنت متأكد من حذف هذه النسخة الاحتياطية؟')) {
+    return;
+  }
+  
+  fetch('{% url "delete_backup" %}?id=' + backupId, {
+    method: 'DELETE',
+    headers: {
+      'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+    }
+  })
+  .then(response => response.json())
+  .then(data => {
+    if (data.success) {
+      alert('تم حذف النسخة الاحتياطية بنجاح');
+      location.reload();
+    } else {
+      alert('حدث خطأ: ' + data.error);
+    }
+  })
+  .catch(error => {
+    alert('حدث خطأ: ' + error);
+  });
+}
+</script>
 
 <style>
 .settings-layout {
@@ -112,9 +366,9 @@
 }
 
 .settings-sidebar {
-  background: var(--card-bg);
-  border: 2px solid var(--border);
-  border-radius: var(--radius-lg);
+  background: #1E1E1E;
+  border: 2px solid #333;
+  border-radius: 12px;
   padding: 20px;
   height: fit-content;
 }
@@ -124,16 +378,16 @@
   align-items: center;
   gap: 10px;
   padding: 12px 16px;
-  color: var(--text);
+  color: #ffffff;
   text-decoration: none;
-  border-radius: var(--radius-sm);
+  border-radius: 8px;
   margin-bottom: 8px;
   transition: all 0.3s;
 }
 
 .sidebar-link:hover,
 .sidebar-link.active {
-  background: var(--primary);
+  background: #FF7A00;
   color: white;
 }
 
@@ -142,9 +396,9 @@
 }
 
 .settings-content {
-  background: var(--card-bg);
-  border: 2px solid var(--border);
-  border-radius: var(--radius-lg);
+  background: #1E1E1E;
+  border: 2px solid #333;
+  border-radius: 12px;
   padding: 30px;
 }
 
@@ -155,7 +409,7 @@
 }
 
 .form-section {
-  border-bottom: 2px solid var(--border);
+  border-bottom: 2px solid #333;
   padding-bottom: 30px;
 }
 
@@ -167,7 +421,7 @@
   font-size: 1.3rem;
   font-weight: 700;
   margin: 0 0 20px 0;
-  color: var(--text);
+  color: #ffffff;
 }
 
 .form-group {
@@ -178,28 +432,28 @@
   display: block;
   margin-bottom: 8px;
   font-weight: 600;
-  color: var(--text);
+  color: #ffffff;
 }
 
 .form-control {
   width: 100%;
   padding: 12px 16px;
-  border: 2px solid var(--border);
-  border-radius: var(--radius-sm);
+  border: 2px solid #333;
+  border-radius: 8px;
   font-size: 1rem;
-  background: var(--bg-alt);
-  color: var(--text);
+  background: #0B0B0B;
+  color: #ffffff;
 }
 
 .form-control:focus {
   outline: none;
-  border-color: var(--primary);
+  border-color: #FF7A00;
 }
 
 .btn {
   padding: 12px 24px;
   border: none;
-  border-radius: var(--radius-sm);
+  border-radius: 8px;
   font-size: 1rem;
   font-weight: 600;
   cursor: pointer;
@@ -207,12 +461,62 @@
 }
 
 .btn-primary {
-  background: var(--primary);
+  background: #FF7A00;
   color: white;
 }
 
 .btn-primary:hover {
-  background: var(--primary-dark);
+  background: #E56D00;
+}
+
+.btn-outline {
+  background: #1E1E1E;
+  color: #ffffff;
+  border: 2px solid #FF7A00;
+}
+
+.btn-outline:hover {
+  background: rgba(255, 122, 0, 0.1);
+}
+
+.btn-danger {
+  background: #EF4444;
+  color: white;
+}
+
+.btn-danger:hover {
+  background: #DC2626;
+}
+
+.btn-sm {
+  padding: 8px 16px;
+  font-size: 0.875rem;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.table th,
+.table td {
+  padding: 12px 16px;
+  text-align: right;
+  border-bottom: 1px solid #333;
+}
+
+.table th {
+  background: #252525;
+  color: #FF7A00;
+  font-weight: 700;
+}
+
+.table td {
+  color: #ffffff;
+}
+
+.table tr:hover {
+  background: rgba(255, 122, 0, 0.05);
 }
 
 @media (max-width: 768px) {

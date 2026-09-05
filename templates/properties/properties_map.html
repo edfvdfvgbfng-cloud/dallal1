@@ -619,7 +619,7 @@ body.map-page .sidebar-toggle {
 }
 
 .property-badge.new {
-  background: #8b5cf6;
+  background: #FF7A00;
 }
 
 .property-info {
@@ -2433,6 +2433,12 @@ body.map-page .sidebar-toggle {
   }
   
   function addDrawControl() {
+    // Check if Leaflet Draw is loaded
+    if (typeof L.Control.Draw === 'undefined') {
+      console.error('Leaflet Draw is not loaded');
+      return;
+    }
+
     var drawnItems = new L.FeatureGroup();
     map.addLayer(drawnItems);
     

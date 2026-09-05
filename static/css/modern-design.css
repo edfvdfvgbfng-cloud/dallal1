@@ -30,7 +30,7 @@
     --success: #22C55E;
     --warning: #F59E0B;
     --error: #EF4444;
-    --info: #3B82F6;
+    --info: #FF7A00;
     
     /* Typography */
     --font-family: 'Cairo', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -517,9 +517,9 @@ body {
 }
 
 .alert-info {
-    background-color: #dbeafe;
-    color: #1e40af;
-    border: 1px solid #3b82f6;
+    background-color: #ffedd5;
+    color: #c2410c;
+    border: 1px solid #FF7A00;
 }
 
 /* Loading Spinner */

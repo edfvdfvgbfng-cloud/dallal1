@@ -11,7 +11,7 @@
 <a href="{% url 'admin_properties_list' %}" class="btn btn-success">🏢 إدارة العقارات</a>
 <a href="{% url 'admin_subscriptions_list' %}" class="btn btn-warning">� إدارة الاشتراكات</a>
 <a href="{% url 'admin_notifications_list' %}" class="btn btn-info">🔔 إدارة الإشعارات</a>
-<a href="{% url 'admin_realtime_monitoring' %}" class="btn btn-purple">� المراقبة اللحظية</a>
+<a href="{% url 'admin_realtime_monitoring' %}" class="btn btn-orange">� المراقبة اللحظية</a>
 <a href="{% url 'admin_analytics_panel' %}" class="btn btn-primary">📊 التحليلات المتقدمة</a>
 <a href="{% url 'admin_reports_panel' %}" class="btn btn-danger">📈 التقارير</a>
 <a href="/admin/" target="_blank" class="btn btn-dark">🔧 Django Admin</a>
@@ -340,7 +340,7 @@
 .badge.bg-info { background: #3b82f6; }
 .badge.bg-primary { background: #6366f1; }
 .badge.bg-secondary { background: #6b7280; }
-.badge.bg-purple { background: #8b5cf6; }
+.badge.bg-orange { background: #FF7A00; }
 .badge.bg-pink { background: #ec4899; }
 
 /* Activity List */
@@ -532,7 +532,7 @@
 
     <!-- شبكة الإحصائيات الرئيسية -->
     <div class="stats-grid">
-      <div class="stat-card" style="--card-color-1: #667eea; --card-color-2: #764ba2;">
+      <div class="stat-card" style="--card-color-1: #667eea; --card-color-2: #FF9500;">
         <div class="stat-icon">👥</div>
         <div class="stat-value">{{ total_users }}</div>
         <div class="stat-label">إجمالي المستخدمين</div>
@@ -606,7 +606,7 @@
         </div>
       </div>
 
-      <div class="stat-card" style="--card-color-1: #667eea; --card-color-2: #764ba2;">
+      <div class="stat-card" style="--card-color-1: #667eea; --card-color-2: #FF9500;">
         <div class="stat-icon">✈️</div>
         <div class="stat-value">{{ total_travel_companies }}</div>
         <div class="stat-label">شركات السفر</div>
@@ -656,7 +656,7 @@
   <!-- Users Tab -->
   <div id="users" class="tab-content">
     <div class="stats-grid">
-      <div class="stat-card" style="--card-color-1: #667eea; --card-color-2: #764ba2;">
+      <div class="stat-card" style="--card-color-1: #667eea; --card-color-2: #FF9500;">
         <div class="stat-icon">👥</div>
         <div class="stat-value">{{ total_users }}</div>
         <div class="stat-label">إجمالي المستخدمين</div>

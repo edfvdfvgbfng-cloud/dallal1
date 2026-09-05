@@ -25,6 +25,12 @@ def mul(value, arg):
         return 0
 
 
+@register.filter(name='multiply')
+def multiply(value, arg):
+    """Multiply value by arg (alias for mul)"""
+    return mul(value, arg)
+
+
 @register.filter
 def add(value, arg):
     """Add arg to value"""
@@ -32,3 +38,4 @@ def add(value, arg):
         return float(value) + float(arg)
     except (ValueError, TypeError):
         return 0
+

@@ -12,11 +12,11 @@
     <!-- Location Toggle Buttons -->
     <div style="display: flex; justify-content: center; gap: 15px; margin-bottom: 30px;">
         <a href="{% url 'jobs_list' %}?location_type=inside_iraq"
-           style="padding: 15px 30px; background: {% if location_type == 'inside_iraq' or not location_type %}linear-gradient(135deg, #667eea 0%, #764ba2 100%){% else %}rgba(255,255,255,0.1){% endif %}; border: none; border-radius: 8px; color: white; text-decoration: none; font-size: 16px; display: inline-flex; align-items: center; gap: 10px; cursor: pointer;">
+           style="padding: 15px 30px; background: {% if location_type == 'inside_iraq' or not location_type %}linear-gradient(135deg, #FF7A00 0%, #FF9500 100%){% else %}rgba(255,255,255,0.1){% endif %}; border: none; border-radius: 8px; color: white; text-decoration: none; font-size: 16px; display: inline-flex; align-items: center; gap: 10px; cursor: pointer;">
             🌍 فرص العمل داخل العراق
         </a>
         <a href="{% url 'jobs_list' %}?location_type=outside_iraq"
-           style="padding: 15px 30px; background: {% if location_type == 'outside_iraq' %}linear-gradient(135deg, #667eea 0%, #764ba2 100%){% else %}rgba(255,255,255,0.1){% endif %}; border: none; border-radius: 8px; color: white; text-decoration: none; font-size: 16px; display: inline-flex; align-items: center; gap: 10px; cursor: pointer;">
+           style="padding: 15px 30px; background: {% if location_type == 'outside_iraq' %}linear-gradient(135deg, #FF7A00 0%, #FF9500 100%){% else %}rgba(255,255,255,0.1){% endif %}; border: none; border-radius: 8px; color: white; text-decoration: none; font-size: 16px; display: inline-flex; align-items: center; gap: 10px; cursor: pointer;">
             💼 فرص العمل خارج العراق
         </a>
     </div>
@@ -133,7 +133,7 @@
                 </div>
             </div>
 
-            <button type="submit" style="padding: 12px 30px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border: none; border-radius: 8px; color: white; cursor: pointer; align-self: flex-start;">
+            <button type="submit" style="padding: 12px 30px; background: linear-gradient(135deg, #FF7A00 0%, #FF9500 100%); border: none; border-radius: 8px; color: white; cursor: pointer; align-self: flex-start;">
                 🔍 بحث
             </button>
         </form>
@@ -200,7 +200,7 @@
                 <!-- Action Buttons -->
                 <div style="display: flex; gap: 10px; flex-wrap: wrap;">
                     <a href="{% url 'job_detail' job.pk %}" 
-                       style="flex: 1; padding: 10px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border: none; border-radius: 8px; color: white; text-align: center; text-decoration: none; min-width: 100px;">
+                       style="flex: 1; padding: 10px; background: linear-gradient(135deg, #FF7A00 0%, #FF9500 100%); border: none; border-radius: 8px; color: white; text-align: center; text-decoration: none; min-width: 100px;">
                         📄 التفاصيل
                     </a>
                     {% if job.contact_phone %}

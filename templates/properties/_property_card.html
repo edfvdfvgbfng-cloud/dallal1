@@ -40,7 +40,7 @@
     <h3 class="property-card-title">{{ property.display_title }}</h3>
     <p class="property-card-location">
       <span class="location-icon">📍</span>
-      <span>{{ property.city }}{% if property.district %} — {{ property.district }}{% endif %}</span>
+      <span>{{ property.governorate }}{% if property.city %} — {{ property.city }}{% endif %}{% if property.district %} — {{ property.district }}{% endif %}</span>
     </p>
     <div class="property-card-meta">
       <div class="meta-item">

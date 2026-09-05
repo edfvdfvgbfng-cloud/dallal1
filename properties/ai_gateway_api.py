@@ -18,7 +18,7 @@ logger = logging.getLogger(__name__)
 
 
 @api_view(['POST'])
-@permission_classes([AllowAny])
+@permission_classes([IsAuthenticated])
 def ai_chat(request):
     """
     Unified AI chat endpoint - Bridge to conversation_manager

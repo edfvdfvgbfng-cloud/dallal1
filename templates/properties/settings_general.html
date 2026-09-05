@@ -7,7 +7,7 @@
   <div class="dashboard-header">
     <div class="header-badge"><span class="badge-icon">⚙️</span><span>الإعدادات العامة</span></div>
     <h1>الإعدادات العامة</h1>
-    <p>إعدادات الموقع الأساسية</p>
+    <p>إعدادات الموقع الأساسية والتكوين المتقدم</p>
   </div>
 
   <div class="settings-layout">
@@ -71,183 +71,635 @@
     </div>
 
     <div class="settings-content">
-      <form method="POST" enctype="multipart/form-data" class="settings-form">
+      <form method="POST" enctype="multipart/form-data" class="settings-form" id="settingsForm">
         {% csrf_token %}
         
+        <!-- معلومات الموقع الأساسية -->
         <div class="form-section">
-          <h2>معلومات الموقع</h2>
-          <div class="form-group">
-            <label>اسم الموقع</label>
-            <input type="text" name="site_name" value="{{ settings.site_name }}" class="form-control">
+          <div class="section-header">
+            <h2>📋 معلومات الموقع</h2>
+            <div class="section-actions">
+              <button type="button" class="btn-icon" onclick="toggleSection('site-info')" title="طي/فتح">
+                <span id="site-info-icon">▼</span>
+              </button>
+            </div>
           </div>
-          <div class="form-group">
-            <label>الشعار</label>
-            <input type="text" name="tagline" value="{{ settings.tagline }}" class="form-control">
-          </div>
-          <div class="form-group">
-            <label>وصف الموقع</label>
-            <textarea name="site_description" class="form-control" rows="4">{{ settings.site_description }}</textarea>
-          </div>
-          <div class="form-group">
-            <label>الأيقونة (Favicon)</label>
-            <input type="file" name="favicon" class="form-control">
-            {% if settings.favicon %}
-              <img src="{{ settings.favicon.url }}" alt="Favicon" style="width: 32px; height: 32px; margin-top: 10px;">
-            {% endif %}
+          
+          <div id="site-info" class="section-content">
+            <div class="form-group">
+              <label>اسم الموقع *</label>
+              <input type="text" name="site_name" value="{{ settings.site_name|default:'دلال' }}" class="form-control" required>
+              <small class="form-text">اسم الموقع الذي يظهر في المتصفح وعناوين الصفحات</small>
+            </div>
+            
+            <div class="form-group">
+              <label>الشعار النصي</label>
+              <input type="text" name="tagline" value="{{ settings.tagline|default:'' }}" class="form-control" placeholder="عقارات العراق الأولى">
+              <small class="form-text">جملة قصيرة تصف موقعك</small>
+            </div>
+            
+            <div class="form-group">
+              <label>وصف الموقع</label>
+              <textarea name="site_description" class="form-control" rows="4" placeholder="وصف شامل لموقعك...">{{ settings.site_description|default:'' }}</textarea>
+              <small class="form-text">يستخدم في SEO ومشاركات السوشيال ميديا</small>
+            </div>
+            
+            <div class="form-group">
+              <label>الأيقونة (Favicon)</label>
+              <div class="file-upload">
+                <input type="file" name="favicon" class="form-control" id="faviconInput" accept=".ico,.png,.jpg">
+                <div class="file-preview" id="faviconPreview">
+                  {% if settings.favicon %}
+                    <img src="{{ settings.favicon.url }}" alt="Favicon" class="favicon-img">
+                  {% else %}
+                    <span class="file-placeholder">📁</span>
+                  {% endif %}
+                </div>
+              </div>
+              <small class="form-text">الحجم الموصى به: 32x32 بكسل، صيغة ICO أو PNG</small>
+            </div>
+            
+            <div class="form-group">
+              <label>الشعار (Logo)</label>
+              <div class="file-upload">
+                <input type="file" name="logo" class="form-control" id="logoInput" accept=".png,.jpg,.svg">
+                <div class="file-preview" id="logoPreview">
+                  {% if settings.logo %}
+                    <img src="{{ settings.logo.url }}" alt="Logo" class="logo-img">
+                  {% else %}
+                    <span class="file-placeholder">📁</span>
+                  {% endif %}
+                </div>
+              </div>
+              <small class="form-text">الحجم الموصى به: 200x50 بكسل، صيغة PNG أو SVG</small>
+            </div>
           </div>
         </div>
 
+        <!-- معلومات الاتصال -->
         <div class="form-section">
-          <h2>اللغة والوقت</h2>
-          <div class="form-group">
-            <label>اللغة الافتراضية</label>
-            <select name="default_language" class="form-control">
-              <option value="ar" {% if settings.default_language == 'ar' %}selected{% endif %}>العربية</option>
-              <option value="en" {% if settings.default_language == 'en' %}selected{% endif %}>English</option>
-            </select>
+          <div class="section-header">
+            <h2>📞 معلومات الاتصال</h2>
+            <div class="section-actions">
+              <button type="button" class="btn-icon" onclick="toggleSection('contact-info')" title="طي/فتح">
+                <span id="contact-info-icon">▼</span>
+              </button>
+            </div>
           </div>
-          <div class="form-group">
-            <label>المنطقة الزمنية</label>
-            <select name="timezone" class="form-control">
-              <option value="Asia/Baghdad" {% if settings.timezone == 'Asia/Baghdad' %}selected{% endif %}>بغداد</option>
-              <option value="Asia/Dubai" {% if settings.timezone == 'Asia/Dubai' %}selected{% endif %}>دبي</option>
-              <option value="Asia/Riyadh" {% if settings.timezone == 'Asia/Riyadh' %}selected{% endif %}>الرياض</option>
-            </select>
-          </div>
-          <div class="form-group">
-            <label>تنسيق التاريخ</label>
-            <input type="text" name="date_format" value="{{ settings.date_format }}" class="form-control">
-          </div>
-          <div class="form-group">
-            <label>تنسيق الوقت</label>
-            <input type="text" name="time_format" value="{{ settings.time_format }}" class="form-control">
+          
+          <div id="contact-info" class="section-content">
+            <div class="form-row">
+              <div class="form-group">
+                <label>البريد الإلكتروني</label>
+                <input type="email" name="contact_email" value="{{ settings.contact_email|default:'' }}" class="form-control" placeholder="info@example.com">
+              </div>
+              <div class="form-group">
+                <label>رقم الهاتف</label>
+                <input type="tel" name="contact_phone" value="{{ settings.contact_phone|default:'' }}" class="form-control" placeholder="+964 7XX XXX XXXX">
+              </div>
+            </div>
+            
+            <div class="form-group">
+              <label>العنوان</label>
+              <textarea name="contact_address" class="form-control" rows="2" placeholder="بغداد، العراق">{{ settings.contact_address|default:'' }}</textarea>
+            </div>
+            
+            <div class="form-row">
+              <div class="form-group">
+                <label>المدينة</label>
+                <input type="text" name="contact_city" value="{{ settings.contact_city|default:'' }}" class="form-control" placeholder="بغداد">
+              </div>
+              <div class="form-group">
+                <label>الدولة</label>
+                <input type="text" name="contact_country" value="{{ settings.contact_country|default:'' }}" class="form-control" placeholder="العراق">
+              </div>
+            </div>
           </div>
         </div>
 
-        <button type="submit" class="btn btn-primary">حفظ الإعدادات</button>
+        <!-- السوشيال ميديا -->
+        <div class="form-section">
+          <div class="section-header">
+            <h2>🌐 السوشيال ميديا</h2>
+            <div class="section-actions">
+              <button type="button" class="btn-icon" onclick="toggleSection('social-media')" title="طي/فتح">
+                <span id="social-media-icon">▼</span>
+              </button>
+            </div>
+          </div>
+          
+          <div id="social-media" class="section-content">
+            <div class="social-links-grid">
+              <div class="form-group">
+                <label>📘 فيسبوك</label>
+                <input type="url" name="facebook_url" value="{{ settings.facebook_url|default:'' }}" class="form-control" placeholder="https://facebook.com/yourpage">
+              </div>
+              <div class="form-group">
+                <label>🐦 تويتر (X)</label>
+                <input type="url" name="twitter_url" value="{{ settings.twitter_url|default:'' }}" class="form-control" placeholder="https://twitter.com/yourhandle">
+              </div>
+              <div class="form-group">
+                <label>📸 إنستغرام</label>
+                <input type="url" name="instagram_url" value="{{ settings.instagram_url|default:'' }}" class="form-control" placeholder="https://instagram.com/yourhandle">
+              </div>
+              <div class="form-group">
+                <label>💼 لينكد إن</label>
+                <input type="url" name="linkedin_url" value="{{ settings.linkedin_url|default:'' }}" class="form-control" placeholder="https://linkedin.com/company/yourcompany">
+              </div>
+              <div class="form-group">
+                <label>📱 تيليجرام</label>
+                <input type="url" name="telegram_url" value="{{ settings.telegram_url|default:'' }}" class="form-control" placeholder="https://t.me/yourchannel">
+              </div>
+              <div class="form-group">
+                <label>🎵 تيك توك</label>
+                <input type="url" name="tiktok_url" value="{{ settings.tiktok_url|default:'' }}" class="form-control" placeholder="https://tiktok.com/@yourhandle">
+              </div>
+              <div class="form-group">
+                <label>▶️ يوتيوب</label>
+                <input type="url" name="youtube_url" value="{{ settings.youtube_url|default:'' }}" class="form-control" placeholder="https://youtube.com/@yourchannel">
+              </div>
+              <div class="form-group">
+                <label>💬 سناب شات</label>
+                <input type="url" name="snapchat_url" value="{{ settings.snapchat_url|default:'' }}" class="form-control" placeholder="https://snapchat.com/add/yourhandle">
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- اللغة والوقت -->
+        <div class="form-section">
+          <div class="section-header">
+            <h2>🌍 اللغة والوقت</h2>
+            <div class="section-actions">
+              <button type="button" class="btn-icon" onclick="toggleSection('locale-settings')" title="طي/فتح">
+                <span id="locale-settings-icon">▼</span>
+              </button>
+            </div>
+          </div>
+          
+          <div id="locale-settings" class="section-content">
+            <div class="form-row">
+              <div class="form-group">
+                <label>اللغة الافتراضية</label>
+                <select name="default_language" class="form-control">
+                  <option value="ar" {% if settings.default_language == 'ar' %}selected{% endif %}>🇮🇶 العربية</option>
+                  <option value="en" {% if settings.default_language == 'en' %}selected{% endif %}>🇬🇧 English</option>
+                  <option value="ku" {% if settings.default_language == 'ku' %}selected{% endif %}>🇹🇯 کوردی</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label>المنطقة الزمنية</label>
+                <select name="timezone" class="form-control">
+                  <option value="Asia/Baghdad" {% if settings.timezone == 'Asia/Baghdad' %}selected{% endif %}>🇮🇶 بغداد (GMT+3)</option>
+                  <option value="Asia/Dubai" {% if settings.timezone == 'Asia/Dubai' %}selected{% endif %}>🇦🇪 دبي (GMT+4)</option>
+                  <option value="Asia/Riyadh" {% if settings.timezone == 'Asia/Riyadh' %}selected{% endif %}>🇸🇦 الرياض (GMT+3)</option>
+                  <option value="Asia/Kuwait" {% if settings.timezone == 'Asia/Kuwait' %}selected{% endif %}>🇰🇼 الكويت (GMT+3)</option>
+                  <option value="Asia/Qatar" {% if settings.timezone == 'Asia/Qatar' %}selected{% endif %}>🇶🇦 قطر (GMT+3)</option>
+                </select>
+              </div>
+            </div>
+            
+            <div class="form-row">
+              <div class="form-group">
+                <label>تنسيق التاريخ</label>
+                <select name="date_format" class="form-control">
+                  <option value="Y-m-d" {% if settings.date_format == 'Y-m-d' %}selected{% endif %}>2024-01-15</option>
+                  <option value="d/m/Y" {% if settings.date_format == 'd/m/Y' %}selected{% endif %}>15/01/2024</option>
+                  <option value="m/d/Y" {% if settings.date_format == 'm/d/Y' %}selected{% endif %}>01/15/2024</option>
+                  <option value="F j, Y" {% if settings.date_format == 'F j, Y' %}selected{% endif %}>يناير 15, 2024</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label>تنسيق الوقت</label>
+                <select name="time_format" class="form-control">
+                  <option value="H:i" {% if settings.time_format == 'H:i' %}selected{% endif %}>24 ساعة (14:30)</option>
+                  <option value="g:i A" {% if settings.time_format == 'g:i A' %}selected{% endif %}>12 ساعة (2:30 PM)</option>
+                </select>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- إعدادات متقدمة -->
+        <div class="form-section">
+          <div class="section-header">
+            <h2>⚡ إعدادات متقدمة</h2>
+            <div class="section-actions">
+              <button type="button" class="btn-icon" onclick="toggleSection('advanced-settings')" title="طي/فتح">
+                <span id="advanced-settings-icon">▼</span>
+              </button>
+            </div>
+          </div>
+          
+          <div id="advanced-settings" class="section-content">
+            <div class="form-group">
+              <label>وضع الصيانة</label>
+              <div class="toggle-switch">
+                <input type="checkbox" name="maintenance_mode" id="maintenanceMode" {% if settings.maintenance_mode %}checked{% endif %}>
+                <label for="maintenanceMode" class="toggle-label">
+                  <span class="toggle-text">تفعيل وضع الصيانة</span>
+                  <span class="toggle-slider"></span>
+                </label>
+              </div>
+              <small class="form-text">عند التفعيل، سيتم إيقاف الموقع للمستخدمين العاديين</small>
+            </div>
+            
+            <div class="form-group">
+              <label>رسالة الصيانة</label>
+              <textarea name="maintenance_message" class="form-control" rows="3" placeholder="الموقع قيد الصيانة مؤقتاً...">{{ settings.maintenance_message|default:'' }}</textarea>
+            </div>
+            
+            <div class="form-group">
+              <label>السماح بالتسجيل</label>
+              <div class="toggle-switch">
+                <input type="checkbox" name="allow_registration" id="allowRegistration" {% if settings.allow_registration %}checked{% endif %}>
+                <label for="allowRegistration" class="toggle-label">
+                  <span class="toggle-text">تفعيل التسجيل الجديد</span>
+                  <span class="toggle-slider"></span>
+                </label>
+              </div>
+            </div>
+            
+            <div class="form-group">
+              <label>تأكيد البريد الإلكتروني</label>
+              <div class="toggle-switch">
+                <input type="checkbox" name="require_email_verification" id="emailVerification" {% if settings.require_email_verification %}checked{% endif %}>
+                <label for="emailVerification" class="toggle-label">
+                  <span class="toggle-text">إلزام التحقق من البريد</span>
+                  <span class="toggle-slider"></span>
+                </label>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- أزرار الإجراءات -->
+        <div class="form-actions">
+          <button type="submit" class="btn btn-primary btn-lg">
+            <span class="btn-icon">💾</span>
+            حفظ الإعدادات
+          </button>
+          <button type="button" class="btn btn-secondary" onclick="resetSettings()">
+            <span class="btn-icon">🔄</span>
+            إعادة تعيين
+          </button>
+          <button type="button" class="btn btn-info" onclick="previewSettings()">
+            <span class="btn-icon">👁️</span>
+            معاينة
+          </button>
+        </div>
       </form>
     </div>
   </div>
 </div>
 
 <style>
+/* Main Layout */
 .settings-layout {
   display: grid;
-  grid-template-columns: 250px 1fr;
+  grid-template-columns: 280px 1fr;
   gap: 30px;
   margin-top: 30px;
 }
 
+/* Sidebar */
 .settings-sidebar {
   background: var(--card-bg);
   border: 2px solid var(--border);
   border-radius: var(--radius-lg);
   padding: 20px;
   height: fit-content;
+  position: sticky;
+  top: 20px;
 }
 
 .sidebar-link {
   display: flex;
   align-items: center;
-  gap: 10px;
-  padding: 12px 16px;
+  gap: 12px;
+  padding: 14px 18px;
   color: var(--text);
   text-decoration: none;
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-md);
   margin-bottom: 8px;
-  transition: all 0.3s;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  font-weight: 500;
+  border: 1px solid transparent;
 }
 
-.sidebar-link:hover,
+.sidebar-link:hover {
+  background: rgba(255, 122, 0, 0.1);
+  border-color: var(--primary);
+  transform: translateX(5px);
+}
+
 .sidebar-link.active {
-  background: var(--primary);
+  background: linear-gradient(135deg, #FF7A00 0%, #FF9500 100%);
   color: white;
+  box-shadow: 0 4px 15px rgba(255, 122, 0, 0.3);
 }
 
 .link-icon {
-  font-size: 1.2rem;
+  font-size: 1.3rem;
+  width: 24px;
+  text-align: center;
 }
 
+/* Main Content */
 .settings-content {
   background: var(--card-bg);
   border: 2px solid var(--border);
   border-radius: var(--radius-lg);
-  padding: 30px;
+  padding: 35px;
+  box-shadow: var(--shadow-lg);
 }
 
 .settings-form {
   display: flex;
   flex-direction: column;
-  gap: 30px;
+  gap: 35px;
 }
 
+/* Section Styling */
 .form-section {
+  border: 2px solid var(--border);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  background: var(--bg-alt);
+}
+
+.section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px 25px;
+  background: linear-gradient(135deg, rgba(255, 122, 0, 0.1) 0%, rgba(255, 149, 0, 0.05) 100%);
   border-bottom: 2px solid var(--border);
-  padding-bottom: 30px;
 }
 
-.form-section:last-child {
-  border-bottom: none;
-}
-
-.form-section h2 {
-  font-size: 1.3rem;
+.section-header h2 {
+  font-size: 1.4rem;
   font-weight: 700;
-  margin: 0 0 20px 0;
+  margin: 0;
   color: var(--text);
+  display: flex;
+  align-items: center;
+  gap: 10px;
 }
 
+.section-actions {
+  display: flex;
+  gap: 10px;
+}
+
+.btn-icon {
+  background: none;
+  border: none;
+  color: var(--text);
+  cursor: pointer;
+  padding: 8px;
+  border-radius: var(--radius-sm);
+  transition: all 0.3s;
+  font-size: 1rem;
+}
+
+.btn-icon:hover {
+  background: var(--primary);
+  color: white;
+}
+
+.section-content {
+  padding: 25px;
+  transition: all 0.3s ease;
+}
+
+.section-content.collapsed {
+  display: none;
+}
+
+/* Form Groups */
 .form-group {
-  margin-bottom: 20px;
+  margin-bottom: 25px;
 }
 
 .form-group label {
   display: block;
-  margin-bottom: 8px;
+  margin-bottom: 10px;
   font-weight: 600;
   color: var(--text);
+  font-size: 0.95rem;
 }
 
+.form-text {
+  display: block;
+  margin-top: 8px;
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+}
+
+.form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+}
+
+/* Form Controls */
 .form-control {
   width: 100%;
-  padding: 12px 16px;
+  padding: 14px 18px;
   border: 2px solid var(--border);
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-md);
   font-size: 1rem;
-  background: var(--bg-alt);
+  background: var(--bg-card);
   color: var(--text);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .form-control:focus {
   outline: none;
   border-color: var(--primary);
+  box-shadow: 0 0 0 4px rgba(255, 122, 0, 0.1);
+  background: var(--bg-card);
 }
 
-.btn {
-  padding: 12px 24px;
-  border: none;
-  border-radius: var(--radius-sm);
-  font-size: 1rem;
-  font-weight: 600;
+.form-control::placeholder {
+  color: var(--text-tertiary);
+}
+
+textarea.form-control {
+  resize: vertical;
+  min-height: 100px;
+}
+
+/* File Upload */
+.file-upload {
+  position: relative;
+}
+
+.file-preview {
+  margin-top: 15px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  border: 2px dashed var(--border);
+  border-radius: var(--radius-md);
+  background: var(--bg-card);
+  min-height: 80px;
+}
+
+.favicon-img {
+  width: 32px;
+  height: 32px;
+  object-fit: contain;
+}
+
+.logo-img {
+  max-width: 200px;
+  max-height: 60px;
+  object-fit: contain;
+}
+
+.file-placeholder {
+  font-size: 2rem;
+  color: var(--text-tertiary);
+}
+
+/* Social Links Grid */
+.social-links-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 20px;
+}
+
+/* Toggle Switch */
+.toggle-switch {
+  position: relative;
+}
+
+.toggle-switch input[type="checkbox"] {
+  display: none;
+}
+
+.toggle-label {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
   cursor: pointer;
+  padding: 15px;
+  background: var(--bg-card);
+  border: 2px solid var(--border);
+  border-radius: var(--radius-md);
   transition: all 0.3s;
 }
 
+.toggle-label:hover {
+  border-color: var(--primary);
+}
+
+.toggle-text {
+  font-weight: 600;
+  color: var(--text);
+}
+
+.toggle-slider {
+  position: relative;
+  width: 50px;
+  height: 26px;
+  background: var(--border);
+  border-radius: 13px;
+  transition: all 0.3s;
+}
+
+.toggle-slider::before {
+  content: '';
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 20px;
+  height: 20px;
+  background: white;
+  border-radius: 50%;
+  transition: all 0.3s;
+}
+
+.toggle-switch input:checked + .toggle-label .toggle-slider {
+  background: linear-gradient(135deg, #FF7A00 0%, #FF9500 100%);
+}
+
+.toggle-switch input:checked + .toggle-label .toggle-slider::before {
+  transform: translateX(24px);
+}
+
+/* Form Actions */
+.form-actions {
+  display: flex;
+  gap: 15px;
+  flex-wrap: wrap;
+  padding-top: 20px;
+  border-top: 2px solid var(--border);
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 28px;
+  border: none;
+  border-radius: var(--radius-md);
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  text-decoration: none;
+}
+
+.btn-lg {
+  padding: 16px 32px;
+  font-size: 1.1rem;
+}
+
 .btn-primary {
-  background: var(--primary);
+  background: linear-gradient(135deg, #FF7A00 0%, #FF9500 100%);
   color: white;
+  box-shadow: 0 4px 15px rgba(255, 122, 0, 0.3);
 }
 
 .btn-primary:hover {
-  background: var(--primary-dark);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(255, 122, 0, 0.4);
 }
 
-@media (max-width: 768px) {
+.btn-secondary {
+  background: var(--bg-card);
+  color: var(--text);
+  border: 2px solid var(--border);
+}
+
+.btn-secondary:hover {
+  border-color: var(--primary);
+  color: var(--primary);
+}
+
+.btn-info {
+  background: var(--bg-card);
+  color: var(--text);
+  border: 2px solid var(--border);
+}
+
+.btn-info:hover {
+  border-color: var(--primary);
+  color: var(--primary);
+}
+
+/* Responsive */
+@media (max-width: 1024px) {
   .settings-layout {
     grid-template-columns: 1fr;
   }
   
   .settings-sidebar {
+    position: static;
     display: flex;
     flex-wrap: wrap;
     gap: 10px;
@@ -255,9 +707,151 @@
   
   .sidebar-link {
     flex: 1;
-    min-width: 150px;
+    min-width: 180px;
     text-align: center;
+    justify-content: center;
+  }
+  
+  .form-row {
+    grid-template-columns: 1fr;
+  }
+  
+  .social-links-grid {
+    grid-template-columns: 1fr;
   }
 }
+
+@media (max-width: 768px) {
+  .settings-content {
+    padding: 20px;
+  }
+  
+  .section-header {
+    padding: 15px 20px;
+  }
+  
+  .section-content {
+    padding: 20px;
+  }
+  
+  .form-actions {
+    flex-direction: column;
+  }
+  
+  .btn {
+    width: 100%;
+    justify-content: center;
+  }
+}
+
+/* Animations */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.form-section {
+  animation: fadeIn 0.5s ease;
+}
+
+.form-section:nth-child(1) { animation-delay: 0.1s; }
+.form-section:nth-child(2) { animation-delay: 0.2s; }
+.form-section:nth-child(3) { animation-delay: 0.3s; }
+.form-section:nth-child(4) { animation-delay: 0.4s; }
+.form-section:nth-child(5) { animation-delay: 0.5s; }
 </style>
+
+<script>
+// Toggle section visibility
+function toggleSection(sectionId) {
+  const section = document.getElementById(sectionId);
+  const icon = document.getElementById(sectionId + '-icon');
+  
+  if (section.classList.contains('collapsed')) {
+    section.classList.remove('collapsed');
+    icon.textContent = '▼';
+  } else {
+    section.classList.add('collapsed');
+    icon.textContent = '▶';
+  }
+}
+
+// File preview functionality
+document.getElementById('faviconInput').addEventListener('change', function(e) {
+  const file = e.target.files[0];
+  if (file) {
+    const reader = new FileReader();
+    reader.onload = function(e) {
+      const preview = document.getElementById('faviconPreview');
+      preview.innerHTML = `<img src="${e.target.result}" alt="Favicon" class="favicon-img">`;
+    };
+    reader.readAsDataURL(file);
+  }
+});
+
+document.getElementById('logoInput').addEventListener('change', function(e) {
+  const file = e.target.files[0];
+  if (file) {
+    const reader = new FileReader();
+    reader.onload = function(e) {
+      const preview = document.getElementById('logoPreview');
+      preview.innerHTML = `<img src="${e.target.result}" alt="Logo" class="logo-img">`;
+    };
+    reader.readAsDataURL(file);
+  }
+});
+
+// Reset settings
+function resetSettings() {
+  if (confirm('هل أنت متأكد من إعادة تعيين جميع الإعدادات؟')) {
+    document.getElementById('settingsForm').reset();
+  }
+}
+
+// Preview settings
+function previewSettings() {
+  const formData = new FormData(document.getElementById('settingsForm'));
+  const previewData = {};
+  
+  for (let [key, value] of formData.entries()) {
+    previewData[key] = value;
+  }
+  
+  console.log('Settings Preview:', previewData);
+  alert('تم إنشاء معاينة للإعدادات. تحقق من Console للتفاصيل.');
+}
+
+// Auto-save functionality (debounced)
+let autoSaveTimeout;
+const form = document.getElementById('settingsForm');
+
+form.addEventListener('input', function() {
+  clearTimeout(autoSaveTimeout);
+  autoSaveTimeout = setTimeout(function() {
+    // Optional: Implement auto-save here
+    console.log('Auto-save triggered');
+  }, 2000);
+});
+
+// Keyboard shortcuts
+document.addEventListener('keydown', function(e) {
+  // Ctrl/Cmd + S: Save
+  if ((e.ctrlKey || e.metaKey) && e.key === 's') {
+    e.preventDefault();
+    form.submit();
+  }
+  
+  // Ctrl/Cmd + R: Reset
+  if ((e.ctrlKey || e.metaKey) && e.key === 'r') {
+    e.preventDefault();
+    resetSettings();
+  }
+});
+</script>
 {% endblock %}

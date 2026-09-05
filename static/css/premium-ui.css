@@ -959,8 +959,8 @@ body.dashboard-page .navbar {
 
 /* ===== Scroll Reveal ===== */
 .reveal {
-  opacity: 0;
-  transform: translateY(24px);
+  opacity: 1; /* Changed from 0 to 1 to prevent hiding */
+  transform: translateY(0); /* Changed from 24px to 0 to prevent hiding */
   transition: opacity 0.6s ease, transform 0.6s ease;
 }
 

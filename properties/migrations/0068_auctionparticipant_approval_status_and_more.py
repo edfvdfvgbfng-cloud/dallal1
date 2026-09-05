@@ -6,12 +6,11 @@ from django.db import migrations, models, connection
 
 
 def create_model_if_not_exists(apps, schema_editor):
-    # Check if table already exists
-    with connection.cursor() as cursor:
-        cursor.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='properties_auctionparticipant'")
-        if cursor.fetchone():
-            # Table already exists, skip creation
-            return
+    # Check if table already exists using database-agnostic method
+    table_names = connection.introspection.table_names()
+    if 'properties_auctionparticipant' in table_names:
+        # Table already exists, skip creation
+        return
     
     # Table doesn't exist, create it
     AuctionParticipant = apps.get_model('properties', 'AuctionParticipant')

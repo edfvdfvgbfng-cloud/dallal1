@@ -4,7 +4,7 @@
 
 {% block content %}
 <div class="container">
-  <div class="register-wrapper" style="max-width: 800px; margin: 40px auto;">
+  <div class="register-wrapper" style="max-width: 900px; margin: 40px auto;">
     <div class="register-header" style="text-align: center; margin-bottom: 30px;">
       <h1 style="font-size: 2rem; color: var(--text); margin: 0 0 10px 0;">🔧 تسجيل كمقدم خدمة</h1>
       <p style="color: var(--text-light); margin: 0;">سجل حسابك كمقدم خدمة (مقاول، كهربائي، سباك، إلخ)</p>
@@ -12,130 +12,196 @@
 
     <form method="post" class="service-form" style="background: var(--card-bg); padding: 30px; border-radius: var(--radius); border: 1px solid var(--border);" enctype="multipart/form-data">
       {% csrf_token %}
-      
+
+      <!-- معلومات العمل -->
       <div class="form-section" style="margin-bottom: 30px;">
-        <h3 style="color: var(--text); margin: 0 0 20px 0; border-bottom: 2px solid var(--border); padding-bottom: 10px;">معلومات العمل</h3>
-        
-        <div class="form-group" style="margin-bottom: 20px;">
-          <label style="display: block; margin-bottom: 8px; color: var(--text); font-weight: 600;">اسم العمل/الشركة *</label>
-          {{ form.business_name }}
+        <h3 style="color: var(--text); margin: 0 0 20px 0; border-bottom: 2px solid var(--border); padding-bottom: 10px;">🏢 معلومات العمل</h3>
+
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px;">
+          <div class="form-group" style="margin-bottom: 20px;">
+            <label style="display: block; margin-bottom: 8px; color: var(--text); font-weight: 600;">اسم العمل/الشركة *</label>
+            {{ form.business_name }}
+          </div>
+
+          <div class="form-group" style="margin-bottom: 20px;">
+            <label style="display: block; margin-bottom: 8px; color: var(--text); font-weight: 600;">الاسم التجاري</label>
+            {{ form.trade_name }}
+          </div>
+
+          <div class="form-group" style="margin-bottom: 20px;">
+            <label style="display: block; margin-bottom: 8px; color: var(--text); font-weight: 600;">اسم المسؤول / صاحب العمل</label>
+            {{ form.owner_name }}
+          </div>
+
+          <div class="form-group" style="margin-bottom: 20px;">
+            <label style="display: block; margin-bottom: 8px; color: var(--text); font-weight: 600;">رقم التسجيل التجاري</label>
+            {{ form.commercial_registration }}
+          </div>
+
+          <div class="form-group" style="margin-bottom: 20px;">
+            <label style="display: block; margin-bottom: 8px; color: var(--text); font-weight: 600;">نوع الخدمة *</label>
+            {{ form.service_type }}
+          </div>
+
+          <div class="form-group" style="margin-bottom: 20px;">
+            <label style="display: block; margin-bottom: 8px; color: var(--text); font-weight: 600;">نوع الملكية</label>
+            {{ form.ownership_type }}
+          </div>
+
+          <div class="form-group" style="margin-bottom: 20px;">
+            <label style="display: block; margin-bottom: 8px; color: var(--text); font-weight: 600;">تاريخ تأسيس العمل</label>
+            {{ form.establishment_date }}
+          </div>
+
+          <div class="form-group" style="margin-bottom: 20px;">
+            <label style="display: block; margin-bottom: 8px; color: var(--text); font-weight: 600;">حالة العمل</label>
+            {{ form.business_status }}
+          </div>
         </div>
-        
+
         <div class="form-group" style="margin-bottom: 20px;">
-          <label style="display: block; margin-bottom: 8px; color: var(--text); font-weight: 600;">نوع الخدمة *</label>
-          {{ form.service_type }}
+          <label style="display: block; margin-bottom: 8px; color: var(--text); font-weight: 600;">نبذة عن الشركة</label>
+          {{ form.company_description }}
         </div>
-        
+
         <div class="form-group" style="margin-bottom: 20px;">
           <label style="display: block; margin-bottom: 8px; color: var(--text); font-weight: 600;">وصف الخدمات</label>
           {{ form.description }}
         </div>
       </div>
 
+      <!-- الخدمات والتخصصات -->
       <div class="form-section" style="margin-bottom: 30px;">
-        <h3 style="color: var(--text); margin: 0 0 20px 0; border-bottom: 2px solid var(--border); padding-bottom: 10px;">معلومات التواصل</h3>
-        
+        <h3 style="color: var(--text); margin: 0 0 20px 0; border-bottom: 2px solid var(--border); padding-bottom: 10px;">🛠️ الخدمات والتخصصات</h3>
+
         <div class="form-group" style="margin-bottom: 20px;">
-          <label style="display: block; margin-bottom: 8px; color: var(--text); font-weight: 600;">رقم الهاتف *</label>
-          {{ form.phone }}
+          <label style="display: block; margin-bottom: 8px; color: var(--text); font-weight: 600;">الخدمات التي يقدمها</label>
+          {{ form.services_offered }}
+          <small style="color: #888888;">خدمات متعددة، مفصولة بفاصلة</small>
         </div>
-        
+
         <div class="form-group" style="margin-bottom: 20px;">
-          <label style="display: block; margin-bottom: 8px; color: var(--text); font-weight: 600;">واتساب</label>
-          {{ form.whatsapp }}
+          <label style="display: block; margin-bottom: 8px; color: var(--text); font-weight: 600;">خدمات إضافية</label>
+          {{ form.additional_services }}
         </div>
-        
+
         <div class="form-group" style="margin-bottom: 20px;">
-          <label style="display: block; margin-bottom: 8px; color: var(--text); font-weight: 600;">البريد الإلكتروني</label>
-          {{ form.email }}
+          <label style="display: block; margin-bottom: 8px; color: var(--text); font-weight: 600;">المناطق التي نخدمها</label>
+          {{ form.areas_served }}
         </div>
-        
+
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px;">
+          <div class="form-group" style="margin-bottom: 20px;">
+            <label style="display: block; margin-bottom: 8px; color: var(--text); font-weight: 600;">هل تقدم خدمة منزلية؟</label>
+            {{ form.home_service }}
+          </div>
+
+          <div class="form-group" style="margin-bottom: 20px;">
+            <label style="display: block; margin-bottom: 8px; color: var(--text); font-weight: 600;">هل تقدم خدمة طوارئ؟</label>
+            {{ form.emergency_service }}
+          </div>
+        </div>
+      </div>
+
+      <!-- معلومات التواصل -->
+      <div class="form-section" style="margin-bottom: 30px;">
+        <h3 style="color: var(--text); margin: 0 0 20px 0; border-bottom: 2px solid var(--border); padding-bottom: 10px;">📞 معلومات التواصل</h3>
+
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px;">
+          <div class="form-group" style="margin-bottom: 20px;">
+            <label style="display: block; margin-bottom: 8px; color: var(--text); font-weight: 600;">رقم الهاتف *</label>
+            {{ form.phone }}
+          </div>
+
+          <div class="form-group" style="margin-bottom: 20px;">
+            <label style="display: block; margin-bottom: 8px; color: var(--text); font-weight: 600;">رقم هاتف إضافي</label>
+            {{ form.phone_secondary }}
+          </div>
+
+          <div class="form-group" style="margin-bottom: 20px;">
+            <label style="display: block; margin-bottom: 8px; color: var(--text); font-weight: 600;">واتساب</label>
+            {{ form.whatsapp }}
+          </div>
+
+          <div class="form-group" style="margin-bottom: 20px;">
+            <label style="display: block; margin-bottom: 8px; color: var(--text); font-weight: 600;">البريد الإلكتروني</label>
+            {{ form.email }}
+          </div>
+
+          <div class="form-group" style="margin-bottom: 20px;">
+            <label style="display: block; margin-bottom: 8px; color: var(--text); font-weight: 600;">أفضل وسيلة للتواصل</label>
+            {{ form.preferred_contact }}
+          </div>
+        </div>
+
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px;">
+          <div class="form-group" style="margin-bottom: 20px;">
+            <label style="display: block; margin-bottom: 8px; color: var(--text); font-weight: 600;">رابط فيسبوك</label>
+            {{ form.facebook_url }}
+          </div>
+
+          <div class="form-group" style="margin-bottom: 20px;">
+            <label style="display: block; margin-bottom: 8px; color: var(--text); font-weight: 600;">رابط إنستغرام</label>
+            {{ form.instagram_url }}
+          </div>
+
+          <div class="form-group" style="margin-bottom: 20px;">
+            <label style="display: block; margin-bottom: 8px; color: var(--text); font-weight: 600;">رابط تيك توك</label>
+            {{ form.tiktok_url }}
+          </div>
+
+          <div class="form-group" style="margin-bottom: 20px;">
+            <label style="display: block; margin-bottom: 8px; color: var(--text); font-weight: 600;">رابط الموقع الإلكتروني</label>
+            {{ form.website_url }}
+          </div>
+        </div>
+      </div>
+
+      <!-- الموقع -->
+      <div class="form-section" style="margin-bottom: 30px;">
+        <h3 style="color: var(--text); margin: 0 0 20px 0; border-bottom: 2px solid var(--border); padding-bottom: 10px;">📍 الموقع</h3>
+
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px;">
+          <div class="form-group" style="margin-bottom: 20px;">
+            <label style="display: block; margin-bottom: 8px; color: var(--text); font-weight: 600;">المحافظة</label>
+            {{ form.governorate }}
+          </div>
+
+          <div class="form-group" style="margin-bottom: 20px;">
+            <label style="display: block; margin-bottom: 8px; color: var(--text); font-weight: 600;">المدينة / القضاء</label>
+            {{ form.city }}
+          </div>
+
+          <div class="form-group" style="margin-bottom: 20px;">
+            <label style="display: block; margin-bottom: 8px; color: var(--text); font-weight: 600;">المنطقة / الحي</label>
+            {{ form.district }}
+          </div>
+        </div>
+
         <div class="form-group" style="margin-bottom: 20px;">
-          <label style="display: block; margin-bottom: 8px; color: var(--text); font-weight: 600;">العنوان</label>
+          <label style="display: block; margin-bottom: 8px; color: var(--text); font-weight: 600;">العنوان التفصيلي</label>
           {{ form.address }}
         </div>
-        
-        <div class="form-group" style="margin-bottom: 20px;">
-          <label style="display: block; margin-bottom: 8px; color: var(--text); font-weight: 600;">المحافظة</label>
-          {{ form.governorate }}
-        </div>
-      </div>
 
-      <div class="form-section" style="margin-bottom: 30px;">
-        <h3 style="color: var(--text); margin: 0 0 20px 0; border-bottom: 2px solid var(--border); padding-bottom: 10px;">معلومات العمل</h3>
-        
-        <div class="form-group" style="margin-bottom: 20px;">
-          <label style="display: block; margin-bottom: 8px; color: var(--text); font-weight: 600;">سنوات الخبرة</label>
-          {{ form.years_experience }}
-        </div>
-        
-        <div class="form-group" style="margin-bottom: 20px;">
-          <label style="display: block; margin-bottom: 8px; color: var(--text); font-weight: 600;">حجم الفريق</label>
-          {{ form.team_size }}
-        </div>
-        
-        <div class="form-group" style="margin-bottom: 20px;">
-          <label style="display: block; margin-bottom: 8px; color: var(--text); font-weight: 600;">ساعات العمل</label>
-          {{ form.working_hours }}
-        </div>
-      </div>
-
-      <div class="form-section" style="margin-bottom: 30px;">
-        <h3 style="color: var(--text); margin: 0 0 20px 0; border-bottom: 2px solid var(--border); padding-bottom: 10px;">الأسعار</h3>
-        
-        <div class="form-group" style="margin-bottom: 20px;">
-          <label style="display: block; margin-bottom: 8px; color: var(--text); font-weight: 600;">أقل سعر</label>
-          {{ form.min_price }}
-        </div>
-        
-        <div class="form-group" style="margin-bottom: 20px;">
-          <label style="display: block; margin-bottom: 8px; color: var(--text); font-weight: 600;">أعلى سعر</label>
-          {{ form.max_price }}
-        </div>
-        
-        <div class="form-group" style="margin-bottom: 20px;">
-          <label style="display: block; margin-bottom: 8px; color: var(--text); font-weight: 600;">وحدة السعر (متر مربع، مشروع، إلخ)</label>
-          {{ form.price_unit }}
-        </div>
-      </div>
-
-      <div class="form-section" style="margin-bottom: 30px;">
-        <h3 style="color: var(--text); margin: 0 0 20px 0; border-bottom: 2px solid var(--border); padding-bottom: 10px;">الوسائط</h3>
-        
-        <div class="form-group" style="margin-bottom: 20px;">
-          <label style="display: block; margin-bottom: 8px; color: var(--text); font-weight: 600;">الشعار</label>
-          {{ form.logo }}
-        </div>
-        
-        <div class="form-group" style="margin-bottom: 20px;">
-          <label style="display: block; margin-bottom: 8px; color: var(--text); font-weight: 600;">صورة الغلاف</label>
-          {{ form.cover_image }}
-        </div>
-        
-        <div class="form-group" style="margin-bottom: 20px;">
-          <label style="display: block; margin-bottom: 8px; color: var(--text); font-weight: 600;">رابط الفيديو</label>
-          {{ form.video_url }}
-          <small style="color: #888888;">رابط يوتيوب أو فيديو آخر يعرض أعمالك</small>
-        </div>
-      </div>
-
-      <div class="form-section" style="margin-bottom: 30px;">
-        <h3 style="color: var(--text); margin: 0 0 20px 0; border-bottom: 2px solid var(--border); padding-bottom: 10px;">الموقع الجغرافي</h3>
-        
         <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px;">
           <div class="form-group" style="margin-bottom: 20px;">
             <label style="display: block; margin-bottom: 8px; color: var(--text); font-weight: 600;">خط العرض (Latitude)</label>
             {{ form.latitude }}
             <small style="color: #888888;">مثال: 33.3152 لبغداد</small>
           </div>
-          
+
           <div class="form-group" style="margin-bottom: 20px;">
             <label style="display: block; margin-bottom: 8px; color: var(--text); font-weight: 600;">خط الطول (Longitude)</label>
             {{ form.longitude }}
             <small style="color: #888888;">مثال: 44.3661 لبغداد</small>
           </div>
         </div>
-        
+
+        <div class="form-group" style="margin-bottom: 20px;">
+          <label style="display: block; margin-bottom: 8px; color: var(--text); font-weight: 600;">رابط Google Maps</label>
+          {{ form.google_maps_url }}
+        </div>
+
         <div style="background: rgba(17, 153, 142, 0.1); padding: 15px; border-radius: 8px; border: 1px solid rgba(17, 153, 142, 0.3); margin-top: 15px;">
           <h4 style="margin-bottom: 10px; color: #11998e;">📍 كيفية الحصول على الإحداثيات</h4>
           <ol style="margin: 0; padding-left: 20px; color: var(--text-light);">
@@ -144,6 +210,176 @@
             <li>سيظهر الإحداثيات في الأعلى، انسخها وألصقها هنا</li>
             <li>أو استخدم تطبيق GPS للحصول على الإحداثيات بدقة</li>
           </ol>
+        </div>
+      </div>
+
+      <!-- الخبرة والفريق -->
+      <div class="form-section" style="margin-bottom: 30px;">
+        <h3 style="color: var(--text); margin: 0 0 20px 0; border-bottom: 2px solid var(--border); padding-bottom: 10px;">👷 الخبرة والفريق</h3>
+
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px;">
+          <div class="form-group" style="margin-bottom: 20px;">
+            <label style="display: block; margin-bottom: 8px; color: var(--text); font-weight: 600;">سنوات الخبرة</label>
+            {{ form.years_experience }}
+          </div>
+
+          <div class="form-group" style="margin-bottom: 20px;">
+            <label style="display: block; margin-bottom: 8px; color: var(--text); font-weight: 600;">حجم الفريق</label>
+            {{ form.team_size }}
+          </div>
+
+          <div class="form-group" style="margin-bottom: 20px;">
+            <label style="display: block; margin-bottom: 8px; color: var(--text); font-weight: 600;">عدد المشاريع المنجزة</label>
+            {{ form.completed_projects_count }}
+          </div>
+
+          <div class="form-group" style="margin-bottom: 20px;">
+            <label style="display: block; margin-bottom: 8px; color: var(--text); font-weight: 600;">عدد العملاء</label>
+            {{ form.clients_count }}
+          </div>
+        </div>
+
+        <div class="form-group" style="margin-bottom: 20px;">
+          <label style="display: block; margin-bottom: 8px; color: var(--text); font-weight: 600;">التخصصات / مهارات الفريق</label>
+          {{ form.team_skills }}
+        </div>
+
+        <div class="form-group" style="margin-bottom: 20px;">
+          <label style="display: block; margin-bottom: 8px; color: var(--text); font-weight: 600;">التراخيص والشهادات</label>
+          {{ form.licenses }}
+        </div>
+      </div>
+
+      <!-- الأسعار -->
+      <div class="form-section" style="margin-bottom: 30px;">
+        <h3 style="color: var(--text); margin: 0 0 20px 0; border-bottom: 2px solid var(--border); padding-bottom: 10px;">💰 الأسعار</h3>
+
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px;">
+          <div class="form-group" style="margin-bottom: 20px;">
+            <label style="display: block; margin-bottom: 8px; color: var(--text); font-weight: 600;">أقل سعر</label>
+            {{ form.min_price }}
+          </div>
+
+          <div class="form-group" style="margin-bottom: 20px;">
+            <label style="display: block; margin-bottom: 8px; color: var(--text); font-weight: 600;">أعلى سعر</label>
+            {{ form.max_price }}
+          </div>
+
+          <div class="form-group" style="margin-bottom: 20px;">
+            <label style="display: block; margin-bottom: 8px; color: var(--text); font-weight: 600;">العملة</label>
+            {{ form.currency }}
+          </div>
+
+          <div class="form-group" style="margin-bottom: 20px;">
+            <label style="display: block; margin-bottom: 8px; color: var(--text); font-weight: 600;">وحدة السعر</label>
+            {{ form.price_unit }}
+          </div>
+
+          <div class="form-group" style="margin-bottom: 20px;">
+            <label style="display: block; margin-bottom: 8px; color: var(--text); font-weight: 600;">طريقة التسعير</label>
+            {{ form.pricing_method }}
+          </div>
+        </div>
+
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px;">
+          <div class="form-group" style="margin-bottom: 20px;">
+            <label style="display: block; margin-bottom: 8px; color: var(--text); font-weight: 600;">السعر قابل للتفاوض؟</label>
+            {{ form.negotiable }}
+          </div>
+
+          <div class="form-group" style="margin-bottom: 20px;">
+            <label style="display: block; margin-bottom: 8px; color: var(--text); font-weight: 600;">استشارة مجانية؟</label>
+            {{ form.free_consultation }}
+          </div>
+        </div>
+      </div>
+
+      <!-- أوقات العمل -->
+      <div class="form-section" style="margin-bottom: 30px;">
+        <h3 style="color: var(--text); margin: 0 0 20px 0; border-bottom: 2px solid var(--border); padding-bottom: 10px;">🕐 أوقات العمل</h3>
+
+        <div class="form-group" style="margin-bottom: 20px;">
+          <label style="display: block; margin-bottom: 8px; color: var(--text); font-weight: 600;">مفتوح 24 ساعة؟</label>
+          {{ form.open_24_hours }}
+        </div>
+
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px;">
+          <div class="form-group" style="margin-bottom: 20px;">
+            <label style="display: block; margin-bottom: 8px; color: var(--text); font-weight: 600;">السبت</label>
+            {{ form.saturday_hours }}
+            <small style="color: #888888;">مثال: 9:00 - 17:00</small>
+          </div>
+
+          <div class="form-group" style="margin-bottom: 20px;">
+            <label style="display: block; margin-bottom: 8px; color: var(--text); font-weight: 600;">الأحد</label>
+            {{ form.sunday_hours }}
+            <small style="color: #888888;">مثال: 9:00 - 17:00</small>
+          </div>
+
+          <div class="form-group" style="margin-bottom: 20px;">
+            <label style="display: block; margin-bottom: 8px; color: var(--text); font-weight: 600;">الاثنين</label>
+            {{ form.monday_hours }}
+            <small style="color: #888888;">مثال: 9:00 - 17:00</small>
+          </div>
+
+          <div class="form-group" style="margin-bottom: 20px;">
+            <label style="display: block; margin-bottom: 8px; color: var(--text); font-weight: 600;">الثلاثاء</label>
+            {{ form.tuesday_hours }}
+            <small style="color: #888888;">مثال: 9:00 - 17:00</small>
+          </div>
+
+          <div class="form-group" style="margin-bottom: 20px;">
+            <label style="display: block; margin-bottom: 8px; color: var(--text); font-weight: 600;">الأربعاء</label>
+            {{ form.wednesday_hours }}
+            <small style="color: #888888;">مثال: 9:00 - 17:00</small>
+          </div>
+
+          <div class="form-group" style="margin-bottom: 20px;">
+            <label style="display: block; margin-bottom: 8px; color: var(--text); font-weight: 600;">الخميس</label>
+            {{ form.thursday_hours }}
+            <small style="color: #888888;">مثال: 9:00 - 17:00</small>
+          </div>
+
+          <div class="form-group" style="margin-bottom: 20px;">
+            <label style="display: block; margin-bottom: 8px; color: var(--text); font-weight: 600;">الجمعة</label>
+            {{ form.friday_hours }}
+            <small style="color: #888888;">مثال: مغلق / 9:00 - 17:00</small>
+          </div>
+        </div>
+      </div>
+
+      <!-- الوسائط والأعمال -->
+      <div class="form-section" style="margin-bottom: 30px;">
+        <h3 style="color: var(--text); margin: 0 0 20px 0; border-bottom: 2px solid var(--border); padding-bottom: 10px;">🖼️ الوسائط والأعمال</h3>
+
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px;">
+          <div class="form-group" style="margin-bottom: 20px;">
+            <label style="display: block; margin-bottom: 8px; color: var(--text); font-weight: 600;">الشعار</label>
+            {{ form.logo }}
+          </div>
+
+          <div class="form-group" style="margin-bottom: 20px;">
+            <label style="display: block; margin-bottom: 8px; color: var(--text); font-weight: 600;">صورة الغلاف</label>
+            {{ form.cover_image }}
+          </div>
+        </div>
+
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px;">
+          <div class="form-group" style="margin-bottom: 20px;">
+            <label style="display: block; margin-bottom: 8px; color: var(--text); font-weight: 600;">رابط الفيديو</label>
+            {{ form.video_url }}
+            <small style="color: #888888;">رابط يوتيوب أو فيديو آخر يعرض أعمالك</small>
+          </div>
+
+          <div class="form-group" style="margin-bottom: 20px;">
+            <label style="display: block; margin-bottom: 8px; color: var(--text); font-weight: 600;">رابط معرض الأعمال</label>
+            {{ form.portfolio_url }}
+          </div>
+
+          <div class="form-group" style="margin-bottom: 20px;">
+            <label style="display: block; margin-bottom: 8px; color: var(--text); font-weight: 600;">ملف PDF للأعمال / الكتالوج</label>
+            {{ form.catalog_pdf }}
+          </div>
         </div>
       </div>
 

@@ -24,6 +24,7 @@ from .serializers import (
     SendMessageSerializer, UserSerializer
 )
 from .permissions import can_access_dashboard
+from .message_service import MessageService, MessageServiceError
 
 
 @api_view(['GET'])
@@ -92,10 +93,18 @@ class ConversationViewSet(viewsets.ModelViewSet):
     
     @action(detail=True, methods=['post'])
     def mark_as_read(self, request, pk=None):
-        """Mark all messages in conversation as read"""
+        """Mark all messages in conversation as read using MessageService"""
         conversation = self.get_object()
-        conversation.mark_as_read_for_user(request.user)
-        return Response({'status': 'marked as read'})
+
+        try:
+            count = MessageService.mark_conversation_as_read(request.user, conversation)
+        except MessageServiceError as e:
+            return Response(
+                {'error': str(e)},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        return Response({'status': 'marked as read', 'count': count})
     
     @action(detail=True, methods=['post'])
     def archive(self, request, pk=None):
@@ -281,11 +290,11 @@ class ChatMessageViewSet(viewsets.ModelViewSet):
     
     @action(detail=False, methods=['post'])
     def send_message(self, request):
-        """Send a new message"""
+        """Send a new message using MessageService"""
         serializer = SendMessageSerializer(data=request.data)
         if serializer.is_valid():
             data = serializer.validated_data
-            
+
             try:
                 conversation = Conversation.objects.get(
                     conversation_id=data['conversation_id']
@@ -295,84 +304,101 @@ class ChatMessageViewSet(viewsets.ModelViewSet):
                     {'error': 'Conversation not found'},
                     status=status.HTTP_404_NOT_FOUND
                 )
-            
-            # Check if user is a participant
-            if not conversation.participants.filter(id=request.user.id).exists():
-                return Response(
-                    {'error': 'You are not a participant in this conversation'},
-                    status=status.HTTP_403_FORBIDDEN
-                )
-            
-            # Create message
-            message = ChatMessage.objects.create(
-                conversation=conversation,
-                sender=request.user,
-                message_type=data['message_type'],
-                content=data.get('content', '')
-            )
-            
+
             # Handle reply_to
+            reply_to = None
             if data.get('reply_to_message_id'):
                 try:
                     reply_to = ChatMessage.objects.get(
                         message_id=data['reply_to_message_id']
                     )
-                    message.reply_to = reply_to
-                    message.save()
                 except ChatMessage.DoesNotExist:
                     pass
-            
+
+            # Use MessageService to send message
+            try:
+                message = MessageService.send_message(
+                    sender=request.user,
+                    conversation=conversation,
+                    message_type=data['message_type'],
+                    content=data.get('content', ''),
+                    reply_to=reply_to
+                )
+            except MessageServiceError as e:
+                return Response(
+                    {'error': str(e)},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+
             return Response(
                 ChatMessageSerializer(message, context={'request': request}).data,
                 status=status.HTTP_201_CREATED
             )
-        
+
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     
     @action(detail=True, methods=['post'])
     def mark_as_read(self, request, pk=None):
-        """Mark a message as read"""
+        """Mark a message as read using MessageService"""
         message = self.get_object()
-        message.mark_as_read(request.user)
+
+        try:
+            MessageService.mark_as_read(request.user, message)
+        except MessageServiceError as e:
+            return Response(
+                {'error': str(e)},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
         return Response({'status': 'marked as read'})
-    
+
     @action(detail=True, methods=['post'])
     def edit(self, request, pk=None):
-        """Edit a message"""
+        """Edit a message using MessageService"""
         message = self.get_object()
-        
-        # Check if user is the sender
-        if message.sender != request.user:
-            return Response(
-                {'error': 'You can only edit your own messages'},
-                status=status.HTTP_403_FORBIDDEN
-            )
-        
+
         new_content = request.data.get('content')
         if not new_content:
             return Response(
                 {'error': 'content is required'},
                 status=status.HTTP_400_BAD_REQUEST
             )
-        
-        message.edit(new_content)
+
+        try:
+            message = MessageService.edit_message(
+                user=request.user,
+                message=message,
+                new_content=new_content
+            )
+        except MessageServiceError as e:
+            return Response(
+                {'error': str(e)},
+                status=status.HTTP_403_FORBIDDEN
+            )
+
         return Response(
             ChatMessageSerializer(message, context={'request': request}).data
         )
-    
+
     @action(detail=True, methods=['post'])
     def delete(self, request, pk=None):
-        """Delete a message (soft delete)"""
+        """Delete a message (soft delete) using MessageService"""
         message = self.get_object()
-        
-        # Check if user is the sender
-        if message.sender != request.user:
+
+        delete_for_everyone = request.data.get('delete_for_everyone', False)
+
+        try:
+            MessageService.delete_message(
+                user=request.user,
+                message=message,
+                delete_for_everyone=delete_for_everyone
+            )
+        except MessageServiceError as e:
             return Response(
-                {'error': 'You can only delete your own messages'},
+                {'error': str(e)},
                 status=status.HTTP_403_FORBIDDEN
             )
-        
-        message.soft_delete()
+
         return Response({'status': 'deleted'})
     
     @action(detail=True, methods=['post'])
@@ -390,6 +416,266 @@ class ChatMessageViewSet(viewsets.ModelViewSet):
         message.is_pinned = False
         message.save()
         return Response({'status': 'unpinned'})
+
+    @action(detail=True, methods=['post'])
+    def reply(self, request, pk=None):
+        """Reply to a message using MessageService"""
+        message = self.get_object()
+        content = request.data.get('content')
+
+        if not content:
+            return Response(
+                {'error': 'content is required'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        try:
+            reply = MessageService.reply_message(
+                sender=request.user,
+                conversation=message.conversation,
+                reply_to=message,
+                content=content
+            )
+        except MessageServiceError as e:
+            return Response(
+                {'error': str(e)},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        return Response(
+            ChatMessageSerializer(reply, context={'request': request}).data,
+            status=status.HTTP_201_CREATED
+        )
+
+    @action(detail=True, methods=['post'])
+    def forward(self, request, pk=None):
+        """Forward a message to other conversations using MessageService"""
+        message = self.get_object()
+        conversation_ids = request.data.get('conversation_ids', [])
+
+        if not conversation_ids:
+            return Response(
+                {'error': 'conversation_ids is required'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        # Get target conversations
+        target_conversations = []
+        for conv_id in conversation_ids:
+            try:
+                conv = Conversation.objects.get(conversation_id=conv_id)
+                if MessageService.check_conversation_access(request.user, conv):
+                    target_conversations.append(conv)
+            except Conversation.DoesNotExist:
+                continue
+
+        try:
+            forwarded = MessageService.forward_message(
+                sender=request.user,
+                message=message,
+                target_conversations=target_conversations
+            )
+        except MessageServiceError as e:
+            return Response(
+                {'error': str(e)},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        return Response({
+            'status': 'forwarded',
+            'count': len(forwarded),
+            'messages': ChatMessageSerializer(forwarded, many=True, context={'request': request}).data
+        })
+
+    @action(detail=True, methods=['post'])
+    def add_reaction(self, request, pk=None):
+        """Add reaction to message using MessageService"""
+        message = self.get_object()
+        reaction_type = request.data.get('reaction_type')
+
+        if not reaction_type:
+            return Response(
+                {'error': 'reaction_type is required'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        try:
+            MessageService.add_reaction(request.user, message, reaction_type)
+        except MessageServiceError as e:
+            return Response(
+                {'error': str(e)},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        return Response({'status': 'reaction added'})
+
+    @action(detail=True, methods=['post'])
+    def remove_reaction(self, request, pk=None):
+        """Remove reaction from message using MessageService"""
+        message = self.get_object()
+
+        try:
+            MessageService.remove_reaction(request.user, message)
+        except MessageServiceError as e:
+            return Response(
+                {'error': str(e)},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        return Response({'status': 'reaction removed'})
+
+    @action(detail=True, methods=['post'])
+    def share_property(self, request, pk=None):
+        """Share a property in conversation using MessageService"""
+        message = self.get_object()
+        property_id = request.data.get('property_id')
+
+        if not property_id:
+            return Response(
+                {'error': 'property_id is required'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        try:
+            from .models import Property
+            property_obj = Property.objects.get(id=property_id)
+        except Property.DoesNotExist:
+            return Response(
+                {'error': 'Property not found'},
+                status=status.HTTP_404_NOT_FOUND
+            )
+
+        try:
+            shared = MessageService.share_property(
+                sender=request.user,
+                conversation=message.conversation,
+                property_obj=property_obj
+            )
+        except MessageServiceError as e:
+            return Response(
+                {'error': str(e)},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        return Response(
+            ChatMessageSerializer(shared, context={'request': request}).data,
+            status=status.HTTP_201_CREATED
+        )
+
+    @action(detail=True, methods=['post'])
+    def share_hotel(self, request, pk=None):
+        """Share a hotel in conversation using MessageService"""
+        message = self.get_object()
+        hotel_id = request.data.get('hotel_id')
+
+        if not hotel_id:
+            return Response(
+                {'error': 'hotel_id is required'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        try:
+            from .models import Hotel
+            hotel = Hotel.objects.get(id=hotel_id)
+        except Hotel.DoesNotExist:
+            return Response(
+                {'error': 'Hotel not found'},
+                status=status.HTTP_404_NOT_FOUND
+            )
+
+        try:
+            shared = MessageService.share_hotel(
+                sender=request.user,
+                conversation=message.conversation,
+                hotel=hotel
+            )
+        except MessageServiceError as e:
+            return Response(
+                {'error': str(e)},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        return Response(
+            ChatMessageSerializer(shared, context={'request': request}).data,
+            status=status.HTTP_201_CREATED
+        )
+
+    @action(detail=True, methods=['post'])
+    def share_resort(self, request, pk=None):
+        """Share a resort in conversation using MessageService"""
+        message = self.get_object()
+        resort_id = request.data.get('resort_id')
+
+        if not resort_id:
+            return Response(
+                {'error': 'resort_id is required'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        try:
+            from .models import Resort
+            resort = Resort.objects.get(id=resort_id)
+        except Resort.DoesNotExist:
+            return Response(
+                {'error': 'Resort not found'},
+                status=status.HTTP_404_NOT_FOUND
+            )
+
+        try:
+            shared = MessageService.share_resort(
+                sender=request.user,
+                conversation=message.conversation,
+                resort=resort
+            )
+        except MessageServiceError as e:
+            return Response(
+                {'error': str(e)},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        return Response(
+            ChatMessageSerializer(shared, context={'request': request}).data,
+            status=status.HTTP_201_CREATED
+        )
+
+    @action(detail=False, methods=['get'])
+    def search(self, request):
+        """Search messages by content using MessageService"""
+        query = request.query_params.get('q', '')
+        conversation_id = request.query_params.get('conversation_id')
+
+        if not query:
+            return Response(
+                {'error': 'Query parameter "q" is required'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        # Get conversation if specified
+        conversation = None
+        if conversation_id:
+            try:
+                conversation = Conversation.objects.get(conversation_id=conversation_id)
+            except Conversation.DoesNotExist:
+                return Response(
+                    {'error': 'Conversation not found'},
+                    status=status.HTTP_404_NOT_FOUND
+                )
+
+        try:
+            messages = MessageService.search_messages(
+                user=request.user,
+                query=query,
+                conversation=conversation
+            )
+        except MessageServiceError as e:
+            return Response(
+                {'error': str(e)},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        return Response(
+            ChatMessageSerializer(messages, many=True, context={'request': request}).data
+        )
 
 
 class MessageAttachmentViewSet(viewsets.ModelViewSet):

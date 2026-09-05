@@ -7,11 +7,11 @@
 <div style="background: linear-gradient(135deg, #0f0f23 0%, #1a1a2e 100%); min-height: 100vh;">
   
   <!-- Cover Photo -->
-  <div style="position: relative; height: 350px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); overflow: hidden;">
+  <div style="position: relative; height: 350px; background: linear-gradient(135deg, #FF7A00 0%, #FF9500 100%); overflow: hidden;">
     {% if channel.cover_image %}
       <img src="{{ channel.cover_image.url }}" alt="Cover" style="width: 100%; height: 100%; object-fit: cover;">
     {% else %}
-      <div style="width: 100%; height: 100%; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); display: flex; align-items: center; justify-content: center;">
+      <div style="width: 100%; height: 100%; background: linear-gradient(135deg, #FF7A00 0%, #FF9500 100%); display: flex; align-items: center; justify-content: center;">
         <span style="font-size: 6rem; opacity: 0.3;">🏠</span>
       </div>
     {% endif %}
@@ -87,7 +87,7 @@
           <!-- Action Buttons -->
           <div style="display: flex; gap: 10px; flex-wrap: wrap;">
             {% if user.is_authenticated %}
-              <button onclick="followChannel('{{ channel.id }}')" id="follow-btn" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border: none; color: white; padding: 12px 30px; border-radius: 25px; cursor: pointer; font-weight: bold; transition: transform 0.3s ease;">
+              <button onclick="followChannel('{{ channel.id }}')" id="follow-btn" style="background: linear-gradient(135deg, #FF7A00 0%, #FF9500 100%); border: none; color: white; padding: 12px 30px; border-radius: 25px; cursor: pointer; font-weight: bold; transition: transform 0.3s ease;">
                 <span id="follow-text">متابعة</span>
               </button>
               {% if channel.whatsapp %}
@@ -110,7 +110,7 @@
                 🔖 حفظ
               </button>
             {% else %}
-              <a href="{% url 'login' %}" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border: none; color: white; padding: 12px 30px; border-radius: 25px; text-decoration: none; display: inline-block; font-weight: bold;">
+              <a href="{% url 'login' %}" style="background: linear-gradient(135deg, #FF7A00 0%, #FF9500 100%); border: none; color: white; padding: 12px 30px; border-radius: 25px; text-decoration: none; display: inline-block; font-weight: bold;">
                 تسجيل الدخول للمتابعة
               </a>
             {% endif %}
@@ -125,7 +125,7 @@
           <div style="color: rgba(255,255,255,0.6); font-size: 0.9rem;">متابعين</div>
         </div>
         <div style="text-align: center; padding: 20px; background: rgba(255,255,255,0.05); border-radius: 15px;">
-          <div style="font-size: 2rem; font-weight: bold; color: #667eea;">{{ channel.views_count }}</div>
+          <div style="font-size: 2rem; font-weight: bold; color: #FF7A00;">{{ channel.views_count }}</div>
           <div style="color: rgba(255,255,255,0.6); font-size: 0.9rem;">مشاهدات</div>
         </div>
         <div style="text-align: center; padding: 20px; background: rgba(255,255,255,0.05); border-radius: 15px;">
@@ -165,7 +165,7 @@
           <option value="price_low">الأقل سعراً</option>
           <option value="popular">الأكثر مشاهدة</option>
         </select>
-        <button onclick="applyFilters()" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border: none; color: white; padding: 15px 30px; border-radius: 10px; cursor: pointer; font-weight: bold;">
+        <button onclick="applyFilters()" style="background: linear-gradient(135deg, #FF7A00 0%, #FF9500 100%); border: none; color: white; padding: 15px 30px; border-radius: 10px; cursor: pointer; font-weight: bold;">
           تطبيق
         </button>
       </div>
@@ -221,7 +221,7 @@
           </div>
           <div style="text-align: center; padding: 20px; background: rgba(255,255,255,0.05); border-radius: 15px;">
             <div style="font-size: 3rem; margin-bottom: 10px;">👥</div>
-            <div style="font-size: 1.5rem; font-weight: bold; color: #667eea;">{{ channel.clients_count|default:0 }}</div>
+            <div style="font-size: 1.5rem; font-weight: bold; color: #FF7A00;">{{ channel.clients_count|default:0 }}</div>
             <div style="color: rgba(255,255,255,0.6);">عملاء راضون</div>
           </div>
           <div style="text-align: center; padding: 20px; background: rgba(255,255,255,0.05); border-radius: 15px;">
@@ -273,7 +273,7 @@
                 {% if property.main_image %}
                   <img src="{{ property.main_image.url }}" alt="{{ property.display_title }}" style="width: 100%; height: 100%; object-fit: cover;">
                 {% else %}
-                  <div style="width: 100%; height: 100%; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); display: flex; align-items: center; justify-content: center; font-size: 3rem;">🏠</div>
+                  <div style="width: 100%; height: 100%; background: linear-gradient(135deg, #FF7A00 0%, #FF9500 100%); display: flex; align-items: center; justify-content: center; font-size: 3rem;">🏠</div>
                 {% endif %}
                 {% if property.publication_type == 'featured' %}
                   <span style="position: absolute; top: 10px; right: 10px; background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); color: white; padding: 5px 15px; border-radius: 20px; font-size: 0.8rem; font-weight: bold;">⭐ مميز</span>
@@ -291,7 +291,7 @@
               <h3 style="color: white; margin: 0 0 10px 0;">لا توجد عقارات</h3>
               <p style="color: rgba(255,255,255,0.6); margin: 0 0 20px 0;">لم يتم إضافة أي عقارات بعد</p>
               {% if request.user == channel.broker.user %}
-                <a href="{% url 'dynamic_add_property' %}" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border: none; color: white; padding: 12px 30px; border-radius: 25px; text-decoration: none; display: inline-block; font-weight: bold;">
+                <a href="{% url 'dynamic_add_property' %}" style="background: linear-gradient(135deg, #FF7A00 0%, #FF9500 100%); border: none; color: white; padding: 12px 30px; border-radius: 25px; text-decoration: none; display: inline-block; font-weight: bold;">
                   ➕ إضافة أول عقار
                 </a>
               {% endif %}
@@ -312,7 +312,7 @@
                 {% if property.main_image %}
                   <img src="{{ property.main_image.url }}" alt="{{ property.display_title }}" style="width: 100%; height: 100%; object-fit: cover;">
                 {% else %}
-                  <div style="width: 100%; height: 100%; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); display: flex; align-items: center; justify-content: center; font-size: 3rem;">🏠</div>
+                  <div style="width: 100%; height: 100%; background: linear-gradient(135deg, #FF7A00 0%, #FF9500 100%); display: flex; align-items: center; justify-content: center; font-size: 3rem;">🏠</div>
                 {% endif %}
                 {% if property.publication_type == 'featured' %}
                   <span style="position: absolute; top: 10px; right: 10px; background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); color: white; padding: 5px 15px; border-radius: 20px; font-size: 0.8rem; font-weight: bold;">⭐ مميز</span>
@@ -330,7 +330,7 @@
               <h3 style="color: white; margin: 0 0 10px 0;">لا توجد عقارات</h3>
               <p style="color: rgba(255,255,255,0.6); margin: 0 0 20px 0;">لم يتم إضافة أي عقارات بعد</p>
               {% if request.user == channel.broker.user %}
-                <a href="{% url 'dynamic_add_property' %}" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border: none; color: white; padding: 12px 30px; border-radius: 25px; text-decoration: none; display: inline-block; font-weight: bold;">
+                <a href="{% url 'dynamic_add_property' %}" style="background: linear-gradient(135deg, #FF7A00 0%, #FF9500 100%); border: none; color: white; padding: 12px 30px; border-radius: 25px; text-decoration: none; display: inline-block; font-weight: bold;">
                   ➕ إضافة أول عقار
                 </a>
               {% endif %}
@@ -351,7 +351,7 @@
                 {% if post.post_type == 'image' and post.media %}
                   <img src="{{ post.media.url }}" alt="{{ post.title }}" style="width: 100%; height: 100%; object-fit: cover;">
                 {% else %}
-                  <div style="width: 100%; height: 100%; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); display: flex; align-items: center; justify-content: center; font-size: 3rem;">📱</div>
+                  <div style="width: 100%; height: 100%; background: linear-gradient(135deg, #FF7A00 0%, #FF9500 100%); display: flex; align-items: center; justify-content: center; font-size: 3rem;">📱</div>
                 {% endif %}
                 {% if post.is_pinned %}
                   <span style="position: absolute; top: 10px; left: 10px; background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); color: white; padding: 5px 15px; border-radius: 20px; font-size: 0.8rem; font-weight: bold;">📌 مثبت</span>
@@ -473,7 +473,7 @@
       <div style="background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%); border-radius: 20px; padding: 30px;">
         <h2 style="color: white; margin: 0 0 20px 0;">⭐ المراجعات</h2>
         {% if user.is_authenticated %}
-          <button onclick="showReviewForm()" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border: none; color: white; padding: 12px 30px; border-radius: 25px; cursor: pointer; font-weight: bold; margin-bottom: 20px;">
+          <button onclick="showReviewForm()" style="background: linear-gradient(135deg, #FF7A00 0%, #FF9500 100%); border: none; color: white; padding: 12px 30px; border-radius: 25px; cursor: pointer; font-weight: bold; margin-bottom: 20px;">
             ➕ أضف مراجعة
           </button>
         {% endif %}
@@ -481,7 +481,7 @@
           {% for review in reviews|slice:":5" %}
             <div style="background: rgba(255,255,255,0.05); border-radius: 15px; padding: 20px;">
               <div style="display: flex; align-items: center; gap: 15px; margin-bottom: 15px;">
-                <div style="width: 50px; height: 50px; border-radius: 50%; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); display: flex; align-items: center; justify-content: center; font-size: 1.5rem; color: white;">
+                <div style="width: 50px; height: 50px; border-radius: 50%; background: linear-gradient(135deg, #FF7A00 0%, #FF9500 100%); display: flex; align-items: center; justify-content: center; font-size: 1.5rem; color: white;">
                   {{ review.user.username|slice:":1"|upper }}
                 </div>
                 <div>
@@ -622,7 +622,7 @@
         <label style="color: white; display: block; margin-bottom: 5px;">المراجعة</label>
         <textarea name="content" rows="4" required style="width: 100%; padding: 12px; border: 2px solid rgba(255,255,255,0.1); border-radius: 10px; background: rgba(255,255,255,0.1); color: white; resize: vertical;"></textarea>
       </div>
-      <button type="submit" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border: none; color: white; padding: 12px 30px; border-radius: 25px; cursor: pointer; font-weight: bold; width: 100%;">
+      <button type="submit" style="background: linear-gradient(135deg, #FF7A00 0%, #FF9500 100%); border: none; color: white; padding: 12px 30px; border-radius: 25px; cursor: pointer; font-weight: bold; width: 100%;">
         إرسال المراجعة
       </button>
     </form>
@@ -648,7 +648,7 @@
 }
 
 .tab-btn.active {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #FF7A00 0%, #FF9500 100%);
   color: white;
 }
 

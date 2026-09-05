@@ -9,7 +9,7 @@ import logging
 import re
 from collections import defaultdict
 
-from .ai_intent_detection import intent_detector
+from .ai_intent_classifier import intent_classifier
 from .ai_entity_extraction import entity_extractor
 from .ai_arabic_normalizer import ArabicNormalizer
 

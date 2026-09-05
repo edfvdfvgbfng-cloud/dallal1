@@ -14,7 +14,7 @@ from django.core.cache import cache
 from unittest.mock import patch, MagicMock
 
 from .models import Property, Broker, JobPosting
-from .ai_intent_detection import intent_detector
+from .ai_intent_classifier import intent_classifier
 from .ai_entity_extraction import entity_extractor
 from .ai_conversation_manager import conversation_manager
 from .ai_agent_loop import ai_agent

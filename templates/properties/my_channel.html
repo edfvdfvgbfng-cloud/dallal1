@@ -18,9 +18,6 @@
 <a href="{% url 'admin_contact' %}" class="btn btn-outline btn-sm">📧 مراسلة الإدارة</a>
 {% endblock %}
 
-{% block dashboard_content %}
-{% csrf_token %}
-
 {% block extra_css %}
 <style>
 .my-channel-container {
@@ -33,7 +30,7 @@
 .channel-cover {
   position: relative;
   height: 300px;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #FF7A00 0%, #FF9500 100%);
   border-radius: 20px;
   overflow: hidden;
   margin-bottom: -80px;
@@ -217,7 +214,7 @@
 }
 
 .channel-action-btn.primary {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #FF7A00 0%, #FF9500 100%);
   border: none;
   color: white;
 }
@@ -247,8 +244,8 @@
   transform: translateY(-5px);
 }
 
-.stat-card.purple {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+.stat-card.orange {
+  background: linear-gradient(135deg, #FF7A00 0%, #FF9500 100%);
   color: white;
 }
 
@@ -346,7 +343,7 @@
 }
 
 .tab-btn.active {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #FF7A00 0%, #FF9500 100%);
   color: white;
 }
 
@@ -404,7 +401,7 @@
 
 .apply-btn {
   padding: 12px 30px;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #FF7A00 0%, #FF9500 100%);
   border: none;
   color: white;
   border-radius: 10px;
@@ -571,7 +568,7 @@
 .property-image-placeholder {
   width: 100%;
   height: 100%;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #FF7A00 0%, #FF9500 100%);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -661,7 +658,7 @@
 
 .property-action-btn.edit {
   background: rgba(102, 126, 234, 0.1);
-  color: #667eea;
+  color: #FF7A00;
 }
 
 .property-action-btn.edit:hover {
@@ -722,7 +719,7 @@
 
 .empty-state-btn {
   padding: 15px 40px;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #FF7A00 0%, #FF9500 100%);
   border: none;
   color: white;
   border-radius: 25px;
@@ -773,7 +770,7 @@
   width: 50px;
   height: 50px;
   border-radius: 50%;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #FF7A00 0%, #FF9500 100%);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -912,7 +909,7 @@
 
   <!-- Stats Cards -->
   <div class="stats-grid">
-    <div class="stat-card purple">
+    <div class="stat-card orange">
       <div class="stat-icon">🏘️</div>
       <div class="stat-number">{{ properties.count|default:0 }}</div>
       <div class="stat-label">عقارات</div>
@@ -1460,6 +1457,5 @@ function deletePost(postId) {
     alert('سيتم إضافة وظيفة حذف المنشور قريباً - ID: ' + postId);
   }
 }
-{% endblock %}
 </script>
 {% endblock %}

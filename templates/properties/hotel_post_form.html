@@ -1,154 +1,609 @@
-{% extends 'properties/base.html' %}
-{% load static %}
+{% extends 'properties/dashboard_base.html' %}
 
-{% block title %}
-    {% if action == 'create' %}إنشاء منشور جديد{% else %}تعديل المنشور{% endif %} - {{ page.name }}
+{% block title %}إنشاء منشور فندق{% endblock %}
+
+{% block dashboard_title %}📝 إنشاء منشور داخل صفحة الفندق{% endblock %}
+
+{% block dashboard_subtitle %}
+<p style="margin:4px 0 0;color:var(--text-muted);font-size:0.9rem;">
+  {{ hotel.name }} - أنشئ منشور جديد
+</p>
 {% endblock %}
 
-{% block content %}
-<div class="container py-5">
-    <div class="row">
-        <div class="col-lg-8 mx-auto">
-            <div class="card">
-                <div class="card-header">
-                    <h4 class="mb-0">
-                        {% if action == 'create' %}
-                            <i class="fas fa-plus-circle me-2"></i>إنشاء منشور جديد
-                        {% else %}
-                            <i class="fas fa-edit me-2"></i>تعديل المنشور
-                        {% endif %}
-                    </h4>
-                </div>
-                <div class="card-body">
-                    <form method="post" enctype="multipart/form-data">
-                        {% csrf_token %}
-                        
-                        <div class="mb-3">
-                            <label for="{{ form.post_type.id_for_label }}" class="form-label">نوع المنشور</label>
-                            {{ form.post_type }}
-                            {% if form.post_type.errors %}
-                                <div class="text-danger">{{ form.post_type.errors }}</div>
-                            {% endif %}
-                        </div>
-                        
-                        <div class="mb-3">
-                            <label for="{{ form.title.id_for_label }}" class="form-label">العنوان</label>
-                            {{ form.title }}
-                            {% if form.title.errors %}
-                                <div class="text-danger">{{ form.title.errors }}</div>
-                            {% endif %}
-                        </div>
-                        
-                        <div class="mb-3">
-                            <label for="{{ form.content.id_for_label }}" class="form-label">المحتوى</label>
-                            {{ form.content }}
-                            {% if form.content.errors %}
-                                <div class="text-danger">{{ form.content.errors }}</div>
-                            {% endif %}
-                        </div>
-                        
-                        <div class="mb-3">
-                            <label for="{{ form.image.id_for_label }}" class="form-label">الصورة</label>
-                            {{ form.image }}
-                            {% if form.image.errors %}
-                                <div class="text-danger">{{ form.image.errors }}</div>
-                            {% endif %}
-                            {% if post.image %}
-                                <div class="mt-2">
-                                    <img src="{{ post.image.url }}" alt="{{ post.title }}" class="img-thumbnail" style="max-height: 200px;">
-                                </div>
-                            {% endif %}
-                        </div>
-                        
-                        <div class="row">
-                            <div class="col-md-6">
-                                <div class="mb-3">
-                                    <label for="{{ form.price.id_for_label }}" class="form-label">السعر</label>
-                                    {{ form.price }}
-                                    {% if form.price.errors %}
-                                        <div class="text-danger">{{ form.price.errors }}</div>
-                                    {% endif %}
-                                </div>
-                            </div>
-                            <div class="col-md-6">
-                                <div class="mb-3">
-                                    <label for="{{ form.discount_price.id_for_label }}" class="form-label">سعر الخصم</label>
-                                    {{ form.discount_price }}
-                                    {% if form.discount_price.errors %}
-                                        <div class="text-danger">{{ form.discount_price.errors }}</div>
-                                    {% endif %}
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <div class="row">
-                            <div class="col-md-6">
-                                <div class="mb-3">
-                                    <label for="{{ form.valid_from.id_for_label }}" class="form-label">صالح من</label>
-                                    {{ form.valid_from }}
-                                    {% if form.valid_from.errors %}
-                                        <div class="text-danger">{{ form.valid_from.errors }}</div>
-                                    {% endif %}
-                                </div>
-                            </div>
-                            <div class="col-md-6">
-                                <div class="mb-3">
-                                    <label for="{{ form.valid_until.id_for_label }}" class="form-label">صالح حتى</label>
-                                    {{ form.valid_until }}
-                                    {% if form.valid_until.errors %}
-                                        <div class="text-danger">{{ form.valid_until.errors }}</div>
-                                    {% endif %}
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <div class="mb-3">
-                            <label for="{{ form.status.id_for_label }}" class="form-label">الحالة</label>
-                            {{ form.status }}
-                            {% if form.status.errors %}
-                                <div class="text-danger">{{ form.status.errors }}</div>
-                            {% endif %}
-                        </div>
-                        
-                        <div class="d-flex gap-2">
-                            <button type="submit" class="btn btn-primary">
-                                <i class="fas fa-save me-2"></i>
-                                {% if action == 'create' %}إنشاء{% else %}حفظ التغييرات{% endif %}
-                            </button>
-                            <a href="{% url 'hotel_page_detail' slug=page.slug %}" class="btn btn-secondary">
-                                <i class="fas fa-times me-2"></i>إلغاء
-                            </a>
-                        </div>
-                    </form>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
+{% block dashboard_actions %}
+<a href="{% url 'broker_hotels' %}" class="btn btn-outline btn-sm">اختر فندق آخر</a>
+<a href="{% url 'hotel_page_detail' hotel.slug %}" class="btn btn-outline btn-sm">عرض صفحة الفندق</a>
+<a href="{% url 'dashboard' %}" class="btn btn-outline btn-sm">رجوع للوحة التحكم</a>
 {% endblock %}
 
-{% block extra_css %}
+{% block dashboard_content %}
 <style>
-.form-control, form-select {
-    background-color: var(--bg-secondary);
-    border-color: var(--border-color);
-    color: var(--text-primary);
+.post-type-card {
+  border: 2px solid var(--border);
+  border-radius: 12px;
+  padding: 20px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  text-align: center;
+  background: var(--bg-alt);
 }
 
-.form-control:focus, .form-select:focus {
-    background-color: var(--bg-primary);
-    border-color: var(--primary-color);
-    color: var(--text-primary);
+.post-type-card:hover {
+  border-color: var(--primary-color);
+  transform: translateY(-5px);
+  box-shadow: 0 5px 20px rgba(0,0,0,0.1);
 }
 
-.card {
-    background-color: var(--bg-secondary);
-    border-color: var(--border-color);
+.post-type-card.selected {
+  border-color: var(--primary-color);
+  background: linear-gradient(135deg, var(--primary-color) 0%, #00BFA5 100%);
+  color: white;
 }
 
-.card-header {
-    background-color: var(--bg-tertiary);
-    border-color: var(--border-color);
+.post-type-icon {
+  font-size: 2.5rem;
+  margin-bottom: 10px;
+}
+
+.post-type-title {
+  font-weight: 600;
+  margin-bottom: 5px;
+}
+
+.image-preview {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.image-preview-item {
+  position: relative;
+  height: 100px;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.image-preview-item img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.image-preview-item .remove-btn {
+  position: absolute;
+  top: 5px;
+  right: 5px;
+  background: rgba(255,0,0,0.7);
+  color: white;
+  border: none;
+  border-radius: 50%;
+  width: 25px;
+  height: 25px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.section-card {
+  background: var(--bg-alt);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 20px;
+  margin-bottom: 20px;
+}
+
+.section-title {
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: var(--text);
+  margin-bottom: 20px;
+  padding-bottom: 10px;
+  border-bottom: 2px solid var(--border);
+}
+
+.form-label {
+  display: block;
+  color: var(--text);
+  font-weight: 600;
+  margin-bottom: 8px;
+}
+
+.form-input {
+  width: 100%;
+  padding: 12px;
+  border: 2px solid var(--border);
+  border-radius: 10px;
+  background: var(--bg-primary);
+  color: var(--text);
+  transition: all 0.3s ease;
+}
+
+.form-input:focus {
+  border-color: var(--primary-color);
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(0,150,136,0.1);
+}
+
+.btn-primary {
+  background: linear-gradient(135deg, #009688 0%, #00BFA5 100%);
+  border: none;
+  padding: 12px 24px;
+  border-radius: 10px;
+  color: white;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.btn-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 5px 20px rgba(0,150,136,0.3);
+}
+
+.btn-outline {
+  border: 2px solid var(--border);
+  padding: 12px 24px;
+  border-radius: 10px;
+  background: transparent;
+  color: var(--text);
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.btn-outline:hover {
+  border-color: var(--primary-color);
+  color: var(--primary-color);
+}
+
+.progress-bar {
+  height: 8px;
+  background: var(--border);
+  border-radius: 4px;
+  overflow: hidden;
+  margin-top: 10px;
+}
+
+.progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #009688 0%, #00BFA5 100%);
+  transition: width 0.3s ease;
 }
 </style>
+
+<div class="card" style="padding: 28px;">
+  <form method="post" enctype="multipart/form-data" id="postForm">
+    {% csrf_token %}
+    
+    <!-- اختيار نوع المنشور -->
+    <div class="section-card">
+      <h3 class="section-title">📋 اختر نوع المنشور</h3>
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 15px;">
+        <div class="post-type-card" data-type="listing">
+          <div class="post-type-icon">🛏️</div>
+          <div class="post-type-title">عرض غرفة</div>
+        </div>
+        <div class="post-type-card" data-type="offer">
+          <div class="post-type-icon">🎁</div>
+          <div class="post-type-title">عرض خاص</div>
+        </div>
+        <div class="post-type-card" data-type="discount">
+          <div class="post-type-icon">💰</div>
+          <div class="post-type-title">خصم</div>
+        </div>
+        <div class="post-type-card" data-type="family_package">
+          <div class="post-type-icon">👨‍👩‍👧</div>
+          <div class="post-type-title">باقة عائلية</div>
+        </div>
+        <div class="post-type-card" data-type="honeymoon">
+          <div class="post-type-icon">💑</div>
+          <div class="post-type-title">باقة شهر عسل</div>
+        </div>
+        <div class="post-type-card" data-type="restaurant">
+          <div class="post-type-icon">🍽️</div>
+          <div class="post-type-title">عرض مطعم</div>
+        </div>
+        <div class="post-type-card" data-type="pool">
+          <div class="post-type-icon">🏊</div>
+          <div class="post-type-title">عرض مسبح</div>
+        </div>
+        <div class="post-type-card" data-type="hall">
+          <div class="post-type-icon">🏢</div>
+          <div class="post-type-title">عرض قاعة</div>
+        </div>
+        <div class="post-type-card" data-type="conference">
+          <div class="post-type-icon">💼</div>
+          <div class="post-type-title">مؤتمر/اجتماع</div>
+        </div>
+        <div class="post-type-card" data-type="event">
+          <div class="post-type-icon">🎉</div>
+          <div class="post-type-title">مناسبة</div>
+        </div>
+        <div class="post-type-card" data-type="announcement">
+          <div class="post-type-icon">📢</div>
+          <div class="post-type-title">إعلان</div>
+        </div>
+        <div class="post-type-card" data-type="info">
+          <div class="post-type-icon">ℹ️</div>
+          <div class="post-type-title">معلومات</div>
+        </div>
+        <div class="post-type-card" data-type="new_service">
+          <div class="post-type-icon">🆕</div>
+          <div class="post-type-title">خدمة جديدة</div>
+        </div>
+      </div>
+      <input type="hidden" name="post_type" id="postTypeInput" required>
+    </div>
+    
+    <!-- معلومات أساسية -->
+    <div class="section-card">
+      <h3 class="section-title">📝 معلومات المنشور</h3>
+      
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px;">
+        <div style="grid-column: 1 / -1;">
+          <label class="form-label">عنوان العرض <span style="color: #dc3545;">*</span></label>
+          <input type="text" name="title" class="form-input" placeholder="عنوان العرض" required>
+        </div>
+        
+        <div style="grid-column: 1 / -1;">
+          <label class="form-label">وصف العرض <span style="color: #dc3545;">*</span></label>
+          <textarea name="content" class="form-input" placeholder="وصف العرض" required rows="4"></textarea>
+        </div>
+        
+        <div style="grid-column: 1 / -1;">
+          <label class="form-label">صور العرض</label>
+          <input type="file" name="images" accept="image/*" multiple class="form-input" id="imageInput">
+          <div class="image-preview" id="imagePreview"></div>
+        </div>
+        
+        <div>
+          <label class="form-label">رابط الحجز</label>
+          <input type="url" name="booking_url" class="form-input" placeholder="رابط الحجز">
+        </div>
+        
+        <div>
+          <label class="form-label">العملة</label>
+          <select name="currency" class="form-input">
+            <option value="IQD">دينار عراقي</option>
+            <option value="USD">دولار أمريكي</option>
+          </select>
+        </div>
+      </div>
+    </div>
+    
+    <!-- حقول خاصة حسب نوع المنشور -->
+    <div id="room-offer-fields" class="section-card" style="display: none;">
+      <h3 class="section-title">🛏️ تفاصيل عرض الغرفة</h3>
+      
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px;">
+        <div>
+          <label class="form-label">نوع الغرفة</label>
+          <select name="room_type" class="form-input">
+            <option value="">اختر نوع الغرفة</option>
+            <option value="single">غرفة فردية</option>
+            <option value="double">غرفة مزدوجة</option>
+            <option value="family">غرفة عائلية</option>
+            <option value="suite">جناح</option>
+          </select>
+        </div>
+        
+        <div>
+          <label class="form-label">عدد الأشخاص</label>
+          <input type="number" name="guests" class="form-input" placeholder="عدد الأشخاص">
+        </div>
+        
+        <div>
+          <label class="form-label">عدد الليالي</label>
+          <input type="number" name="nights" class="form-input" placeholder="عدد الليالي">
+        </div>
+        
+        <div>
+          <label class="form-label">السعر لليلة</label>
+          <input type="number" name="price_per_night" class="form-input" placeholder="السعر لليلة">
+        </div>
+        
+        <div>
+          <label class="form-label">السعر الإجمالي</label>
+          <input type="number" name="total_price" class="form-input" placeholder="السعر الإجمالي">
+        </div>
+        
+        <div>
+          <label class="form-label">الإفطار</label>
+          <select name="breakfast" class="form-input">
+            <option value="included">مشمول</option>
+            <option value="excluded">غير مشمول</option>
+            <option value="optional">اختياري</option>
+          </select>
+        </div>
+        
+        <div>
+          <label class="form-label">وجبة الغداء</label>
+          <select name="lunch" class="form-input">
+            <option value="included">مشمول</option>
+            <option value="excluded">غير مشمول</option>
+            <option value="optional">اختياري</option>
+          </select>
+        </div>
+        
+        <div>
+          <label class="form-label">وجبة العشاء</label>
+          <select name="dinner" class="form-input">
+            <option value="included">مشمول</option>
+            <option value="excluded">غير مشمول</option>
+            <option value="optional">اختياري</option>
+          </select>
+        </div>
+        
+        <div>
+          <label class="form-label">تاريخ بداية العرض</label>
+          <input type="date" name="valid_from" class="form-input">
+        </div>
+        
+        <div>
+          <label class="form-label">تاريخ نهاية العرض</label>
+          <input type="date" name="valid_until" class="form-input">
+        </div>
+        
+        <div>
+          <label class="form-label">عدد الغرف المتاحة</label>
+          <input type="number" name="available_rooms" class="form-input" placeholder="عدد الغرف المتاحة">
+        </div>
+        
+        <div style="grid-column: 1 / -1;">
+          <label class="form-label">شروط العرض</label>
+          <textarea name="terms" class="form-input" placeholder="شروط العرض" rows="3"></textarea>
+        </div>
+      </div>
+    </div>
+    
+    <div id="discount-fields" class="section-card" style="display: none;">
+      <h3 class="section-title">💰 تفاصيل الخصم</h3>
+      
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px;">
+        <div>
+          <label class="form-label">نسبة الخصم</label>
+          <input type="number" name="discount_percentage" class="form-input" placeholder="نسبة الخصم">
+        </div>
+        
+        <div>
+          <label class="form-label">السعر قبل الخصم</label>
+          <input type="number" name="original_price" class="form-input" placeholder="السعر قبل الخصم">
+        </div>
+        
+        <div>
+          <label class="form-label">السعر بعد الخصم</label>
+          <input type="number" name="discounted_price" class="form-input" placeholder="السعر بعد الخصم">
+        </div>
+        
+        <div>
+          <label class="form-label">تاريخ بداية العرض</label>
+          <input type="date" name="valid_from" class="form-input">
+        </div>
+        
+        <div>
+          <label class="form-label">تاريخ انتهاء العرض</label>
+          <input type="date" name="valid_until" class="form-input">
+        </div>
+        
+        <div>
+          <label class="form-label">عدد الحجوزات المتاحة</label>
+          <input type="number" name="available_bookings" class="form-input" placeholder="عدد الحجوزات المتاحة">
+        </div>
+        
+        <div style="grid-column: 1 / -1;">
+          <label class="form-label">الشروط</label>
+          <textarea name="terms" class="form-input" placeholder="شروط العرض" rows="3"></textarea>
+        </div>
+      </div>
+    </div>
+    
+    <div id="hall-fields" class="section-card" style="display: none;">
+      <h3 class="section-title">🏢 تفاصيل القاعة</h3>
+      
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px;">
+        <div>
+          <label class="form-label">اسم القاعة</label>
+          <input type="text" name="hall_name" class="form-input" placeholder="اسم القاعة">
+        </div>
+        
+        <div>
+          <label class="form-label">نوع المناسبة</label>
+          <select name="event_type" class="form-input">
+            <option value="">اختر نوع المناسبة</option>
+            <option value="wedding">زفاف</option>
+            <option value="conference">مؤتمر</option>
+            <option value="meeting">اجتماع</option>
+            <option value="birthday">عيد ميلاد</option>
+            <option value="corporate">تدشيع</option>
+            <option value="other">أخرى</option>
+          </select>
+        </div>
+        
+        <div>
+          <label class="form-label">سعة القاعة</label>
+          <input type="number" name="capacity" class="form-input" placeholder="سعة القاعة">
+        </div>
+        
+        <div>
+          <label class="form-label">السعر</label>
+          <input type="number" name="price" class="form-input" placeholder="السعر">
+        </div>
+        
+        <div>
+          <label class="form-label">سعر الساعة</label>
+          <input type="number" name="price_per_hour" class="form-input" placeholder="سعر الساعة">
+        </div>
+        
+        <div>
+          <label class="form-label">سعر اليوم</label>
+          <input type="number" name="price_per_day" class="form-input" placeholder="سعر اليوم">
+        </div>
+        
+        <div style="grid-column: 1 / -1;">
+          <label class="form-label">التجهيزات</label>
+          <textarea name="facilities" class="form-input" placeholder="التجهيزات المتوفرة" rows="3"></textarea>
+        </div>
+        
+        <div style="grid-column: 1 / -1;">
+          <label class="form-label">أجهزة العرض</label>
+          <textarea name="av_equipment" class="form-input" placeholder="أجهزة العرض المتوفرة" rows="2"></textarea>
+        </div>
+        
+        <div style="grid-column: 1 / -1;">
+          <label class="form-label">الصوتيات</label>
+          <textarea name="audio_equipment" class="form-input" placeholder="الصوتيات المتوفرة" rows="2"></textarea>
+        </div>
+        
+        <div style="grid-column: 1 / -1;">
+          <label class="form-label">الإضاءة</label>
+          <textarea name="lighting" class="form-input" placeholder="الإضاءة المتوفرة" rows="2"></textarea>
+        </div>
+        
+        <div>
+          <label class="form-label">الطعام والضيافة</label>
+          <select name="catering" class="form-input">
+            <option value="included">مشمول</option>
+            <option value="excluded">غير مشمول</option>
+            <option value="optional">اختياري</option>
+          </select>
+        </div>
+        
+        <div>
+          <label class="form-label">مواقف السيارات</label>
+          <select name="parking" class="form-input">
+            <option value="included">مشمول</option>
+            <option value="excluded">غير مشمول</option>
+            <option value="available">متاح</option>
+          </select>
+        </div>
+        
+        <div>
+          <label class="form-label">تاريخ التوفر</label>
+          <input type="date" name="available_date" class="form-input">
+        </div>
+      </div>
+    </div>
+    
+    <!-- شريط التقدم -->
+    <div class="section-card">
+      <h3 class="section-title">📊 ملخص المنشور</h3>
+      <div class="progress-bar">
+        <div class="progress-fill" id="progressFill" style="width: 0%"></div>
+      </div>
+      <p style="margin-top: 10px; color: var(--text-muted); font-size: 0.9rem;">
+        <span id="progressText">0%</span> مكتمل
+      </p>
+    </div>
+    
+    <div style="display: flex; gap: 15px; margin-top: 30px;">
+      <button type="submit" class="btn btn-primary">
+        🚀 نشر المنشور
+      </button>
+      <a href="{% url 'broker_hotels' %}" class="btn btn-outline">
+        إلغاء
+      </a>
+    </div>
+  </form>
+</div>
+
+<script>
+// اختيار نوع المنشور
+document.querySelectorAll('.post-type-card').forEach(card => {
+  card.addEventListener('click', function() {
+    // إزالة التحديد من جميع البطاقات
+    document.querySelectorAll('.post-type-card').forEach(c => c.classList.remove('selected'));
+    // إضافة التحديد للبطاقة المختارة
+    this.classList.add('selected');
+    // تحديث الحقل المخفي
+    document.getElementById('postTypeInput').value = this.dataset.type;
+    // إظهار الحقول المناسبة
+    showFieldsForType(this.dataset.type);
+    // تحديث شريط التقدم
+    updateProgress();
+  });
+});
+
+// إظهار الحقول المناسبة
+function showFieldsForType(type) {
+  document.getElementById('room-offer-fields').style.display = 'none';
+  document.getElementById('discount-fields').style.display = 'none';
+  document.getElementById('hall-fields').style.display = 'none';
+  
+  if (type === 'listing') {
+    document.getElementById('room-offer-fields').style.display = 'block';
+  } else if (type === 'discount') {
+    document.getElementById('discount-fields').style.display = 'block';
+  } else if (type === 'hall' || type === 'conference' || type === 'event') {
+    document.getElementById('hall-fields').style.display = 'block';
+  }
+}
+
+// معاينة الصور
+document.getElementById('imageInput').addEventListener('change', function(e) {
+  const preview = document.getElementById('imagePreview');
+  preview.innerHTML = '';
+  
+  Array.from(this.files).forEach((file, index) => {
+    const reader = new FileReader();
+    reader.onload = function(e) {
+      const div = document.createElement('div');
+      div.className = 'image-preview-item';
+      div.innerHTML = `
+        <img src="${e.target.result}" alt="Preview">
+        <button type="button" class="remove-btn" onclick="this.parentElement.remove()">×</button>
+      `;
+      preview.appendChild(div);
+    };
+    reader.readAsDataURL(file);
+  });
+  
+  updateProgress();
+});
+
+// تحديث شريط التقدم
+function updateProgress() {
+  const postType = document.getElementById('postTypeInput').value;
+  const title = document.querySelector('input[name="title"]').value;
+  const content = document.querySelector('textarea[name="content"]').value;
+  const images = document.getElementById('imageInput').files.length;
+  
+  let progress = 0;
+  if (postType) progress += 25;
+  if (title) progress += 25;
+  if (content) progress += 25;
+  if (images > 0) progress += 25;
+  
+  document.getElementById('progressFill').style.width = progress + '%';
+  document.getElementById('progressText').textContent = progress + '%';
+}
+
+// تحديث التقدم عند الكتابة
+document.querySelector('input[name="title"]').addEventListener('input', updateProgress);
+document.querySelector('textarea[name="content"]').addEventListener('input', updateProgress);
+
+// منع الإرسال إذا لم يتم اختيار نوع
+document.getElementById('postForm').addEventListener('submit', function(e) {
+  if (!document.getElementById('postTypeInput').value) {
+    e.preventDefault();
+    alert('يرجى اختيار نوع المنشور أولاً');
+  }
+});
+</script>
+{% endblock %}
+  document.getElementById('room-offer-fields').style.display = 'none';
+  document.getElementById('discount-fields').style.display = 'none';
+  document.getElementById('hall-fields').style.display = 'none';
+  
+  // إظهار الحقول المناسبة
+  if (postType === 'listing') {
+    document.getElementById('room-offer-fields').style.display = 'block';
+  } else if (postType === 'discount') {
+    document.getElementById('discount-fields').style.display = 'block';
+  } else if (postType === 'hall' || postType === 'conference' || postType === 'event') {
+    document.getElementById('hall-fields').style.display = 'block';
+  }
+});
+</script>
 {% endblock %}

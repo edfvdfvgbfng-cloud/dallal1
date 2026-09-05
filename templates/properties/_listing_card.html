@@ -1,0 +1,193 @@
+{% load static %}
+<article class="listing-card" data-listing-id="{{ listing.id }}" data-listing-url="{{ listing.get_absolute_url }}" data-listing-title="{{ listing.display_title }}">
+    <!-- Card Media -->
+    <div class="listing-card-media">
+        <!-- Actions -->
+        <div class="listing-card-actions">
+            <button type="button" class="listing-card-action-btn btn-favorite" 
+                    aria-label="مفضلة" 
+                    data-property-id="{{ listing.id }}" 
+                    data-property-url="{{ listing.get_absolute_url }}" 
+                    data-property-title="{{ listing.display_title }}"
+                    {% if listing.id in user_saves %}class="listing-card-action-btn active"{% endif %}>
+                <span class="fav-icon">{% if listing.id in user_saves %}❤️{% else %}🤍{% endif %}</span>
+            </button>
+            <button type="button" class="listing-card-action-btn" 
+                    aria-label="مشاركة" 
+                    data-action="share"
+                    data-property-url="{{ listing.get_absolute_url }}"
+                    data-property-title="{{ listing.display_title }}">
+                <span>📤</span>
+            </button>
+            <button type="button" class="listing-card-action-btn" 
+                    aria-label="مقارنة" 
+                    data-action="compare"
+                    data-property-id="{{ listing.id }}"
+                    data-property-url="{{ listing.get_absolute_url }}"
+                    data-property-title="{{ listing.display_title }}"
+                    data-property-price="{{ listing.price_formatted }}"
+                    data-property-area="{{ listing.area }}"
+                    data-property-city="{{ listing.city }}">
+                <span>⚖️</span>
+            </button>
+        </div>
+
+        <!-- Badges -->
+        <div class="listing-card-badges">
+            {% if listing.is_featured %}
+            <span class="listing-card-badge listing-card-badge-featured">⭐ مميز</span>
+            {% endif %}
+            {% if listing.is_verified %}
+            <span class="listing-card-badge listing-card-badge-verified">✓ موثق</span>
+            {% endif %}
+            {% if listing.purpose %}
+            <span class="listing-card-badge listing-card-badge-{{ listing.purpose }}">
+                {% if listing.purpose == 'sale' %}بيع{% elif listing.purpose == 'rent' %}إيجار{% elif listing.purpose == 'investment' %}استثمار{% elif listing.purpose == 'auction' %}مزاد{% endif %}
+            </span>
+            {% endif %}
+        </div>
+
+        <!-- Image -->
+        <a href="{{ listing.get_absolute_url }}" class="listing-card-image-link">
+            {% if listing.get_main_image %}
+            <img src="{{ listing.get_main_image }}" 
+                 alt="{{ listing.display_title }}" 
+                 loading="lazy"
+                 width="400"
+                 height="300"
+                 class="listing-card-image"
+                 data-src="{{ listing.get_main_image }}"
+                 style="aspect-ratio: 4/3; object-fit: cover;"
+                 onerror="this.src='/static/images/property-placeholder.svg'; this.onerror=null;">
+            {% else %}
+            <div class="listing-card-placeholder">
+                <span class="listing-card-placeholder-icon">🏠</span>
+                <span class="listing-card-placeholder-text">لا توجد صور</span>
+            </div>
+            {% endif %}
+        </a>
+
+        <!-- Gallery Count -->
+        {% if listing.images_count > 1 %}
+        <div class="listing-card-gallery-count">
+            {{ listing.images_count }}
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Card Body -->
+    <div class="listing-card-body">
+        <!-- Type -->
+        <div class="listing-card-type">
+            <span class="listing-card-type-icon">
+                {% if listing.type == 'apartment' %}🏢
+                {% elif listing.type == 'house' %}🏡
+                {% elif listing.type == 'villa' %}🏰
+                {% elif listing.type == 'duplex' %}🏘️
+                {% elif listing.type == 'residential_complex' %}🏙️
+                {% elif listing.type == 'shop' %}🏪
+                {% elif listing.type == 'office' %>🏢
+                {% elif listing.type == 'residential_building' %}🏢
+                {% elif listing.type == 'commercial_building' %>🏢
+                {% elif listing.type == 'residential_land' %}🌳
+                {% elif listing.type == 'agricultural_land' %>🌾
+                {% elif listing.type == 'commercial_land' %>🏗️
+                {% else %}🏠{% endif %}
+            </span>
+            <span>{{ listing.get_type_display }}</span>
+        </div>
+
+        <!-- Title -->
+        <a href="{{ listing.get_absolute_url }}">
+            <h3 class="listing-card-title">{{ listing.display_title }}</h3>
+        </a>
+
+        <!-- Location -->
+        <div class="listing-card-location">
+            <span class="listing-card-location-icon">📍</span>
+            <span>
+                {{ listing.governorate }}
+                {% if listing.city %} — {{ listing.city }}{% endif %}
+                {% if listing.district %} — {{ listing.district }}{% endif %}
+            </span>
+        </div>
+
+        <!-- Meta -->
+        <div class="listing-card-meta">
+            <div class="listing-card-meta-item">
+                <span class="listing-card-meta-icon">📐</span>
+                <span>{{ listing.area }} م²</span>
+            </div>
+            {% if listing.bedrooms %}
+            <div class="listing-card-meta-item">
+                <span class="listing-card-meta-icon">🛏️</span>
+                <span>{{ listing.bedrooms }} غرفة</span>
+            </div>
+            {% endif %}
+            {% if listing.bathrooms %}
+            <div class="listing-card-meta-item">
+                <span class="listing-card-meta-icon">🚿</span>
+                <span>{{ listing.bathrooms }} حمام</span>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Price -->
+        <div class="listing-card-price">
+            <span class="listing-card-price-value">{{ listing.price_formatted }}</span>
+            <span class="listing-card-price-currency">
+                {% if listing.currency != 'IQD' %}{{ listing.currency }}{% else %}د.ع{% endif %}
+            </span>
+        </div>
+
+        <!-- Footer -->
+        <div class="listing-card-footer">
+            <!-- Broker Info -->
+            <div class="listing-card-broker">
+                {% if listing.broker %}
+                <img src="{{ listing.broker.profile.image.url|default:'/static/images/default-avatar.png' }}" 
+                     alt="{{ listing.broker.username }}" 
+                     class="listing-card-broker-avatar"
+                     loading="lazy"
+                     width="40"
+                     height="40"
+                     style="aspect-ratio: 1/1; object-fit: cover;"
+                     onerror="this.src='/static/images/default-avatar.png'; this.onerror=null;">
+                <div class="listing-card-broker-info">
+                    <div class="listing-card-broker-name">{{ listing.broker.username }}</div>
+                    {% if listing.broker.is_verified %}
+                    <div class="listing-card-broker-verified">✓ موثق</div>
+                    {% endif %}
+                </div>
+                {% else %}
+                <div class="listing-card-broker-avatar">
+                    <span>👤</span>
+                </div>
+                <div class="listing-card-broker-info">
+                    <div class="listing-card-broker-name">
+                        {% if listing.owner_name %}{{ listing.owner_name }}{% else %}مالك العقار{% endif %}
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+
+            <!-- Meta Bottom -->
+            <div class="listing-card-meta-bottom">
+                <div class="listing-card-views">
+                    <span>👁️</span>
+                    <span>{{ listing.views_count|default:0 }}</span>
+                </div>
+                <div class="listing-card-time">
+                    <span>🕒</span>
+                    <span>{{ listing.created_at|timesince }}</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Action Button -->
+        <a href="{{ listing.get_absolute_url }}" class="listing-card-btn listing-card-btn-primary">
+            <span>عرض التفاصيل</span>
+            <span>←</span>
+        </a>
+    </div>
+</article>

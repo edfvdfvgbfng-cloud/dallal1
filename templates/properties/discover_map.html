@@ -1,0 +1,198 @@
+{% extends "base.html" %}
+{% load static %}
+{% load i18n %}
+
+{% block title %}{% trans "اكتشف حولك" %} - {% trans "دلال" %}{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-12">
+            <div class="card shadow">
+                <div class="card-header bg-info text-white">
+                    <h2 class="h4 mb-0">
+                        <i class="fas fa-map-marked-alt ml-2"></i>
+                        {% trans "اكتشف حولك" %}
+                    </h2>
+                </div>
+                <div class="card-body">
+                    <p class="text-muted mb-4">
+                        {% trans "استكشف الخريطة التفاعلية لتعرف على العقارات، الفنادق، المطاعم، الخدمات، والوظائف في منطقتك" %}
+                    </p>
+                    
+                    <form method="post" class="discover-map-form">
+                        {% csrf_token %}
+                        
+                        <div class="row">
+                            <div class="col-md-4">
+                                <div class="form-group">
+                                    <label for="latitude">{% trans "خط العرض" %}</label>
+                                    <input type="text" class="form-control" id="latitude" name="latitude" placeholder="33.3152">
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="form-group">
+                                    <label for="longitude">{% trans "خط الطول" %}</label>
+                                    <input type="text" class="form-control" id="longitude" name="longitude" placeholder="44.3661">
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="form-group">
+                                    <label for="radius">{% trans "نصف القطر (كم)" %}</label>
+                                    <input type="number" class="form-control" id="radius" name="radius" value="5" min="1" max="50">
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="categories">{% trans "الفئات" %}</label>
+                            <div class="row">
+                                <div class="col-md-3">
+                                    <div class="form-check">
+                                        <input type="checkbox" class="form-check-input" id="category_properties" name="categories" value="properties" checked>
+                                        <label class="form-check-label" for="category_properties">
+                                            <i class="fas fa-home ml-1"></i>
+                                            {% trans "عقارات" %}
+                                        </label>
+                                    </div>
+                                </div>
+                                <div class="col-md-3">
+                                    <div class="form-check">
+                                        <input type="checkbox" class="form-check-input" id="category_hotels" name="categories" value="hotels" checked>
+                                        <label class="form-check-label" for="category_hotels">
+                                            <i class="fas fa-hotel ml-1"></i>
+                                            {% trans "فنادق" %}
+                                        </label>
+                                    </div>
+                                </div>
+                                <div class="col-md-3">
+                                    <div class="form-check">
+                                        <input type="checkbox" class="form-check-input" id="category_restaurants" name="categories" value="restaurants" checked>
+                                        <label class="form-check-label" for="category_restaurants">
+                                            <i class="fas fa-utensils ml-1"></i>
+                                            {% trans "مطاعم" %}
+                                        </label>
+                                    </div>
+                                </div>
+                                <div class="col-md-3">
+                                    <div class="form-check">
+                                        <input type="checkbox" class="form-check-input" id="category_services" name="categories" value="services" checked>
+                                        <label class="form-check-label" for="category_services">
+                                            <i class="fas fa-concierge-bell ml-1"></i>
+                                            {% trans "خدمات" %}
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="row mt-2">
+                                <div class="col-md-3">
+                                    <div class="form-check">
+                                        <input type="checkbox" class="form-check-input" id="category_jobs" name="categories" value="jobs" checked>
+                                        <label class="form-check-label" for="category_jobs">
+                                            <i class="fas fa-briefcase ml-1"></i>
+                                            {% trans "وظائف" %}
+                                        </label>
+                                    </div>
+                                </div>
+                                <div class="col-md-3">
+                                    <div class="form-check">
+                                        <input type="checkbox" class="form-check-input" id="category_schools" name="categories" value="schools">
+                                        <label class="form-check-label" for="category_schools">
+                                            <i class="fas fa-school ml-1"></i>
+                                            {% trans "مدارس" %}
+                                        </label>
+                                    </div>
+                                </div>
+                                <div class="col-md-3">
+                                    <div class="form-check">
+                                        <input type="checkbox" class="form-check-input" id="category_hospitals" name="categories" value="hospitals">
+                                        <label class="form-check-label" for="category_hospitals">
+                                            <i class="fas fa-hospital ml-1"></i>
+                                            {% trans "مستشفيات" %}
+                                        </label>
+                                    </div>
+                                </div>
+                                <div class="col-md-3">
+                                    <div class="form-check">
+                                        <input type="checkbox" class="form-check-input" id="category_malls" name="categories" value="malls">
+                                        <label class="form-check-label" for="category_malls">
+                                            <i class="fas fa-shopping-cart ml-1"></i>
+                                            {% trans "مولات" %}
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="form-group">
+                            <button type="button" class="btn btn-info" id="use_current_location">
+                                <i class="fas fa-location-arrow ml-2"></i>
+                                {% trans "استخدم موقعي الحالي" %}
+                            </button>
+                        </div>
+                        
+                        <button type="submit" class="btn btn-primary btn-lg btn-block mt-4">
+                            <i class="fas fa-search ml-2"></i>
+                            {% trans "ابحث في المنطقة" %}
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card shadow">
+                <div class="card-body">
+                    <div id="map" style="height: 500px; width: 100%;"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="row mt-4">
+        <div class="col-12">
+            <h3 class="mb-3">{% trans "النتائج القريبة" %}</h3>
+            
+            <div class="row" id="nearby-results">
+                <div class="col-12">
+                    <div class="alert alert-info text-center">
+                        <i class="fas fa-map-marker-alt fa-2x mb-3"></i>
+                        <h4>{% trans "اختر موقع على الخريطة أو أدخل الإحداثيات للبحث" %}</h4>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Get current location
+    document.getElementById('use_current_location').addEventListener('click', function() {
+        if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(function(position) {
+                document.getElementById('latitude').value = position.coords.latitude;
+                document.getElementById('longitude').value = position.coords.longitude;
+            }, function(error) {
+                alert('خطأ في الحصول على الموقع: ' + error.message);
+            });
+        } else {
+            alert('المتصفح لا يدعم تحديد الموقع');
+        }
+    });
+    
+    // Initialize map (you can use Google Maps, Leaflet, or any other map library)
+    // This is a placeholder - you need to integrate your preferred map library
+    function initMap() {
+        // Example using Leaflet.js (you need to include the library in your base template)
+        // var map = L.map('map').setView([33.3152, 44.3661], 13);
+        // L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
+    }
+    
+    // Call initMap when the page loads
+    // initMap();
+});
+</script>
+{% endblock %}

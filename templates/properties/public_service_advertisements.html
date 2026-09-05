@@ -17,20 +17,8 @@
                        style="width: 100%; padding: 12px 20px; border: 2px solid rgba(255,255,255,0.1); border-radius: 8px; background: rgba(255,255,255,0.1); color: white;">
             </div>
             <div style="min-width: 150px;">
-                <select name="service_type" style="width: 100%; padding: 12px 20px; border: 2px solid rgba(255,255,255,0.1); border-radius: 8px; background: rgba(255,255,255,0.1); color: white;">
-                    <option value="">كل الخدمات</option>
-                    <option value="construction" {% if service_type == 'construction' %}selected{% endif %}>بناء وتشطيب</option>
-                    <option value="electricity" {% if service_type == 'electricity' %}selected{% endif %}>كهرباء</option>
-                    <option value="plumbing" {% if service_type == 'plumbing' %}selected{% endif %}>سباكة</option>
-                    <option value="carpentry" {% if service_type == 'carpentry' %}selected{% endif %}>نجارة</option>
-                    <option value="painting" {% if service_type == 'painting' %}selected{% endif %}>دهان</option>
-                    <option value="hvac" {% if service_type == 'hvac' %}selected{% endif %}>تكييف وتبريد</option>
-                    <option value="landscaping" {% if service_type == 'landscaping' %}selected{% endif %}>تنسيق حدائق</option>
-                    <option value="security" {% if service_type == 'security' %}selected{% endif %}>أمن وحراسة</option>
-                    <option value="cleaning" {% if service_type == 'cleaning' %}selected{% endif %}>تنظيف</option>
-                    <option value="moving" {% if service_type == 'moving' %}selected{% endif %}>نقل عفش</option>
-                    <option value="other" {% if service_type == 'other' %}selected{% endif %}>خدمات أخرى</option>
-                </select>
+                <input type="text" name="service_type" placeholder="نوع الخدمة" value="{{ service_type }}"
+                       style="width: 100%; padding: 12px 20px; border: 2px solid rgba(255,255,255,0.1); border-radius: 8px; background: rgba(255,255,255,0.1); color: white;">
             </div>
             <div style="min-width: 150px;">
                 <select name="governorate" style="width: 100%; padding: 12px 20px; border: 2px solid rgba(255,255,255,0.1); border-radius: 8px; background: rgba(255,255,255,0.1); color: white;">
@@ -63,97 +51,157 @@
                 <input type="number" name="price_max" placeholder="الحد الأقصى" value="{{ price_max }}"
                        style="width: 100%; padding: 12px 20px; border: 2px solid rgba(255,255,255,0.1); border-radius: 8px; background: rgba(255,255,255,0.1); color: white;">
             </div>
-            <button type="submit" style="padding: 12px 30px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border: none; border-radius: 8px; color: white; cursor: pointer;">
+            <button type="submit" style="padding: 12px 30px; background: linear-gradient(135deg, #FF7A00 0%, #FF9500 100%); border: none; border-radius: 8px; color: white; cursor: pointer;">
                 🔍 بحث
             </button>
         </form>
     </div>
 
-    <!-- Service Advertisements Grid -->
-    <div class="ads-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(350px, 1fr)); gap: 25px;">
-        {% for ad in advertisements %}
-        <div class="ad-card" style="background: rgba(255,255,255,0.05); border-radius: 12px; overflow: hidden; transition: transform 0.3s ease;">
-            {% if ad.is_featured %}
-            <div style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); padding: 8px 15px; text-align: center;">
-                <span style="color: white; font-weight: bold;">⭐ مميز</span>
-            </div>
-            {% endif %}
-            
-            {% if ad.cover_image %}
-            <div style="height: 200px; background-image: url('{{ ad.cover_image.url }}'); background-size: cover; background-position: center;"></div>
-            {% else %}
-            <div style="height: 200px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); display: flex; align-items: center; justify-content: center;">
-                <span style="font-size: 48px;">🔧</span>
-            </div>
-            {% endif %}
-            
-            <div style="padding: 20px;">
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
-                    <h3 style="font-size: 18px; margin: 0;">{{ ad.title }}</h3>
-                    <span style="background: rgba(255,255,255,0.1); padding: 5px 10px; border-radius: 20px; font-size: 12px;">
-                        {{ ad.get_service_type_display }}
-                    </span>
+    <!-- Featured Advertisements -->
+    {% if featured_ads %}
+    <div style="margin-bottom: 50px;">
+        <h2 style="font-size: 24px; margin-bottom: 20px; color: #FFD700;">⭐ إعلانات مميزة</h2>
+        <div class="ads-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(350px, 1fr)); gap: 25px;">
+            {% for ad in featured_ads %}
+            <div class="ad-card" style="background: rgba(255,215,0,0.1); border: 2px solid #FFD700; border-radius: 12px; overflow: hidden; transition: transform 0.3s ease;">
+                <div style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); padding: 8px 15px; text-align: center;">
+                    <span style="color: white; font-weight: bold;">⭐ مميز</span>
                 </div>
                 
-                <div style="margin-bottom: 15px;">
-                    <p style="color: rgba(255,255,255,0.7); margin: 5px 0;">📍 {{ ad.location|default:"-" }} - {{ ad.get_governorate_display }}</p>
-                    <p style="color: rgba(255,255,255,0.7); margin: 5px 0;">⏱️ {{ ad.completion_time|default:"-" }}</p>
-                    {% if ad.price %}
-                    <p style="color: rgba(255,255,255,0.7); margin: 5px 0;">💰 {{ ad.price }} د.ع {% if ad.price_description %}({{ ad.price_description }}){% endif %}</p>
-                    {% endif %}
+                {% if ad.cover_image %}
+                <div style="height: 200px; background-image: url('{{ ad.cover_image.url }}'); background-size: cover; background-position: center;"></div>
+                {% else %}
+                <div style="height: 200px; background: linear-gradient(135deg, #FF7A00 0%, #FF9500 100%); display: flex; align-items: center; justify-content: center;">
+                    <span style="font-size: 48px;">🔧</span>
                 </div>
+                {% endif %}
                 
-                <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 15px;">
-                    {% if ad.service_provider.logo %}
-                    <img src="{{ ad.service_provider.logo.url }}" style="width: 40px; height: 40px; border-radius: 50%; object-fit: cover;">
-                    {% endif %}
-                    <div>
-                        <p style="color: rgba(255,255,255,0.9); margin: 0; font-size: 14px;">{{ ad.service_provider.business_name }}</p>
-                        <p style="color: rgba(255,255,255,0.5); margin: 0; font-size: 12px;">⭐ {{ ad.service_provider.rating }} ({{ ad.service_provider.reviews_count }} تقييم)</p>
+                <div style="padding: 20px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                        <h3 style="font-size: 18px; margin: 0;">{{ ad.title }}</h3>
+                        <span style="background: rgba(255,215,0,0.2); color: #FFD700; padding: 5px 10px; border-radius: 20px; font-size: 12px;">
+                            {{ ad.service_type }}
+                        </span>
+                    </div>
+                    
+                    <div style="margin-bottom: 15px;">
+                        <p style="color: rgba(255,255,255,0.7); margin: 5px 0;">📍 {{ ad.governorate|default:"-" }}</p>
+                        <p style="color: rgba(255,255,255,0.7); margin: 5px 0;">⏱️ {{ ad.completion_time|default:"-" }}</p>
+                        {% if ad.expires_at %}
+                        <p style="color: rgba(255,255,255,0.7); margin: 5px 0;">📅 ينتهي: {{ ad.expires_at|date:"Y-m-d" }}</p>
+                        {% endif %}
+                        {% if ad.price %}
+                        <p style="color: rgba(255,255,255,0.7); margin: 5px 0;">💰 {{ ad.price }} د.ع {% if ad.price_description %}({{ ad.price_description }}){% endif %}</p>
+                        {% endif %}
+                    </div>
+                    
+                    <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 15px;">
+                        <div style="width: 40px; height: 40px; background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 20px;">
+                            🔧
+                        </div>
+                        <div>
+                            <p style="color: rgba(255,255,255,0.9); margin: 0; font-size: 14px;">{{ ad.service_provider.business_name }}</p>
+                            <p style="color: rgba(255,255,255,0.5); margin: 0; font-size: 12px;">⭐ {{ ad.service_provider.rating|default:0 }} ({{ ad.service_provider.reviews_count|default:0 }} تقييم)</p>
+                        </div>
+                    </div>
+                    
+                    <p style="color: rgba(255,255,255,0.6); font-size: 14px; margin-bottom: 15px; line-height: 1.5;">
+                        {{ ad.description|truncatechars:120 }}
+                    </p>
+                    
+                    <div style="display: flex; gap: 10px; flex-direction: column;">
+                        <a href="{% url 'service_advertisement_detail' ad.id %}" 
+                           style="padding: 12px; background: linear-gradient(135deg, #FF7A00 0%, #FF9500 100%); border: none; border-radius: 8px; color: white; text-align: center; text-decoration: none; font-weight: 600;">
+                            👁️ عرض التفاصيل
+                        </a>
+                        {% if ad.service_provider.phone %}
+                        <a href="tel:{{ ad.service_provider.phone }}" 
+                           style="padding: 12px; background: rgba(255,255,255,0.1); border: none; border-radius: 8px; color: white; text-align: center; text-decoration: none;">
+                            📞 اتصل
+                        </a>
+                        {% endif %}
                     </div>
                 </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Regular Advertisements -->
+    {% if regular_ads %}
+    <div>
+        <h2 style="font-size: 24px; margin-bottom: 20px;">📋 جميع الإعلانات</h2>
+        <div class="ads-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(350px, 1fr)); gap: 25px;">
+            {% for ad in regular_ads %}
+            <div class="ad-card" style="background: rgba(255,255,255,0.05); border-radius: 12px; overflow: hidden; transition: transform 0.3s ease;">
+                {% if ad.cover_image %}
+                <div style="height: 200px; background-image: url('{{ ad.cover_image.url }}'); background-size: cover; background-position: center;"></div>
+                {% else %}
+                <div style="height: 200px; background: linear-gradient(135deg, #FF7A00 0%, #FF9500 100%); display: flex; align-items: center; justify-content: center;">
+                    <span style="font-size: 48px;">🔧</span>
+                </div>
+                {% endif %}
                 
-                <p style="color: rgba(255,255,255,0.6); font-size: 14px; margin-bottom: 15px; line-height: 1.5;">
-                    {{ ad.description|truncatechars:120 }}
-                </p>
-                
-                <div style="display: flex; gap: 10px; flex-direction: column;">
-                    <a href="{% url 'service_advertisement_detail' ad.id %}" 
-                       style="padding: 12px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border: none; border-radius: 8px; color: white; text-align: center; text-decoration: none; font-weight: 600;">
-                        👁️ عرض التفاصيل
-                    </a>
-                    {% if ad.service_provider.phone %}
-                    <a href="tel:{{ ad.service_provider.phone }}" 
-                       style="padding: 12px; background: rgba(255,255,255,0.1); border: none; border-radius: 8px; color: white; text-align: center; text-decoration: none;">
-                        📞 اتصل
-                    </a>
-                    {% endif %}
+                <div style="padding: 20px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                        <h3 style="font-size: 18px; margin: 0;">{{ ad.title }}</h3>
+                        <span style="background: rgba(255,255,255,0.1); padding: 5px 10px; border-radius: 20px; font-size: 12px;">
+                            {{ ad.service_type }}
+                        </span>
+                    </div>
+                    
+                    <div style="margin-bottom: 15px;">
+                        <p style="color: rgba(255,255,255,0.7); margin: 5px 0;">📍 {{ ad.governorate|default:"-" }}</p>
+                        <p style="color: rgba(255,255,255,0.7); margin: 5px 0;">⏱️ {{ ad.completion_time|default:"-" }}</p>
+                        {% if ad.expires_at %}
+                        <p style="color: rgba(255,255,255,0.7); margin: 5px 0;">📅 ينتهي: {{ ad.expires_at|date:"Y-m-d" }}</p>
+                        {% endif %}
+                        {% if ad.price %}
+                        <p style="color: rgba(255,255,255,0.7); margin: 5px 0;">💰 {{ ad.price }} د.ع {% if ad.price_description %}({{ ad.price_description }}){% endif %}</p>
+                        {% endif %}
+                    </div>
+                    
+                    <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 15px;">
+                        <div style="width: 40px; height: 40px; background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 20px;">
+                            🔧
+                        </div>
+                        <div>
+                            <p style="color: rgba(255,255,255,0.9); margin: 0; font-size: 14px;">{{ ad.service_provider.business_name }}</p>
+                            <p style="color: rgba(255,255,255,0.5); margin: 0; font-size: 12px;">⭐ {{ ad.service_provider.rating|default:0 }} ({{ ad.service_provider.reviews_count|default:0 }} تقييم)</p>
+                        </div>
+                    </div>
+                    
+                    <p style="color: rgba(255,255,255,0.6); font-size: 14px; margin-bottom: 15px; line-height: 1.5;">
+                        {{ ad.description|truncatechars:120 }}
+                    </p>
+                    
+                    <div style="display: flex; gap: 10px; flex-direction: column;">
+                        <a href="{% url 'service_advertisement_detail' ad.id %}" 
+                           style="padding: 12px; background: linear-gradient(135deg, #FF7A00 0%, #FF9500 100%); border: none; border-radius: 8px; color: white; text-align: center; text-decoration: none; font-weight: 600;">
+                            👁️ عرض التفاصيل
+                        </a>
+                        {% if ad.service_provider.phone %}
+                        <a href="tel:{{ ad.service_provider.phone }}" 
+                           style="padding: 12px; background: rgba(255,255,255,0.1); border: none; border-radius: 8px; color: white; text-align: center; text-decoration: none;">
+                            📞 اتصل
+                        </a>
+                        {% endif %}
+                    </div>
                 </div>
             </div>
+            {% endfor %}
         </div>
-        {% empty %}
-        <div style="grid-column: 1 / -1; text-align: center; padding: 60px 20px;">
-            <p style="font-size: 18px; color: rgba(255,255,255,0.7);">لا توجد إعلانات خدمات حالياً</p>
-        </div>
-        {% endfor %}
     </div>
+    {% endif %}
 
-
-
-    <!-- Register as Service Provider Button -->
-    <div style="text-align: center; margin-top: 40px;">
-        {% if user.is_authenticated %}
-        <a href="{% url 'service_provider_register' %}" 
-           style="display: inline-block; padding: 15px 40px; background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%); border: none; border-radius: 8px; color: white; font-size: 16px; text-decoration: none;">
-            ➕ سجل كمقدم خدمة
-        </a>
-        {% else %}
-        <a href="{% url 'login' %}" 
-           style="display: inline-block; padding: 15px 40px; background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%); border: none; border-radius: 8px; color: white; font-size: 16px; text-decoration: none;">
-            تسجيل الدخول للتسجيل كمقدم خدمة
-        </a>
-        {% endif %}
+    {% if not featured_ads and not regular_ads %}
+    <div style="text-align: center; padding: 60px 20px;">
+        <p style="font-size: 18px; color: rgba(255,255,255,0.7);">لا توجد إعلانات خدمات حالياً</p>
     </div>
+    {% endif %}
+
+
 </div>
 
 <style>

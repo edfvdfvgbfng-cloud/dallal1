@@ -264,20 +264,6 @@ function initThemeToggle() {
   localStorage.setItem('theme', 'dark');
 }
 
-// ===== Back to Top =====
-function initBackToTop() {
-  const btn = document.getElementById('back-to-top');
-  if (!btn) return;
-  
-  window.addEventListener('scroll', () => {
-    btn.style.display = window.scrollY > 300 ? 'block' : 'none';
-  });
-  
-  btn.addEventListener('click', () => {
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  });
-}
-
 // ===== Mobile Navigation =====
 function initMobileNav() {
   const toggle = document.querySelector('.hamburger') || document.querySelector('.nav-toggle');
@@ -450,7 +436,7 @@ function initApp() {
   initCalculator();
   initPropertyMap();
   initThemeToggle();
-  initBackToTop();
+  // initBackToTop(); // Function not defined, commented out
   initMobileNav();
   initActiveNav();
   initScrollReveal();

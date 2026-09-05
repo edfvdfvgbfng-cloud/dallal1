@@ -1,0 +1,120 @@
+{% load static %}
+<article class="listing-card listing-card-hotel" data-hotel-id="{{ hotel.id }}" data-hotel-url="{{ hotel.get_absolute_url }}" data-hotel-title="{{ hotel.title }}">
+    <!-- Card Media -->
+    <div class="listing-card-media">
+        <!-- Actions -->
+        <div class="listing-card-actions">
+            <button type="button" class="listing-card-action-btn btn-favorite" 
+                    aria-label="مفضلة" 
+                    data-hotel-id="{{ hotel.id }}">
+                <span class="fav-icon">🤍</span>
+            </button>
+            <button type="button" class="listing-card-action-btn" 
+                    aria-label="مشاركة" 
+                    data-action="share"
+                    data-hotel-url="{{ hotel.get_absolute_url }}"
+                    data-hotel-title="{{ hotel.title }}">
+                <span>📤</span>
+            </button>
+        </div>
+
+        <!-- Badges -->
+        <div class="listing-card-badges">
+            {% if hotel.is_featured %}
+            <span class="listing-card-badge listing-card-badge-featured">⭐ مميز</span>
+            {% endif %}
+            {% if hotel.star_rating %}
+            <span class="listing-card-badge listing-card-badge-verified">
+                {% for i in hotel.star_rating|range %}⭐{% endfor %}
+            </span>
+            {% endif %}
+        </div>
+
+        <!-- Image -->
+        <a href="{{ hotel.get_absolute_url }}" class="listing-card-image-link">
+            {% if hotel.cover_image %}
+            <img src="{{ hotel.cover_image.url }}" 
+                 alt="{{ hotel.title }}" 
+                 loading="lazy"
+                 width="400"
+                 height="300"
+                 class="listing-card-image"
+                 data-src="{{ hotel.cover_image.url }}"
+                 style="aspect-ratio: 4/3; object-fit: cover;"
+                 onerror="this.src='/static/images/hotel-placeholder.svg'; this.onerror=null;">
+            {% else %}
+            <div class="listing-card-placeholder">
+                <span class="listing-card-placeholder-icon">🏨</span>
+                <span class="listing-card-placeholder-text">لا توجد صور</span>
+            </div>
+            {% endif %}
+        </a>
+
+        <!-- Gallery Count -->
+        {% if hotel.images_count > 1 %}
+        <div class="listing-card-gallery-count">
+            {{ hotel.images_count }}
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Card Body -->
+    <div class="listing-card-body">
+        <!-- Rating & Stars -->
+        <div class="listing-card-type">
+            <span class="listing-card-type-icon">⭐</span>
+            <span>
+                {% if hotel.rating %}{{ hotel.rating }}/5{% else %}جديد{% endif %}
+                {% if hotel.star_rating %} • {% for i in hotel.star_rating|range %}⭐{% endfor %}{% endif %}
+            </span>
+        </div>
+
+        <!-- Title -->
+        <a href="{{ hotel.get_absolute_url }}">
+            <h3 class="listing-card-title">{{ hotel.title }}</h3>
+        </a>
+
+        <!-- Location -->
+        <div class="listing-card-location">
+            <span class="listing-card-location-icon">📍</span>
+            <span>
+                {{ hotel.governorate }}
+                {% if hotel.city %} — {{ hotel.city }}{% endif %}
+                {% if hotel.district %} — {{ hotel.district }}{% endif %}
+            </span>
+        </div>
+
+        <!-- Description (truncated) -->
+        {% if hotel.description %}
+        <p class="listing-card-description">
+            {{ hotel.description|truncatewords:15 }}
+        </p>
+        {% endif %}
+
+        <!-- Amenities -->
+        {% if hotel.amenities %}
+        <div class="listing-card-amenities">
+            {% for amenity in hotel.amenities|slice:":4" %}
+            <span class="listing-card-amenity">{{ amenity }}</span>
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        <!-- Price -->
+        <div class="listing-card-price">
+            <span class="listing-card-price-value">
+                {% if hotel.price_start %}{{ hotel.price_start }}{% else %}--{% endif %}
+            </span>
+            <span class="listing-card-price-currency">
+                {% if hotel.currency %}{{ hotel.currency }}{% else %}د.ع{% endif %}
+            </span>
+            <span class="listing-card-price-unit">/ ليلة</span>
+        </div>
+
+        <!-- Action Button -->
+        <a href="{{ hotel.get_absolute_url }}" class="listing-card-btn listing-card-btn-primary">
+            <span>عرض الفندق</span>
+            <span>←</span>
+        </a>
+    </div>
+</article>

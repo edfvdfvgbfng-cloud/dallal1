@@ -94,7 +94,7 @@
                                         عرض
                                     </a>
                                     {% if notification.status == 'draft' %}
-                                    <a href="{% url 'admin_send_notification' notification.id %}" class="btn btn-sm btn-outline-success">
+                                    <a href="{% url 'admin_resend_notification' notification.id %}" class="btn btn-sm btn-outline-success">
                                         إرسال
                                     </a>
                                     {% endif %}

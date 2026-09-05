@@ -1,255 +1,232 @@
-{% extends "properties/base.html" %}
+{% extends 'properties/base.html' %}
 {% load static %}
 
-{% block title %}فرص العمل - دلال{% endblock %}
+{% block title %}فرص العمل 💼{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/listing-pages.css' %}">
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'js/listing-pages.js' %}" defer></script>
+<script src="{% static 'js/search-autocomplete.js' %}" defer></script>
+{% endblock %}
 
 {% block content %}
-<div class="container py-5">
-    <div class="row">
-        <div class="col-12">
-            <div class="d-flex justify-content-between align-items-center mb-4">
-                <h1 class="h2 mb-0">فرص العمل</h1>
-                <a href="/jobs/post/" class="btn btn-primary">نشر وظيفة جديدة</a>
+<div class="listing-page">
+    <!-- Skip to content for accessibility -->
+    <a href="#listings-container" class="skip-to-content">انتقل إلى المحتوى الرئيسي</a>
+
+    <!-- Hero Section -->
+    <section class="listing-hero">
+        <div class="listing-hero-content">
+            <span class="listing-hero-icon">💼</span>
+            <h1 class="listing-hero-title">فرص العمل</h1>
+            <p class="listing-hero-subtitle">اكتشف أفضل فرص العمل في العراق وخارج العراق</p>
+        </div>
+    </section>
+
+    <!-- Search & Filters Toolbar -->
+    <div class="listing-toolbar">
+        <div class="listing-toolbar-content">
+            <!-- Search Box -->
+            <div class="listing-search-box">
+                <input type="text" 
+                       class="listing-search-input" 
+                       placeholder="ابحث عن وظيفتك..." 
+                       name="search"
+                       value="{{ search|default:'' }}">
+                <span class="listing-search-icon">🔍</span>
             </div>
-            
-            <!-- Search and Filter -->
-            <div class="card mb-4">
-                <div class="card-body">
-                    <form method="GET" action="{% url 'jobs' %}">
-                        <div class="row g-3">
-                            <div class="col-md-3">
-                                <input type="text" name="search" class="form-control" placeholder="ابحث عن وظيفة..." value="{{ request.GET.search }}">
-                            </div>
-                            <div class="col-md-2">
-                                <select name="category" class="form-select">
-                                    <option value="">كل التصنيفات</option>
-                                    {% for category in categories %}
-                                    <option value="{{ category.id }}" {% if request.GET.category == category.id|stringformat:"s" %}selected{% endif %}>{{ category.icon }} {{ category.name_ar }}</option>
-                                    {% endfor %}
-                                </select>
-                            </div>
-                            <div class="col-md-2">
-                                <select name="location_type" class="form-select">
-                                    <option value="">كل المواقع</option>
-                                    <option value="inside_iraq" {% if request.GET.location_type == 'inside_iraq' %}selected{% endif %}>داخل العراق</option>
-                                    <option value="outside_iraq" {% if request.GET.location_type == 'outside_iraq' %}selected{% endif %}>خارج العراق</option>
-                                </select>
-                            </div>
-                            <div class="col-md-2">
-                                <select name="governorate" class="form-select">
-                                    <option value="">كل المحافظات</option>
-                                    {% for gov in governorates %}
-                                    <option value="{{ gov.0 }}" {% if request.GET.governorate == gov.0 %}selected{% endif %}>{{ gov.1 }}</option>
-                                    {% endfor %}
-                                </select>
-                            </div>
-                            <div class="col-md-3">
-                                <button type="submit" class="btn btn-primary w-100">بحث</button>
-                            </div>
-                        </div>
-                    </form>
+
+            <!-- Actions -->
+            <div class="listing-actions">
+                <!-- View Toggle -->
+                <div class="listing-view-toggle">
+                    <button class="listing-view-btn active" data-view="grid" aria-label="عرض شبكي">
+                        ▦
+                    </button>
+                    <button class="listing-view-btn" data-view="list" aria-label="عرض قائمة">
+                        ☰
+                    </button>
                 </div>
+
+                <!-- Filter Button (Mobile) -->
+                <button class="listing-filter-btn" aria-label="الفلاتر">
+                    <span>🔍</span>
+                    <span>الفلاتر</span>
+                </button>
+
+                <!-- Sort -->
+                <select class="listing-sort-select" name="sort">
+                    <option value="newest" {% if sort == 'newest' %}selected{% endif %}>الأحدث</option>
+                    <option value="salary_high" {% if sort == 'salary_high' %}selected{% endif %}>الأعلى راتبًا</option>
+                    <option value="salary_low" {% if sort == 'salary_low' %}selected{% endif %}>الأقل راتبًا</option>
+                    <option value="featured" {% if sort == 'featured' %}selected{% endif %}>المميز أولًا</option>
+                </select>
             </div>
-            
-            <!-- Featured Jobs Section -->
-            {% if featured_jobs %}
-            <div class="mb-5">
-                <div class="d-flex align-items-center mb-3">
-                    <h3 class="h4 mb-0">
-                        <i class="fas fa-star text-warning me-2"></i>
-                        فرص عمل مميزة
-                    </h3>
-                    <span class="badge bg-warning ms-2">{{ featured_jobs|length }}</span>
+        </div>
+    </div>
+
+    <!-- Main Layout -->
+    <div class="listing-layout" id="listings-container">
+        <!-- Filters Sidebar -->
+        <aside class="listing-filters">
+            <div class="listing-filters-header">
+                <h2 class="listing-filters-title">الفلاتر</h2>
+                <button class="listing-filters-clear" type="button">مسح الكل</button>
+            </div>
+
+            <form class="listing-filters-form" method="get" action="{% url 'jobs' %}">
+                <!-- Category -->
+                <div class="listing-filter-group">
+                    <label class="listing-filter-label">التصنيف</label>
+                    <select name="category" class="listing-filter-select">
+                        <option value="">كل التصنيفات</option>
+                        {% for cat in categories %}
+                        <option value="{{ cat.id }}" {% if category|add:0 == cat.id %}selected{% endif %}>{{ cat.name }}</option>
+                        {% endfor %}
+                    </select>
                 </div>
-                <div class="row">
-                    {% for job in featured_jobs %}
-                    <div class="col-md-6 mb-4">
-                        <div class="card h-100 featured-job-card">
-                            <div class="card-body">
-                                <div class="d-flex justify-content-between align-items-start mb-3">
-                                    <div>
-                                        <h5 class="card-title">
-                                            <i class="fas fa-star text-warning me-1"></i>
-                                            {{ job.title }}
-                                        </h5>
-                                        <p class="text-muted mb-1">{{ job.company_name }}</p>
-                                    </div>
-                                    {% if job.company_logo %}
-                                    <img src="{{ job.company_logo.url }}" alt="{{ job.company_name }}" class="company-logo">
-                                    {% endif %}
-                                </div>
-                                
-                                <div class="mb-3">
-                                    <span class="badge bg-primary">{{ job.get_job_type_display }}</span>
-                                    <span class="badge bg-info">{{ job.get_experience_level_display }}</span>
-                                    {% if job.is_urgent %}
-                                    <span class="badge bg-danger">عادية</span>
-                                    {% endif %}
-                                    <span class="badge bg-warning">مميز</span>
-                                </div>
-                                
-                                <p class="card-text">{{ job.description|truncatewords:20 }}</p>
-                                
-                                <div class="job-details mb-3">
-                                    <div class="d-flex align-items-center mb-2">
-                                        <i class="fas fa-map-marker-alt me-2"></i>
-                                        <span>{{ job.governorate }} - {{ job.city }}</span>
-                                    </div>
-                                    <div class="d-flex align-items-center mb-2">
-                                        <i class="fas fa-money-bill-wave me-2"></i>
-                                        <span>{{ job.salary_range }}</span>
-                                    </div>
-                                    <div class="d-flex align-items-center">
-                                        <i class="fas fa-eye me-2"></i>
-                                        <span>{{ job.views_count }} مشاهدة</span>
-                                    </div>
-                                </div>
-                                
-                                <div class="d-flex justify-content-between align-items-center">
-                                    <small class="text-muted">{{ job.created_at|date:"Y-m-d" }}</small>
-                                    <a href="{% url 'job_detail' job.slug %}" class="btn btn-warning btn-sm">التفاصيل والتقديم</a>
-                                </div>
-                            </div>
-                        </div>
+
+                <!-- Location Type -->
+                <div class="listing-filter-group">
+                    <label class="listing-filter-label">الموقع</label>
+                    <select name="location_type" class="listing-filter-select">
+                        <option value="">الكل</option>
+                        <option value="inside_iraq" {% if location_type == 'inside_iraq' %}selected{% endif %}>داخل العراق</option>
+                        <option value="outside_iraq" {% if location_type == 'outside_iraq' %}selected{% endif %}>خارج العراق</option>
+                    </select>
+                </div>
+
+                <!-- Governorate (for inside Iraq) -->
+                <div class="listing-filter-group">
+                    <label class="listing-filter-label">المحافظة</label>
+                    <select name="governorate" class="listing-filter-select">
+                        <option value="">كل المحافظات</option>
+                        {% for gov_code, gov_name in governorates %}
+                        <option value="{{ gov_name }}" {% if governorate == gov_name %}selected{% endif %}>{{ gov_name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <!-- Country (for outside Iraq) -->
+                <div class="listing-filter-group">
+                    <label class="listing-filter-label">الدولة</label>
+                    <select name="country" class="listing-filter-select">
+                        <option value="">كل الدول</option>
+                        {% for country_code, country_name in countries %}
+                        <option value="{{ country_code }}" {% if country == country_code %}selected{% endif %}>{{ country_name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <!-- Job Type -->
+                <div class="listing-filter-group">
+                    <label class="listing-filter-label">نوع الدوام</label>
+                    <select name="job_type" class="listing-filter-select">
+                        <option value="">الكل</option>
+                        {% for type_code, type_name in job_types %}
+                        <option value="{{ type_code }}" {% if job_type == type_code %}selected{% endif %}>{{ type_name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <!-- Experience Level -->
+                <div class="listing-filter-group">
+                    <label class="listing-filter-label">مستوى الخبرة</label>
+                    <select name="experience" class="listing-filter-select">
+                        <option value="">الكل</option>
+                        {% for exp_code, exp_name in experience_levels %}
+                        <option value="{{ exp_code }}" {% if experience == exp_code %}selected{% endif %}>{{ exp_name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <!-- Salary Range -->
+                <div class="listing-filter-group">
+                    <label class="listing-filter-label">الراتب (د.ع)</label>
+                    <div class="listing-filter-range">
+                        <input type="number" 
+                               name="salary_min" 
+                               class="listing-filter-input" 
+                               placeholder="من"
+                               value="{{ salary_min|default:'' }}">
+                        <span class="listing-filter-range-separator">—</span>
+                        <input type="number" 
+                               name="salary_max" 
+                               class="listing-filter-input" 
+                               placeholder="إلى"
+                               value="{{ salary_max|default:'' }}">
                     </div>
-                    {% endfor %}
                 </div>
+
+                <!-- Apply Button -->
+                <button type="submit" class="listing-filter-apply">
+                    <span>🔍</span>
+                    <span>تصفية النتائج</span>
+                </button>
+            </form>
+        </aside>
+
+        <!-- Listings Container -->
+        <div class="listings-container">
+            <!-- Header -->
+            <div class="listings-header">
+                <span class="listings-count">
+                    {% if jobs %}
+                    {{ jobs|length }} وظيفة
+                    {% else %}
+                    لا توجد نتائج
+                    {% endif %}
+                </span>
             </div>
-            {% endif %}
-            
-            <!-- Regular Jobs Section -->
-            <div class="mb-3">
-                <h3 class="h4 mb-3">
-                    <i class="fas fa-briefcase me-2"></i>
-                    فرص عمل عادية
-                </h3>
-            </div>
-            
-            <!-- Jobs List -->
-            <div class="row">
+
+            <!-- Jobs Grid -->
+            {% if jobs %}
+            <div class="listings-grid">
                 {% for job in jobs %}
-                <div class="col-md-6 mb-4">
-                    <div class="card h-100 job-card">
-                        <div class="card-body">
-                            <div class="d-flex justify-content-between align-items-start mb-3">
-                                <div>
-                                    <h5 class="card-title">{{ job.title }}</h5>
-                                    <p class="text-muted mb-1">{{ job.company_name }}</p>
-                                </div>
-                                {% if job.company_logo %}
-                                <img src="{{ job.company_logo.url }}" alt="{{ job.company_name }}" class="company-logo">
-                                {% endif %}
-                            </div>
-                            
-                            <div class="mb-3">
-                                <span class="badge bg-primary">{{ job.get_job_type_display }}</span>
-                                <span class="badge bg-info">{{ job.get_experience_level_display }}</span>
-                                {% if job.is_urgent %}
-                                <span class="badge bg-danger">عاجل</span>
-                                {% endif %}
-                            </div>
-                            
-                            <p class="card-text">{{ job.description|truncatewords:20 }}</p>
-                            
-                            <div class="job-details mb-3">
-                                <div class="d-flex align-items-center mb-2">
-                                    <i class="fas fa-map-marker-alt me-2"></i>
-                                    <span>{{ job.governorate }} - {{ job.city }}</span>
-                                </div>
-                                <div class="d-flex align-items-center mb-2">
-                                    <i class="fas fa-money-bill-wave me-2"></i>
-                                    <span>{{ job.salary_range }}</span>
-                                </div>
-                                <div class="d-flex align-items-center">
-                                    <i class="fas fa-eye me-2"></i>
-                                    <span>{{ job.views_count }} مشاهدة</span>
-                                </div>
-                            </div>
-                            
-                            <div class="d-flex justify-content-between align-items-center">
-                                <small class="text-muted">{{ job.created_at|date:"Y-m-d" }}</small>
-                                <a href="{% url 'job_detail' job.slug %}" class="btn btn-outline-primary btn-sm">التفاصيل والتقديم</a>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                {% empty %}
-                <div class="col-12">
-                    <div class="alert alert-info">
-                        لا توجد فرص عمل متاحة حالياً.
-                    </div>
-                </div>
+                {% include 'properties/_job_card.html' with job=job %}
                 {% endfor %}
             </div>
-            
+
             <!-- Pagination -->
             {% if is_paginated %}
-            <nav aria-label="Page navigation">
-                <ul class="pagination justify-content-center">
-                    {% if page_obj.has_previous %}
-                    <li class="page-item">
-                        <a class="page-link" href="?page=1{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.category %}&category={{ request.GET.category }}{% endif %}{% if request.GET.governorate %}&governorate={{ request.GET.governorate }}{% endif %}">الأولى</a>
-                    </li>
-                    <li class="page-item">
-                        <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.category %}&category={{ request.GET.category }}{% endif %}{% if request.GET.governorate %}&governorate={{ request.GET.governorate }}{% endif %}">السابق</a>
-                    </li>
-                    {% endif %}
-                    
-                    <li class="page-item active">
-                        <span class="page-link">{{ page_obj.number }}</span>
-                    </li>
-                    
-                    {% if page_obj.has_next %}
-                    <li class="page-item">
-                        <a class="page-link" href="?page={{ page_obj.next_page_number }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.category %}&category={{ request.GET.category }}{% endif %}{% if request.GET.governorate %}&governorate={{ request.GET.governorate }}{% endif %}">التالي</a>
-                    </li>
-                    <li class="page-item">
-                        <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.category %}&category={{ request.GET.category }}{% endif %}{% if request.GET.governorate %}&governorate={{ request.GET.governorate }}{% endif %}">الأخيرة</a>
-                    </li>
-                    {% endif %}
-                </ul>
-            </nav>
+            <div class="listing-pagination">
+                {% if page_obj.has_previous %}
+                <a href="?page={{ page_obj.previous_page_number }}" class="listing-pagination-btn">→</a>
+                {% endif %}
+
+                {% for num in page_obj.paginator.page_range %}
+                {% if page_obj.number == num %}
+                <span class="listing-pagination-btn active">{{ num }}</span>
+                {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                <a href="?page={{ num }}" class="listing-pagination-btn">{{ num }}</a>
+                {% endif %}
+                {% endfor %}
+
+                {% if page_obj.has_next %}
+                <a href="?page={{ page_obj.next_page_number }}" class="listing-pagination-btn">←</a>
+                {% endif %}
+            </div>
+            {% endif %}
+
+            {% else %}
+            <!-- Empty State -->
+            <div class="listing-empty-state">
+                <div class="listing-empty-icon">💼</div>
+                <h3 class="listing-empty-title">لا توجد وظائف مطابقة</h3>
+                <p class="listing-empty-text">جرّب تغيير الفلاتر أو البحث عن وظيفة مختلفة</p>
+                <button class="listing-empty-action" onclick="window.location.href='{% url 'jobs' %}'">
+                    <span>🔄</span>
+                    <span>مسح الفلاتر</span>
+                </button>
+            </div>
             {% endif %}
         </div>
     </div>
 </div>
 
-<style>
-.job-card {
-    transition: transform 0.3s ease, box-shadow 0.3s ease;
-    border: 1px solid #e0e0e0;
-}
-
-.job-card:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-}
-
-.featured-job-card {
-    transition: transform 0.3s ease, box-shadow 0.3s ease;
-    border: 2px solid #ffc107;
-    background: linear-gradient(135deg, #fff8e1 0%, #ffffff 100%);
-    box-shadow: 0 4px 15px rgba(255, 193, 7, 0.3);
-}
-
-.featured-job-card:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 8px 25px rgba(255, 193, 7, 0.5);
-}
-
-.company-logo {
-    width: 60px;
-    height: 60px;
-    object-fit: contain;
-    border-radius: 8px;
-}
-
-.job-details {
-    font-size: 0.9rem;
-}
-
-.job-details i {
-    color: #0d9488;
-}
-</style>
+<!-- Mobile Filters Overlay -->
+<div class="listing-filters-overlay"></div>
 {% endblock %}

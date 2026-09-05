@@ -14,7 +14,7 @@
   --success: #22C55E;
   --danger: #EF4444;
   --warning: #F59E0B;
-  --info: #3B82F6;
+  --info: #FF7A00;
 
   --bg: #0B0B0B;
   --bg-alt: #161616;
@@ -628,17 +628,35 @@ label {
   font-weight: 600;
   white-space: nowrap;
   transition: var(--transition);
+  pointer-events: auto;
+  position: relative;
+  z-index: 1;
 }
 
 .tab-btn:hover {
   border-color: var(--border-strong);
   color: var(--primary);
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.tab-btn:active {
+  transform: translateY(0);
+  box-shadow: none;
 }
 
 .tab-btn.active {
   background: rgba(255, 122, 0, 0.15);
   border-color: var(--primary);
   color: var(--primary);
+  pointer-events: auto;
+}
+
+/* Ensure dashboard tabs container doesn't block clicks */
+.dashboard-tabs {
+  pointer-events: auto;
+  position: relative;
+  z-index: 10;
 }
 
 .panel { display: none; }

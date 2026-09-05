@@ -202,7 +202,7 @@
         <tr>
           <td>{{ presence.office.name }}</td>
           <td>
-            <span class="status-badge {% if.is_online %}status-online{% elif.status == 'busy' %}status-busy{% else %}status-offline{% endif %}">
+            <span class="status-badge {% if presence.is_online %}status-online{% elif presence.status == 'busy' %}status-busy{% else %}status-offline{% endif %}">
               {{ presence.get_status_emoji }} {{ presence.get_status_display }}
             </span>
           </td>

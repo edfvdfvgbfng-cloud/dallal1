@@ -4,7 +4,6 @@ import uuid
 from datetime import datetime, timedelta
 from django.http import JsonResponse
 from django.views.decorators.http import require_http_methods
-from django.views.decorators.csrf import csrf_exempt
 import random
 import time
 from django.db.models import Q, Count, Avg, Sum, F
@@ -21,7 +20,7 @@ from .models import BuildingAdvertisement, AdResponse
 # Import new AI components
 from .ai_conversation_manager import conversation_manager
 from .ai_nlp_layer import nlp_manager
-from .ai_intent_detection import intent_detector
+from .ai_intent_classifier import intent_classifier
 from .ai_entity_extraction import entity_extractor
 from .ai_context_engine import context_manager
 
@@ -29,7 +28,7 @@ logger = logging.getLogger('properties')
 
 
 @api_view(['POST'])
-@permission_classes([AllowAny])
+@permission_classes([IsAuthenticated])
 def ai_chatbot_api(request):
     """AI Chatbot main API endpoint - Using AI Agent with tool calling and voice support"""
     try:

@@ -15,7 +15,7 @@
                 <span class="badge" style="background: linear-gradient(135deg, #ff6b35 0%, #f7931e 100%); color: white;">
                   {% if auction.approval_status == 'approved' %}موافق عليه{% elif auction.approval_status == 'pending' %}قيد المراجعة{% elif auction.approval_status == 'rejected' %}مرفوض{% else %}يحتاج تعديل{% endif %}
                 </span>
-                <span class="badge" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;">
+                <span class="badge" style="background: linear-gradient(135deg, #667eea 0%, #FF9500 100%); color: white;">
                   {% if auction.status == 'upcoming' %}قادم{% elif auction.status == 'active' %}نشط{% elif auction.status == 'ended' %}منتهي{% else %}ملغي{% endif %}
                 </span>
                 {% if auction.is_featured %}

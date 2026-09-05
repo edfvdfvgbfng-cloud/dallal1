@@ -1,0 +1,479 @@
+{% extends 'properties/base.html' %}
+{% load static %}
+{% load custom_filters %}
+
+{% block title %}تفاصيل العقد - {{ contract.contract_number }}{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-12">
+            <!-- رأس الصفحة -->
+            <div class="card mb-4">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <div>
+                        <h2 class="mb-0">📄 {{ contract.contract_number }}</h2>
+                        <small class="text-muted">{{ contract.contract_title|default:"بدون عنوان" }}</small>
+                    </div>
+                    <div class="btn-group">
+                        {% if can_edit %}
+                        <a href="{% url 'contract_edit' contract.id %}" class="btn btn-warning">
+                            <span class="btn-icon">✏️</span>
+                            تعديل
+                        </a>
+                        <form method="post" action="{% url 'contract_archive' contract.id %}" class="d-inline">
+                            {% csrf_token %}
+                            <button type="submit" class="btn btn-secondary" onclick="return confirm('هل أنت متأكد من أرشفة هذا العقد؟')">
+                                <span class="btn-icon">📚</span>
+                                أرشفة
+                            </button>
+                        </form>
+                        {% endif %}
+                        {% if can_delete %}
+                        <form method="post" action="{% url 'contract_delete' contract.id %}" class="d-inline">
+                            {% csrf_token %}
+                            <button type="submit" class="btn btn-danger" onclick="return confirm('هل أنت متأكد من حذف هذا العقد نهائياً؟ لا يمكن التراجع عن هذا الإجراء.')">
+                                <span class="btn-icon">🗑️</span>
+                                حذف نهائي
+                            </button>
+                        </form>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            
+            <!-- معلومات العقد الأساسية -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h4 class="mb-0">معلومات العقد</h4>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="info-item">
+                                <label>نوع العقد:</label>
+                                <span>{{ contract.get_contract_type_display }}</span>
+                            </div>
+                            <div class="info-item">
+                                <label>الحالة:</label>
+                                <span class="badge {% if contract.status == 'active' %}bg-success{% elif contract.status == 'completed' %}bg-primary{% elif contract.status == 'draft' %}bg-secondary{% elif contract.status == 'expired' %}bg-danger{% else %}bg-warning{% endif %}">
+                                    {{ contract.get_status_display }}
+                                </span>
+                            </div>
+                            <div class="info-item">
+                                <label>القيمة:</label>
+                                <span>{{ contract.amount }} {{ contract.currency }}</span>
+                            </div>
+                            <div class="info-item">
+                                <label>العربون:</label>
+                                <span>{{ contract.deposit }} {{ contract.currency }}</span>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="info-item">
+                                <label>تاريخ البدء:</label>
+                                <span>{{ contract.start_date|date:"Y-m-d" }}</span>
+                            </div>
+                            <div class="info-item">
+                                <label>تاريخ الانتهاء:</label>
+                                <span>{{ contract.end_date|date:"Y-m-d"|default:"-" }}</span>
+                            </div>
+                            <div class="info-item">
+                                <label>تاريخ التوقيع:</label>
+                                <span>{{ contract.signing_date|date:"Y-m-d"|default:"-" }}</span>
+                            </div>
+                            <div class="info-item">
+                                <label>تكرار الدفع:</label>
+                                <span>{{ contract.get_payment_frequency_display }}</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- حالة الانتهاء -->
+                    {% if expiry_status %}
+                    <div class="alert {% if expiry_status == 'expired' %}alert-danger{% elif expiry_status == 'critical' %}alert-danger{% elif expiry_status == 'warning' %}alert-warning{% else %}alert-success{% endif %} mt-3">
+                        {% if expiry_status == 'expired' %}
+                        🔴 العقد منتهي
+                        {% elif expiry_status == 'critical' %}
+                        🟠 ينتهي خلال {{ days_remaining }} أيام
+                        {% elif expiry_status == 'warning' %}
+                        🟡 ينتهي خلال {{ days_remaining }} يوماً
+                        {% else %}
+                        🟢 العقد نشط
+                        {% endif %}
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <!-- الأطراف المعنية -->
+            <div class="card mb-4">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h4 class="mb-0">الأطراف المعنية</h4>
+                    {% if can_edit %}
+                    <a href="{% url 'contract_party_add' contract.id %}" class="btn btn-sm btn-primary">
+                        <span class="btn-icon">➕</span>
+                        إضافة طرف
+                    </a>
+                    {% endif %}
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h5>الطرف الأول</h5>
+                            {% if contract.client %}
+                            <p><strong>المستخدم:</strong> {{ contract.client.username }}</p>
+                            {% endif %}
+                            {% if contract.broker %}
+                            <p><strong>الدلال:</strong> {{ contract.broker.display_name }}</p>
+                            {% endif %}
+                        </div>
+                        <div class="col-md-6">
+                            <h5>الطرف الثاني</h5>
+                            {% if contract.second_party_name %}
+                            <p><strong>الاسم:</strong> {{ contract.second_party_name }}</p>
+                            <p><strong>الهاتف:</strong> {{ contract.second_party_phone }}</p>
+                            <p><strong>البريد:</strong> {{ contract.second_party_email }}</p>
+                            {% else %}
+                            <p class="text-muted">لا يوجد طرف ثان محدد</p>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <!-- الأطراف التفصيلية -->
+                    {% if parties %}
+                    <hr>
+                    <h5 class="mt-3">الأطراف التفصيلية</h5>
+                    <div class="row">
+                        {% for party in parties %}
+                        <div class="col-md-6 mb-3">
+                            <div class="card bg-light">
+                                <div class="card-body">
+                                    <h6>{{ party.get_party_type_display }} - {{ party.get_party_role_display }}</h6>
+                                    <p><strong>الاسم:</strong> {{ party.full_name }}</p>
+                                    <p><strong>الهاتف:</strong> {{ party.phone }}</p>
+                                    {% if party.national_id %}
+                                    <p><strong>رقم الهوية:</strong> {{ party.national_id }}</p>
+                                    {% endif %}
+                                    {% if party.email %}
+                                    <p><strong>البريد:</strong> {{ party.email }}</p>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <!-- العقار -->
+            {% if contract.property %}
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h4 class="mb-0">العقار</h4>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <p><strong>العنوان:</strong> {{ contract.property.title }}</p>
+                            <p><strong>المحافظة:</strong> {{ contract.property.get_governorate_display }}</p>
+                            <p><strong>المدينة:</strong> {{ contract.property.city }}</p>
+                        </div>
+                        <div class="col-md-6">
+                            <p><strong>المساحة:</strong> {{ contract.property.area }} م²</p>
+                            <p><strong>السعر:</strong> {{ contract.property.price }}</p>
+                            <a href="{% url 'property_detail' contract.property.slug %}" class="btn btn-sm btn-info">
+                                <span class="btn-icon">🏠</span>
+                                عرض العقار
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+            
+            <!-- الوثائق -->
+            <div class="card mb-4">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h4 class="mb-0">📁 الوثائق</h4>
+                    {% if can_edit %}
+                    <a href="{% url 'contract_document_add' contract.id %}" class="btn btn-sm btn-primary">
+                        <span class="btn-icon">➕</span>
+                        إضافة وثيقة
+                    </a>
+                    {% endif %}
+                </div>
+                <div class="card-body">
+                    {% if documents %}
+                    <div class="row">
+                        {% for document in documents %}
+                        <div class="col-md-4 mb-3">
+                            <div class="card">
+                                <div class="card-body">
+                                    <h6>{{ document.title }}</h6>
+                                    <p class="text-muted small">{{ document.get_document_type_display }}</p>
+                                    <p class="small">الصفحة {{ document.page_number }}</p>
+                                    <div class="btn-group">
+                                        <a href="{% url 'contract_document_view' document.id %}" class="btn btn-sm btn-info" target="_blank">
+                                            👁️ عرض
+                                        </a>
+                                        {% if can_edit %}
+                                        <form method="post" action="{% url 'contract_document_delete' document.id %}" class="d-inline">
+                                            {% csrf_token %}
+                                            <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('هل أنت متأكد من حذف هذه الوثيقة؟')">
+                                                🗑️
+                                            </button>
+                                        </form>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <p class="text-muted">لا توجد وثائق مرفقة</p>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <!-- المدفوعات -->
+            {% if payments %}
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h4 class="mb-0">💰 المدفوعات</h4>
+                </div>
+                <div class="card-body">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>رقم الدفعة</th>
+                                <th>المبلغ</th>
+                                <th>الحالة</th>
+                                <th>تاريخ الاستحقاق</th>
+                                <th>تاريخ الدفع</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for payment in payments %}
+                            <tr>
+                                <td>{{ payment.payment_number }}</td>
+                                <td>{{ payment.amount }}</td>
+                                <td>
+                                    <span class="badge {% if payment.status == 'completed' %}bg-success{% elif payment.status == 'pending' %}bg-warning{% else %}bg-danger{% endif %}">
+                                        {{ payment.get_status_display }}
+                                    </span>
+                                </td>
+                                <td>{{ payment.due_date|date:"Y-m-d" }}</td>
+                                <td>{{ payment.paid_date|date:"Y-m-d"|default:"-" }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            {% endif %}
+            
+            <!-- التذكيرات -->
+            {% if reminders %}
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h4 class="mb-0">⏰ التذكيرات القادمة</h4>
+                </div>
+                <div class="card-body">
+                    <ul class="list-group">
+                        {% for reminder in reminders %}
+                        <li class="list-group-item">
+                            <strong>{{ reminder.title }}</strong> - {{ reminder.reminder_date|date:"Y-m-d" }}
+                            <span class="badge bg-info">{{ reminder.get_reminder_type_display }}</span>
+                        </li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            </div>
+            {% endif %}
+            
+            <!-- سجل التدقيق -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h4 class="mb-0">📋 سجل العمليات</h4>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-sm">
+                            <thead>
+                                <tr>
+                                    <th>العملية</th>
+                                    <th>نفذ بواسطة</th>
+                                    <th>الوقت</th>
+                                    <th>الوصف</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for log in audit_logs %}
+                                <tr>
+                                    <td>{{ log.get_action_display }}</td>
+                                    <td>{{ log.performed_by.username|default:"النظام" }}</td>
+                                    <td>{{ log.performed_at|date:"Y-m-d H:i" }}</td>
+                                    <td>{{ log.description|default:"-" }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- الملاحظات والشروط -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h4 class="mb-0">الملاحظات والشروط</h4>
+                </div>
+                <div class="card-body">
+                    {% if contract.terms_and_conditions %}
+                    <div class="mb-3">
+                        <h6>الشروط والأحكام:</h6>
+                        <p>{{ contract.terms_and_conditions }}</p>
+                    </div>
+                    {% endif %}
+                    {% if contract.special_clauses %}
+                    <div class="mb-3">
+                        <h6>البنود الخاصة:</h6>
+                        <p>{{ contract.special_clauses }}</p>
+                    </div>
+                    {% endif %}
+                    {% if contract.payment_terms %}
+                    <div class="mb-3">
+                        <h6>شروط الدفع:</h6>
+                        <p>{{ contract.payment_terms }}</p>
+                    </div>
+                    {% endif %}
+                    {% if contract.notes %}
+                    <div class="mb-3">
+                        <h6>ملاحظات:</h6>
+                        <p>{{ contract.notes }}</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.card {
+    background: #1a1a2e;
+    border: 1px solid #333;
+    border-radius: 10px;
+    margin-bottom: 20px;
+}
+
+.card-header {
+    background: #16213e;
+    border-bottom: 1px solid #333;
+    padding: 20px;
+    border-radius: 10px 10px 0 0;
+}
+
+.card-header h4 {
+    color: #e67e22;
+    margin: 0;
+}
+
+.card-body {
+    padding: 20px;
+    color: #fff;
+}
+
+.info-item {
+    margin-bottom: 15px;
+    color: #fff;
+}
+
+.info-item label {
+    color: #e67e22;
+    font-weight: 600;
+    margin-left: 10px;
+}
+
+.info-item strong {
+    color: #e67e22;
+    font-weight: 600;
+}
+
+h6 {
+    color: #e67e22;
+    font-weight: 600;
+    margin-bottom: 10px;
+}
+
+.table {
+    background: #1a1a2e;
+    border-radius: 10px;
+    overflow: hidden;
+}
+
+.table thead {
+    background: #16213e;
+    border-bottom: 2px solid #e67e22;
+}
+
+.table th {
+    color: #e67e22;
+    font-weight: 600;
+    padding: 15px;
+    text-align: right;
+}
+
+.table td {
+    padding: 15px;
+    border-bottom: 1px solid #333;
+    color: #fff;
+}
+
+.table tbody tr:hover {
+    background: #16213e;
+}
+
+.badge {
+    padding: 5px 10px;
+    border-radius: 4px;
+    font-size: 0.85rem;
+}
+
+.btn-icon {
+    margin-left: 5px;
+}
+
+.alert {
+    border-radius: 8px;
+    padding: 15px;
+    margin-bottom: 20px;
+}
+
+.alert-success {
+    background: rgba(76, 175, 80, 0.1);
+    border: 1px solid #4caf50;
+    color: #4caf50;
+}
+
+.alert-warning {
+    background: rgba(255, 152, 0, 0.1);
+    border: 1px solid #ff9800;
+    color: #ff9800;
+}
+
+.alert-danger {
+    background: rgba(244, 67, 54, 0.1);
+    border: 1px solid #f44336;
+    color: #f44336;
+}
+
+.alert-info {
+    background: rgba(33, 150, 243, 0.1);
+    border: 1px solid #2196f3;
+    color: #2196f3;
+}
+</style>
+{% endblock %}

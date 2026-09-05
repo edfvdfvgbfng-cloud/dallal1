@@ -6,10 +6,11 @@
 {% block dashboard_actions %}
 <a href="{% url 'admin_panel' %}" class="btn btn-outline">لوحة الإدارة</a>
 <button class="btn btn-primary" onclick="openNewChat()">➕ محادثة جديدة</button>
-<button class="btn btn-success" onclick="createTicket()">🎫 إنشاء تذكرة</button>
-<button class="btn btn-info" onclick="showAnalytics()">📊 الإحصائيات</button>
-<button class="btn btn-warning" onclick="showSettings()">⚙️ الإعدادات</button>
-<button class="btn btn-secondary" onclick="toggleTheme()">🌙 الوضع</button>
+<button class="btn btn-success" onclick="contactAdmin()">📧 مراسلة الإدارة</button>
+<button class="btn btn-info" onclick="createTicket()">🎫 إنشاء تذكرة</button>
+<button class="btn btn-warning" onclick="showAnalytics()">📊 الإحصائيات</button>
+<button class="btn btn-secondary" onclick="showSettings()">⚙️ الإعدادات</button>
+<button class="btn btn-dark" onclick="toggleTheme()">🌙 الوضع</button>
 <button class="btn btn-dark" onclick="toggleNotifications()">🔔 الإشعارات</button>
 {% endblock %}
 
@@ -266,7 +267,7 @@
 
 .progress-bar-fill {
   height: 100%;
-  background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(90deg, #FF7A00 0%, #FF9500 100%);
   transition: width 0.3s ease;
 }
 
@@ -347,7 +348,7 @@
 
 /* Message encryption indicator */
 .encrypted-badge {
-  background: #8b5cf6;
+  background: #FF7A00;
   color: white;
   padding: 2px 6px;
   border-radius: 5px;
@@ -398,7 +399,7 @@
   --text-light: #a0a0a0;
   --text-muted: #6b7280;
   --border: #404040;
-  --primary: #667eea;
+  --primary: #FF7A00;
   --shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
 }
 
@@ -904,7 +905,7 @@
 }
 
 .sidebar-stat {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #FF7A00 0%, #FF9500 100%);
   color: white;
   padding: 8px 15px;
   border-radius: 10px;
@@ -1002,7 +1003,7 @@
   width: 40px;
   height: 40px;
   border-radius: 50%;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #FF7A00 0%, #FF9500 100%);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1080,7 +1081,7 @@
 
 .filter-btn:hover,
 .filter-btn.active {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #FF7A00 0%, #FF9500 100%);
   border-color: transparent;
   color: white;
 }
@@ -1154,7 +1155,7 @@
   width: 50px;
   height: 50px;
   border-radius: 50%;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #FF7A00 0%, #FF9500 100%);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1224,7 +1225,7 @@
 }
 
 .conversation-type.support {
-  background: #8b5cf6;
+  background: #FF7A00;
 }
 
 .conversation-preview {
@@ -1290,7 +1291,7 @@
   width: 50px;
   height: 50px;
   border-radius: 50%;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #FF7A00 0%, #FF9500 100%);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1374,7 +1375,7 @@
   width: 40px;
   height: 40px;
   border-radius: 50%;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #FF7A00 0%, #FF9500 100%);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1394,7 +1395,7 @@
 }
 
 .message.sent .message-bubble {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #FF7A00 0%, #FF9500 100%);
   color: white;
   border-radius: 15px 15px 0 15px;
 }
@@ -1711,7 +1712,7 @@
 }
 
 .ticket-status.resolved {
-  background: #8b5cf6;
+  background: #FF7A00;
   color: white;
 }
 
@@ -1883,7 +1884,7 @@
 
 .send-btn {
   padding: 10px 25px;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #FF7A00 0%, #FF9500 100%);
   border: none;
   color: white;
   border-radius: 10px;
@@ -2897,12 +2898,68 @@ function loadConversation(conversationId) {
 }
 
 function openNewChat() {
-  // Open new chat modal
-  const recipientName = prompt('أدخل اسم الشخص للتواصل معه:');
-  if (recipientName) {
-    console.log('Opening new chat with:', recipientName);
-    // Implement new chat creation
+  // Open new chat modal with options
+  const chatType = prompt('اختر نوع المحادثة:\n1. محادثة مع مستخدم معين\n2. محادثة مع الإدارة\n\nأدخل الرقم (1 أو 2):');
+  
+  if (chatType === '1') {
+    const recipientName = prompt('أدخل اسم الشخص للتواصل معه:');
+    if (recipientName) {
+      console.log('Opening new chat with:', recipientName);
+      // Implement new chat creation with user
+      // TODO: Add API call to create conversation
+    }
+  } else if (chatType === '2') {
+    contactAdmin();
   }
+}
+
+function contactAdmin() {
+  // Direct contact with admin
+  const message = prompt('اكتب رسالتك للإدارة:');
+  if (message) {
+    console.log('Sending message to admin:', message);
+    
+    // Create conversation with admin
+    fetch('/api/create-admin-conversation/', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRFToken': getCookie('csrftoken')
+      },
+      body: JSON.stringify({
+        message: message
+      })
+    })
+    .then(response => response.json())
+    .then(data => {
+      if (data.success) {
+        alert('تم إرسال رسالتك للإدارة بنجاح!');
+        // Refresh the page to show the new conversation
+        location.reload();
+      } else {
+        alert('حدث خطأ: ' + (data.error || 'يرجى المحاولة مرة أخرى'));
+      }
+    })
+    .catch(error => {
+      console.error('Error:', error);
+      alert('حدث خطأ في إرسال الرسالة');
+    });
+  }
+}
+
+function getCookie(name) {
+  let cookieValue = null;
+  if (document.cookie && document.cookie !== '') {
+    const cookies = document.cookie.split(';');
+    for (let i = 0; i < cookies.length; i++) {
+      const cookie = cookies[i].trim();
+      if (cookie.substring(0, name.length + 1) === (name + '=')) {
+        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+        break;
+      }
+    }
+  }
+  return cookieValue;
 }
 
 function exportChat() {
