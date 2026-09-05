@@ -30,8 +30,13 @@ os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'dalal_project.settings')
 
 # Add project root to path
 project_root = os.path.dirname(os.path.abspath(__file__))
-if project_root not in sys.path:
-    sys.path.insert(0, project_root)
+cwd = os.getcwd()
+candidate_paths = [project_root, cwd, '/app', '/workspace']
+for p in candidate_paths:
+    if os.path.isdir(p) and p not in sys.path:
+        sys.path.insert(0, p)
+os.environ['PYTHONPATH'] = ':'.join([p for p in candidate_paths if os.path.isdir(p)]) + ':' + os.environ.get('PYTHONPATH', '')
+
 
 
 def run(cmd, allow_fail=False):

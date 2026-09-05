@@ -3,13 +3,16 @@
 import os
 import sys
 
-# Ensure project root is always the first item in sys.path
+# Dynamic multi-path resolution for all cloud platforms (Docker, Railway, Nixpacks, Heroku)
 project_root = os.path.dirname(os.path.abspath(__file__))
-if project_root not in sys.path:
-    sys.path.insert(0, project_root)
+cwd = os.getcwd()
 
-# Set up PYTHONPATH environment variable for any child subprocesses
-os.environ['PYTHONPATH'] = f"{project_root}:{os.environ.get('PYTHONPATH', '')}"
+candidate_paths = [project_root, cwd, '/app', '/workspace']
+for p in candidate_paths:
+    if os.path.isdir(p) and p not in sys.path:
+        sys.path.insert(0, p)
+
+os.environ['PYTHONPATH'] = ':'.join([p for p in candidate_paths if os.path.isdir(p)]) + ':' + os.environ.get('PYTHONPATH', '')
 
 
 def main():
