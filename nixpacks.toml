@@ -4,13 +4,15 @@ nixPkgs = ["python311", "postgresql", "redis"]
 [phases.build]
 cmds = ["python -m venv /opt/venv && . /opt/venv/bin/activate && pip install -r requirements.txt"]
 
+[phases.release]
+cmds = [". /opt/venv/bin/activate && python manage.py migrate --noinput"]
+
 [start]
-cmd = "PORT=8000 python manage.py runserver 0.0.0.0:8000"
+cmd = "python manage.py runserver 0.0.0.0:$PORT"
 
 [env]
 DJANGO_SETTINGS_MODULE = "dalal_project.settings"
 PYTHONPATH = "/app"
-PORT = "8000"
 
 [static]
 # Static files will be served by Whitenoise
