@@ -32,6 +32,10 @@ COPY . /app/
 RUN mkdir -p /app/static /app/staticfiles /app/logs /app/media /app/locale && \
     chmod +x /app/entrypoint.sh /app/run_server.py
 
+# Verify Python path and module import
+RUN python -c "import sys; sys.path.insert(0, '/app'); import dalal_project; print('dalal_project import OK')" || \
+    (echo "ERROR: dalal_project import failed" && exit 1)
+
 # Verify Django installation
 RUN python -c "import django; print(f'Django {django.__version__} OK')"
 

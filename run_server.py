@@ -37,6 +37,11 @@ for p in candidate_paths:
         sys.path.insert(0, p)
 os.environ['PYTHONPATH'] = ':'.join([p for p in candidate_paths if os.path.isdir(p)]) + ':' + os.environ.get('PYTHONPATH', '')
 
+# Debug logging for path resolution
+logger.info(f"Project root: {project_root}")
+logger.info(f"Current directory: {cwd}")
+logger.info(f"Python path: {sys.path[:5]}")
+logger.info(f"PYTHONPATH: {os.environ.get('PYTHONPATH')}")
 
 
 def run(cmd, allow_fail=False):
@@ -59,6 +64,15 @@ def main():
     logger.info(f"=== Dalal Platform Startup Initialized (port {port}) ===")
     logger.info(f"DEBUG={os.getenv('DEBUG', 'False')}")
     logger.info(f"DJANGO_SETTINGS_MODULE={os.getenv('DJANGO_SETTINGS_MODULE')}")
+
+    # Verify module can be imported
+    try:
+        import dalal_project
+        logger.info("dalal_project module imported successfully")
+    except ImportError as e:
+        logger.critical(f"FATAL: Cannot import dalal_project: {e}")
+        logger.critical(f"Python path: {sys.path}")
+        sys.exit(1)
 
     # 1. Setup Django
     try:
