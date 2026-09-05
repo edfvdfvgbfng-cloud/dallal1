@@ -1,2 +1,12 @@
 # Railway cache busting patterns
-*
+# Ignore cache and temporary files only
+__pycache__/
+*.pyc
+*.pyo
+.env
+.venv
+venv/
+.git/
+.github/
+.cache/
+*.log
