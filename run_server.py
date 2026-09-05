@@ -15,15 +15,22 @@ import subprocess
 import sys
 import logging
 
-# Configure logging - reduce level for production
+# Configure logging - minimal in production
 debug_mode = os.getenv('DEBUG', 'False').lower() == 'true'
-log_level = logging.INFO if debug_mode else logging.WARNING
 
-logging.basicConfig(
-    level=log_level,
-    format='%(asctime)s [%(levelname)s] [STARTUP] %(message)s'
-)
-logger = logging.getLogger('startup')
+if debug_mode:
+    logging.basicConfig(
+        level=logging.INFO,
+        format='%(asctime)s [%(levelname)s] [STARTUP] %(message)s'
+    )
+    logger = logging.getLogger('startup')
+else:
+    # Minimal logging in production - only CRITICAL
+    logging.basicConfig(
+        level=logging.CRITICAL,
+        format='%(asctime)s [CRITICAL] %(message)s'
+    )
+    logger = logging.getLogger('startup')
 
 # Force disable WebSockets to use Gunicorn instead of Daphne
 os.environ['USE_WEBSOCKETS'] = 'false'
@@ -55,10 +62,14 @@ def run(cmd, allow_fail=False):
     env = os.environ.copy()
     env['PYTHONPATH'] = project_root
     try:
-        subprocess.run(cmd, check=True, env=env, cwd=project_root)
+        # Redirect to DEVNULL in production to reduce log volume
+        if debug_mode:
+            subprocess.run(cmd, check=True, env=env, cwd=project_root)
+        else:
+            subprocess.run(cmd, check=True, env=env, cwd=project_root, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
     except subprocess.CalledProcessError as e:
         if allow_fail:
-            logger.warning(f"Command failed (non-fatal): {e}. Continuing.")
+            logger.critical(f"Command failed (non-fatal): {e}. Continuing.")
         else:
             logger.critical(f"FATAL: Command failed with exit code {e.returncode}: {e}")
             raise
@@ -143,14 +154,20 @@ def main():
 
     # 7. Start Production Gunicorn Web Server
     workers = os.getenv('GUNICORN_WORKERS', '2')
-    log_level = os.getenv('GUNICORN_LOG_LEVEL', 'warning')  # Changed to warning for production
+    log_level = os.getenv('GUNICORN_LOG_LEVEL', 'error')  # Changed to error for production
     timeout = os.getenv('GUNICORN_TIMEOUT', '120')
 
     if debug_mode:
         logger.info(f"Starting Gunicorn server: workers={workers}, timeout={timeout}, log_level={log_level}")
 
-    # Disable access logs in production to reduce log volume
-    access_logfile = '/dev/null' if not debug_mode else '-'
+    # Disable all logs in production to reduce log volume
+    if not debug_mode:
+        log_level = 'error'
+        access_logfile = '/dev/null'
+        error_logfile = '/dev/null'
+    else:
+        access_logfile = '-'
+        error_logfile = '-'
 
     os.execvp(
         'gunicorn',
@@ -161,8 +178,8 @@ def main():
             '--workers', workers,
             '--timeout', timeout,
             '--log-level', log_level,
-            '--access-logfile', access_logfile,  # /dev/null in production to disable access logs
-            '--error-logfile', '-',
+            '--access-logfile', access_logfile,
+            '--error-logfile', error_logfile,
             '--forwarded-allow-ips', '*',
             '--capture-output',
         ],

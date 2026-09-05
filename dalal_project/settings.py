@@ -355,51 +355,55 @@ if os.getenv('REDIS_URL') and not DEBUG:
 LOG_DIR = BASE_DIR / 'logs'
 LOG_DIR.mkdir(exist_ok=True)
 
-# Reduce logging level for production to avoid Railway rate limits
+# Minimal logging in production to avoid Railway rate limits
 if DEBUG:
-    log_level = 'INFO'
-    console_level = 'INFO'
+    LOGGING = {
+        'version': 1,
+        'disable_existing_loggers': False,
+        'formatters': {
+            'verbose': {
+                'format': '{levelname} {asctime} {module} {message}',
+                'style': '{',
+            },
+        },
+        'handlers': {
+            'file': {
+                'level': 'INFO',
+                'class': 'logging.handlers.RotatingFileHandler',
+                'filename': LOG_DIR / 'dalal.log',
+                'maxBytes': 5 * 1024 * 1024,
+                'backupCount': 5,
+                'formatter': 'verbose',
+            },
+            'console': {
+                'class': 'logging.StreamHandler',
+                'formatter': 'verbose',
+            },
+        },
+        'root': {
+            'handlers': ['console', 'file'],
+            'level': 'INFO',
+        },
+        'loggers': {
+            'django': {'handlers': ['console', 'file'], 'level': 'WARNING', 'propagate': False},
+            'properties': {'handlers': ['console', 'file'], 'level': 'INFO', 'propagate': False},
+        },
+    }
 else:
-    log_level = 'WARNING'
-    console_level = 'WARNING'
-
-LOGGING = {
-    'version': 1,
-    'disable_existing_loggers': False,
-    'formatters': {
-        'verbose': {
-            'format': '{levelname} {asctime} {module} {message}',
-            'style': '{',
+    # Minimal logging in production - only CRITICAL errors
+    LOGGING = {
+        'version': 1,
+        'disable_existing_loggers': True,  # Disable all loggers
+        'handlers': {
+            'null': {
+                'class': 'logging.NullHandler',
+            },
         },
-        'simple': {
-            'format': '{levelname} {message}',
-            'style': '{',
+        'root': {
+            'handlers': ['null'],
+            'level': 'CRITICAL',
         },
-    },
-    'handlers': {
-        'file': {
-            'level': log_level,
-            'class': 'logging.handlers.RotatingFileHandler',
-            'filename': LOG_DIR / 'dalal.log',
-            'maxBytes': 5 * 1024 * 1024,
-            'backupCount': 5,
-            'formatter': 'verbose',
-        },
-        'console': {
-            'class': 'logging.StreamHandler',
-            'level': console_level,
-            'formatter': 'simple',
-        },
-    },
-    'root': {
-        'handlers': ['file'],  # Only file logging in production
-        'level': log_level,
-    },
-    'loggers': {
-        'django': {'handlers': ['file'], 'level': 'WARNING', 'propagate': False},
-        'properties': {'handlers': ['file'], 'level': log_level, 'propagate': False},
-    },
-}
+    }
 
 # --- Messages ---
 from django.contrib.messages import constants as message_constants

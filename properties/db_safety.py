@@ -28,8 +28,8 @@ if not logger.handlers:
     handler = logging.StreamHandler(sys.stdout)
     handler.setFormatter(logging.Formatter('%(asctime)s [%(levelname)s] [DB_SAFETY] %(message)s'))
     logger.addHandler(handler)
-    # Use WARNING level in production to reduce log volume
-    logger.setLevel(logging.WARNING if is_production() else logging.INFO)
+    # Use CRITICAL level in production to minimize logs
+    logger.setLevel(logging.CRITICAL if is_production() else logging.INFO)
 
 # Core production models to track across migrations and deployments
 CORE_MODELS = [
@@ -174,15 +174,9 @@ def get_table_counts_snapshot():
 
 def log_counts_summary(snapshot, stage="Pre-Migration"):
     """Log a structured summary of core table counts."""
-    # Only log detailed counts in debug mode
+    # Only log in debug mode or for critical errors
     if is_production():
-        logger.warning(f"=== Core Table Records Summary ({stage}) ===")
-        if not snapshot:
-            logger.warning("  (No tracked tables exist yet - fresh schema initialization)")
-            return
-        # Only log summary in production, not per-table details
-        total_records = sum(data['count'] for data in snapshot.values())
-        logger.warning(f"  Total core table records: {total_records} across {len(snapshot)} tables")
+        return  # Skip logging entirely in production
     else:
         logger.info(f"=== Core Table Records Summary ({stage}) ===")
         if not snapshot:
@@ -198,9 +192,7 @@ def verify_data_preservation(pre_snapshot, post_snapshot):
     Verify that record counts have NOT dropped across migrations/deployments.
     Returns (True, "All data preserved") or raises RuntimeError on data loss.
     """
-    if is_production():
-        logger.warning("=== Verifying Data Preservation Post-Migration ===")
-    else:
+    if not is_production():
         logger.info("=== Verifying Data Preservation Post-Migration ===")
     violations = []
 
@@ -226,8 +218,6 @@ def verify_data_preservation(pre_snapshot, post_snapshot):
         logger.critical(error_msg)
         raise RuntimeError(error_msg)
 
-    if is_production():
-        logger.warning("ZERO DATA LOSS VERIFIED: All existing production data was preserved successfully.")
-    else:
+    if not is_production():
         logger.info("ZERO DATA LOSS VERIFIED: All existing production data was preserved successfully.")
     return True
