@@ -1,31 +1,39 @@
 """
 Django settings for dalal_project — production-ready configuration.
 Supports SQLite (dev) and PostgreSQL (production) environment variables.
-Cache bust: 2026-09-05-01-50
+Cache bust: 2026-09-05-02-00
 """
 
 import os
 from pathlib import Path
 import logging
 
-# Try multiple import options for maximum compatibility
+# Load environment variables from .env file if it exists
 try:
-    from decouple import config, Csv
+    from dotenv import load_dotenv
+    load_dotenv()
 except ImportError:
     try:
-        from dotenv import load_dotenv
-        load_dotenv()
-        def config(key, default='', cast=str):
-            return os.getenv(key, default)
-        def Csv():
-            return lambda v: [x.strip() for x in v.split(',') if x.strip()]
-    except ImportError:
         from python_dotenv import load_dotenv
         load_dotenv()
-        def config(key, default='', cast=str):
-            return os.getenv(key, default)
-        def Csv():
-            return lambda v: [x.strip() for x in v.split(',') if x.strip()]
+    except ImportError:
+        pass  # No dotenv available, rely on system env vars
+
+# Helper function to get config values (replaces decouple.config)
+def config(key, default='', cast=str):
+    """Get environment variable with optional type casting."""
+    value = os.getenv(key, default)
+    if cast == bool:
+        return value.lower() in ('true', '1', 'yes', 'on')
+    try:
+        return cast(value)
+    except (ValueError, TypeError):
+        return default
+
+# Helper function for CSV values (replaces decouple.Csv)
+def Csv():
+    """Return a function that parses comma-separated values."""
+    return lambda v: [x.strip() for x in v.split(',') if x.strip()]
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
