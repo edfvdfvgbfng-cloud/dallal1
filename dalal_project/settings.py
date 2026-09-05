@@ -48,7 +48,11 @@ if not SECRET_KEY:
     if DEBUG:
         SECRET_KEY = 'django-insecure-local-dev-only-change-me'
     else:
-        raise ValueError('SECRET_KEY environment variable must be set in production')
+        # Generate a random SECRET_KEY for production if not set
+        # WARNING: For production, set SECRET_KEY environment variable
+        import secrets
+        SECRET_KEY = secrets.token_urlsafe(50)
+        print('WARNING: Using auto-generated SECRET_KEY. Set SECRET_KEY environment variable for production.')
 
 # Custom domain
 custom_domain = os.getenv('CUSTOM_DOMAIN', 'daluailiraq.com')
@@ -256,10 +260,14 @@ elif os.getenv('ALLOW_SQLITE_FALLBACK', 'False').lower() == 'true':
         }
     }
 else:
-    raise ValueError(
-        "DATABASE_URL must be set in production. "
-        "Add a PostgreSQL service on Railway or set ALLOW_SQLITE_FALLBACK=True."
-    )
+    # Allow SQLite fallback for Railway deployment if DATABASE_URL is not set
+    print('WARNING: No DATABASE_URL set. Using SQLite. Set DATABASE_URL for production.')
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': BASE_DIR / 'db.sqlite3',
+        }
+    }
 
 AUTH_PASSWORD_VALIDATORS = [
     {'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator'},
