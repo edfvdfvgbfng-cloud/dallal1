@@ -1,31 +1,15 @@
-# This file is NOW ACTIVE - Using Nixpacks instead of Dockerfile
-# Force Railway rebuild - 2026-09-05-02-15 - settings.py now contains production content
 [phases.setup]
-nixPkgs = ["python311", "gcc", "pkg-config", "postgresql"]
+nixPkgs = ["python311", "postgresql", "redis"]
 
 [phases.build]
-cmds = [
-    "pip install --upgrade pip",
-    "pip install -r requirements.txt",
-    "echo '=== Creating directories ==='",
-    "mkdir -p static staticfiles logs media",
-    "echo '=== Running Django commands ==='",
-    "python manage.py migrate --noinput",
-    "python manage.py collectstatic --noinput --clear",
-]
+cmds = ["python -m venv /opt/venv && . /opt/venv/bin/activate && pip install -r requirements.txt"]
 
-[phases.start]
-cmd = "python run_server.py"
+[start]
+cmd = "gunicorn dalal_project.wsgi:application --bind 0.0.0.0 --port $PORT --workers 4 --timeout 120"
+
+[env]
+DJANGO_SETTINGS_MODULE = "dalal_project.settings"
+PYTHONPATH = "/app"
 
 [static]
-include = ["templates/**", "static/**", "staticfiles/**"]
-
-[variables]
-DEBUG = "False"
-PORT = "8080"
-PYTHONUNBUFFERED = "1"
-PYTHONPATH = "/app"
-DJANGO_SETTINGS_MODULE = "dalal_project.settings"
-ALLOW_SQLITE_FALLBACK = "False"
-GUNICORN_WORKERS = "2"
-GUNICORN_TIMEOUT = "120"
+# Static files will be served by Whitenoise

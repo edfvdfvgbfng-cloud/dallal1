@@ -1,25 +1,66 @@
 version: '3.8'
 
 services:
-  # Django Backend
-  backend:
-    build:
-      context: .
-      dockerfile: Dockerfile
-    ports:
-      - "8000:8080"
+  db:
+    image: postgres:13
     environment:
-      - DEBUG=True
-      - SECRET_KEY=django-insecure-dev-key-change-in-production
-      - DATABASE_URL=
-      - ALLOWED_HOSTS=localhost,127.0.0.1
+      POSTGRES_DB: dalal_db
+      POSTGRES_USER: dalal_user
+      POSTGRES_PASSWORD: dalal_password
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U dalal_user"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  web:
+    build: .
+    command: gunicorn dalal_project.wsgi:application --bind 0.0.0.0:8000 --workers 4 --timeout 120
     volumes:
       - .:/app
-      - ./logs:/app/logs
-    command: python manage.py runserver 0.0.0.0:8080
-    networks:
-      - dalal-network
+      - static_volume:/app/staticfiles
+      - media_volume:/app/media
+    ports:
+      - "8000:8000"
+    env_file:
+      - .env
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "python", "manage.py", "check"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
 
-networks:
-  dalal-network:
-    driver: bridge
+  nginx:
+    image: nginx:alpine
+    ports:
+      - "80:80"
+    volumes:
+      - static_volume:/app/staticfiles
+      - media_volume:/app/media
+      - ./nginx.conf:/etc/nginx/nginx.conf
+    depends_on:
+      - web
+
+volumes:
+  postgres_data:
+  static_volume:
+  media_volume:
