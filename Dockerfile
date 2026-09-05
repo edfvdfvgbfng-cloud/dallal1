@@ -28,12 +28,15 @@ RUN pip install --upgrade pip && \
 # Copy all application files (filtered by .dockerignore)
 COPY . /app/
 
+# Verify directory structure
+RUN ls -la /app/ && ls -la /app/dalal_project/
+
 # Create necessary directories and ensure execution permissions
 RUN mkdir -p /app/static /app/staticfiles /app/logs /app/media /app/locale && \
     chmod +x /app/entrypoint.sh /app/run_server.py
 
-# Verify Python path and module import
-RUN python -c "import sys; sys.path.insert(0, '/app'); import dalal_project; print('dalal_project import OK')" || \
+# Verify Python path and module import - using python -c with sys.path
+RUN python -c "import sys; print('Python path:', sys.path); sys.path.insert(0, '/app'); import os; print('Files in /app:', os.listdir('/app')); print('Files in /app/dalal_project:', os.listdir('/app/dalal_project') if os.path.exists('/app/dalal_project') else 'NOT FOUND'); import dalal_project; print('dalal_project import OK')" || \
     (echo "ERROR: dalal_project import failed" && exit 1)
 
 # Verify Django installation
