@@ -1,19 +1,31 @@
 """
 Django settings for dalal_project — production-ready configuration.
 Supports SQLite (dev) and PostgreSQL (production) environment variables.
-Cache bust: 2026-09-05-01-45
+Cache bust: 2026-09-05-01-50
 """
 
 import os
 from pathlib import Path
 import logging
 
+# Try multiple import options for maximum compatibility
 try:
-    from dotenv import load_dotenv
-    load_dotenv()
+    from decouple import config, Csv
 except ImportError:
-    from python_dotenv import load_dotenv
-    load_dotenv()
+    try:
+        from dotenv import load_dotenv
+        load_dotenv()
+        def config(key, default='', cast=str):
+            return os.getenv(key, default)
+        def Csv():
+            return lambda v: [x.strip() for x in v.split(',') if x.strip()]
+    except ImportError:
+        from python_dotenv import load_dotenv
+        load_dotenv()
+        def config(key, default='', cast=str):
+            return os.getenv(key, default)
+        def Csv():
+            return lambda v: [x.strip() for x in v.split(',') if x.strip()]
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
