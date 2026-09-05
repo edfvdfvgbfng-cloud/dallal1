@@ -174,18 +174,26 @@ git push origin main
    - Add Redis service
    - Deploy the application
 
-### Step 3: Configure Environment
+### Step 3: Configure Environment (Optional)
 
-In Railway dashboard, set these for your main service:
+The project now auto-generates required settings for Railway deployment:
 
+**Auto-generated (no manual setup needed):**
+- SECRET_KEY - Auto-generated using secrets.token_urlsafe(50)
+- DATABASE_URL - Falls back to SQLite if PostgreSQL not added
+
+**Optional enhancements (recommended for production):**
 ```bash
-DEBUG=False
-SECRET_KEY=your-generated-secret-key
-ALLOWED_HOSTS=your-app.railway.app
-USE_WEBSOCKETS=True
+# For better production setup, you can add:
+SECRET_KEY=your-own-secure-key  # For consistent deployments
+USE_WEBSOCKETS=True  # If you add Redis service
 ```
 
-Railway will automatically provide:
+**Railway services (optional but recommended):**
+- Add PostgreSQL service for production database
+- Add Redis service for WebSocket support
+
+Railway will automatically provide these if you add the services:
 - DATABASE_URL (PostgreSQL connection)
 - REDIS_URL (Redis connection)
 
