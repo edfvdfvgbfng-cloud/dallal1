@@ -1,7 +1,7 @@
 # Railway configuration for Dalal Platform
-# Force rebuild - 2026-09-05-04-35 - FORCE NEW BUILD
+# Force rebuild - 2026-09-05-04-40 - Switch back to Dockerfile for proper file copying
 [build]
-builder = "NIXPACKS"
+builder = "DOCKERFILE"
 
 [deploy]
 healthcheckPath = "/health/"
