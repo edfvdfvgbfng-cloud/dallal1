@@ -15,9 +15,12 @@ import subprocess
 import sys
 import logging
 
-# Configure logging
+# Configure logging - reduce level for production
+debug_mode = os.getenv('DEBUG', 'False').lower() == 'true'
+log_level = logging.INFO if debug_mode else logging.WARNING
+
 logging.basicConfig(
-    level=logging.INFO,
+    level=log_level,
     format='%(asctime)s [%(levelname)s] [STARTUP] %(message)s'
 )
 logger = logging.getLogger('startup')
@@ -37,16 +40,18 @@ for p in candidate_paths:
         sys.path.insert(0, p)
 os.environ['PYTHONPATH'] = ':'.join([p for p in candidate_paths if os.path.isdir(p)]) + ':' + os.environ.get('PYTHONPATH', '')
 
-# Debug logging for path resolution
-logger.info(f"Project root: {project_root}")
-logger.info(f"Current directory: {cwd}")
-logger.info(f"Python path: {sys.path[:5]}")
-logger.info(f"PYTHONPATH: {os.environ.get('PYTHONPATH')}")
+# Debug logging for path resolution (only in development)
+if debug_mode:
+    logger.info(f"Project root: {project_root}")
+    logger.info(f"Current directory: {cwd}")
+    logger.info(f"Python path: {sys.path[:5]}")
+    logger.info(f"PYTHONPATH: {os.environ.get('PYTHONPATH')}")
 
 
 def run(cmd, allow_fail=False):
     """Run command with proper PYTHONPATH and strict error checking."""
-    logger.info(f"Running: {' '.join(str(c) for c in cmd)}")
+    if debug_mode:
+        logger.info(f"Running: {' '.join(str(c) for c in cmd)}")
     env = os.environ.copy()
     env['PYTHONPATH'] = project_root
     try:
@@ -61,17 +66,20 @@ def run(cmd, allow_fail=False):
 
 def main():
     port = os.getenv('PORT', '8080')
-    logger.info(f"=== Dalal Platform Startup Initialized (port {port}) ===")
-    logger.info(f"DEBUG={os.getenv('DEBUG', 'False')}")
-    logger.info(f"DJANGO_SETTINGS_MODULE={os.getenv('DJANGO_SETTINGS_MODULE')}")
+    if debug_mode:
+        logger.info(f"=== Dalal Platform Startup Initialized (port {port}) ===")
+        logger.info(f"DEBUG={os.getenv('DEBUG', 'False')}")
+        logger.info(f"DJANGO_SETTINGS_MODULE={os.getenv('DJANGO_SETTINGS_MODULE')}")
 
     # Verify module can be imported
     try:
         import dalal_project
-        logger.info("dalal_project module imported successfully")
+        if debug_mode:
+            logger.info("dalal_project module imported successfully")
     except ImportError as e:
         logger.critical(f"FATAL: Cannot import dalal_project: {e}")
-        logger.critical(f"Python path: {sys.path}")
+        if debug_mode:
+            logger.critical(f"Python path: {sys.path}")
         sys.exit(1)
 
     # 1. Setup Django
@@ -80,9 +88,10 @@ def main():
         django.setup()
         from django.conf import settings
         from properties import db_safety
-        
-        logger.info(f"Django {django.__version__} loaded successfully")
-        logger.info(f"Properties in INSTALLED_APPS: {'properties' in settings.INSTALLED_APPS}")
+
+        if debug_mode:
+            logger.info(f"Django {django.__version__} loaded successfully")
+            logger.info(f"Properties in INSTALLED_APPS: {'properties' in settings.INSTALLED_APPS}")
     except Exception as e:
         logger.critical(f"FATAL: Error initializing Django: {e}")
         raise
@@ -91,7 +100,8 @@ def main():
     # Enforces strict PostgreSQL in Production, verifies live connection
     try:
         db_info = db_safety.verify_database_identity()
-        logger.info(f"Database Identity: {db_info['vendor']} ({db_info['database_name']} on {db_info['host']}) - VERIFIED")
+        if debug_mode:
+            logger.info(f"Database Identity: {db_info['vendor']} ({db_info['database_name']} on {db_info['host']}) - VERIFIED")
     except Exception as e:
         logger.critical(f"FATAL: Database Identity Verification failed: {e}")
         sys.exit(1)
@@ -100,12 +110,14 @@ def main():
     pre_snapshot = {}
     try:
         pre_snapshot = db_safety.get_table_counts_snapshot()
-        db_safety.log_counts_summary(pre_snapshot, "Pre-Migration Baseline")
+        if debug_mode:
+            db_safety.log_counts_summary(pre_snapshot, "Pre-Migration Baseline")
     except Exception as e:
         logger.warning(f"Could not capture pre-migration snapshot: {e}")
 
     # 4. Run Safe Database Migrations
-    logger.info("Executing safe database migrations (migrate --noinput)...")
+    if debug_mode:
+        logger.info("Executing safe database migrations (migrate --noinput)...")
     # CRITICAL: We run migrate --noinput ONLY. Never flush, reset, or drop.
     try:
         run([sys.executable, 'manage.py', 'migrate', '--noinput'], allow_fail=False)
@@ -117,22 +129,28 @@ def main():
     # 5. Post-Migration Verification (Validate zero data loss)
     try:
         post_snapshot = db_safety.get_table_counts_snapshot()
-        db_safety.log_counts_summary(post_snapshot, "Post-Migration Audit")
+        if debug_mode:
+            db_safety.log_counts_summary(post_snapshot, "Post-Migration Audit")
         db_safety.verify_data_preservation(pre_snapshot, post_snapshot)
     except Exception as e:
         logger.critical(f"FATAL: Post-migration data preservation check failed: {e}")
         sys.exit(1)
 
     # 6. Collect Static Files
-    logger.info("Collecting static files...")
+    if debug_mode:
+        logger.info("Collecting static files...")
     run([sys.executable, 'manage.py', 'collectstatic', '--noinput'], allow_fail=True)
 
     # 7. Start Production Gunicorn Web Server
     workers = os.getenv('GUNICORN_WORKERS', '2')
-    log_level = os.getenv('GUNICORN_LOG_LEVEL', 'info')
+    log_level = os.getenv('GUNICORN_LOG_LEVEL', 'warning')  # Changed to warning for production
     timeout = os.getenv('GUNICORN_TIMEOUT', '120')
 
-    logger.info(f"Starting Gunicorn server: workers={workers}, timeout={timeout}, log_level={log_level}")
+    if debug_mode:
+        logger.info(f"Starting Gunicorn server: workers={workers}, timeout={timeout}, log_level={log_level}")
+
+    # Disable access logs in production to reduce log volume
+    access_logfile = '/dev/null' if not debug_mode else '-'
 
     os.execvp(
         'gunicorn',
@@ -143,7 +161,7 @@ def main():
             '--workers', workers,
             '--timeout', timeout,
             '--log-level', log_level,
-            '--access-logfile', '-',
+            '--access-logfile', access_logfile,  # /dev/null in production to disable access logs
             '--error-logfile', '-',
             '--forwarded-allow-ips', '*',
             '--capture-output',

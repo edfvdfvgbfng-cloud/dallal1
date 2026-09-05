@@ -9,12 +9,27 @@ import logging
 from django.conf import settings
 from django.db import connection
 
+
+def is_production():
+    """Determine if running in a production or production-like deployment."""
+    if not getattr(settings, 'DEBUG', True):
+        return True
+    if os.getenv('RAILWAY_ENVIRONMENT') or os.getenv('RAILWAY_PROJECT_ID') or os.getenv('RAILWAY_SERVICE_ID'):
+        return True
+    if os.getenv('ALLOW_SQLITE_FALLBACK', 'True').lower() in ('false', '0', 'no'):
+        return True
+    if os.getenv('ENVIRONMENT', '').lower() == 'production':
+        return True
+    return False
+
+
 logger = logging.getLogger('db_safety')
 if not logger.handlers:
     handler = logging.StreamHandler(sys.stdout)
     handler.setFormatter(logging.Formatter('%(asctime)s [%(levelname)s] [DB_SAFETY] %(message)s'))
     logger.addHandler(handler)
-    logger.setLevel(logging.INFO)
+    # Use WARNING level in production to reduce log volume
+    logger.setLevel(logging.WARNING if is_production() else logging.INFO)
 
 # Core production models to track across migrations and deployments
 CORE_MODELS = [
@@ -159,13 +174,23 @@ def get_table_counts_snapshot():
 
 def log_counts_summary(snapshot, stage="Pre-Migration"):
     """Log a structured summary of core table counts."""
-    logger.info(f"=== Core Table Records Summary ({stage}) ===")
-    if not snapshot:
-        logger.info("  (No tracked tables exist yet - fresh schema initialization)")
-        return
+    # Only log detailed counts in debug mode
+    if is_production():
+        logger.warning(f"=== Core Table Records Summary ({stage}) ===")
+        if not snapshot:
+            logger.warning("  (No tracked tables exist yet - fresh schema initialization)")
+            return
+        # Only log summary in production, not per-table details
+        total_records = sum(data['count'] for data in snapshot.values())
+        logger.warning(f"  Total core table records: {total_records} across {len(snapshot)} tables")
+    else:
+        logger.info(f"=== Core Table Records Summary ({stage}) ===")
+        if not snapshot:
+            logger.info("  (No tracked tables exist yet - fresh schema initialization)")
+            return
 
-    for key, data in snapshot.items():
-        logger.info(f"  {data['label']} ({key}): {data['count']} records [Table: {data['table']}]")
+        for key, data in snapshot.items():
+            logger.info(f"  {data['label']} ({key}): {data['count']} records [Table: {data['table']}]")
 
 
 def verify_data_preservation(pre_snapshot, post_snapshot):
@@ -173,7 +198,10 @@ def verify_data_preservation(pre_snapshot, post_snapshot):
     Verify that record counts have NOT dropped across migrations/deployments.
     Returns (True, "All data preserved") or raises RuntimeError on data loss.
     """
-    logger.info("=== Verifying Data Preservation Post-Migration ===")
+    if is_production():
+        logger.warning("=== Verifying Data Preservation Post-Migration ===")
+    else:
+        logger.info("=== Verifying Data Preservation Post-Migration ===")
     violations = []
 
     for key, pre_data in pre_snapshot.items():
@@ -190,7 +218,7 @@ def verify_data_preservation(pre_snapshot, post_snapshot):
                 f"DATA LOSS DETECTED on {key} ({pre_data['label']}): "
                 f"count dropped from {pre_count} to {post_count} (loss of {pre_count - post_count} records)!"
             )
-        else:
+        elif not is_production():
             logger.info(f"  PRESERVED: {pre_data['label']} ({key}): {post_count} records (Baseline: {pre_count})")
 
     if violations:
@@ -198,5 +226,8 @@ def verify_data_preservation(pre_snapshot, post_snapshot):
         logger.critical(error_msg)
         raise RuntimeError(error_msg)
 
-    logger.info("ZERO DATA LOSS VERIFIED: All existing production data was preserved successfully.")
+    if is_production():
+        logger.warning("ZERO DATA LOSS VERIFIED: All existing production data was preserved successfully.")
+    else:
+        logger.info("ZERO DATA LOSS VERIFIED: All existing production data was preserved successfully.")
     return True
