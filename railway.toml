@@ -1,5 +1,5 @@
 # Railway configuration for Dalal Platform
-# Force rebuild - 2026-09-05-02-15 - Replace settings.py with production content
+# Force rebuild - 2026-09-05-04-35 - FORCE NEW BUILD
 [build]
 builder = "NIXPACKS"
 
