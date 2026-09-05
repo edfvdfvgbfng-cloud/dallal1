@@ -5,6 +5,7 @@ Provides API endpoints for AI-powered services
 
 from django.http import JsonResponse
 from django.views.decorators.http import require_http_methods
+from django.views.decorators.csrf import csrf_protect
 from django.contrib.auth.decorators import login_required
 import json
 import logging
@@ -13,10 +14,13 @@ from .ai_duplicate_detector import duplicate_detector
 from .ai_hotel_travel_assistant import hotel_travel_assistant
 from .ai_match_engine import ai_match_engine
 from .models import Property, HotelPage
+from .permissions_centralized import rate_limit, get_client_ip
 
 logger = logging.getLogger(__name__)
 
 
+@rate_limit(max_requests=20, period=60)
+@csrf_protect
 @require_http_methods(["POST"])
 @login_required
 def api_detect_duplicate_images(request):
@@ -52,6 +56,8 @@ def api_detect_duplicate_images(request):
         }, status=500)
 
 
+@rate_limit(max_requests=20, period=60)
+@csrf_protect
 @require_http_methods(["POST"])
 @login_required
 def api_detect_suspicious_listings(request):
@@ -79,6 +85,8 @@ def api_detect_suspicious_listings(request):
         }, status=500)
 
 
+@rate_limit(max_requests=15, period=60)
+@csrf_protect
 @require_http_methods(["POST"])
 @login_required
 def api_analyze_property_images(request):
@@ -106,6 +114,8 @@ def api_analyze_property_images(request):
         }, status=500)
 
 
+@rate_limit(max_requests=15, period=60)
+@csrf_protect
 @require_http_methods(["POST"])
 @login_required
 def api_travel_planner(request):
@@ -144,6 +154,8 @@ def api_travel_planner(request):
         }, status=500)
 
 
+@rate_limit(max_requests=15, period=60)
+@csrf_protect
 @require_http_methods(["POST"])
 @login_required
 def api_ai_match_properties(request):
@@ -178,6 +190,8 @@ def api_ai_match_properties(request):
         }, status=500)
 
 
+@rate_limit(max_requests=15, period=60)
+@csrf_protect
 @require_http_methods(["POST"])
 @login_required
 def api_ai_match_explanation(request):
@@ -223,6 +237,8 @@ def api_ai_match_explanation(request):
         }, status=500)
 
 
+@rate_limit(max_requests=30, period=60)
+@csrf_protect
 @require_http_methods(["GET"])
 def api_ai_capabilities(request):
     """

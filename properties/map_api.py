@@ -5,12 +5,14 @@ Provides APIs for heatmaps, area statistics, nearby amenities, and location-base
 
 from django.http import JsonResponse
 from django.views.decorators.http import require_GET, require_POST
+from django.contrib.auth.decorators import login_required
 from django.db.models import Avg, Min, Max, Count, Q, F
 from django.core.cache import cache
 import logging
 import math
 
 from .models import Property, AreaStats, Amenity, HeatmapData
+from .permissions_centralized import rate_limit, get_client_ip
 
 logger = logging.getLogger(__name__)
 
@@ -20,7 +22,9 @@ def get_cache_key(*args):
     return "map_" + "_".join(str(arg) for arg in args)
 
 
+@rate_limit(max_requests=50, period=60)
 @require_GET
+@login_required
 def price_heatmap_api(request):
     """
     API: Get price heatmap data for a specific area
@@ -32,6 +36,7 @@ def price_heatmap_api(request):
     grid_size = float(request.GET.get('grid_size', 0.01))
     
     if not governorate or not city:
+        logger.warning(f'Missing parameters in heatmap API by user {request.user.username}')
         return JsonResponse({
             'error': 'Missing required parameters: governorate and city'
         }, status=400)
@@ -83,6 +88,7 @@ def price_heatmap_api(request):
         }, status=500)
 
 
+@rate_limit(max_requests=50, period=60)
 @require_GET
 def area_stats_api(request):
     """
@@ -147,6 +153,7 @@ def area_stats_api(request):
         }, status=500)
 
 
+@rate_limit(max_requests=50, period=60)
 @require_GET
 def average_price_by_area_api(request):
     """
@@ -221,6 +228,7 @@ def average_price_by_area_api(request):
         }, status=500)
 
 
+@rate_limit(max_requests=50, period=60)
 @require_GET
 def nearby_amenities_api(request):
     """
@@ -301,6 +309,7 @@ def nearby_amenities_api(request):
         }, status=500)
 
 
+@rate_limit(max_requests=50, period=60)
 @require_GET
 def distance_calculation_api(request):
     """
@@ -367,6 +376,7 @@ def distance_calculation_api(request):
         }, status=500)
 
 
+@rate_limit(max_requests=50, period=60)
 @require_GET
 def location_based_search_api(request):
     """

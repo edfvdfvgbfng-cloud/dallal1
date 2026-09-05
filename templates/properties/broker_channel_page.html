@@ -558,7 +558,7 @@
               height="100%" 
               frameborder="0" 
               style="border:0"
-              src="https://www.google.com/maps/embed/v1/place?key=YOUR_API_KEY&q={{ channel.address|urlencode }}"
+              src="https://www.google.com/maps/embed/v1/place?key={{ settings.google_maps_api_key|default:'' }}&q={{ channel.address|urlencode }}"
               allowfullscreen>
             </iframe>
           </div>

@@ -13,10 +13,12 @@ from datetime import datetime
 from .ai_gateway import ai_gateway
 from .ai_conversation_state_manager import conversation_state_manager
 from .ai_conversation_manager import conversation_manager
+from .permissions_centralized import rate_limit
 
 logger = logging.getLogger(__name__)
 
 
+@rate_limit(max_requests=30, period=60)
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
 def ai_chat(request):
@@ -72,6 +74,7 @@ def ai_chat(request):
         }, status=status.HTTP_200_OK)
 
 
+@rate_limit(max_requests=20, period=60)
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
 def ai_multimodal(request):

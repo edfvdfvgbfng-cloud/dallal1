@@ -262,7 +262,8 @@ def api_contract_create(request):
         }, status=400)
 
 
-@csrf_exempt
+@rate_limit(max_requests=15, period=60)
+@csrf_protect
 @require_http_methods(["POST"])
 @login_required
 def api_contract_update(request, contract_id):
@@ -271,10 +272,12 @@ def api_contract_update(request, contract_id):
     contract = RealEstateContract.objects.filter(pk=contract_id).first()
     
     if not contract:
+        logger.warning(f'Contract not found for update: {contract_id} by user {request.user.username}')
         return JsonResponse({'success': False, 'error': 'العقد غير موجود'}, status=404)
     
     # فحص الصلاحيات
     if not contract.can_edit(request.user):
+        logger.warning(f'Unauthorized update attempt by user {request.user.username} on contract {contract_id}')
         return JsonResponse({'success': False, 'error': 'ليس لديك صلاحية'}, status=403)
     
     try:
@@ -322,7 +325,8 @@ def api_contract_update(request, contract_id):
         }, status=400)
 
 
-@csrf_exempt
+@rate_limit(max_requests=10, period=60)
+@csrf_protect
 @require_http_methods(["POST"])
 @login_required
 def api_contract_archive(request, contract_id):
@@ -331,10 +335,12 @@ def api_contract_archive(request, contract_id):
     contract = RealEstateContract.objects.filter(pk=contract_id).first()
     
     if not contract:
+        logger.warning(f'Contract not found for archive: {contract_id} by user {request.user.username}')
         return JsonResponse({'success': False, 'error': 'العقد غير موجود'}, status=404)
     
     # فحص الصلاحيات
     if not contract.can_edit(request.user):
+        logger.warning(f'Unauthorized archive attempt by user {request.user.username} on contract {contract_id}')
         return JsonResponse({'success': False, 'error': 'ليس لديك صلاحية'}, status=403)
     
     try:
@@ -348,7 +354,8 @@ def api_contract_archive(request, contract_id):
     return JsonResponse({'success': True, 'message': 'تم أرشفة العقد بنجاح'})
 
 
-@csrf_exempt
+@rate_limit(max_requests=10, period=60)
+@csrf_protect
 @require_http_methods(["POST"])
 @login_required
 def api_contract_restore(request, contract_id):
@@ -357,10 +364,12 @@ def api_contract_restore(request, contract_id):
     contract = RealEstateContract.objects.filter(pk=contract_id).first()
     
     if not contract:
+        logger.warning(f'Contract not found for restore: {contract_id} by user {request.user.username}')
         return JsonResponse({'success': False, 'error': 'العقد غير موجود'}, status=404)
     
     # فحص الصلاحيات
     if not request.user.is_superuser:
+        logger.warning(f'Unauthorized restore attempt by user {request.user.username} on contract {contract_id}')
         return JsonResponse({'success': False, 'error': 'ليس لديك صلاحية'}, status=403)
     
     contract.restore(user=request.user)
@@ -368,7 +377,8 @@ def api_contract_restore(request, contract_id):
     return JsonResponse({'success': True, 'message': 'تم استرجاع العقد بنجاح'})
 
 
-@csrf_exempt
+@rate_limit(max_requests=30, period=60)
+@csrf_protect
 @require_http_methods(["GET"])
 @login_required
 def api_contract_statistics(request):
@@ -376,6 +386,7 @@ def api_contract_statistics(request):
     
     # فحص الصلاحيات
     if not request.user.is_superuser and not request.user.is_staff:
+        logger.warning(f'Unauthorized statistics access by user {request.user.username}')
         return JsonResponse({'success': False, 'error': 'ليس لديك صلاحية'}, status=403)
     
     stats = {
@@ -416,7 +427,8 @@ def api_contract_statistics(request):
     return JsonResponse({'success': True, 'stats': stats})
 
 
-@csrf_exempt
+@rate_limit(max_requests=30, period=60)
+@csrf_protect
 @require_http_methods(["GET"])
 @login_required
 def api_expiring_contracts(request):
@@ -424,6 +436,7 @@ def api_expiring_contracts(request):
     
     # فحص الصلاحيات
     if not request.user.is_superuser and not request.user.is_staff:
+        logger.warning(f'Unauthorized expiring contracts access by user {request.user.username}')
         return JsonResponse({'success': False, 'error': 'ليس لديك صلاحية'}, status=403)
     
     days = int(request.GET.get('days', 7))

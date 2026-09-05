@@ -13,10 +13,12 @@ from .ai_market_orchestrator import market_intelligence_orchestrator
 from .ai_market_intelligence import market_intelligence_system, BuyerIntentType
 from .ai_agent_matching import agent_matching_system
 from .ai_safe_analytics import safe_analytics_layer, QueryType, MetricType
+from .permissions_centralized import rate_limit
 
 logger = logging.getLogger(__name__)
 
 
+@rate_limit(max_requests=20, period=60)
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
 def market_query(request):
@@ -52,6 +54,7 @@ def market_query(request):
         )
 
 
+@rate_limit(max_requests=20, period=60)
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
 def calculate_property_match(request):
@@ -84,6 +87,7 @@ def calculate_property_match(request):
         )
 
 
+@rate_limit(max_requests=20, period=60)
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
 def match_agents(request):
@@ -115,6 +119,7 @@ def match_agents(request):
         )
 
 
+@rate_limit(max_requests=20, period=60)
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
 def market_analytics(request):
@@ -154,6 +159,7 @@ def market_analytics(request):
         )
 
 
+@rate_limit(max_requests=30, period=60)
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def market_summary(request):

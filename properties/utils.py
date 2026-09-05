@@ -242,15 +242,27 @@ def sort_properties(queryset, sort_key):
 
 
 def save_gallery_images(property_obj, files, is_360_list=None):
-    """Save multiple uploaded images to PropertyImage."""
+    """Save multiple uploaded images to PropertyImage with security validation."""
     if not files:
         return
+    
+    from .file_upload_security import validate_property_image
+    
     start_order = property_obj.gallery_images.count()
     for i, f in enumerate(files):
         if not f or not getattr(f, 'name', None):
             continue
         ctype = getattr(f, 'content_type', '') or ''
         if ctype and not ctype.startswith('image/'):
+            continue
+        
+        # Security validation
+        try:
+            validation_result = validate_property_image(f)
+        except Exception as e:
+            import logging
+            logger = logging.getLogger(__name__)
+            logger.warning(f"Image validation failed: {str(e)}")
             continue
         
         # Check if this is a 360° image
@@ -268,9 +280,12 @@ def save_gallery_images(property_obj, files, is_360_list=None):
 
 
 def save_gallery_videos(property_obj, files):
-    """Save multiple uploaded videos to PropertyVideo."""
+    """Save multiple uploaded videos to PropertyVideo with security validation."""
     if not files:
         return
+    
+    from .file_upload_security import validate_video_upload
+    
     start_order = property_obj.gallery_videos.count()
     for i, f in enumerate(files):
         if not f or not getattr(f, 'name', None):
@@ -278,6 +293,16 @@ def save_gallery_videos(property_obj, files):
         ctype = getattr(f, 'content_type', '') or ''
         if ctype and not ctype.startswith('video/'):
             continue
+        
+        # Security validation
+        try:
+            validation_result = validate_video_upload(f)
+        except Exception as e:
+            import logging
+            logger = logging.getLogger(__name__)
+            logger.warning(f"Video validation failed: {str(e)}")
+            continue
+        
         PropertyVideo.objects.create(
             property=property_obj,
             video=f,

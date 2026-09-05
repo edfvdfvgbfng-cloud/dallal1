@@ -457,6 +457,19 @@ IMAGE_CONVERT_TO_WEBP = os.getenv('IMAGE_CONVERT_TO_WEBP', 'True').lower() == 't
 IMAGE_QUALITY = int(os.getenv('IMAGE_QUALITY', '85'))
 IMAGE_WEBP_QUALITY = int(os.getenv('IMAGE_WEBP_QUALITY', '80'))
 
+# File Upload Security Settings
+UPLOAD_MAX_FILE_SIZE = int(os.getenv('UPLOAD_MAX_FILE_SIZE', '10485760'))  # 10MB default
+UPLOAD_ALLOWED_IMAGE_EXTENSIONS = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg']
+UPLOAD_ALLOWED_VIDEO_EXTENSIONS = ['mp4', 'webm', 'mov', 'avi']
+UPLOAD_ALLOWED_DOCUMENT_EXTENSIONS = ['pdf', 'doc', 'docx', 'xls', 'xlsx']
+UPLOAD_MAX_IMAGE_DIMENSIONS = (4096, 4096)  # 4K max resolution
+UPLOAD_SCAN_MALWARE = os.getenv('UPLOAD_SCAN_MALWARE', 'False').lower() == 'true'
+UPLOAD_USE_UUID_FILENAMES = os.getenv('UPLOAD_USE_UUID_FILENAMES', 'True').lower() == 'true'
+
+# Sensitive Document Storage (separate from public media)
+UPLOAD_SENSITIVE_PATH = 'private_documents/'  # For identity docs, contracts, etc.
+UPLOAD_PUBLIC_PATH = 'media/'  # For regular property images
+
 # CDN Settings
 CDN_ENABLED = os.getenv('CDN_ENABLED', 'False').lower() == 'true'
 CDN_PROVIDER = os.getenv('CDN_PROVIDER', '')  # 'cloudinary', 'aws_s3', 'imgix'
@@ -482,6 +495,23 @@ IMGIX_SIGN_KEY = os.getenv('IMGIX_SIGN_KEY', '')
 GEOCODING_ENABLED = os.getenv('GEOCODING_ENABLED', 'False').lower() == 'true'
 GEOCODING_PROVIDER = os.getenv('GEOCODING_PROVIDER', '')  # 'google', 'mapbox', 'here'
 GEOCODING_API_KEY = os.getenv('GEOCODING_API_KEY', '')
+
+# AI Configuration
+AI_ENABLED = os.getenv('AI_ENABLED', 'False').lower() == 'true'
+AI_PROVIDER = os.getenv('AI_PROVIDER', 'openai')  # 'openai', 'anthropic', 'huggingface'
+OPENAI_API_KEY = os.getenv('OPENAI_API_KEY', '')
+ANTHROPIC_API_KEY = os.getenv('ANTHROPIC_API_KEY', '')
+HUGGINGFACE_API_KEY = os.getenv('HUGGINGFACE_API_KEY', '')
+AI_MODEL = os.getenv('AI_MODEL', 'gpt-3.5-turbo')
+AI_MAX_TOKENS = int(os.getenv('AI_MAX_TOKENS', '2000'))
+AI_TEMPERATURE = float(os.getenv('AI_TEMPERATURE', '0.7'))
+
+# AI Safety Configuration
+AI_RATE_LIMIT_ENABLED = os.getenv('AI_RATE_LIMIT_ENABLED', 'True').lower() == 'true'
+AI_RATE_LIMIT_REQUESTS_PER_MINUTE = int(os.getenv('AI_RATE_LIMIT_REQUESTS_PER_MINUTE', '20'))
+AI_CONTENT_MODERATION_ENABLED = os.getenv('AI_CONTENT_MODERATION_ENABLED', 'True').lower() == 'true'
+AI_LOGGING_ENABLED = os.getenv('AI_LOGGING_ENABLED', 'False').lower() == 'true'  # Log AI interactions in production
+AI_SAFE_MODE = os.getenv('AI_SAFE_MODE', 'True').lower() == 'true'  # Restrict AI from sensitive operations
 
 # GPS Search Settings
 GPS_SEARCH_RADIUS_KM = int(os.getenv('GPS_SEARCH_RADIUS_KM', '10'))
