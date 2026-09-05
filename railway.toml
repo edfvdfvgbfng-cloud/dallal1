@@ -1,5 +1,5 @@
 # Railway configuration for Dalal Platform
-# Force rebuild - 2026-09-05-02-10 - Switch to Nixpacks to bypass Docker cache
+# Force rebuild - 2026-09-05-02-15 - Replace settings.py with production content
 [build]
 builder = "NIXPACKS"
 
@@ -14,7 +14,7 @@ DEBUG = "False"
 PORT = "8080"
 PYTHONUNBUFFERED = "1"
 PYTHONPATH = "/app"
-DJANGO_SETTINGS_MODULE = "dalal_project.settings_production"
+DJANGO_SETTINGS_MODULE = "dalal_project.settings"
 ALLOW_SQLITE_FALLBACK = "False"
 GUNICORN_WORKERS = "2"
 GUNICORN_TIMEOUT = "120"

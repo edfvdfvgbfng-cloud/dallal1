@@ -1,5 +1,5 @@
 # This file is NOW ACTIVE - Using Nixpacks instead of Dockerfile
-# Force Railway rebuild - 2026-09-05-02-10 - Bypass Docker cache, use production settings
+# Force Railway rebuild - 2026-09-05-02-15 - settings.py now contains production content
 [phases.setup]
 nixPkgs = ["python311", "gcc", "pkg-config", "postgresql"]
 
@@ -25,7 +25,7 @@ DEBUG = "False"
 PORT = "8080"
 PYTHONUNBUFFERED = "1"
 PYTHONPATH = "/app"
-DJANGO_SETTINGS_MODULE = "dalal_project.settings_production"
+DJANGO_SETTINGS_MODULE = "dalal_project.settings"
 ALLOW_SQLITE_FALLBACK = "False"
 GUNICORN_WORKERS = "2"
 GUNICORN_TIMEOUT = "120"
