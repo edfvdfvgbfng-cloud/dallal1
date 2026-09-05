@@ -1,6 +1,5 @@
-# This file is DISABLED - Using Dockerfile instead
-# To use Nixpacks, change builder in railway.toml to "NIXPACKS"
-# Force Railway rebuild - 2026-08-24-15-05 - Fix static files handling
+# This file is NOW ACTIVE - Using Nixpacks instead of Dockerfile
+# Force Railway rebuild - 2026-09-05-02-05 - Bypass Docker cache
 [phases.setup]
 nixPkgs = ["python311", "gcc", "pkg-config", "postgresql"]
 

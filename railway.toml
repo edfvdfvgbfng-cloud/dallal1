@@ -1,7 +1,7 @@
 # Railway configuration for Dalal Platform
-# Force rebuild - 2026-09-05-02-00
+# Force rebuild - 2026-09-05-02-05 - Switch to Nixpacks to bypass Docker cache
 [build]
-builder = "DOCKERFILE"
+builder = "NIXPACKS"
 
 [deploy]
 healthcheckPath = "/health/"
