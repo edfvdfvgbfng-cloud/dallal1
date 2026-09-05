@@ -257,7 +257,7 @@ def clear_conversation(request):
 
 
 @api_view(['POST'])
-@permission_classes([AllowAny])
+@permission_classes([IsAuthenticated])
 def ai_chatbot_legacy(request):
     """
     Legacy endpoint - Compatibility wrapper for /api/chatbot/

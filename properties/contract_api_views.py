@@ -4,19 +4,25 @@ API Views للعقود العقارية
 """
 
 from django.http import JsonResponse
-from django.views.decorators.csrf import csrf_exempt
+from django.views.decorators.csrf import csrf_protect
 from django.views.decorators.http import require_http_methods
 from django.contrib.auth.decorators import login_required
 from django.core.paginator import Paginator
 from django.db.models import Q, Count, Sum
 from django.utils import timezone
+from django.core.exceptions import PermissionDenied
 import json
+import logging
 
 from .models import RealEstateContract, ContractParty, ContractDocument, ContractAuditLog
 from .forms import RealEstateContractForm, ContractDocumentForm, ContractPartyForm
+from .permissions_centralized import rate_limit, log_activity, get_client_ip
+
+logger = logging.getLogger(__name__)
 
 
-@csrf_exempt
+@rate_limit(max_requests=30, period=60)
+@csrf_protect
 @require_http_methods(["GET"])
 @login_required
 def api_contracts_list(request):
@@ -24,6 +30,7 @@ def api_contracts_list(request):
     
     # فحص الصلاحيات
     if not request.user.is_superuser and not request.user.is_staff:
+        logger.warning(f'Unauthorized API access attempt by user {request.user.username} to contracts list')
         return JsonResponse({'success': False, 'error': 'ليس لديك صلاحية'}, status=403)
     
     # الاستعلام الأساسي
@@ -90,7 +97,8 @@ def api_contracts_list(request):
     })
 
 
-@csrf_exempt
+@rate_limit(max_requests=30, period=60)
+@csrf_protect
 @require_http_methods(["GET"])
 @login_required
 def api_contract_detail(request, contract_id):
@@ -99,10 +107,12 @@ def api_contract_detail(request, contract_id):
     contract = RealEstateContract.objects.filter(pk=contract_id).first()
     
     if not contract:
+        logger.warning(f'Contract not found: {contract_id} by user {request.user.username}')
         return JsonResponse({'success': False, 'error': 'العقد غير موجود'}, status=404)
     
     # فحص الصلاحيات
     if not contract.can_view(request.user):
+        logger.warning(f'Unauthorized view attempt by user {request.user.username} on contract {contract_id}')
         return JsonResponse({'success': False, 'error': 'ليس لديك صلاحية'}, status=403)
     
     # تسجيل العرض
@@ -212,7 +222,8 @@ def api_contract_detail(request, contract_id):
     return JsonResponse({'success': True, 'contract': contract_data})
 
 
-@csrf_exempt
+@rate_limit(max_requests=10, period=60)
+@csrf_protect
 @require_http_methods(["POST"])
 @login_required
 def api_contract_create(request):
@@ -220,6 +231,7 @@ def api_contract_create(request):
     
     # فحص الصلاحيات
     if not request.user.is_superuser and not request.user.is_staff:
+        logger.warning(f'Unauthorized create attempt by user {request.user.username}')
         return JsonResponse({'success': False, 'error': 'ليس لديك صلاحية'}, status=403)
     
     try:

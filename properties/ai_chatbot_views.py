@@ -57,7 +57,7 @@ def ai_chatbot_api(request):
 
 
 @api_view(['POST'])
-@permission_classes([AllowAny])
+@permission_classes([IsAuthenticated])
 def ai_confirmation_api(request):
     """API for handling user confirmations for AI Agent operations"""
     try:
@@ -86,7 +86,7 @@ def ai_confirmation_api(request):
 
 
 @api_view(['POST'])
-@permission_classes([AllowAny])
+@permission_classes([IsAuthenticated])
 def ai_feedback_api(request):
     """API for recording user feedback on AI responses"""
     try:
@@ -113,7 +113,7 @@ def ai_feedback_api(request):
 
 
 @api_view(['POST'])
-@permission_classes([AllowAny])
+@permission_classes([IsAuthenticated])
 def ai_correction_api(request):
     """API for recording user corrections"""
     try:
@@ -157,7 +157,7 @@ def ai_correction_api(request):
 
 
 @api_view(['GET'])
-@permission_classes([AllowAny])
+@permission_classes([IsAuthenticated])
 def ai_statistics_api(request):
     """API for getting AI system statistics"""
     try:

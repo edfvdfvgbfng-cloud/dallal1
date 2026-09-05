@@ -8,7 +8,6 @@ from rest_framework.decorators import api_view, permission_classes, action
 from rest_framework.permissions import IsAuthenticated, IsAdminUser, AllowAny
 from rest_framework.response import Response
 from django.http import JsonResponse
-from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_http_methods
 from django.utils import timezone
 from django.db.models import Q
@@ -39,7 +38,7 @@ class PropertyViewSet(viewsets.ModelViewSet):
     """Basic Property ViewSet for API compatibility"""
     queryset = Property.objects.all()
     serializer_class = PropertySerializer
-    permission_classes = [AllowAny]
+    permission_classes = [IsAuthenticated]
     
     def get_queryset(self):
         queryset = Property.objects.filter(status='available')
@@ -1173,7 +1172,7 @@ def reservation_action_api(request, reservation_id):
 # ==================== GPS AND LOCATION API ====================
 
 @api_view(['GET'])
-@permission_classes([AllowAny])
+@permission_classes([IsAuthenticated])
 def gps_nearby_properties_api(request):
     """
     API endpoint for finding properties near a GPS location
@@ -1260,7 +1259,7 @@ def gps_nearby_properties_api(request):
 
 
 @api_view(['GET'])
-@permission_classes([AllowAny])
+@permission_classes([IsAuthenticated])
 def gps_area_search_api(request):
     """
     API endpoint for searching properties within a rectangular area
@@ -1345,7 +1344,7 @@ def gps_area_search_api(request):
 
 
 @api_view(['POST'])
-@permission_classes([AllowAny])
+@permission_classes([IsAuthenticated])
 def gps_geocode_api(request):
     """
     API endpoint for geocoding addresses to coordinates
@@ -1392,7 +1391,7 @@ def gps_geocode_api(request):
 
 
 @api_view(['POST'])
-@permission_classes([AllowAny])
+@permission_classes([IsAuthenticated])
 def gps_reverse_geocode_api(request):
     """
     API endpoint for reverse geocoding coordinates to address
@@ -1442,7 +1441,7 @@ def gps_reverse_geocode_api(request):
 
 
 @api_view(['GET'])
-@permission_classes([AllowAny])
+@permission_classes([IsAuthenticated])
 def gps_distance_api(request):
     """
     API endpoint for calculating distance between two points
