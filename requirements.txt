@@ -1,8 +1,6 @@
 # Core Django
 Django>=4.2,<5.3
 python-dotenv>=1.0.0
-python-decouple>=3.8
-decouple>=3.6
 Pillow>=10.0.0
 
 # Production server & static files
@@ -39,4 +37,4 @@ django-solo>=2.0.0
 django-leaflet>=0.28.0
 qrcode>=7.4.0
 
-# Force rebuild - 2026-09-05-02-10
+# Force rebuild - 2026-09-05-02-40
