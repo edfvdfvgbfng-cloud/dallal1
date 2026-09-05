@@ -3,13 +3,17 @@
 import os
 import sys
 
+# Ensure project root is always the first item in sys.path
+project_root = os.path.dirname(os.path.abspath(__file__))
+if project_root not in sys.path:
+    sys.path.insert(0, project_root)
+
+# Set up PYTHONPATH environment variable for any child subprocesses
+os.environ['PYTHONPATH'] = f"{project_root}:{os.environ.get('PYTHONPATH', '')}"
+
 
 def main():
     """Run administrative tasks."""
-    project_root = os.path.dirname(os.path.abspath(__file__))
-    if project_root not in sys.path:
-        sys.path.insert(0, project_root)
-
     os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'dalal_project.settings')
     try:
         from django.core.management import execute_from_command_line
