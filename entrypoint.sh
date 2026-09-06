@@ -14,8 +14,8 @@ echo "ALLOWED_HOSTS from env: $ALLOWED_HOSTS"
 
 # Try using gunicorn instead of runserver
 if command -v gunicorn &> /dev/null; then
-    echo "Using gunicorn..."
-    exec gunicorn dalal_project.wsgi:application --bind 0.0.0.0:$PORT --workers 2 --timeout 120
+    echo "Using gunicorn with 1 worker and 300s timeout..."
+    exec gunicorn dalal_project.wsgi:application --bind 0.0.0.0:$PORT --workers 1 --timeout 300 --access-logfile - --error-logfile - --log-level info
 else
     echo "Using Django runserver (gunicorn not available)..."
     exec python manage.py runserver 0.0.0.0:$PORT
