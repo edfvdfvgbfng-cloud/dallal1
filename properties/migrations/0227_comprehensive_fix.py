@@ -100,6 +100,24 @@ def comprehensive_fix(apps, schema_editor):
                 );
             """)
             print("Created properties_brokerchannel table")
+            
+            # Add foreign key to Broker table if it exists
+            try:
+                cursor.execute("""
+                    SELECT EXISTS (
+                        SELECT FROM information_schema.tables 
+                        WHERE table_name = 'properties_broker'
+                    );
+                """)
+                if cursor.fetchone()[0]:
+                    cursor.execute("""
+                        ALTER TABLE properties_brokerchannel 
+                        ADD CONSTRAINT properties_brokerchannel_broker_id_fk 
+                        FOREIGN KEY (broker_id) REFERENCES properties_broker(id) ON DELETE SET NULL;
+                    """)
+                    print("Added foreign key to properties_brokerchannel")
+            except Exception as e:
+                print(f"Could not add foreign key: {e}")
         
         # Step 5: Add missing columns to properties_property
         property_columns = [
@@ -134,7 +152,38 @@ def comprehensive_fix(apps, schema_editor):
                     """)
                 print(f"Added {col_name} column to properties_property")
         
-        # Step 6: Add theme_mode to properties_sitesettings if it doesn't exist
+        # Step 6: Add missing columns to properties_property (both publication_end_date and expiry_date)
+        additional_property_columns = [
+            ('expiry_date', 'TIMESTAMP WITH TIME ZONE', 'NULL'),
+        ]
+        
+        for col_name, col_type, default_val in additional_property_columns:
+            cursor.execute("""
+                SELECT EXISTS (
+                    SELECT FROM information_schema.columns 
+                    WHERE table_name = 'properties_property' 
+                    AND column_name = %s
+                );
+            """, [col_name])
+            if not cursor.fetchone()[0]:
+                if default_val == 'NULL':
+                    cursor.execute(f"""
+                        ALTER TABLE properties_property 
+                        ADD COLUMN {col_name} {col_type} NULL;
+                    """)
+                elif col_type == 'BOOLEAN':
+                    cursor.execute(f"""
+                        ALTER TABLE properties_property 
+                        ADD COLUMN {col_name} {col_type} DEFAULT {default_val} NOT NULL;
+                    """)
+                else:
+                    cursor.execute(f"""
+                        ALTER TABLE properties_property 
+                        ADD COLUMN {col_name} {col_type} DEFAULT '{default_val}' NOT NULL;
+                    """)
+                print(f"Added {col_name} column to properties_property")
+        
+        # Step 7: Add theme_mode to properties_sitesettings if it doesn't exist
         cursor.execute("""
             SELECT EXISTS (
                 SELECT FROM information_schema.columns 
@@ -149,38 +198,89 @@ def comprehensive_fix(apps, schema_editor):
             """)
             print("Added theme_mode column to properties_sitesettings")
         
-        # Step 7: Fix data type issues in SiteSettings
+        # Step 8: Create Resort table if it doesn't exist (minimal version)
         cursor.execute("""
             SELECT EXISTS (
-                SELECT FROM information_schema.columns 
-                WHERE table_name = 'properties_sitesettings' 
-                AND column_name = 'spam_filter_level'
-                AND data_type = 'integer'
+                SELECT FROM information_schema.tables 
+                WHERE table_name = 'properties_resort'
             );
         """)
-        if cursor.fetchone()[0]:
+        if not cursor.fetchone()[0]:
             cursor.execute("""
-                ALTER TABLE properties_sitesettings 
-                ALTER COLUMN spam_filter_level TYPE VARCHAR(20) 
-                USING spam_filter_level::text;
+                CREATE TABLE properties_resort (
+                    id BIGSERIAL PRIMARY KEY,
+                    name VARCHAR(200) NOT NULL,
+                    description TEXT DEFAULT '' NOT NULL,
+                    address VARCHAR(300) DEFAULT '' NOT NULL,
+                    city VARCHAR(100) DEFAULT '' NOT NULL,
+                    governorate VARCHAR(100) DEFAULT '' NOT NULL,
+                    country VARCHAR(100) DEFAULT '' NOT NULL,
+                    price INTEGER DEFAULT 0 NOT NULL,
+                    rating DECIMAL(2,1) DEFAULT 0.0 NOT NULL,
+                    is_active BOOLEAN DEFAULT TRUE NOT NULL,
+                    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW() NOT NULL,
+                    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW() NOT NULL
+                );
             """)
-            print("Fixed spam_filter_level column type")
+            print("Created properties_resort table")
         
-        cursor.execute("""
-            SELECT EXISTS (
-                SELECT FROM information_schema.columns 
-                WHERE table_name = 'properties_sitesettings' 
-                AND column_name = 'account_lockout_threshold'
-                AND data_type = 'integer'
-            );
-        """)
-        if cursor.fetchone()[0]:
+        # Step 9: Fix data type issues in SiteSettings (multiple columns that might be INTEGER instead of VARCHAR)
+        varchar_columns = [
+            'spam_filter_level',
+            'account_lockout_threshold',
+            'report_priority_threshold',
+            'server_monitoring_interval',
+            'database_monitoring_interval',
+            'cache_monitoring_interval',
+            'log_rotation_size',
+            'max_image_size',
+            'max_video_size',
+            'max_properties_per_user',
+            'max_images_per_user',
+            'max_messages_per_day',
+            'max_search_results',
+            'subscription_price_monthly',
+            'subscription_price_yearly',
+            'rd_budget_percentage',
+            'csr_budget_percentage',
+            'backup_retention_days',
+            'data_retention_days',
+            'audit_log_retention_days',
+            'activity_log_retention_days',
+            'error_log_retention_days',
+            'access_log_retention_days',
+            'auto_cleanup_days',
+            'testing_frequency',
+            'risk_assessment_frequency',
+            'bcp_test_frequency',
+            'rto_hours',
+            'rpo_hours',
+            'account_lockout_duration',
+            'session_timeout',
+            'cache_duration',
+            'rate_limit_requests',
+            'rate_limit_period',
+            'minimum_age',
+            'api_rate_limit',
+            'hsts_max_age',
+        ]
+        
+        for col_name in varchar_columns:
             cursor.execute("""
-                ALTER TABLE properties_sitesettings 
-                ALTER COLUMN account_lockout_threshold TYPE VARCHAR(20) 
-                USING account_lockout_threshold::text;
-            """)
-            print("Fixed account_lockout_threshold column type")
+                SELECT EXISTS (
+                    SELECT FROM information_schema.columns 
+                    WHERE table_name = 'properties_sitesettings' 
+                    AND column_name = %s
+                    AND data_type = 'integer'
+                );
+            """, [col_name])
+            if cursor.fetchone()[0]:
+                cursor.execute(f"""
+                    ALTER TABLE properties_sitesettings 
+                    ALTER COLUMN {col_name} TYPE VARCHAR(50) 
+                    USING {col_name}::text;
+                """)
+                print(f"Fixed {col_name} column type from INTEGER to VARCHAR")
 
 
 def reverse_migration(apps, schema_editor):
