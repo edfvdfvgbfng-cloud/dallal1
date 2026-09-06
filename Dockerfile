@@ -34,14 +34,15 @@ COPY --from=builder /usr/local/bin /usr/local/bin
 # Copy application code
 COPY . .
 
+# Copy entrypoint script
+COPY entrypoint.sh /app/entrypoint.sh
+RUN chmod +x /app/entrypoint.sh
+
 # Create static files directory
 RUN mkdir -p staticfiles media static
 
 # Collect static files
 RUN python manage.py collectstatic --noinput --clear || true
-
-# Run migrations (without || true to see actual errors)
-RUN python manage.py migrate --noinput
 
 # Expose port
 EXPOSE 8000
@@ -51,4 +52,4 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
     CMD python manage.py check || exit 1
 
 # Run application
-CMD ["python", "manage.py", "runserver", "0.0.0.0:8000"]
+CMD ["/app/entrypoint.sh"]
