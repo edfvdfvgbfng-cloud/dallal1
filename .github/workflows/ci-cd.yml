@@ -1,10 +1,10 @@
-name: AI Platform CI/CD Pipeline
+name: AI Platform CI/CD Pipeline (DISABLED)
 
 on:
   push:
-    branches: [ main, develop ]
+    branches: [ disabled ]
   pull_request:
-    branches: [ main ]
+    branches: [ disabled ]
 
 env:
   PYTHON_VERSION: '3.11'

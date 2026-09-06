@@ -1,8 +1,8 @@
-name: Deploy to Railway
+name: Deploy to Railway (DISABLED)
 
 on:
   push:
-    branches: [ main, develop ]
+    branches: [ disabled ]
   workflow_dispatch:
 
 jobs:
