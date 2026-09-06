@@ -48,11 +48,12 @@ if not SECRET_KEY:
     if DEBUG:
         SECRET_KEY = 'django-insecure-local-dev-only-change-me'
     else:
-        # Generate a random SECRET_KEY for production if not set
-        # WARNING: For production, set SECRET_KEY environment variable
-        import secrets
-        SECRET_KEY = secrets.token_urlsafe(50)
-        print('WARNING: Using auto-generated SECRET_KEY. Set SECRET_KEY environment variable for production.')
+        # Production MUST have SECRET_KEY - fail fast
+        raise ValueError(
+            'SECRET_KEY environment variable is required in production. '
+            'Set SECRET_KEY in Railway Variables. '
+            'Application cannot start without SECRET_KEY.'
+        )
 
 # Custom domain
 custom_domain = os.getenv('CUSTOM_DOMAIN', 'daluailiraq.com')
