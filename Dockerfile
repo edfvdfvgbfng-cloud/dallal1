@@ -50,9 +50,6 @@ RUN chmod +x /healthcheck.sh
 # Create static files directory
 RUN mkdir -p staticfiles media static
 
-# Collect static files
-RUN python manage.py collectstatic --noinput --clear || true
-
 # Expose port
 EXPOSE 8000
 

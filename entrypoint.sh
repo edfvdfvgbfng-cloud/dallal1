@@ -12,6 +12,10 @@ echo "PORT=$PORT"
 echo "RAILWAY_PUBLIC_DOMAIN=$RAILWAY_PUBLIC_DOMAIN"
 echo "ALLOWED_HOSTS from env: $ALLOWED_HOSTS"
 
+# Collect static files (even if database tables don't exist)
+echo "Collecting static files..."
+python manage.py collectstatic --noinput --clear || echo "Collectstatic failed, continuing..."
+
 # Try using gunicorn instead of runserver
 if command -v gunicorn &> /dev/null; then
     echo "Using gunicorn with 1 worker and 300s timeout..."
