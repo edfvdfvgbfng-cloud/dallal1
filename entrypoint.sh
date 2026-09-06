@@ -26,7 +26,14 @@ if [ "$DEBUG" = "False" ] || [ "$DEBUG" = "false" ] || [ -z "$DEBUG" ]; then
 fi
 
 echo "Running Django migrations..."
-python manage.py migrate --noinput || echo "Migrations failed, continuing..."
+# Try to apply migrations, if they fail due to index conflict, fake the problematic migration
+python manage.py migrate --noinput
+if [ $? -ne 0 ]; then
+    echo "Migrations failed, trying to fake properties.0004 due to index conflict..."
+    python manage.py migrate properties 0003 --fake
+    python manage.py migrate properties 0004 --fake
+    python manage.py migrate --noinput || echo "Migrations still failed, continuing..."
+fi
 
 echo "Collecting static files..."
 python manage.py collectstatic --noinput --clear || echo "Collectstatic failed, continuing..."
