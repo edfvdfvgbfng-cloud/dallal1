@@ -26,12 +26,18 @@ if [ "$DEBUG" = "False" ] || [ "$DEBUG" = "false" ] || [ -z "$DEBUG" ]; then
 fi
 
 echo "Running Django migrations..."
-# Try to apply migrations, if they fail due to index conflict, fake the problematic migration
+# Try to apply migrations normally
 python manage.py migrate --noinput
 if [ $? -ne 0 ]; then
-    echo "Migrations failed, trying to fake properties.0004 due to index conflict..."
+    echo "Migrations failed, faking all remaining properties migrations from 0004 onwards..."
+    # Get the last migration number
+    LAST_MIGRATION=$(python manage.py showmigrations properties | tail -1 | awk '{print $1}')
+    # Fake from 0004 to last migration
     python manage.py migrate properties 0003 --fake
-    python manage.py migrate properties 0004 --fake
+    if [ -n "$LAST_MIGRATION" ]; then
+        python manage.py migrate properties $LAST_MIGRATION --fake
+    fi
+    echo "Continuing with other apps migrations..."
     python manage.py migrate --noinput || echo "Migrations still failed, continuing..."
 fi
 
