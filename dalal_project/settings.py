@@ -228,6 +228,10 @@ import dj_database_url
 
 database_url = os.getenv('DATABASE_URL')
 
+# Try Railway's automatic DATABASE_URL first
+if not database_url:
+    database_url = os.getenv('RAILWAY_POSTGRES_DATABASE_URL')
+
 if not database_url:
     db_name = os.getenv('DB_NAME') or os.getenv('POSTGRES_DB')
     db_user = os.getenv('DB_USER') or os.getenv('POSTGRES_USER')
@@ -240,8 +244,12 @@ if not database_url:
 
 # Validate database URL - reject placeholder values
 if database_url:
+    import logging
+    logger = logging.getLogger(__name__)
+    logger.info(f"DATABASE_URL raw value (first 50 chars): {database_url[:50]}")
     invalid_patterns = ['@host:', 'user:password@', '://']
     if any(pattern in database_url for pattern in invalid_patterns):
+        logger.warning(f"DATABASE_URL rejected - contains invalid pattern")
         database_url = None
 
 if database_url:
