@@ -225,12 +225,16 @@ if USE_WEBSOCKETS:
 
 # --- Database Configuration ---
 import dj_database_url
+import logging
+logger = logging.getLogger(__name__)
 
 database_url = os.getenv('DATABASE_URL')
+logger.info(f"DATABASE_URL from env: {'SET' if database_url else 'NOT SET'}")
 
 # Try Railway's automatic DATABASE_URL first
 if not database_url:
     database_url = os.getenv('RAILWAY_POSTGRES_DATABASE_URL')
+    logger.info(f"RAILWAY_POSTGRES_DATABASE_URL: {'SET' if database_url else 'NOT SET'}")
 
 if not database_url:
     db_name = os.getenv('DB_NAME') or os.getenv('POSTGRES_DB')
@@ -241,15 +245,15 @@ if not database_url:
 
     if db_name and db_user and db_password and db_host:
         database_url = f'postgres://{db_user}:{db_password}@{db_host}:{db_port}/{db_name}'
+        logger.info(f"DATABASE_URL constructed from env vars")
 
-# Validate database URL - reject placeholder values
+# Log the final DATABASE_URL value (first 50 chars for security)
 if database_url:
-    import logging
-    logger = logging.getLogger(__name__)
-    logger.info(f"DATABASE_URL raw value (first 50 chars): {database_url[:50]}")
+    logger.info(f"DATABASE_URL final value (first 50 chars): {database_url[:50]}")
+    # Validate database URL - reject placeholder values
     invalid_patterns = ['@host:', 'user:password@', '://']
     if any(pattern in database_url for pattern in invalid_patterns):
-        logger.warning(f"DATABASE_URL rejected - contains invalid pattern")
+        logger.warning(f"DATABASE_URL rejected - contains invalid pattern: {database_url[:50]}")
         database_url = None
 
 if database_url:
