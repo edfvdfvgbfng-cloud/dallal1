@@ -15,7 +15,6 @@ local_settings.py
 db.sqlite3
 db.sqlite3-journal
 /media
-/staticfiles
 /static
 
 # Virtual Environment
@@ -65,3 +64,6 @@ htmlcov/
 
 # Railway
 railway.json
+
+# Force rebuild marker
+# Force Railway Docker rebuild - 2026-09-06-05-30

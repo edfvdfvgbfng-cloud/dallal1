@@ -40,8 +40,8 @@ RUN mkdir -p staticfiles media static
 # Collect static files
 RUN python manage.py collectstatic --noinput --clear || true
 
-# Run migrations
-RUN python manage.py migrate --noinput || true
+# Run migrations (without || true to see actual errors)
+RUN python manage.py migrate --noinput
 
 # Expose port
 EXPOSE 8000
