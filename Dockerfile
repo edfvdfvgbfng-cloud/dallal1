@@ -1,5 +1,5 @@
 # Stage 1: Build
-FROM python:3.11-slim as builder
+FROM python:3.11-slim AS builder
 
 WORKDIR /app
 
@@ -48,4 +48,4 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
     CMD python manage.py check || exit 1
 
 # Run application
-CMD ["gunicorn", "dalal_project.wsgi:application", "--bind", "0.0.0.0:8000", "--workers", "4", "--timeout", "120"]
+CMD ["python", "manage.py", "runserver", "0.0.0.0:8000"]
