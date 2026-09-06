@@ -72,6 +72,7 @@ ALLOWED_HOSTS = _unique(ALLOWED_HOSTS + [
     'mup.up.railway.app',
     'muq.up.railway.app',
     'muqq.up.railway.app',
+    'dallal1-production.up.railway.app',
     'localhost',
     '127.0.0.1',
 ])
