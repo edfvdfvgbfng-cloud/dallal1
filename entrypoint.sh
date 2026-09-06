@@ -25,7 +25,9 @@ if [ "$DEBUG" = "False" ] || [ "$DEBUG" = "false" ] || [ -z "$DEBUG" ]; then
     fi
 fi
 
-echo "Skipping migrations for now due to database conflicts..."
+echo "Running Django migrations..."
+python manage.py migrate --noinput || echo "Migrations failed, continuing..."
+
 echo "Collecting static files..."
 python manage.py collectstatic --noinput --clear || echo "Collectstatic failed, continuing..."
 
