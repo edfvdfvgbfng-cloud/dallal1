@@ -75,8 +75,10 @@ def simple_home(request):
 urlpatterns = [
     # Health check endpoint (first for Railway healthcheck)
     path('health/', health_check, name='health-check'),
+    # Simple root view for testing
+    path('', simple_home, name='simple-home'),
     # Include properties URLs as main path (includes dashboard/)
-    path('', include('properties.urls')),
+    path('app/', include('properties.urls')),
     # Admin panel
     path('admin/', admin.site.urls),
     # API endpoints
