@@ -5,7 +5,7 @@ nixPkgs = ["python311", "postgresql", "redis"]
 cmds = ["python -m venv /opt/venv && . /opt/venv/bin/activate && pip install -r requirements.txt"]
 
 [phases.release]
-cmds = [". /opt/venv/bin/activate && python manage.py migrate --noinput"]
+cmds = [". /opt/venv/bin/activate && python manage.py collectstatic --noinput"]
 
 [start]
 cmd = "python manage.py runserver 0.0.0.0:$PORT"
