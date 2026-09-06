@@ -26,6 +26,8 @@ if [ "$DEBUG" = "False" ] || [ "$DEBUG" = "false" ] || [ -z "$DEBUG" ]; then
 fi
 
 echo "Running Django migrations..."
+# Try to drop conflicting index before migrations
+python manage.py dbshell -c "DROP INDEX IF EXISTS properties_property_slug_f3b16024_like;" 2>/dev/null || echo "Could not drop index, trying migrations anyway..."
 # Try to apply migrations normally
 python manage.py migrate --noinput
 if [ $? -ne 0 ]; then
