@@ -28,18 +28,13 @@ fi
 echo "Running Django migrations..."
 # Try to drop conflicting index before migrations using Python script
 python drop_conflicting_index.py || echo "Could not drop index, trying migrations anyway..."
-# Try to apply migrations normally
+# Apply migrations normally - DO NOT fake migrations
 python manage.py migrate --noinput
 if [ $? -ne 0 ]; then
-    echo "Migrations failed, faking all remaining properties migrations from 0004 onwards..."
-    # Get the last migration number
-    LAST_MIGRATION=$(python manage.py showmigrations properties | grep -E "^\[X\]" | tail -1 | awk '{print $1}')
-    echo "Current migration state: $LAST_MIGRATION"
-    # Fake all migrations from 0004 to the end
-    python manage.py migrate properties 0003 --fake
-    python manage.py migrate properties --fake || echo "Could not fake migrations, continuing anyway..."
-    echo "Continuing with other apps migrations..."
-    python manage.py migrate --noinput || echo "Migrations still failed, continuing..."
+    echo "ERROR: Migrations failed. This is a critical error."
+    echo "The database schema may be inconsistent."
+    echo "Please check the migration files and database state."
+    exit 1
 fi
 
 echo "Collecting static files..."
