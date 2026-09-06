@@ -261,14 +261,14 @@ elif os.getenv('ALLOW_SQLITE_FALLBACK', 'False').lower() == 'true':
         }
     }
 else:
-    # Allow SQLite fallback for Railway deployment if DATABASE_URL is not set
-    print('WARNING: No DATABASE_URL set. Using SQLite. Set DATABASE_URL for production.')
-    DATABASES = {
-        'default': {
-            'ENGINE': 'django.db.backends.sqlite3',
-            'NAME': BASE_DIR / 'db.sqlite3',
-        }
-    }
+    # Production MUST have DATABASE_URL - fail fast instead of using SQLite
+    raise ValueError(
+        'DATABASE_URL environment variable is required in production. '
+        'Set DATABASE_URL to connect to PostgreSQL. '
+        'Application cannot start without DATABASE_URL. '
+        'In Railway, use Reference Variable: ${{Postgres.DATABASE_URL}} '
+        'or set DATABASE_URL manually with PostgreSQL connection string.'
+    )
 
 AUTH_PASSWORD_VALIDATORS = [
     {'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator'},
