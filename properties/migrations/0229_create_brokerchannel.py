@@ -61,7 +61,7 @@ def reverse_migration(apps, schema_editor):
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('properties', '0228_fix_missing_schema'),
+        ('properties', '0228_add_critical_missing_columns'),
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
     ]
 
