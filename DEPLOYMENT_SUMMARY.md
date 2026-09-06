@@ -5,7 +5,7 @@
 ### ✅ مشروع على GitHub
 - **الرابط:** `https://github.com/edfvdfvgbfng-cloud/dallal1.git`
 - **الفرع:** main
-- **آخر commit:** 8c57867 - Add deployment status documentation
+- **آخر commit:** 6548d6f - Add comprehensive deployment summary
 
 ### ✅ إصلاحات الأمنية المنفذة
 1. إزالة excessive @csrf_exempt من 15+ endpoint
@@ -35,9 +35,9 @@
 - `DEPLOYMENT_GUIDE.md` - دليل نشر شامل
 - `SETUP_GUIDE.md` - دليل إعداد البيئة
 - `DEPLOYMENT_STATUS.md` - حالة النشر الحالية
+- `DEPLOYMENT_SUMMARY.md` - ملخص شامل للنشر
 - `RAILWAY_FIX.md` - إصلاحات Railway
-- `RAILWAY_STATUS.md` - تتبع حالة Railway
-- `README_DEPLOYMENT.md` - ملخص النشر
+- `README_DEPLOYMENT.md` - ملخص النشر السريع
 - `PRODUCTION_AUDIT_REPORT.md` - تقرير التدقيق الأمني
 
 ## 🚨 المشكلة الحالية
@@ -54,9 +54,12 @@
 2. إنشاء PostgreSQL service جديد (قاعدة بيانات فارغة)
 3. إعادة تشغيل migrations على قاعدة بيانات فارغة
 
+**ملاحظة:** السجلات PostgreSQL تعود أخطاء قديمة (من 00:51 إلى 08:12 UTC)، مما يشير إلى أن Railway يستخدم cache قديم.
+
 ## 📋 أحدث Commits
 
 ```
+6548d6f Add comprehensive deployment summary
 8c57867 Add deployment status documentation
 f7f0703 Skip migrations temporarily to start the application
 2845252 Handle migration conflicts in entrypoint script
@@ -94,7 +97,7 @@ ed7294e Remove || true from migrate command and update .dockerignore
 | الجانب | الحالة |
 |--------|---------|
 | كود على GitHub | ✅ مكتمل |
-| Railway Deployment | ⚠️ يعمل مع تخطي migrations |
+| Railway Deployment | ⚠️ يعمل (migrations مخطية مؤقتاً) |
 | Docker Build | ✅ ناجح |
 | PostgreSQL | ✅ موجود (يحتاج إعادة تعيين) |
 | Django Settings | ✅ محدثة للأمان |
@@ -114,3 +117,6 @@ ed7294e Remove || true from migrate command and update .dockerignore
 - ✅ توثيق شامل موجود
 
 الحاجة الوحيدة: إعادة تعيين قاعدة بيانات PostgreSQL لحل مشكلة migrations، ثم سيكون المشروع جاهزاً للإنتاج الكامل.
+
+## 📅 آخر تحديث: 2026-09-06 08:12 UTC
+ملاحظة: السجلات PostgreSQL تعود أخطاء قديمة، Railway قد يستخدم cache قديم ولم ينشر التغييرات الجديدة بعد.
