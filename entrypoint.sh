@@ -29,16 +29,8 @@ echo "Running Django migrations..."
 # Try to apply migrations normally
 python manage.py migrate --noinput
 if [ $? -ne 0 ]; then
-    echo "Migrations failed, faking all remaining properties migrations from 0004 onwards..."
-    # Get the last migration number
-    LAST_MIGRATION=$(python manage.py showmigrations properties | tail -1 | awk '{print $1}')
-    # Fake from 0004 to last migration
-    python manage.py migrate properties 0003 --fake
-    if [ -n "$LAST_MIGRATION" ]; then
-        python manage.py migrate properties $LAST_MIGRATION --fake
-    fi
-    echo "Continuing with other apps migrations..."
-    python manage.py migrate --noinput || echo "Migrations still failed, continuing..."
+    echo "Migrations failed, faking all migrations using --fake-initial..."
+    python manage.py migrate --fake-initial --noinput || echo "Fake migrations failed, continuing..."
 fi
 
 echo "Collecting static files..."
