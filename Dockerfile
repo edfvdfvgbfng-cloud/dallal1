@@ -48,9 +48,9 @@ RUN python manage.py collectstatic --noinput --clear || true
 # Expose port
 EXPOSE 8000
 
-# Health check - use /health/ endpoint
+# Health check - use /health/ endpoint with dynamic PORT
 HEALTHCHECK --interval=30s --timeout=10s --start-period=10s --retries=3 \
-    CMD curl -f http://localhost:8000/health/ || exit 1
+    CMD curl -f http://localhost:${PORT:-8000}/health/ || exit 1
 
 # Run application
 CMD ["/app/entrypoint.sh"]
