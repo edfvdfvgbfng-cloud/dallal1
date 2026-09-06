@@ -251,7 +251,7 @@ if not database_url:
 if database_url:
     logger.info(f"DATABASE_URL final value (first 50 chars): {database_url[:50]}")
     # Validate database URL - reject placeholder values
-    invalid_patterns = ['@host:', 'user:password@', '://']
+    invalid_patterns = ['@host:', 'user:password@']
     if any(pattern in database_url for pattern in invalid_patterns):
         logger.warning(f"DATABASE_URL rejected - contains invalid pattern: {database_url[:50]}")
         database_url = None
