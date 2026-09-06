@@ -240,7 +240,7 @@ if not database_url:
 
 # Validate database URL - reject placeholder values
 if database_url:
-    invalid_patterns = ['@host:', 'user:password@']
+    invalid_patterns = ['@host:', 'user:password@', '://']
     if any(pattern in database_url for pattern in invalid_patterns):
         database_url = None
 
