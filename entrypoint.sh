@@ -36,9 +36,6 @@ if [ $? -ne 0 ]; then
     echo "Please check the migration files and database state."
     exit 1
 fi
-# Run syncdb to create any missing tables from models
-echo "Running syncdb to create missing tables..."
-python manage.py migrate --run-syncdb
 
 echo "Collecting static files..."
 python manage.py collectstatic --noinput --clear || echo "Collectstatic failed, continuing..."
