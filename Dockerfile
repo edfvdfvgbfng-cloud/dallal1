@@ -15,6 +15,7 @@ RUN apt-get update && apt-get install -y \
 COPY requirements.txt .
 RUN pip install --upgrade pip
 RUN pip install --no-cache-dir -r requirements.txt
+RUN pip install gunicorn
 
 # Stage 2: Runtime
 FROM python:3.11-slim
@@ -31,6 +32,9 @@ RUN apt-get update && apt-get install -y \
 # Copy Python dependencies from builder
 COPY --from=builder /usr/local/lib/python3.11/site-packages /usr/local/lib/python3.11/site-packages
 COPY --from=builder /usr/local/bin /usr/local/bin
+
+# Install gunicorn in runtime if not copied
+RUN pip install gunicorn
 
 # Copy application code
 COPY . .
