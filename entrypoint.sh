@@ -11,7 +11,7 @@ echo "SECRET_KEY exists: $(if [ -n "$SECRET_KEY" ]; then echo "YES"; else echo "
 echo ""
 
 # Check if this is production
-if [ "$DEBUG" = "False" ] || [ "$DEBUG" = "false" ]; then
+if [ "$DEBUG" = "False" ] || [ "$DEBUG" = "false" ] || [ -z "$DEBUG" ]; then
     echo "=== PRODUCTION MODE ==="
     if [ -z "$DATABASE_URL" ]; then
         echo "ERROR: DATABASE_URL is required in production!"

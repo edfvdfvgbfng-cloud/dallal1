@@ -41,7 +41,7 @@ def _unique(items):
     return result
 
 
-DEBUG = os.getenv('DEBUG', 'True').lower() == 'true'
+DEBUG = os.getenv('DEBUG', 'False').lower() == 'true'
 
 SECRET_KEY = os.getenv('SECRET_KEY')
 if not SECRET_KEY:
