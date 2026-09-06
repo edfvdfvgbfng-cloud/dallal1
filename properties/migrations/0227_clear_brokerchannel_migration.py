@@ -1,5 +1,8 @@
 # Migration to clear inconsistent migration history
 
+from django.db import migrations
+
+
 def clear_inconsistent_migration_history(apps, schema_editor):
     """Remove inconsistent migration record from django_migrations"""
     from django.db import connection
