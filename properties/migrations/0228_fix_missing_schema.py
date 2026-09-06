@@ -7,18 +7,21 @@ from django.conf import settings
 from django.db import migrations, models
 
 
-class Migration(migrations.Migration):
-
-    dependencies = [
-        ('properties', '0227_useronlinestatus_chatmessage_delivered_at_and_more'),
-        migrations.swappable_dependency(settings.AUTH_USER_MODEL),
-    ]
-
-    operations = [
-        # Create SiteSettings table if it doesn't exist
-        migrations.RunSQL(
-            sql="""
-                CREATE TABLE IF NOT EXISTS properties_sitesettings (
+def create_missing_tables_and_columns(apps, schema_editor):
+    """Create missing tables and columns safely"""
+    from django.db import connection
+    
+    with connection.cursor() as cursor:
+        # Check and create SiteSettings table
+        cursor.execute("""
+            SELECT EXISTS (
+                SELECT FROM information_schema.tables 
+                WHERE table_name = 'properties_sitesettings'
+            );
+        """)
+        if not cursor.fetchone()[0]:
+            cursor.execute("""
+                CREATE TABLE properties_sitesettings (
                     id BIGSERIAL PRIMARY KEY,
                     site_name VARCHAR(100) DEFAULT 'دلال' NOT NULL,
                     tagline VARCHAR(200) DEFAULT '' NOT NULL,
@@ -54,14 +57,18 @@ class Migration(migrations.Migration):
                     maintenance_end_time TIMESTAMP WITH TIME ZONE NULL,
                     allow_admins_during_maintenance BOOLEAN DEFAULT TRUE NOT NULL
                 );
-            """,
-            reverse_sql="DROP TABLE IF EXISTS properties_sitesettings CASCADE;"
-        ),
+            """)
         
-        # Create Broker table if it doesn't exist
-        migrations.RunSQL(
-            sql="""
-                CREATE TABLE IF NOT EXISTS properties_broker (
+        # Check and create Broker table
+        cursor.execute("""
+            SELECT EXISTS (
+                SELECT FROM information_schema.tables 
+                WHERE table_name = 'properties_broker'
+            );
+        """)
+        if not cursor.fetchone()[0]:
+            cursor.execute("""
+                CREATE TABLE properties_broker (
                     id BIGSERIAL PRIMARY KEY,
                     phone VARCHAR(20) NOT NULL,
                     office_name VARCHAR(200) DEFAULT '' NOT NULL,
@@ -78,14 +85,18 @@ class Migration(migrations.Migration):
                     parent_id INTEGER NULL,
                     user_id INTEGER NOT NULL UNIQUE
                 );
-            """,
-            reverse_sql="DROP TABLE IF EXISTS properties_broker CASCADE;"
-        ),
+            """)
         
-        # Create Office table if it doesn't exist
-        migrations.RunSQL(
-            sql="""
-                CREATE TABLE IF NOT EXISTS properties_office (
+        # Check and create Office table
+        cursor.execute("""
+            SELECT EXISTS (
+                SELECT FROM information_schema.tables 
+                WHERE table_name = 'properties_office'
+            );
+        """)
+        if not cursor.fetchone()[0]:
+            cursor.execute("""
+                CREATE TABLE properties_office (
                     id BIGSERIAL PRIMARY KEY,
                     name VARCHAR(200) NOT NULL,
                     address VARCHAR(300) DEFAULT '' NOT NULL,
@@ -95,209 +106,146 @@ class Migration(migrations.Migration):
                     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW() NOT NULL,
                     owner_id INTEGER NULL
                 );
-            """,
-            reverse_sql="DROP TABLE IF EXISTS properties_office CASCADE;"
-        ),
+            """)
         
-        # Add missing columns to properties_property if they don't exist
-        migrations.RunSQL(
-            sql="""
-                ALTER TABLE properties_property 
-                ADD COLUMN IF NOT EXISTS city VARCHAR(100) DEFAULT 'بغداد' NOT NULL;
-            """,
-            reverse_sql="ALTER TABLE properties_property DROP COLUMN IF EXISTS city;"
-        ),
+        # Check and add missing columns to properties_property
+        columns_to_add = [
+            ('city', 'VARCHAR(100)', 'بغداد'),
+            ('is_featured', 'BOOLEAN', 'FALSE'),
+            ('is_promoted', 'BOOLEAN', 'FALSE'),
+            ('promotion_until', 'DATE', 'NULL'),
+            ('slug', 'VARCHAR(220)', ''),
+            ('title', 'VARCHAR(200)', ''),
+            ('district', 'VARCHAR(100)', ''),
+            ('province', 'VARCHAR(30)', 'baghdad'),
+            ('latitude', 'DECIMAL(9,6)', 'NULL'),
+            ('longitude', 'DECIMAL(9,6)', 'NULL'),
+            ('broker_id', 'INTEGER', 'NULL'),
+            ('office_id', 'INTEGER', 'NULL'),
+            ('owner_id', 'INTEGER', 'NULL'),
+        ]
         
-        migrations.RunSQL(
-            sql="""
-                ALTER TABLE properties_property 
-                ADD COLUMN IF NOT EXISTS is_featured BOOLEAN DEFAULT FALSE NOT NULL;
-            """,
-            reverse_sql="ALTER TABLE properties_property DROP COLUMN IF EXISTS is_featured;"
-        ),
-        
-        migrations.RunSQL(
-            sql="""
-                ALTER TABLE properties_property 
-                ADD COLUMN IF NOT EXISTS is_promoted BOOLEAN DEFAULT FALSE NOT NULL;
-            """,
-            reverse_sql="ALTER TABLE properties_property DROP COLUMN IF EXISTS is_promoted;"
-        ),
-        
-        migrations.RunSQL(
-            sql="""
-                ALTER TABLE properties_property 
-                ADD COLUMN IF NOT EXISTS promotion_until DATE NULL;
-            """,
-            reverse_sql="ALTER TABLE properties_property DROP COLUMN IF EXISTS promotion_until;"
-        ),
-        
-        migrations.RunSQL(
-            sql="""
-                ALTER TABLE properties_property 
-                ADD COLUMN IF NOT EXISTS slug VARCHAR(220) DEFAULT '' NOT NULL;
-            """,
-            reverse_sql="ALTER TABLE properties_property DROP COLUMN IF EXISTS slug;"
-        ),
-        
-        migrations.RunSQL(
-            sql="""
-                ALTER TABLE properties_property 
-                ADD COLUMN IF NOT EXISTS title VARCHAR(200) DEFAULT '' NOT NULL;
-            """,
-            reverse_sql="ALTER TABLE properties_property DROP COLUMN IF EXISTS title;"
-        ),
-        
-        migrations.RunSQL(
-            sql="""
-                ALTER TABLE properties_property 
-                ADD COLUMN IF NOT EXISTS district VARCHAR(100) DEFAULT '' NOT NULL;
-            """,
-            reverse_sql="ALTER TABLE properties_property DROP COLUMN IF EXISTS district;"
-        ),
-        
-        migrations.RunSQL(
-            sql="""
-                ALTER TABLE properties_property 
-                ADD COLUMN IF NOT EXISTS province VARCHAR(30) DEFAULT 'baghdad' NOT NULL;
-            """,
-            reverse_sql="ALTER TABLE properties_property DROP COLUMN IF EXISTS province;"
-        ),
-        
-        migrations.RunSQL(
-            sql="""
-                ALTER TABLE properties_property 
-                ADD COLUMN IF NOT EXISTS latitude DECIMAL(9, 6) NULL;
-            """,
-            reverse_sql="ALTER TABLE properties_property DROP COLUMN IF EXISTS latitude;"
-        ),
-        
-        migrations.RunSQL(
-            sql="""
-                ALTER TABLE properties_property 
-                ADD COLUMN IF NOT EXISTS longitude DECIMAL(9, 6) NULL;
-            """,
-            reverse_sql="ALTER TABLE properties_property DROP COLUMN IF EXISTS longitude;"
-        ),
-        
-        # Add foreign key columns if they don't exist
-        migrations.RunSQL(
-            sql="""
-                ALTER TABLE properties_property 
-                ADD COLUMN IF NOT EXISTS broker_id INTEGER NULL;
-            """,
-            reverse_sql="ALTER TABLE properties_property DROP COLUMN IF EXISTS broker_id;"
-        ),
-        
-        migrations.RunSQL(
-            sql="""
-                ALTER TABLE properties_property 
-                ADD COLUMN IF NOT EXISTS office_id INTEGER NULL;
-            """,
-            reverse_sql="ALTER TABLE properties_property DROP COLUMN IF EXISTS office_id;"
-        ),
-        
-        migrations.RunSQL(
-            sql="""
-                ALTER TABLE properties_property 
-                ADD COLUMN IF NOT EXISTS owner_id INTEGER NULL;
-            """,
-            reverse_sql="ALTER TABLE properties_property DROP COLUMN IF EXISTS owner_id;"
-        ),
+        for col_name, col_type, default_val in columns_to_add:
+            cursor.execute("""
+                SELECT EXISTS (
+                    SELECT FROM information_schema.columns 
+                    WHERE table_name = 'properties_property' 
+                    AND column_name = %s
+                );
+            """, [col_name])
+            if not cursor.fetchone()[0]:
+                if default_val == 'NULL':
+                    cursor.execute(f"""
+                        ALTER TABLE properties_property 
+                        ADD COLUMN {col_name} {col_type} NULL;
+                    """)
+                else:
+                    cursor.execute(f"""
+                        ALTER TABLE properties_property 
+                        ADD COLUMN {col_name} {col_type} DEFAULT '{default_val}' NOT NULL;
+                    """)
         
         # Add foreign key constraints
-        migrations.RunSQL(
-            sql="""
+        try:
+            cursor.execute("""
                 ALTER TABLE properties_property 
-                ADD CONSTRAINT IF NOT EXISTS properties_property_broker_id_fk 
+                ADD CONSTRAINT properties_property_broker_id_fk 
                 FOREIGN KEY (broker_id) REFERENCES properties_broker(id) ON DELETE SET NULL;
-            """,
-            reverse_sql="ALTER TABLE properties_property DROP CONSTRAINT IF EXISTS properties_property_broker_id_fk;"
-        ),
+            """)
+        except Exception:
+            pass  # Constraint may already exist
         
-        migrations.RunSQL(
-            sql="""
+        try:
+            cursor.execute("""
                 ALTER TABLE properties_property 
-                ADD CONSTRAINT IF NOT EXISTS properties_property_office_id_fk 
+                ADD CONSTRAINT properties_property_office_id_fk 
                 FOREIGN KEY (office_id) REFERENCES properties_office(id) ON DELETE SET NULL;
-            """,
-            reverse_sql="ALTER TABLE properties_property DROP CONSTRAINT IF EXISTS properties_property_office_id_fk;"
-        ),
+            """)
+        except Exception:
+            pass
         
-        migrations.RunSQL(
-            sql="""
+        try:
+            cursor.execute("""
                 ALTER TABLE properties_broker 
-                ADD CONSTRAINT IF NOT EXISTS properties_broker_office_id_fk 
+                ADD CONSTRAINT properties_broker_office_id_fk 
                 FOREIGN KEY (office_id) REFERENCES properties_office(id) ON DELETE SET NULL;
-            """,
-            reverse_sql="ALTER TABLE properties_broker DROP CONSTRAINT IF EXISTS properties_broker_office_id_fk;"
-        ),
+            """)
+        except Exception:
+            pass
         
-        migrations.RunSQL(
-            sql="""
+        try:
+            cursor.execute("""
                 ALTER TABLE properties_broker 
-                ADD CONSTRAINT IF NOT EXISTS properties_broker_parent_id_fk 
+                ADD CONSTRAINT properties_broker_parent_id_fk 
                 FOREIGN KEY (parent_id) REFERENCES properties_broker(id) ON DELETE SET NULL;
-            """,
-            reverse_sql="ALTER TABLE properties_broker DROP CONSTRAINT IF EXISTS properties_broker_parent_id_fk;"
-        ),
+            """)
+        except Exception:
+            pass
         
-        migrations.RunSQL(
-            sql="""
+        try:
+            cursor.execute("""
                 ALTER TABLE properties_broker 
-                ADD CONSTRAINT IF NOT EXISTS properties_broker_user_id_fk 
+                ADD CONSTRAINT properties_broker_user_id_fk 
                 FOREIGN KEY (user_id) REFERENCES auth_user(id) ON DELETE CASCADE;
-            """,
-            reverse_sql="ALTER TABLE properties_broker DROP CONSTRAINT IF EXISTS properties_broker_user_id_fk;"
-        ),
+            """)
+        except Exception:
+            pass
         
         # Add indexes
-        migrations.RunSQL(
-            sql="""
-                CREATE INDEX IF NOT EXISTS properties__provinc_14c1b1_idx 
-                ON properties_property(province, city);
-            """,
-            reverse_sql="DROP INDEX IF EXISTS properties__provinc_14c1b1_idx;"
-        ),
+        indexes = [
+            'properties__provinc_14c1b1_idx ON properties_property(province, city)',
+            'properties__type_d3d96a_idx ON properties_property(type, status)',
+            'properties__price_32e7c2_idx ON properties_property(price)',
+            'properties__created_9ef325_idx ON properties_property(created_at DESC)',
+            'properties__is_feat_b56ef4_idx ON properties_property(is_featured, is_promoted)',
+        ]
         
-        migrations.RunSQL(
-            sql="""
-                CREATE INDEX IF NOT EXISTS properties__type_d3d96a_idx 
-                ON properties_property(type, status);
-            """,
-            reverse_sql="DROP INDEX IF EXISTS properties__type_d3d96a_idx;"
-        ),
-        
-        migrations.RunSQL(
-            sql="""
-                CREATE INDEX IF NOT EXISTS properties__price_32e7c2_idx 
-                ON properties_property(price);
-            """,
-            reverse_sql="DROP INDEX IF EXISTS properties__price_32e7c2_idx;"
-        ),
-        
-        migrations.RunSQL(
-            sql="""
-                CREATE INDEX IF NOT EXISTS properties__created_9ef325_idx 
-                ON properties_property(created_at DESC);
-            """,
-            reverse_sql="DROP INDEX IF EXISTS properties__created_9ef325_idx;"
-        ),
-        
-        migrations.RunSQL(
-            sql="""
-                CREATE INDEX IF NOT EXISTS properties__is_feat_b56ef4_idx 
-                ON properties_property(is_featured, is_promoted);
-            """,
-            reverse_sql="DROP INDEX IF EXISTS properties__is_feat_b56ef4_idx;"
-        ),
+        for index_def in indexes:
+            try:
+                cursor.execute(f"CREATE INDEX IF NOT EXISTS {index_def}")
+            except Exception:
+                pass
         
         # Add unique constraint on slug
-        migrations.RunSQL(
-            sql="""
+        try:
+            cursor.execute("""
                 ALTER TABLE properties_property 
                 ADD CONSTRAINT properties_property_slug_key UNIQUE (slug);
-            """,
-            reverse_sql="ALTER TABLE properties_property DROP CONSTRAINT IF EXISTS properties_property_slug_key;"
-        ),
+            """)
+        except Exception:
+            pass
+
+
+def reverse_migration(apps, schema_editor):
+    """Reverse migration - drop tables and columns"""
+    from django.db import connection
+    
+    with connection.cursor() as cursor:
+        # Drop tables
+        cursor.execute("DROP TABLE IF EXISTS properties_sitesettings CASCADE;")
+        cursor.execute("DROP TABLE IF EXISTS properties_broker CASCADE;")
+        cursor.execute("DROP TABLE IF EXISTS properties_office CASCADE;")
+        
+        # Drop columns from properties_property
+        columns_to_drop = [
+            'city', 'is_featured', 'is_promoted', 'promotion_until', 'slug', 'title',
+            'district', 'province', 'latitude', 'longitude', 'broker_id', 'office_id', 'owner_id'
+        ]
+        
+        for col_name in columns_to_drop:
+            try:
+                cursor.execute(f"ALTER TABLE properties_property DROP COLUMN IF EXISTS {col_name};")
+            except Exception:
+                pass
+
+
+class Migration(migrations.Migration):
+
+    dependencies = [
+        ('properties', '0227_useronlinestatus_chatmessage_delivered_at_and_more'),
+        migrations.swappable_dependency(settings.AUTH_USER_MODEL),
+    ]
+
+    operations = [
+        migrations.RunPython(create_missing_tables_and_columns, reverse_migration),
     ]
