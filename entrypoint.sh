@@ -31,8 +31,10 @@ python drop_conflicting_index.py || echo "Could not drop index, trying migration
 # Try to apply migrations normally
 python manage.py migrate --noinput
 if [ $? -ne 0 ]; then
-    echo "Migrations failed, faking all migrations using --fake-initial..."
-    python manage.py migrate --fake-initial --noinput || echo "Fake migrations failed, continuing..."
+    echo "Migrations failed, faking migration 0004 and continuing..."
+    python manage.py migrate properties 0003 --fake
+    python manage.py migrate properties 0004 --fake
+    python manage.py migrate --noinput || echo "Migrations still failed, continuing..."
 fi
 
 echo "Collecting static files..."
