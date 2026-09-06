@@ -1,7 +1,5 @@
 #!/bin/bash
 
-echo "Running database migrations..."
-python manage.py migrate --fake-initial || python manage.py migrate --fake || echo "Migrations may have conflicts, trying to continue..."
-
-echo "Starting Django application..."
+echo "Skipping migrations for now due to database conflicts..."
+echo "Starting Django application directly..."
 exec python manage.py runserver 0.0.0.0:8000
