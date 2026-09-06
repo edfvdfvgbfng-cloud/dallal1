@@ -68,17 +68,13 @@ schema_view = get_schema_view(
     permission_classes=(permissions.AllowAny,),
 )
 
-def simple_home(request):
-    """Simple home view for testing"""
-    return JsonResponse({'status': 'ok', 'message': 'Home works', 'time': str(timezone.now())})
-
 urlpatterns = [
     # Health check endpoint (first for Railway healthcheck)
     path('health/', health_check, name='health-check'),
-    # Simple root view for testing
-    path('', simple_home, name='simple-home'),
     # Include properties URLs as main path (includes dashboard/)
-    path('app/', include('properties.urls')),
+    path('', include('properties.urls')),
+    # Admin panel
+    path('admin/', admin.site.urls),
     # Admin panel
     path('admin/', admin.site.urls),
     # API endpoints
