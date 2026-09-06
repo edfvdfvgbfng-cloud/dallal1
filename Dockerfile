@@ -39,6 +39,10 @@ COPY . .
 COPY entrypoint.sh /app/entrypoint.sh
 RUN chmod +x /app/entrypoint.sh
 
+# Copy healthcheck script
+COPY healthcheck.sh /healthcheck.sh
+RUN chmod +x /healthcheck.sh
+
 # Create static files directory
 RUN mkdir -p staticfiles media static
 
@@ -50,7 +54,7 @@ EXPOSE 8000
 
 # Health check - use /health/ endpoint with dynamic PORT
 HEALTHCHECK --interval=30s --timeout=10s --start-period=10s --retries=3 \
-    CMD curl -f http://localhost:${PORT:-8000}/health/ || exit 1
+    CMD /healthcheck.sh
 
 # Run application
 CMD ["/app/entrypoint.sh"]
