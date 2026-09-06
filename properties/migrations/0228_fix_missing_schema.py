@@ -573,7 +573,7 @@ def create_missing_tables_and_columns(apps, schema_editor):
             ('enable_scene_detection', 'BOOLEAN', 'FALSE'),
             ('enable_video_transcoding', 'BOOLEAN', 'FALSE'),
             ('enable_iot_devices', 'BOOLEAN', 'FALSE'),
-            ('iot_protocol', 'VARCHAR(50), 'mqtt'),
+            ('iot_protocol', 'VARCHAR(50)', 'mqtt'),
             ('enable_smart_home_integration', 'BOOLEAN', 'FALSE'),
             ('enable_sensor_data', 'BOOLEAN', 'FALSE'),
             ('enable_smart_contracts', 'BOOLEAN', 'FALSE'),
