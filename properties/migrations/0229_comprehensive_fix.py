@@ -291,7 +291,7 @@ def reverse_migration(apps, schema_editor):
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('properties', '0227_useronlinestatus_chatmessage_delivered_at_and_more'),
+        ('properties', '0228_clear_old_comprehensive_fix'),
     ]
 
     operations = [

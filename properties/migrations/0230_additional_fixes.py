@@ -116,7 +116,7 @@ def reverse_migration(apps, schema_editor):
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('properties', '0227_comprehensive_fix'),
+        ('properties', '0229_comprehensive_fix'),
     ]
 
     operations = [
