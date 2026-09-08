@@ -57,6 +57,11 @@ fi
 echo "Running Django migrations..."
 # Try to drop conflicting index before migrations using Python script
 python drop_conflicting_index.py || echo "Could not drop index, trying migrations anyway..."
+
+# Try to merge conflicting migrations automatically (ignore errors if no conflicts)
+echo "Attempting to merge conflicting migrations if any..."
+python manage.py makemigrations --merge --noinput 2>/dev/null || echo "No merge needed"
+
 # Apply migrations normally - DO NOT fake migrations
 python manage.py migrate --noinput
 if [ $? -ne 0 ]; then
