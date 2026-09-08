@@ -1,1 +1,1 @@
-# Force Railway complete rebuild - 2026-09-08-14-15 - Fix PORT to 8080
+# Force Railway complete rebuild - 2026-09-08-14-20 - Allow SQLite fallback and auto-generate SECRET_KEY

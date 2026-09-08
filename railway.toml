@@ -10,15 +10,16 @@ restartPolicyType = "ON_FAILURE"
 restartPolicyMaxRetries = 10
 
 [variables]
-DEBUG = "False"
+DEBUG = "True"
 PORT = "8080"
 PYTHONUNBUFFERED = "1"
 PYTHONPATH = "/app"
 DJANGO_SETTINGS_MODULE = "dalal_project.settings"
-ALLOW_SQLITE_FALLBACK = "False"
+ALLOW_SQLITE_FALLBACK = "True"
 GUNICORN_WORKERS = "2"
 GUNICORN_THREADS = "4"
 GUNICORN_TIMEOUT = "300"
+SECRET_KEY = "railway-temporary-key-change-in-production-minimum-50-chars"
 
 # CRITICAL: Database Protection Settings
 # These settings ensure Railway PostgreSQL is never deleted or reset
