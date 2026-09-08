@@ -59,6 +59,14 @@ else
 fi
 
 echo "Running Django migrations..."
+
+# Delete SQLite database to ensure clean start when using SQLite
+if [ -z "$DATABASE_URL" ]; then
+    echo "Using SQLite - recreating database for clean start"
+    rm -f db.sqlite3
+    echo "Deleted old SQLite database (if existed)"
+fi
+
 # Try to drop conflicting index before migrations using Python script
 python drop_conflicting_index.py || echo "Could not drop index, trying migrations anyway..."
 
@@ -73,6 +81,13 @@ python manage.py makemigrations --noinput 2>/dev/null || echo "No new migrations
 # Apply migrations - skip PostgreSQL-specific ones when using SQLite
 if [ -z "$DATABASE_URL" ]; then
     echo "Using SQLite - skipping PostgreSQL-specific migrations"
+    # Apply base migrations first
+    echo "Applying base Django migrations..."
+    python manage.py migrate auth --noinput || echo "Auth migrations failed"
+    python manage.py migrate contenttypes --noinput || echo "Contenttypes migrations failed"
+    python manage.py migrate sessions --noinput || echo "Sessions migrations failed"
+    python manage.py migrate admin --noinput || echo "Admin migrations failed"
+    
     # Skip migrations that use PostgreSQL-specific syntax
     python manage.py migrate properties 0227 --fake 2>/dev/null || echo "0227 skipped"
     python manage.py migrate properties 0228 --fake 2>/dev/null || echo "0228 skipped"
