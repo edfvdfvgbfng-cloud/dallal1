@@ -92,6 +92,10 @@ if [ $? -ne 0 ]; then
     exit 1
 fi
 
+# Create admin user if it doesn't exist
+echo "Creating admin user if needed..."
+python create_admin_user.py || echo "Admin user creation failed or already exists"
+
 echo "Collecting static files..."
 python manage.py collectstatic --noinput --clear || echo "Collectstatic failed, continuing..."
 
