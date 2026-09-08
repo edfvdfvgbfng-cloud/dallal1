@@ -50,7 +50,7 @@ RUN chmod +x /healthcheck.sh
 # Create static files directory
 RUN mkdir -p staticfiles media static
 
-# Expose port
+# Expose port - Railway uses PORT environment variable
 EXPOSE 8000
 
 # Run application

@@ -141,14 +141,14 @@ DATABASE_URL=postgres://user:password@host:5432/dbname
 
 ## 🌐 النشر على Railway
 
-### خطوات النشر:
+### خطوات النشر السريعة:
 
 1. **ربط المستودع على Railway عبر GitHub:**
    - افتح موقع Railway: https://railway.app
    - سجل الدخول باستخدام GitHub
    - اضغط على "New Project"
    - اختر "Deploy from GitHub repo"
-   - حدد مستودع `mmuuqq`
+   - حدد مستودع المشروع
 
 2. **إضافة خدمة PostgreSQL:**
    - في مشروع Railway، اضغط على "New Service"
@@ -171,11 +171,16 @@ DATABASE_URL=postgres://user:password@host:5432/dbname
    - سيقوم Railway ببناء ونشر المشروع تلقائياً عند كل دفع إلى GitHub
    - يمكنك مراقبة حالة النشر في لوحة تحكم Railway
 
+### الدليل الشامل:
+- `RAILWAY_DEPLOYMENT_GUIDE.md` - دليل نشر Railway شامل خطوة بخطوة
+
 ### ملفات النشر المهمة:
 - `railway.toml` - تكوين Railway الرئيسي
+- `Dockerfile` - إعداد الحاوية
 - `Procfile` - أمر بدء التشغيل
+- `entrypoint.sh` - سكريبت البدء
 - `requirements.txt` - المكتبات المطلوبة
-- `runtime.txt` - إصدار Python (3.12)
+- `runtime.txt` - إصدار Python (3.11)
 - `.env.example` - مثال متغيرات البيئة
 
 ## 📊 أنواع العقارات

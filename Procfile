@@ -1,3 +1,3 @@
-# Force Railway rebuild - 2026-09-05-23-55 (Use start.sh script)
+# Railway Procfile - uses start.sh which calls entrypoint.sh
 web: chmod +x start.sh && ./start.sh
 release: python manage.py migrate --noinput

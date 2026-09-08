@@ -1,6 +1,6 @@
 #!/bin/bash
 
-echo "=== Starting Django Application ==="
+echo "=== Starting Django Application on Railway ==="
 echo "Environment Variables:"
 echo "PORT=${PORT:-8000}"
 echo "RAILWAY_PUBLIC_DOMAIN=$RAILWAY_PUBLIC_DOMAIN"
@@ -42,10 +42,19 @@ python manage.py collectstatic --noinput --clear || echo "Collectstatic failed, 
 
 echo "Starting Django on port ${PORT:-8000}..."
 
-# Try using gunicorn
+# Try using gunicorn with Railway's preferred configuration
 if command -v gunicorn &> /dev/null; then
-    echo "Using gunicorn with 1 worker and 300s timeout..."
-    exec gunicorn dalal_project.wsgi:application --bind 0.0.0.0:${PORT:-8000} --workers 1 --timeout 300 --access-logfile - --error-logfile - --log-level info
+    echo "Using gunicorn with optimized configuration for Railway..."
+    # Use Railway's recommended worker count: 2 workers, 300s timeout
+    exec gunicorn dalal_project.wsgi:application \
+        --bind 0.0.0.0:${PORT:-8000} \
+        --workers ${GUNICORN_WORKERS:-2} \
+        --threads ${GUNICORN_THREADS:-4} \
+        --timeout ${GUNICORN_TIMEOUT:-300} \
+        --access-logfile - \
+        --error-logfile - \
+        --log-level info \
+        --worker-class gthread
 else
     echo "Using Django runserver (gunicorn not available)..."
     exec python manage.py runserver 0.0.0.0:${PORT:-8000}
