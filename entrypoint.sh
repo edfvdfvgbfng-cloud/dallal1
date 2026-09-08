@@ -70,24 +70,8 @@ python manage.py makemigrations --merge --noinput 2>/dev/null || echo "No merge 
 echo "Creating any missing migrations..."
 python manage.py makemigrations --noinput 2>/dev/null || echo "No new migrations needed"
 
-# Apply base Django migrations first (auth, contenttypes, sessions, etc.)
-echo "Applying base Django migrations..."
-python manage.py migrate auth --noinput || echo "Auth migrations failed"
-python manage.py migrate contenttypes --noinput || echo "Contenttypes migrations failed"
-python manage.py migrate sessions --noinput || echo "Sessions migrations failed"
-python manage.py migrate admin --noinput || echo "Admin migrations failed"
-
-# Apply migrations - use fake for PostgreSQL-specific migrations when using SQLite
-if [ -z "$DATABASE_URL" ]; then
-    echo "Using SQLite - pre-faking PostgreSQL-specific migrations"
-    # Fake migrations that use PostgreSQL-specific syntax before running normal migrations
-    python manage.py migrate properties 0227 --fake 2>/dev/null || echo "0227 not applicable"
-    python manage.py migrate properties 0228 --fake 2>/dev/null || echo "0228 not applicable"
-    python manage.py migrate properties 0229 --fake 2>/dev/null || echo "0229 not applicable"
-    python manage.py migrate properties 0230 --fake 2>/dev/null || echo "0230 not applicable"
-fi
-
-# Apply all remaining migrations normally
+# Apply all migrations normally - don't fake any migrations
+echo "Applying all migrations..."
 python manage.py migrate --noinput
 if [ $? -ne 0 ]; then
     echo "ERROR: Migrations failed. This is a critical error."
