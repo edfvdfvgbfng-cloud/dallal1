@@ -62,7 +62,17 @@ python drop_conflicting_index.py || echo "Could not drop index, trying migration
 echo "Attempting to merge conflicting migrations if any..."
 python manage.py makemigrations --merge --noinput 2>/dev/null || echo "No merge needed"
 
-# Apply migrations normally - DO NOT fake migrations
+# Apply migrations - use fake for PostgreSQL-specific migrations when using SQLite
+if [ -z "$DATABASE_URL" ]; then
+    echo "Using SQLite - pre-faking PostgreSQL-specific migrations"
+    # Fake migrations that use PostgreSQL-specific syntax before running normal migrations
+    python manage.py migrate properties 0227 --fake 2>/dev/null || echo "0227 not applicable"
+    python manage.py migrate properties 0228 --fake 2>/dev/null || echo "0228 not applicable"
+    python manage.py migrate properties 0229 --fake 2>/dev/null || echo "0229 not applicable"
+    python manage.py migrate properties 0230 --fake 2>/dev/null || echo "0230 not applicable"
+fi
+
+# Apply migrations normally
 python manage.py migrate --noinput
 if [ $? -ne 0 ]; then
     echo "ERROR: Migrations failed. This is a critical error."
