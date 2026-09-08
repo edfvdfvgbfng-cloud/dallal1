@@ -14,11 +14,11 @@ echo ""
 # Set default environment variables if not set (Railway.toml may not work properly)
 # Force development mode when using SQLite
 if [ -z "$DATABASE_URL" ]; then
-    export DEBUG="true"
-    echo "Auto-setting DEBUG=true for development mode (no DATABASE_URL)"
+    export DEBUG="false"
+    echo "Auto-setting DEBUG=false for Railway deployment (no DATABASE_URL)"
 elif [ -z "$DEBUG" ] || [ "$DEBUG" = "False" ] || [ "$DEBUG" = "false" ]; then
-    export DEBUG="true"
-    echo "Auto-setting DEBUG=true for development mode"
+    export DEBUG="false"
+    echo "Auto-setting DEBUG=false for Railway deployment"
 fi
 
 if [ -z "$ALLOW_SQLITE_FALLBACK" ]; then

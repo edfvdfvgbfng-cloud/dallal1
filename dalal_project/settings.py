@@ -86,7 +86,14 @@ if railway_public_domain:
     ALLOWED_HOSTS = _unique(ALLOWED_HOSTS + [railway_public_domain])
 
 if DEBUG:
-    ALLOWED_HOSTS = _unique(ALLOWED_HOSTS + ['localhost', '127.0.0.1', '[::1]'])
+    if railway_public_domain:
+        ALLOWED_HOSTS = _unique(ALLOWED_HOSTS + [railway_public_domain, 'localhost', '127.0.0.1', '[::1]'])
+    else:
+        ALLOWED_HOSTS = _unique(ALLOWED_HOSTS + ['localhost', '127.0.0.1', '[::1]'])
+
+# Ensure Railway domain is always in ALLOWED_HOSTS
+if railway_public_domain:
+    ALLOWED_HOSTS = _unique(ALLOWED_HOSTS + [railway_public_domain])
 
 # Log ALLOWED_HOSTS for debugging (only in development)
 if DEBUG:
@@ -111,8 +118,13 @@ if DEBUG:
     ]
     # Filter out None values
     CSRF_TRUSTED_ORIGINS = [origin for origin in CSRF_TRUSTED_ORIGINS if origin]
-    CSRF_COOKIE_SECURE = False
-    SESSION_COOKIE_SECURE = False
+    # In Railway with DEBUG=True, we still need secure cookies
+    if railway_domain or 'railway.app' in os.getenv('RAILWAY_PUBLIC_DOMAIN', ''):
+        CSRF_COOKIE_SECURE = True
+        SESSION_COOKIE_SECURE = True
+    else:
+        CSRF_COOKIE_SECURE = False
+        SESSION_COOKIE_SECURE = False
 else:
     CSRF_TRUSTED_ORIGINS = _unique([
         'https://mup.up.railway.app',
