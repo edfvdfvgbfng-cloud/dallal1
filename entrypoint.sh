@@ -65,6 +65,8 @@ if [ -z "$DATABASE_URL" ]; then
     echo "Using SQLite - recreating database for clean start"
     rm -f db.sqlite3
     echo "Deleted old SQLite database (if existed)"
+else
+    echo "Using PostgreSQL database"
 fi
 
 # Try to drop conflicting index before migrations using Python script
@@ -83,10 +85,10 @@ if [ -z "$DATABASE_URL" ]; then
     echo "Using SQLite - skipping PostgreSQL-specific migrations"
     # Apply base migrations first
     echo "Applying base Django migrations..."
-    python manage.py migrate auth --noinput || echo "Auth migrations failed"
-    python manage.py migrate contenttypes --noinput || echo "Contenttypes migrations failed"
-    python manage.py migrate sessions --noinput || echo "Sessions migrations failed"
-    python manage.py migrate admin --noinput || echo "Admin migrations failed"
+    python manage.py migrate auth --noinput 2>/dev/null || echo "Auth migrations failed"
+    python manage.py migrate contenttypes --noinput 2>/dev/null || echo "Contenttypes migrations failed"
+    python manage.py migrate sessions --noinput 2>/dev/null || echo "Sessions migrations failed"
+    python manage.py migrate admin --noinput 2>/dev/null || echo "Admin migrations failed"
     
     # Skip migrations that use PostgreSQL-specific syntax
     python manage.py migrate properties 0227 --fake 2>/dev/null || echo "0227 skipped"
@@ -96,11 +98,11 @@ if [ -z "$DATABASE_URL" ]; then
     
     # Apply remaining migrations normally
     echo "Applying remaining migrations..."
-    python manage.py migrate --noinput
+    python manage.py migrate --noinput 2>/dev/null
 else
     # Apply all migrations normally with PostgreSQL
     echo "Applying all migrations with PostgreSQL..."
-    python manage.py migrate --noinput
+    python manage.py migrate --noinput 2>/dev/null
 fi
 
 if [ $? -ne 0 ]; then
@@ -112,7 +114,7 @@ fi
 
 # Create admin user if it doesn't exist
 echo "Creating admin user if needed..."
-python create_admin_user.py || echo "Admin user creation failed or already exists"
+python create_admin_user.py 2>/dev/null || echo "Admin user creation failed or already exists"
 
 echo "Collecting static files..."
 python manage.py collectstatic --noinput --clear || echo "Collectstatic failed, continuing..."

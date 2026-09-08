@@ -75,8 +75,6 @@ urlpatterns = [
     path('', include('properties.urls')),
     # Admin panel
     path('admin/', admin.site.urls),
-    # Admin panel
-    path('admin/', admin.site.urls),
     # API endpoints
     path('api/', include('properties.api_urls')),
     # Social Authentication
