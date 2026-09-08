@@ -26,6 +26,16 @@ def create_admin_user():
             print(f"User '{username}' already exists. Skipping creation.")
             user = User.objects.get(username=username)
             print(f"User details: {user.username} ({user.email})")
+            print(f"Is staff: {user.is_staff}, Is superuser: {user.is_superuser}")
+            # Ensure user has proper permissions
+            if not user.is_staff:
+                user.is_staff = True
+                user.save()
+                print(f"Updated user.is_staff to True")
+            if not user.is_superuser:
+                user.is_superuser = True
+                user.save()
+                print(f"Updated user.is_superuser to True")
             return
         
         # Create superuser
@@ -40,6 +50,7 @@ def create_admin_user():
         print(f"   Password: {password}")
         print(f"   Email: {email}")
         print(f"   Superuser: Yes")
+        print(f"   Is staff: {user.is_staff}")
         
     except Exception as e:
         print(f"❌ Error creating admin user: {e}")
