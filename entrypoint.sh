@@ -66,6 +66,10 @@ python drop_conflicting_index.py || echo "Could not drop index, trying migration
 echo "Attempting to merge conflicting migrations if any..."
 python manage.py makemigrations --merge --noinput 2>/dev/null || echo "No merge needed"
 
+# Create missing migrations for new models (like ActivityLog)
+echo "Creating any missing migrations..."
+python manage.py makemigrations --noinput 2>/dev/null || echo "No new migrations needed"
+
 # Apply base Django migrations first (auth, contenttypes, sessions, etc.)
 echo "Applying base Django migrations..."
 python manage.py migrate auth --noinput || echo "Auth migrations failed"
