@@ -70,9 +70,24 @@ python manage.py makemigrations --merge --noinput 2>/dev/null || echo "No merge 
 echo "Creating any missing migrations..."
 python manage.py makemigrations --noinput 2>/dev/null || echo "No new migrations needed"
 
-# Apply all migrations normally - don't fake any migrations
-echo "Applying all migrations..."
-python manage.py migrate --noinput
+# Apply migrations - skip PostgreSQL-specific ones when using SQLite
+if [ -z "$DATABASE_URL" ]; then
+    echo "Using SQLite - skipping PostgreSQL-specific migrations"
+    # Skip migrations that use PostgreSQL-specific syntax
+    python manage.py migrate properties 0227 --fake 2>/dev/null || echo "0227 skipped"
+    python manage.py migrate properties 0228 --fake 2>/dev/null || echo "0228 skipped"
+    python manage.py migrate properties 0229 --fake 2>/dev/null || echo "0229 skipped"
+    python manage.py migrate properties 0230 --fake 2>/dev/null || echo "0230 skipped"
+    
+    # Apply remaining migrations normally
+    echo "Applying remaining migrations..."
+    python manage.py migrate --noinput
+else
+    # Apply all migrations normally with PostgreSQL
+    echo "Applying all migrations with PostgreSQL..."
+    python manage.py migrate --noinput
+fi
+
 if [ $? -ne 0 ]; then
     echo "ERROR: Migrations failed. This is a critical error."
     echo "The database schema may be inconsistent."
