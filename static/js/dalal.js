@@ -1,6 +1,13 @@
 (function () {
   'use strict';
 
+  // Remove any navigation items containing "اخفاء من شريط العلوي"
+  document.querySelectorAll('.nav-links li, .nav-links a, .navbar button').forEach(function(element) {
+    if (element.textContent.includes('اخفاء من شريط العلوي')) {
+      element.style.display = 'none';
+    }
+  });
+
   // Mobile nav
   const toggle = document.querySelector('.nav-toggle');
   const navLinks = document.querySelector('.nav-links');
