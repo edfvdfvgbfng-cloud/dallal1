@@ -8,16 +8,21 @@ echo "ALLOWED_HOSTS=$ALLOWED_HOSTS"
 echo "DEBUG=$DEBUG"
 echo "DATABASE_URL exists: $(if [ -n "$DATABASE_URL" ]; then echo "YES"; else echo "NO"; fi)"
 echo "SECRET_KEY exists: $(if [ -n "$SECRET_KEY" ]; then echo "YES"; else echo "NO"; fi)"
+echo "ALLOW_SQLITE_FALLBACK=$ALLOW_SQLITE_FALLBACK"
 echo ""
 
-# Check if this is production
+# Set ALLOWED_HOSTS if not set (use Railway domain)
+if [ -z "$ALLOWED_HOSTS" ] && [ -n "$RAILWAY_PUBLIC_DOMAIN" ]; then
+    export ALLOWED_HOSTS="$RAILWAY_PUBLIC_DOMAIN"
+    echo "Auto-setting ALLOWED_HOSTS to: $ALLOWED_HOSTS"
+fi
+
+# Check if this is production mode
 if [ "$DEBUG" = "False" ] || [ "$DEBUG" = "false" ] || [ -z "$DEBUG" ]; then
     echo "=== PRODUCTION MODE ==="
     if [ -z "$DATABASE_URL" ]; then
-        echo "WARNING: DATABASE_URL is not set. Using SQLite for development."
+        echo "WARNING: DATABASE_URL is not set. This may cause issues in production."
         echo "Please set DATABASE_URL in Railway Variables using: \${{Postgres.DATABASE_URL}}"
-        echo "This is NOT recommended for production!"
-        # Continue anyway for now to allow Railway to start
     fi
     if [ -z "$SECRET_KEY" ]; then
         echo "WARNING: SECRET_KEY is not set. Auto-generating a temporary key."
@@ -25,6 +30,17 @@ if [ "$DEBUG" = "False" ] || [ "$DEBUG" = "false" ] || [ -z "$DEBUG" ]; then
         # Generate a temporary secret key
         export SECRET_KEY=$(python -c "import secrets; print(secrets.token_urlsafe(50))")
         echo "Generated temporary SECRET_KEY: ${SECRET_KEY:0:20}..."
+    fi
+else
+    echo "=== DEVELOPMENT MODE ==="
+    if [ -z "$DATABASE_URL" ]; then
+        echo "Using SQLite for development (ALLOW_SQLITE_FALLBACK=true)"
+        export ALLOW_SQLITE_FALLBACK=true
+    fi
+    if [ -z "$SECRET_KEY" ]; then
+        echo "Auto-generating SECRET_KEY for development..."
+        export SECRET_KEY=$(python -c "import secrets; print(secrets.token_urlsafe(50))")
+        echo "Generated SECRET_KEY: ${SECRET_KEY:0:20}..."
     fi
 fi
 

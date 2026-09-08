@@ -41,7 +41,7 @@ def _unique(items):
     return result
 
 
-DEBUG = os.getenv('DEBUG', 'False').lower() == 'true'
+DEBUG = os.getenv('DEBUG', 'False').lower() in ('true', '1', 'yes')
 
 SECRET_KEY = os.getenv('SECRET_KEY')
 if not SECRET_KEY:
@@ -264,20 +264,14 @@ if database_url:
             conn_health_checks=True,
         )
     }
-elif DEBUG:
+elif DEBUG or os.getenv('ALLOW_SQLITE_FALLBACK', 'False').lower() == 'true':
     DATABASES = {
         'default': {
             'ENGINE': 'django.db.backends.sqlite3',
             'NAME': BASE_DIR / 'db.sqlite3',
         }
     }
-elif os.getenv('ALLOW_SQLITE_FALLBACK', 'False').lower() == 'true':
-    DATABASES = {
-        'default': {
-            'ENGINE': 'django.db.backends.sqlite3',
-            'NAME': BASE_DIR / 'db.sqlite3',
-        }
-    }
+    logger.warning("Using SQLite for development - this is NOT recommended for production!")
 else:
     # Production MUST have DATABASE_URL - fail fast instead of using SQLite
     raise ValueError(

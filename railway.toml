@@ -10,12 +10,13 @@ restartPolicyType = "ON_FAILURE"
 restartPolicyMaxRetries = 10
 
 [variables]
-DEBUG = "True"
+DEBUG = "true"
 PORT = "8080"
 PYTHONUNBUFFERED = "1"
 PYTHONPATH = "/app"
 DJANGO_SETTINGS_MODULE = "dalal_project.settings"
-ALLOW_SQLITE_FALLBACK = "True"
+ALLOW_SQLITE_FALLBACK = "true"
+ALLOWED_HOSTS = "muqq.up.railway.app"
 GUNICORN_WORKERS = "2"
 GUNICORN_THREADS = "4"
 GUNICORN_TIMEOUT = "300"

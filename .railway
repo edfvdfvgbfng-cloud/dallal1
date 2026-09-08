@@ -1,1 +1,1 @@
-# Force Railway complete rebuild - 2026-09-08-14-20 - Allow SQLite fallback and auto-generate SECRET_KEY
+# Force Railway complete rebuild - 2026-09-08-14-25 - Fix DEBUG parsing and ALLOWED_HOSTS
