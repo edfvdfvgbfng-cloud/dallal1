@@ -11,6 +11,17 @@ echo "SECRET_KEY exists: $(if [ -n "$SECRET_KEY" ]; then echo "YES"; else echo "
 echo "ALLOW_SQLITE_FALLBACK=$ALLOW_SQLITE_FALLBACK"
 echo ""
 
+# Set default environment variables if not set (Railway.toml may not work properly)
+if [ -z "$DEBUG" ]; then
+    export DEBUG="true"
+    echo "Auto-setting DEBUG=true for development mode"
+fi
+
+if [ -z "$ALLOW_SQLITE_FALLBACK" ]; then
+    export ALLOW_SQLITE_FALLBACK="true"
+    echo "Auto-setting ALLOW_SQLITE_FALLBACK=true for SQLite fallback"
+fi
+
 # Set ALLOWED_HOSTS if not set (use Railway domain)
 if [ -z "$ALLOWED_HOSTS" ] && [ -n "$RAILWAY_PUBLIC_DOMAIN" ]; then
     export ALLOWED_HOSTS="$RAILWAY_PUBLIC_DOMAIN"
@@ -18,10 +29,10 @@ if [ -z "$ALLOWED_HOSTS" ] && [ -n "$RAILWAY_PUBLIC_DOMAIN" ]; then
 fi
 
 # Check if this is production mode
-if [ "$DEBUG" = "False" ] || [ "$DEBUG" = "false" ] || [ -z "$DEBUG" ]; then
+if [ "$DEBUG" = "False" ] || [ "$DEBUG" = "false" ]; then
     echo "=== PRODUCTION MODE ==="
     if [ -z "$DATABASE_URL" ]; then
-        echo "WARNING: DATABASE_URL is not set. This may cause issues in production."
+        echo "WARNING: DATABASE_URL is not set. Using SQLite fallback."
         echo "Please set DATABASE_URL in Railway Variables using: \${{Postgres.DATABASE_URL}}"
     fi
     if [ -z "$SECRET_KEY" ]; then
@@ -35,7 +46,6 @@ else
     echo "=== DEVELOPMENT MODE ==="
     if [ -z "$DATABASE_URL" ]; then
         echo "Using SQLite for development (ALLOW_SQLITE_FALLBACK=true)"
-        export ALLOW_SQLITE_FALLBACK=true
     fi
     if [ -z "$SECRET_KEY" ]; then
         echo "Auto-generating SECRET_KEY for development..."

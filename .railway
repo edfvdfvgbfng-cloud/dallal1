@@ -1,1 +1,1 @@
-# Force Railway complete rebuild - 2026-09-08-14-25 - Fix DEBUG parsing and ALLOWED_HOSTS
+# Force Railway complete rebuild - 2026-09-08-14-30 - Auto-set env vars when Railway.toml fails

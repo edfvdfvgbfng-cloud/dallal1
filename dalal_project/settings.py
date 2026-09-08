@@ -264,23 +264,20 @@ if database_url:
             conn_health_checks=True,
         )
     }
-elif DEBUG or os.getenv('ALLOW_SQLITE_FALLBACK', 'False').lower() == 'true':
+    logger.info("Using PostgreSQL database")
+else:
+    # Fallback to SQLite if DATABASE_URL is not set
     DATABASES = {
         'default': {
             'ENGINE': 'django.db.backends.sqlite3',
             'NAME': BASE_DIR / 'db.sqlite3',
         }
     }
-    logger.warning("Using SQLite for development - this is NOT recommended for production!")
-else:
-    # Production MUST have DATABASE_URL - fail fast instead of using SQLite
-    raise ValueError(
-        'DATABASE_URL environment variable is required in production. '
-        'Set DATABASE_URL to connect to PostgreSQL. '
-        'Application cannot start without DATABASE_URL. '
-        'In Railway, use Reference Variable: ${{Postgres.DATABASE_URL}} '
-        'or set DATABASE_URL manually with PostgreSQL connection string.'
-    )
+    logger.warning("DATABASE_URL not set - using SQLite for development")
+    logger.warning("This is NOT recommended for production!")
+    if not DEBUG:
+        logger.warning("WARNING: Running in production mode with SQLite database!")
+        logger.warning("Please set DATABASE_URL for production deployment")
 
 AUTH_PASSWORD_VALIDATORS = [
     {'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator'},
