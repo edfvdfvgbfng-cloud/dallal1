@@ -50,8 +50,8 @@ RUN chmod +x /healthcheck.sh
 # Create static files directory
 RUN mkdir -p staticfiles media static
 
-# Expose port - Railway uses PORT environment variable
-EXPOSE 8000
+# Expose port - Railway uses PORT environment variable (standard is 8080)
+EXPOSE 8080
 
 # Run application
 CMD ["/app/entrypoint.sh"]

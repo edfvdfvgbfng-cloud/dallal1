@@ -2,7 +2,7 @@
 
 echo "=== Starting Django Application on Railway ==="
 echo "Environment Variables:"
-echo "PORT=${PORT:-8000}"
+echo "PORT=${PORT:-8080}"
 echo "RAILWAY_PUBLIC_DOMAIN=$RAILWAY_PUBLIC_DOMAIN"
 echo "ALLOWED_HOSTS=$ALLOWED_HOSTS"
 echo "DEBUG=$DEBUG"
@@ -40,7 +40,7 @@ fi
 echo "Collecting static files..."
 python manage.py collectstatic --noinput --clear || echo "Collectstatic failed, continuing..."
 
-echo "Starting Django on port ${PORT:-8000}..."
+echo "Starting Django on port ${PORT:-8080}..."
 
 # Try using gunicorn with Railway's preferred configuration
 if command -v gunicorn &> /dev/null; then
@@ -57,5 +57,5 @@ if command -v gunicorn &> /dev/null; then
         --worker-class gthread
 else
     echo "Using Django runserver (gunicorn not available)..."
-    exec python manage.py runserver 0.0.0.0:${PORT:-8000}
+    exec python manage.py runserver 0.0.0.0:${PORT:-8080}
 fi
