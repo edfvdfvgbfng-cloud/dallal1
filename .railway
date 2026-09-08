@@ -1,1 +1,1 @@
-# Force Railway complete rebuild - 2026-09-08-14-40 - Pre-fake PostgreSQL-specific migrations for SQLite
+# Force Railway complete rebuild - 2026-09-08-14-45 - Apply base migrations first and force DEBUG=true

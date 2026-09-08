@@ -12,7 +12,11 @@ echo "ALLOW_SQLITE_FALLBACK=$ALLOW_SQLITE_FALLBACK"
 echo ""
 
 # Set default environment variables if not set (Railway.toml may not work properly)
-if [ -z "$DEBUG" ]; then
+# Force development mode when using SQLite
+if [ -z "$DATABASE_URL" ]; then
+    export DEBUG="true"
+    echo "Auto-setting DEBUG=true for development mode (no DATABASE_URL)"
+elif [ -z "$DEBUG" ] || [ "$DEBUG" = "False" ] || [ "$DEBUG" = "false" ]; then
     export DEBUG="true"
     echo "Auto-setting DEBUG=true for development mode"
 fi
@@ -62,6 +66,13 @@ python drop_conflicting_index.py || echo "Could not drop index, trying migration
 echo "Attempting to merge conflicting migrations if any..."
 python manage.py makemigrations --merge --noinput 2>/dev/null || echo "No merge needed"
 
+# Apply base Django migrations first (auth, contenttypes, sessions, etc.)
+echo "Applying base Django migrations..."
+python manage.py migrate auth --noinput || echo "Auth migrations failed"
+python manage.py migrate contenttypes --noinput || echo "Contenttypes migrations failed"
+python manage.py migrate sessions --noinput || echo "Sessions migrations failed"
+python manage.py migrate admin --noinput || echo "Admin migrations failed"
+
 # Apply migrations - use fake for PostgreSQL-specific migrations when using SQLite
 if [ -z "$DATABASE_URL" ]; then
     echo "Using SQLite - pre-faking PostgreSQL-specific migrations"
@@ -72,7 +83,7 @@ if [ -z "$DATABASE_URL" ]; then
     python manage.py migrate properties 0230 --fake 2>/dev/null || echo "0230 not applicable"
 fi
 
-# Apply migrations normally
+# Apply all remaining migrations normally
 python manage.py migrate --noinput
 if [ $? -ne 0 ]; then
     echo "ERROR: Migrations failed. This is a critical error."
