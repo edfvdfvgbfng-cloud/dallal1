@@ -16932,22 +16932,26 @@ def reject_subscription_renewal(request, request_id):
 def user_monitoring_panel(request):
     """لوحة مراقبة المستخدمين"""
     from .permissions import is_platform_admin
-    
+
     if not is_platform_admin(request.user):
         messages.error(request, 'ليس لديك صلاحية للوصول إلى هذه الصفحة')
         return redirect('dashboard')
-    
-    users = User.objects.all().select_related('user_profile', 'broker_profile').order_by('-date_joined')
-    
+
+    try:
+        users = User.objects.all().order_by('-date_joined')
+    except Exception as e:
+        logger.exception(f'Error fetching users: {e}')
+        users = []
+
     # Get additional info for each user
     users_data = []
     for user in users:
         broker = None
         try:
             broker = Broker.objects.get(user=user)
-        except Broker.DoesNotExist:
+        except (Broker.DoesNotExist, Exception):
             pass
-        
+
         subscription = None
         if broker:
             try:
@@ -16955,9 +16959,9 @@ def user_monitoring_panel(request):
                     broker=broker,
                     status='active'
                 ).first()
-            except:
+            except Exception:
                 pass
-        
+
         user_data = {
             'user': user,
             'broker': broker,
@@ -16970,7 +16974,7 @@ def user_monitoring_panel(request):
             'email': user.email,
         }
         users_data.append(user_data)
-    
+
     return render(request, 'properties/user_monitoring_panel.html', {
         'users_data': users_data
     })
@@ -16980,43 +16984,54 @@ def user_monitoring_panel(request):
 def user_monitoring_detail(request, user_id):
     """تفاصيل مراقبة مستخدم محدد"""
     from .permissions import is_platform_admin
-    
+
     if not is_platform_admin(request.user):
         messages.error(request, 'ليس لديك صلاحية للوصول إلى هذه الصفحة')
         return redirect('dashboard')
-    
-    user = get_object_or_404(User, id=user_id)
-    
+
+    try:
+        user = get_object_or_404(User, id=user_id)
+    except Exception as e:
+        logger.exception(f'Error fetching user: {e}')
+        messages.error(request, 'المستخدم غير موجود')
+        return redirect('admin-panel:user-monitoring-panel')
+
     # Get broker info
     broker = None
     try:
         broker = Broker.objects.get(user=user)
-    except Broker.DoesNotExist:
+    except (Broker.DoesNotExist, Exception):
         pass
-    
+
     # Get subscription info
     subscriptions = []
     if broker:
-        subscriptions = BrokerPlanSubscription.objects.filter(
-            broker=broker
-        ).order_by('-created_at')
-    
+        try:
+            subscriptions = BrokerPlanSubscription.objects.filter(
+                broker=broker
+            ).order_by('-created_at')
+        except Exception:
+            pass
+
     # Get properties
     properties = []
     if broker:
-        properties = Property.objects.filter(
-            broker=broker
-        ).order_by('-created_at')[:20]
-    
+        try:
+            properties = Property.objects.filter(
+                broker=broker
+            ).order_by('-created_at')[:20]
+        except Exception:
+            pass
+
     # Get activity logs
     activity_logs = []
     try:
         activity_logs = ActivityLog.objects.filter(
             user=user
         ).order_by('-created_at')[:50]
-    except:
+    except Exception:
         pass
-    
+
     # Get messages
     messages_sent = []
     messages_received = []
@@ -17027,9 +17042,9 @@ def user_monitoring_detail(request, user_id):
         messages_received = Message.objects.filter(
             recipient=user
         ).order_by('-created_at')[:20]
-    except:
+    except Exception:
         pass
-    
+
     return render(request, 'properties/user_monitoring_detail.html', {
         'user': user,
         'broker': broker,
@@ -17058,44 +17073,55 @@ def notification_center(request):
     """مركز الإشعارات للمستخدم"""
     from .models import Notification, NotificationRecipient
 
-    # Get all notifications for the user
-    notifications = NotificationRecipient.objects.filter(
-        user=request.user
-    ).select_related('notification').order_by('-created_at')
+    try:
+        # Get all notifications for the user
+        notifications = NotificationRecipient.objects.filter(
+            user=request.user
+        ).select_related('notification').order_by('-created_at')
 
-    # Get unread count
-    unread_count = notifications.filter(is_read=False).count()
+        # Get unread count
+        unread_count = notifications.filter(is_read=False).count()
 
-    # Get archived count
-    archived_count = notifications.filter(is_archived=True).count()
+        # Get archived count
+        archived_count = notifications.filter(is_archived=True).count()
 
-    # Filter by status
-    filter_type = request.GET.get('filter', 'all')
-    if filter_type == 'unread':
-        notifications = notifications.filter(is_read=False, is_archived=False)
-    elif filter_type == 'read':
-        notifications = notifications.filter(is_read=True, is_archived=False)
-    elif filter_type == 'archived':
-        notifications = notifications.filter(is_archived=True)
-    else:
-        notifications = notifications.filter(is_archived=False)
+        # Filter by status
+        filter_type = request.GET.get('filter', 'all')
+        if filter_type == 'unread':
+            notifications = notifications.filter(is_read=False, is_archived=False)
+        elif filter_type == 'read':
+            notifications = notifications.filter(is_read=True, is_archived=False)
+        elif filter_type == 'archived':
+            notifications = notifications.filter(is_archived=True)
+        else:
+            notifications = notifications.filter(is_archived=False)
 
-    # Search
-    search_query = request.GET.get('search', '')
-    if search_query:
-        notifications = notifications.filter(
-            notification__title__icontains=search_query
-        )
+        # Search
+        search_query = request.GET.get('search', '')
+        if search_query:
+            notifications = notifications.filter(
+                notification__title__icontains=search_query
+            )
 
-    context = {
-        'notifications': notifications,
-        'unread_count': unread_count,
-        'archived_count': archived_count,
-        'filter_type': filter_type,
-        'search_query': search_query,
-    }
-    
-    return render(request, 'properties/notification_center.html', context)
+        context = {
+            'notifications': notifications,
+            'unread_count': unread_count,
+            'archived_count': archived_count,
+            'filter_type': filter_type,
+            'search_query': search_query,
+        }
+
+        return render(request, 'properties/notification_center.html', context)
+    except Exception as e:
+        logger.exception(f'Error in notification_center: {e}')
+        context = {
+            'notifications': [],
+            'unread_count': 0,
+            'archived_count': 0,
+            'filter_type': request.GET.get('filter', 'all'),
+            'search_query': request.GET.get('search', ''),
+        }
+        return render(request, 'properties/notification_center.html', context)
 
 
 @login_required
@@ -17104,7 +17130,7 @@ def admin_send_notification(request):
     """إرسال إشعارات من لوحة الإدارة"""
     from .forms import AdminNotificationForm
     from .models import Notification, NotificationRecipient, Broker
-    
+
     if request.method == 'POST':
         form = AdminNotificationForm(request.POST)
         if form.is_valid():
@@ -17120,7 +17146,7 @@ def admin_send_notification(request):
                     status='scheduled' if not form.cleaned_data['send_immediately'] else 'sent',
                     scheduled_for=form.cleaned_data['schedule_date'] if not form.cleaned_data['send_immediately'] else None
                 )
-                
+
                 # Add action URL if provided
                 if form.cleaned_data['action_url']:
                     notification.metadata = {
@@ -17128,62 +17154,77 @@ def admin_send_notification(request):
                         'action_text': form.cleaned_data['action_text'] or 'عرض التفاصيل'
                     }
                     notification.save()
-                
+
                 # Determine recipients based on target audience
                 target_audience = form.cleaned_data['target_audience']
                 recipients = []
-                
+
                 if target_audience == 'all_users':
                     # Send to all active users
-                    users = User.objects.filter(is_active=True)
-                    for user in users:
-                        NotificationRecipient.objects.create(
-                            notification=notification,
-                            user=user
-                        )
-                        recipients.append(user)
-                
+                    try:
+                        users = User.objects.filter(is_active=True)
+                        for user in users:
+                            NotificationRecipient.objects.create(
+                                notification=notification,
+                                user=user
+                            )
+                            recipients.append(user)
+                    except Exception:
+                        pass
+
                 elif target_audience == 'all_brokers':
                     # Send to all active brokers
-                    brokers = Broker.objects.filter(is_active=True)
-                    for broker in brokers:
-                        NotificationRecipient.objects.create(
-                            notification=notification,
-                            user=broker.user,
-                            broker=broker
-                        )
-                        recipients.append(broker.user)
-                
-                elif target_audience == 'both':
-                    # Send to both users and brokers
-                    users = User.objects.filter(is_active=True)
-                    for user in users:
-                        NotificationRecipient.objects.create(
-                            notification=notification,
-                            user=user
-                        )
-                        recipients.append(user)
-                    
-                    brokers = Broker.objects.filter(is_active=True)
-                    for broker in brokers:
-                        if broker.user not in recipients:
+                    try:
+                        brokers = Broker.objects.filter(is_active=True)
+                        for broker in brokers:
                             NotificationRecipient.objects.create(
                                 notification=notification,
                                 user=broker.user,
                                 broker=broker
                             )
                             recipients.append(broker.user)
-                
+                    except Exception:
+                        pass
+
+                elif target_audience == 'both':
+                    # Send to both users and brokers
+                    try:
+                        users = User.objects.filter(is_active=True)
+                        for user in users:
+                            NotificationRecipient.objects.create(
+                                notification=notification,
+                                user=user
+                            )
+                            recipients.append(user)
+                    except Exception:
+                        pass
+
+                    try:
+                        brokers = Broker.objects.filter(is_active=True)
+                        for broker in brokers:
+                            if broker.user not in recipients:
+                                NotificationRecipient.objects.create(
+                                    notification=notification,
+                                    user=broker.user,
+                                    broker=broker
+                                )
+                                recipients.append(broker.user)
+                    except Exception:
+                        pass
+
                 elif target_audience == 'specific_users':
                     # Send to specific users
-                    specific_users = form.cleaned_data['specific_users']
-                    for user in specific_users:
-                        NotificationRecipient.objects.create(
-                            notification=notification,
-                            user=user
-                        )
-                        recipients.append(user)
-                
+                    try:
+                        specific_users = form.cleaned_data['specific_users']
+                        for user in specific_users:
+                            NotificationRecipient.objects.create(
+                                notification=notification,
+                                user=user
+                            )
+                            recipients.append(user)
+                    except Exception:
+                        pass
+
                 elif target_audience == 'specific_brokers':
                     # Send to specific brokers
                     specific_brokers = form.cleaned_data['specific_brokers']
@@ -17194,7 +17235,9 @@ def admin_send_notification(request):
                             broker=broker
                         )
                         recipients.append(broker.user)
-                
+                except Exception:
+                    pass
+
                 # Send immediately if requested
                 if form.cleaned_data['send_immediately']:
                     notification.status = 'sent'
@@ -17202,14 +17245,15 @@ def admin_send_notification(request):
                     messages.success(request, f'تم إرسال الإشعار بنجاح إلى {len(recipients)} مستخدم')
                 else:
                     messages.success(request, f'تم جدولة الإشعار بنجاح لإرساله إلى {len(recipients)} مستخدم')
-                
+
                 return redirect('notification_center')
-                
+
             except Exception as e:
+                logger.exception(f'Error sending notification: {e}')
                 messages.error(request, f'حدث خطأ: {str(e)}')
     else:
         form = AdminNotificationForm()
-    
+
     return render(request, 'properties/admin_send_notification.html', {
         'form': form
     })
@@ -17219,20 +17263,20 @@ def admin_send_notification(request):
 def notification_detail(request, notification_id):
     """عرض تفاصيل إشعار"""
     from .models import Notification, NotificationRecipient
-    
+
     try:
         recipient = NotificationRecipient.objects.get(
             notification_id=notification_id,
             user=request.user
         )
-        
+
         # Mark as read
         recipient.mark_as_read()
-        
+
         # If button link exists, redirect
         if recipient.notification.button_link:
             return redirect(recipient.notification.button_link)
-        
+
         context = {
             'recipient': recipient,
             'notification': recipient.notification,
@@ -17240,7 +17284,8 @@ def notification_detail(request, notification_id):
         
         return render(request, 'properties/notification_detail.html', context)
     
-    except NotificationRecipient.DoesNotExist:
+    except (NotificationRecipient.DoesNotExist, Exception) as e:
+        logger.exception(f'Error fetching notification: {e}')
         messages.error(request, 'الإشعار غير موجود')
         return redirect('notification_center')
 
@@ -17249,7 +17294,7 @@ def notification_detail(request, notification_id):
 def mark_notification_read(request, notification_id):
     """تعليم إشعار كمقروء"""
     from .models import NotificationRecipient
-    
+
     if request.method == 'POST':
         try:
             recipient = NotificationRecipient.objects.get(
@@ -17257,16 +17302,17 @@ def mark_notification_read(request, notification_id):
                 user=request.user
             )
             recipient.mark_as_read()
-            
+
             if request.headers.get('x-requested-with') == 'XMLHttpRequest':
                 return JsonResponse({'success': True})
-            
+
             messages.success(request, 'تم تعليم الإشعار كمقروء')
-        except NotificationRecipient.DoesNotExist:
+        except (NotificationRecipient.DoesNotExist, Exception) as e:
+            logger.exception(f'Error marking notification as read: {e}')
             if request.headers.get('x-requested-with') == 'XMLHttpRequest':
                 return JsonResponse({'success': False, 'error': 'الإشعار غير موجود'})
             messages.error(request, 'الإشعار غير موجود')
-    
+
     return redirect('notification_center')
 
 
@@ -17274,7 +17320,7 @@ def mark_notification_read(request, notification_id):
 def mark_notification_clicked(request, notification_id):
     """تعليم إشعار كتم النقر"""
     from .models import NotificationRecipient
-    
+
     if request.method == 'POST':
         try:
             recipient = NotificationRecipient.objects.get(
@@ -17282,14 +17328,15 @@ def mark_notification_clicked(request, notification_id):
                 user=request.user
             )
             recipient.mark_as_clicked()
-            
+
             if request.headers.get('x-requested-with') == 'XMLHttpRequest':
                 return JsonResponse({'success': True})
-            
-        except NotificationRecipient.DoesNotExist:
+
+        except (NotificationRecipient.DoesNotExist, Exception) as e:
+            logger.exception(f'Error marking notification as clicked: {e}')
             if request.headers.get('x-requested-with') == 'XMLHttpRequest':
                 return JsonResponse({'success': False})
-    
+
     return JsonResponse({'success': True})
 
 
@@ -17297,7 +17344,7 @@ def mark_notification_clicked(request, notification_id):
 def archive_notification(request, notification_id):
     """أرشفة إشعار"""
     from .models import NotificationRecipient
-    
+
     if request.method == 'POST':
         try:
             recipient = NotificationRecipient.objects.get(
@@ -17305,16 +17352,17 @@ def archive_notification(request, notification_id):
                 user=request.user
             )
             recipient.archive()
-            
+
             if request.headers.get('x-requested-with') == 'XMLHttpRequest':
                 return JsonResponse({'success': True})
-            
+
             messages.success(request, 'تم أرشفة الإشعار')
-        except NotificationRecipient.DoesNotExist:
+        except (NotificationRecipient.DoesNotExist, Exception) as e:
+            logger.exception(f'Error archiving notification: {e}')
             if request.headers.get('x-requested-with') == 'XMLHttpRequest':
                 return JsonResponse({'success': False, 'error': 'الإشعار غير موجود'})
             messages.error(request, 'الإشعار غير موجود')
-    
+
     return redirect('notification_center')
 
 
@@ -17322,7 +17370,7 @@ def archive_notification(request, notification_id):
 def delete_notification(request, notification_id):
     """حذف إشعار"""
     from .models import NotificationRecipient
-    
+
     if request.method == 'POST':
         try:
             recipient = NotificationRecipient.objects.get(
@@ -17330,16 +17378,17 @@ def delete_notification(request, notification_id):
                 user=request.user
             )
             recipient.delete()
-            
+
             if request.headers.get('x-requested-with') == 'XMLHttpRequest':
                 return JsonResponse({'success': True})
-            
+
             messages.success(request, 'تم حذف الإشعار')
-        except NotificationRecipient.DoesNotExist:
+        except (NotificationRecipient.DoesNotExist, Exception) as e:
+            logger.exception(f'Error deleting notification: {e}')
             if request.headers.get('x-requested-with') == 'XMLHttpRequest':
                 return JsonResponse({'success': False, 'error': 'الإشعار غير موجود'})
             messages.error(request, 'الإشعار غير موجود')
-    
+
     return redirect('notification_center')
 
 
@@ -17347,18 +17396,24 @@ def delete_notification(request, notification_id):
 def mark_all_read(request):
     """تعليم جميع الإشعارات كمقروءة"""
     from .models import NotificationRecipient
-    
+
     if request.method == 'POST':
-        NotificationRecipient.objects.filter(
-            user=request.user,
-            is_read=False
-        ).update(is_read=True)
-        
-        if request.headers.get('x-requested-with') == 'XMLHttpRequest':
-            return JsonResponse({'success': True})
-        
-        messages.success(request, 'تم تعليم جميع الإشعارات كمقروءة')
-    
+        try:
+            NotificationRecipient.objects.filter(
+                user=request.user,
+                is_read=False
+            ).update(is_read=True)
+
+            if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+                return JsonResponse({'success': True})
+
+            messages.success(request, 'تم تعليم جميع الإشعارات كمقروءة')
+        except Exception as e:
+            logger.exception(f'Error marking all notifications as read: {e}')
+            if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+                return JsonResponse({'success': False})
+            messages.error(request, 'حدث خطأ أثناء تعليم الإشعارات')
+
     return redirect('notification_center')
 
 
