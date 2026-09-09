@@ -34,6 +34,16 @@ fi
 # DATABASE_URL should be set by Railway automatically
 # We force it above if Railway Variables override it
 
+# CRITICAL: DATABASE_URL must be set for production
+if [ -z "$DATABASE_URL" ]; then
+    echo "ERROR: DATABASE_URL is not set! This is required for production."
+    echo "Please add DATABASE_URL from PostgreSQL service in Railway Variables."
+    echo "Stopping application..."
+    exit 1
+fi
+
+echo "✓ DATABASE_URL is set (PostgreSQL will be used)"
+
 # Set default environment variables if not set (Railway.toml may not work properly)
 if [ -z "$DEBUG" ]; then
     export DEBUG="false"
@@ -49,10 +59,6 @@ fi
 # Check if this is production mode
 if [ "$DEBUG" = "False" ] || [ "$DEBUG" = "false" ]; then
     echo "=== PRODUCTION MODE ==="
-    if [ -z "$DATABASE_URL" ]; then
-        echo "WARNING: DATABASE_URL is not set. Using SQLite fallback."
-        echo "Please set DATABASE_URL in Railway Variables using: \${{Postgres.DATABASE_URL}}"
-    fi
     if [ -z "$SECRET_KEY" ]; then
         echo "WARNING: SECRET_KEY is not set. Auto-generating a temporary key."
         echo "Please set SECRET_KEY in Railway Variables for production security."
@@ -93,10 +99,12 @@ python manage.py fix_database
 echo "Running migrations from scratch..."
 python manage.py migrate --noinput
 
-# If migrations fail, fake them
+# If migrations fail, report error and exit
 if [ $? -ne 0 ]; then
-    echo "ERROR: Migrations failed. Faking all migrations..."
-    python manage.py migrate --fake --noinput
+    echo "ERROR: Migrations failed! Database schema not created properly."
+    echo "This is a critical error - the application cannot start without proper database schema."
+    echo "Please check database connection and migration files."
+    exit 1
 fi
 
 echo "Migration process completed"
