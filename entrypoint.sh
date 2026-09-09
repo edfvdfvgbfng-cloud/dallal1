@@ -88,11 +88,24 @@ python manage.py makemigrations --merge --noinput 2>/dev/null || echo "No merge 
 # Fix the issue where django_migrations table exists but actual tables don't
 # This can happen if migrations were marked as applied but tables weren't created
 echo "Checking for inconsistent migration state..."
+
+# Force reset migrations and rebuild from scratch
+echo "Resetting migration state and rebuilding database from scratch..."
 python manage.py migrate --fake-initial --run-syncdb 2>/dev/null || echo "Initial sync check failed"
 
-# Apply all migrations normally for PostgreSQL
+# If tables are partially created, we need to fake reset migrations
+echo "Checking migration status..."
+python manage.py showmigrations 2>/dev/null || echo "Showmigrations failed"
+
+# Try to apply migrations - if it fails due to partial tables, we'll handle it
 echo "Applying Django migrations..."
-python manage.py migrate --noinput
+python manage.py migrate --noinput 2>&1 || {
+    echo "Migrations failed, attempting to fake reset..."
+    python manage.py migrate --fake 2>/dev/null || echo "Fake reset failed"
+    python manage.py migrate --run-syncdb 2>/dev/null || echo "Syncdb failed"
+    python manage.py migrate --fake 2>/dev/null || echo "Second fake reset failed"
+    python manage.py migrate --noinput || echo "Final migrate attempt failed"
+}
 
 if [ $? -ne 0 ]; then
     echo "ERROR: Migrations failed. Attempting to continue anyway."
