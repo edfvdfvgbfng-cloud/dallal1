@@ -1,4 +1,5 @@
 # Stage 1: Build
+# Force rebuild - 2026-09-09-08-10 - Apply PostgreSQL and table creation fixes
 FROM python:3.11-slim AS builder
 
 WORKDIR /app
