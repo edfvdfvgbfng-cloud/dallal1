@@ -85,12 +85,20 @@ fi
 echo "Attempting to merge conflicting migrations if any..."
 python manage.py makemigrations --merge --noinput 2>/dev/null || echo "No merge needed or merge failed"
 
-# Create Django core tables manually to ensure they exist
-echo "Creating Django core tables manually..."
-python create_django_tables.py
+# Delete django_migrations table to reset migration history (corrupted state)
+echo "Resetting migration history to fix corrupted state..."
+python manage.py shell << 'EOF'
+from django.db import connection
+cursor = connection.cursor()
+try:
+    cursor.execute("DROP TABLE IF EXISTS django_migrations CASCADE")
+    print("Dropped django_migrations table")
+except Exception as e:
+    print(f"Error dropping django_migrations: {e}")
+EOF
 
-# Apply migrations normally
-echo "Applying Django migrations..."
+# Apply migrations from scratch
+echo "Applying Django migrations from scratch..."
 python manage.py migrate --noinput
 
 if [ $? -ne 0 ]; then
@@ -99,7 +107,7 @@ if [ $? -ne 0 ]; then
 fi
 
 if [ $? -ne 0 ]; then
-    echo "ERROR: Migrations failed. Attempting to continue anyway."
+    echo "ERROR: Migrations failed. The application may not work correctly."
     echo "The application may work with limited functionality."
     # Don't exit - continue starting the server
 fi
