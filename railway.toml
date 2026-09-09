@@ -23,7 +23,7 @@ ALLOWED_HOSTS = "muqq.up.railway.app"
 GUNICORN_WORKERS = "2"
 GUNICORN_THREADS = "4"
 GUNICORN_TIMEOUT = "300"
-SECRET_KEY = "railway-temporary-key-change-in-production-minimum-50-chars"
+SECRET_KEY = "django-insecure-production-secret-key-minimum-50-characters-long-change-this-immediately"
 
 # CRITICAL: Database Protection Settings
 # These settings ensure Railway PostgreSQL is never deleted or reset
