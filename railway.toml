@@ -1,7 +1,7 @@
 # Railway configuration for Dalal Platform
-# Force rebuild - 2026-09-09-09-20 - Use nixpacks to force PostgreSQL
+# Force rebuild - 2026-09-09-09-30 - Use Dockerfile with entrypoint DATABASE_URL fix
 [build]
-builder = "NIXPACKS"
+builder = "DOCKERFILE"
 
 [deploy]
 healthcheckPath = "/health/"
@@ -10,7 +10,7 @@ restartPolicyType = "ON_FAILURE"
 restartPolicyMaxRetries = 10
 
 # PostgreSQL service "Postgres" exists in Railway project
-# Using nixpacks.toml to force environment variables
+# entrypoint.sh will set DATABASE_URL from Railway environment
 # DATABASE_URL is automatically set by Railway from PostgreSQL service
 
 [variables]
@@ -28,5 +28,5 @@ SECRET_KEY = "django-insecure-production-secret-key-minimum-50-characters-long-c
 
 # CRITICAL: Database Protection Settings
 # - ALLOW_SQLITE_FALLBACK = false: Prevents SQLite in production
-# - nixpacks.toml overrides Railway Variables to ensure PostgreSQL
+# - entrypoint.sh will set DATABASE_URL from Railway environment
 # - PostgreSQL service "Postgres" is linked and required for production

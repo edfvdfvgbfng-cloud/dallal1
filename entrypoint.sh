@@ -11,9 +11,28 @@ echo "SECRET_KEY exists: $(if [ -n "$SECRET_KEY" ]; then echo "YES"; else echo "
 echo "ALLOW_SQLITE_FALLBACK=$ALLOW_SQLITE_FALLBACK"
 echo ""
 
+# CRITICAL: Force DATABASE_URL from Railway PostgreSQL service
+# If DATABASE_URL is not set, try to get it from Railway's automatic variable
+if [ -z "$DATABASE_URL" ]; then
+    # Railway automatically sets DATABASE_URL when PostgreSQL service is linked
+    # But if Railway Variables override it, we need to re-set it
+    # Check if we can get it from Railway's reference
+    if [ -n "$RAILWAY_POSTGRES_DATABASE_URL" ]; then
+        export DATABASE_URL="$RAILWAY_POSTGRES_DATABASE_URL"
+        echo "Set DATABASE_URL from RAILWAY_POSTGRES_DATABASE_URL"
+    elif [ -n "$POSTGRES_URL" ]; then
+        export DATABASE_URL="$POSTGRES_URL"
+        echo "Set DATABASE_URL from POSTGRES_URL"
+    else
+        echo "ERROR: DATABASE_URL not set and Railway PostgreSQL reference not found"
+        echo "This should not happen if PostgreSQL service is linked"
+        echo "Please check Railway service configuration"
+    fi
+fi
+
 # PostgreSQL service exists in Railway project
-# DATABASE_URL is automatically set by Railway
-# Do NOT force SQLite fallback
+# DATABASE_URL should be set by Railway automatically
+# We force it above if Railway Variables override it
 
 # Set default environment variables if not set (Railway.toml may not work properly)
 if [ -z "$DEBUG" ]; then
