@@ -85,29 +85,20 @@ fi
 echo "Attempting to merge conflicting migrations if any..."
 python manage.py makemigrations --merge --noinput 2>/dev/null || echo "No merge needed or merge failed"
 
-# Drop duplicate index that causes migration failures
-echo "Dropping duplicate index if exists..."
-python manage.py shell << 'EOF'
-from django.db import connection
-cursor = connection.cursor()
-try:
-    cursor.execute("DROP INDEX IF EXISTS properties_property_slug_f3b16024_like")
-    print("Dropped duplicate index")
-except Exception as e:
-    print(f"Error dropping index: {e}")
-EOF
+# Apply migrations normally first
+echo "Applying Django migrations..."
+python manage.py migrate --noinput
 
-# Apply migrations with --fake-initial to skip existing objects
-echo "Applying Django migrations with --fake-initial..."
-python manage.py migrate --fake-initial --noinput
-
+# If migrations fail, fake the problematic migration and continue
 if [ $? -ne 0 ]; then
-    echo "ERROR: Migrations failed with --fake-initial. Trying normal migrate..."
+    echo "ERROR: Migrations failed. Faking problematic migration..."
+    python manage.py migrate properties.0004_propertyimage_sitesettings_alter_property_options_and_more --fake
     python manage.py migrate --noinput
 fi
 
+# If still failing, try --run-syncdb
 if [ $? -ne 0 ]; then
-    echo "ERROR: Migrations failed. Attempting with --run-syncdb..."
+    echo "ERROR: Migrations still failed. Attempting with --run-syncdb..."
     python manage.py migrate --run-syncdb --noinput
 fi
 
