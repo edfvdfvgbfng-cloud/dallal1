@@ -12268,7 +12268,7 @@ def admin_reports_panel(request):
             }
     else:
         try:
-                from .models import BrokerPlanSubscription
+            from .models import BrokerPlanSubscription
             try:
                 broker_count = Broker.objects.count() if Broker else 0
                 sub_count = BrokerPlanSubscription.objects.count()
@@ -12281,6 +12281,14 @@ def admin_reports_panel(request):
                 'users_count': User.objects.count(),
                 'brokers_count': broker_count,
                 'subscriptions_count': sub_count,
+            }
+        except ImportError:
+            report_data = {
+                'title': 'نظرة عامة',
+                'properties_count': Property.objects.count() if Property else 0,
+                'users_count': User.objects.count(),
+                'brokers_count': 0,
+                'subscriptions_count': 0,
             }
 
     context = {
