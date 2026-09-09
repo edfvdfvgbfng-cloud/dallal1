@@ -17,6 +17,17 @@ def remove_duplicate_slug_index(apps, schema_editor):
         print(f"Error dropping index (may not exist): {e}")
 
 
+def remove_duplicate_slug_index_after(apps, schema_editor):
+    """Remove the duplicate slug index again after field alteration"""
+    try:
+        with schema_editor.connection.cursor() as cursor:
+            # Try to drop the problematic index
+            cursor.execute("DROP INDEX IF EXISTS properties_property_slug_f3b16024_like")
+            print("Dropped duplicate slug index after field alteration")
+    except Exception as e:
+        print(f"Error dropping index after field alteration (may not exist): {e}")
+
+
 def populate_property_slugs(apps, schema_editor):
     Property = apps.get_model('properties', 'Property')
     for prop in Property.objects.all():
@@ -227,4 +238,5 @@ class Migration(migrations.Migration):
             name='slug',
             field=models.SlugField(allow_unicode=True, blank=True, default='', max_length=220, unique=True),
         ),
+        migrations.RunPython(remove_duplicate_slug_index_after, migrations.RunPython.noop),
     ]
