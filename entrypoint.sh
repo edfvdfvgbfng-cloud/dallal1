@@ -85,37 +85,9 @@ fi
 echo "Attempting to merge conflicting migrations if any..."
 python manage.py makemigrations --merge --noinput 2>/dev/null || echo "No merge needed or merge failed"
 
-# Drop and recreate manual tables to let Django create them properly
-echo "Dropping manual tables to let Django create them properly..."
+# Drop the problematic duplicate index first
+echo "Dropping problematic duplicate index..."
 python manage.py shell << 'EOF'
-from django.db import connection
-cursor = connection.cursor()
-
-# Drop manual tables that were created by entrypoint.sh
-tables_to_drop = [
-    'properties_activitylog',
-    'properties_broker',
-    'properties_sitesettings'
-]
-
-for table in tables_to_drop:
-    try:
-        cursor.execute(f"DROP TABLE IF EXISTS {table} CASCADE")
-        print(f"Dropped table: {table}")
-    except Exception as e:
-        print(f"Error dropping {table}: {e}")
-
-print("Manual tables dropped")
-EOF
-
-# Try to run migrations normally
-echo "Attempting to run migrations normally..."
-python manage.py migrate --noinput
-
-# If migrations fail due to duplicate index, drop it and retry
-if [ $? -ne 0 ]; then
-    echo "ERROR: Migrations failed. Dropping duplicate index and retrying..."
-    python manage.py shell << 'EOF'
 from django.db import connection
 cursor = connection.cursor()
 
@@ -127,14 +99,27 @@ except Exception as e:
     print(f"Error dropping index: {e}")
 EOF
 
-    # Retry migrations
-    echo "Retrying migrations after dropping duplicate index..."
-    python manage.py migrate --noinput
-fi
+# Unmark migrations for properties app to allow Django to recreate tables
+echo "Unmarking properties migrations to allow table recreation..."
+python manage.py shell << 'EOF'
+from django.db import connection
+cursor = connection.cursor()
 
-# If still failing, fake migrations to allow app to start
+# Delete migration records for properties app
+try:
+    cursor.execute("DELETE FROM django_migrations WHERE app = 'properties'")
+    print("Unmarked properties migrations")
+except Exception as e:
+    print(f"Error unmarking migrations: {e}")
+EOF
+
+# Try to run migrations normally
+echo "Running migrations from scratch for properties app..."
+python manage.py migrate --noinput
+
+# If migrations fail, fake them to allow app to start
 if [ $? -ne 0 ]; then
-    echo "ERROR: Migrations still failed. Faking all migrations to allow app startup..."
+    echo "ERROR: Migrations failed. Faking all migrations to allow app startup..."
     python manage.py migrate --fake --noinput
 fi
 
