@@ -85,6 +85,11 @@ fi
 echo "Attempting to merge conflicting migrations if any..."
 python manage.py makemigrations --merge --noinput 2>/dev/null || echo "No merge needed or merge failed"
 
+# Fix the issue where django_migrations table exists but actual tables don't
+# This can happen if migrations were marked as applied but tables weren't created
+echo "Checking for inconsistent migration state..."
+python manage.py migrate --fake-initial --run-syncdb 2>/dev/null || echo "Initial sync check failed"
+
 # Apply all migrations normally for PostgreSQL
 echo "Applying Django migrations..."
 python manage.py migrate --noinput
