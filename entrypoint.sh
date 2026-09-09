@@ -85,6 +85,18 @@ fi
 echo "Attempting to merge conflicting migrations if any..."
 python manage.py makemigrations --merge --noinput 2>/dev/null || echo "No merge needed or merge failed"
 
+# Drop duplicate index that causes migration failures
+echo "Dropping duplicate index if exists..."
+python manage.py shell << 'EOF'
+from django.db import connection
+cursor = connection.cursor()
+try:
+    cursor.execute("DROP INDEX IF EXISTS properties_property_slug_f3b16024_like")
+    print("Dropped duplicate index")
+except Exception as e:
+    print(f"Error dropping index: {e}")
+EOF
+
 # Apply migrations with --fake-initial to skip existing objects
 echo "Applying Django migrations with --fake-initial..."
 python manage.py migrate --fake-initial --noinput
