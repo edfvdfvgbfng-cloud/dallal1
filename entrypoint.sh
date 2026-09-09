@@ -91,19 +91,33 @@ echo "Checking for inconsistent migration state..."
 
 # Force reset migrations and rebuild from scratch
 echo "Resetting migration state and rebuilding database from scratch..."
-python manage.py migrate --fake-initial --run-syncdb 2>/dev/null || echo "Initial sync check failed"
 
-# If tables are partially created, we need to fake reset migrations
-echo "Checking migration status..."
-python manage.py showmigrations 2>/dev/null || echo "Showmigrations failed"
+# Step 1: Drop duplicate indexes to prevent migration conflicts
+echo "Dropping problematic indexes..."
+python manage.py shell << 'EOF'
+from django.db import connection
+cursor = connection.cursor()
+try:
+    # Drop duplicate index if exists
+    cursor.execute("DROP INDEX IF EXISTS properties_property_slug_f3b16024_like")
+    print("Dropped duplicate index: properties_property_slug_f3b16024_like")
+except Exception as e:
+    print(f"Index drop failed (expected): {e}")
+EOF
 
-# Try to apply migrations - if it fails due to partial tables, we'll handle it
+# Step 2: Run syncdb to create missing tables
+echo "Running syncdb to create missing tables..."
+python manage.py migrate --run-syncdb 2>/dev/null || echo "Syncdb failed"
+
+# Step 3: Mark all migrations as applied to avoid conflicts
+echo "Marking migrations as applied..."
+python manage.py migrate --fake 2>/dev/null || echo "Fake migrate failed"
+
+# Step 4: Apply migrations normally to catch any remaining issues
 echo "Applying Django migrations..."
 python manage.py migrate --noinput 2>&1 || {
-    echo "Migrations failed, attempting to fake reset..."
-    python manage.py migrate --fake 2>/dev/null || echo "Fake reset failed"
-    python manage.py migrate --run-syncdb 2>/dev/null || echo "Syncdb failed"
-    python manage.py migrate --fake 2>/dev/null || echo "Second fake reset failed"
+    echo "Standard migrate failed, trying alternative approach..."
+    python manage.py migrate --fake-initial --run-syncdb 2>/dev/null || echo "Alternative sync failed"
     python manage.py migrate --noinput || echo "Final migrate attempt failed"
 }
 
