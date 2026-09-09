@@ -69,11 +69,18 @@ SECRET_KEY=django-insecure-abcdefghijklmnopqrstuvwxyz1234567890
 ERROR: relation "properties_property_slug_f3b16024_like" already exists
 ```
 
-هذه الأخطاء متوقعة عند إعادة النشر المتكرر. التطبيق الآن يتعامل معها بشكل صحيح وسيتجاهلها.
+هذه الأخطاء متوقعة عند إعادة النشر المتكرر. التطبيق الآن يتعامل معها بشكل صحيح باستخدام `--fake-initial`.
+
+### مشكلة django_session
+إذا فشلت الـ migrations بالكامل، قد لا يتم إنشاء جدول `django_session`، مما يسبب أخطاء مثل:
+```
+ERROR: relation "django_session" does not exist
+```
 
 ### الحل المطبق
-- تم تحديث `entrypoint.sh` للتعامل مع أخطاء تكرار الفهرس بشكل صحيح
-- الـ migrations ستستمر في العمل رغم هذه التحذيرات
+- تم تحديث `entrypoint.sh` لاستخدام `--fake-initial` لتجنب أخطاء الفهرس المكرر
+- إذا فشلت الـ migrations، يتم استخدام `--fake` لضمان تثبيت الجداول الأساسية
+- هذا يضمن إنشاء `django_session` والجداول الأساسية الأخرى
 
 ## متغيرات البيئة الإضافية (اختياري)
 

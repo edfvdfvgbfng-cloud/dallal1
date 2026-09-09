@@ -102,8 +102,8 @@ if [ -z "$DATABASE_URL" ]; then
 else
     # Apply all migrations normally with PostgreSQL
     echo "Applying all migrations with PostgreSQL..."
-    # Handle duplicate index errors gracefully - ignore them
-    python manage.py migrate --noinput || python manage.py migrate --fake 2>/dev/null || echo "Migrations completed with warnings"
+    # Handle duplicate index errors gracefully - use --fake-initial
+    python manage.py migrate --fake-initial --noinput || python manage.py migrate --fake 2>/dev/null || echo "Migrations completed with warnings"
 fi
 
 if [ $? -ne 0 ]; then
