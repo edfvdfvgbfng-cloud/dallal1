@@ -21,9 +21,9 @@ GUNICORN_TIMEOUT = "300"
 SECRET_KEY = "django-insecure-production-secret-key-minimum-50-characters-long-change-this-immediately"
 
 # CRITICAL: Force PostgreSQL and prevent SQLite
-# DATABASE_URL will be automatically set by Railway from PostgreSQL service
-# Do NOT set DATABASE_URL here - Railway will set it automatically
-# ALLOW_SQLITE_FALLBACK = false prevents SQLite fallback in production
+# Use Railway's DATABASE_URL reference from PostgreSQL service
+# This overrides any Railway Variables that might set DATABASE_URL to empty
+DATABASE_URL = "${{Postgres.DATABASE_URL}}"
 
-# Override Railway Variables if they exist
+# ALLOW_SQLITE_FALLBACK = false prevents SQLite fallback in production
 # These settings ensure PostgreSQL is used even if Railway Variables are misconfigured
