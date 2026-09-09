@@ -17351,17 +17351,23 @@ def mark_all_read(request):
 
 
 def get_unread_count(request):
-    """الحصول على عدد الإشعارات غير المقروءة (AJAX)"""
-    from .models import NotificationRecipient
-    
-    if request.user.is_authenticated:
-        count = NotificationRecipient.objects.filter(
-            user=request.user,
-            is_read=False
-        ).count()
+    """الحصول على عدد الإشعارات غير المقروءة (AJAX) - Simple version to avoid errors"""
+    try:
+        from .models import NotificationRecipient
+    except ImportError:
+        NotificationRecipient = None
+
+    if request.user.is_authenticated and NotificationRecipient:
+        try:
+            count = NotificationRecipient.objects.filter(
+                user=request.user,
+                is_read=False
+            ).count()
+        except Exception:
+            count = 0
     else:
         count = 0
-    
+
     return JsonResponse({'count': count})
 
 

@@ -142,7 +142,12 @@
 // Update notification badge count
 function updateNotificationBadge() {
     fetch('/api/notifications/unread-count/')
-        .then(response => response.json())
+        .then(response => {
+          if (!response.ok) {
+            throw new Error('API error');
+          }
+          return response.json();
+        })
         .then(data => {
             const badge = document.getElementById('unread-badge');
             if (badge) {
@@ -153,6 +158,9 @@ function updateNotificationBadge() {
                     badge.style.display = 'none';
                 }
             }
+        })
+        .catch(error => {
+          console.log('Notification badge update failed:', error);
         });
 }
 
