@@ -3,7 +3,10 @@
 from django.db.models import Q
 from django.utils import timezone
 
-from .models import Broker, Property, UserProfile, Role, UserRole, JobApplication
+try:
+    from .models import Broker, Property, UserProfile, Role, UserRole, JobApplication
+except ImportError:
+    Broker = Property = UserProfile = Role = UserRole = JobApplication = None
 
 
 SUBSCRIPTION_LIMITS = {
@@ -20,7 +23,7 @@ def get_broker(user):
         return None
     try:
         return user.broker_profile
-    except Broker.DoesNotExist:
+    except (Broker.DoesNotExist, Exception):
         return None
 
 
@@ -30,7 +33,7 @@ def get_user_profile(user):
         return None
     try:
         return user.user_profile
-    except UserProfile.DoesNotExist:
+    except (UserProfile.DoesNotExist, Exception):
         return None
 
 
@@ -44,11 +47,18 @@ def get_user_type(user):
         return 'admin'
 
     # Check if broker
-    broker = get_broker(user)
-    if broker and broker.is_active:
-        if broker.role == Broker.ROLE_ADMIN:
-            return 'admin'
-        return 'broker'
+    try:
+        broker = get_broker(user)
+        if not Broker:
+            return 'user'
+        if broker and broker.is_active:
+            if broker.role == Broker.ROLE_ADMIN:
+                return 'admin'
+            return 'broker'
+    except Exception:
+        pass
+
+    return 'user'
 
     # Regular users (those without broker profile)
     # If user is authenticated and doesn't have a broker profile, they're a regular user
@@ -92,18 +102,33 @@ def has_permission(user, permission_name):
 def is_platform_admin(user):
     if not user or not user.is_authenticated:
         return False
-    broker = get_broker(user)
-    return user.is_superuser or (broker and broker.role == Broker.ROLE_ADMIN and broker.is_active)
+    try:
+        broker = get_broker(user)
+        if not Broker:
+            return user.is_superuser
+        return user.is_superuser or (broker and broker.role == Broker.ROLE_ADMIN and broker.is_active)
+    except Exception:
+        return user.is_superuser
 
 
 def is_main_broker(user):
-    broker = get_broker(user)
-    return broker and broker.role == Broker.ROLE_MAIN and broker.is_active
+    try:
+        broker = get_broker(user)
+        if not Broker:
+            return False
+        return broker and broker.role == Broker.ROLE_MAIN and broker.is_active
+    except Exception:
+        return False
 
 
 def is_sub_broker(user):
-    broker = get_broker(user)
-    return broker and broker.role == Broker.ROLE_SUB and broker.is_active
+    try:
+        broker = get_broker(user)
+        if not Broker:
+            return False
+        return broker and broker.role == Broker.ROLE_SUB and broker.is_active
+    except Exception:
+        return False
 
 
 def can_access_dashboard(user):
@@ -112,64 +137,88 @@ def can_access_dashboard(user):
     # Superusers can always access
     if user.is_superuser:
         return True
-    
+
     # Check through roles
-    if has_permission(user, 'can_access_admin_panel'):
+    try:
+        if has_permission(user, 'can_access_admin_panel'):
+            return True
+    except Exception:
+        pass
+
+    try:
+        broker = get_broker(user)
+        if not broker or not broker.is_active:
+            return False
         return True
-    
-    broker = get_broker(user)
-    if not broker or not broker.is_active:
+    except Exception:
         return False
-    return True
 
 
 def can_access_admin_panel(user):
     """Check if user can access admin panel."""
     if not user or not user.is_authenticated:
         return False
-    
+
     # Check through roles
-    if has_permission(user, 'can_access_admin_panel'):
-        return True
-    
-    user_type = get_user_type(user)
-    return user_type in ['admin', 'broker']
+    try:
+        if has_permission(user, 'can_access_admin_panel'):
+            return True
+    except Exception:
+        pass
+
+    try:
+        user_type = get_user_type(user)
+        return user_type in ['admin', 'broker']
+    except Exception:
+        return user.is_superuser
 
 
 def can_access_broker_panel(user):
     """Check if user can access broker panel."""
     if not user or not user.is_authenticated:
         return False
-    user_type = get_user_type(user)
-    return user_type in ['admin', 'broker']
+    try:
+        user_type = get_user_type(user)
+        return user_type in ['admin', 'broker']
+    except Exception:
+        return user.is_superuser
 
 
 def is_regular_user(user):
     """Check if user is a regular user (not admin or broker)."""
     if not user or not user.is_authenticated:
         return False
-    user_type = get_user_type(user)
-    return user_type == 'user'
+    try:
+        user_type = get_user_type(user)
+        return user_type == 'user'
+    except Exception:
+        return not user.is_superuser
 
 
 def can_post_job(user):
     """Check if user can post jobs."""
     if not user or not user.is_authenticated:
         return False
-    
+
     # Superusers can always post jobs
     if user.is_superuser:
         return True
-    
+
     # Check through roles
-    if has_permission(user, 'can_post_job'):
-        return True
-    
+    try:
+        if has_permission(user, 'can_post_job'):
+            return True
+    except Exception:
+        pass
+
     # Brokers can post jobs
-    broker = get_broker(user)
-    if broker and broker.is_active:
-        return True
-    
+    try:
+        broker = get_broker(user)
+        if broker and broker.is_active:
+            return True
+    except Exception:
+        pass
+
     # Regular users can post jobs (if you want to allow all authenticated users)
     # Comment out the next line if you want to restrict job posting to brokers only
     return True
@@ -179,24 +228,32 @@ def can_edit_job(user, job):
     """Check if user can edit a specific job."""
     if not user or not user.is_authenticated:
         return False
-    
+
     # Superusers can edit any job
     if user.is_superuser:
         return True
-    
+
     # Check through roles
-    if has_permission(user, 'can_edit_any_job'):
-        return True
-    
+    try:
+        if has_permission(user, 'can_edit_any_job'):
+            return True
+    except Exception:
+        pass
+
     # Job poster can edit their own job
     if job.posted_by == user:
         return True
-    
+
     # Broker admins can edit jobs in their company
-    broker = get_broker(user)
-    if broker and broker.is_active and broker.role == Broker.ROLE_ADMIN:
-        return True
-    
+    try:
+        broker = get_broker(user)
+        if not Broker:
+            return False
+        if broker and broker.is_active and broker.role == Broker.ROLE_ADMIN:
+            return True
+    except Exception:
+        pass
+
     return False
 
 
@@ -204,23 +261,31 @@ def can_delete_job(user, job):
     """Check if user can delete a specific job."""
     if not user or not user.is_authenticated:
         return False
-    
+
     # Superusers can delete any job
     if user.is_superuser:
         return True
-    
+
     # Check through roles
-    if has_permission(user, 'can_delete_any_job'):
-        return True
-    
+    try:
+        if has_permission(user, 'can_delete_any_job'):
+            return True
+    except Exception:
+        pass
+
     # Job poster can delete their own job
     if job.posted_by == user:
         return True
-    
+
     # Broker admins can delete jobs in their company
-    broker = get_broker(user)
-    if broker and broker.is_active and broker.role == Broker.ROLE_ADMIN:
-        return True
+    try:
+        broker = get_broker(user)
+        if not Broker:
+            return False
+        if broker and broker.is_active and broker.role == Broker.ROLE_ADMIN:
+            return True
+    except Exception:
+        pass
     
     return False
 
@@ -229,40 +294,52 @@ def can_apply_for_job(user, job):
     """Check if user can apply for a job."""
     if not user or not user.is_authenticated:
         return False
-    
+
     # Superusers can apply for any job
     if user.is_superuser:
         return True
-    
+
     # Check if user already applied
-    from .models import JobApplication
-    if JobApplication.objects.filter(job=job, applicant=user).exists():
-        return False
-    
+    try:
+        from .models import JobApplication
+        if JobApplication.objects.filter(job=job, applicant=user).exists():
+            return False
+    except Exception:
+        pass
+
     # Job poster cannot apply for their own job
     if job.posted_by == user:
         return False
-    
+
     return True
 
 
 def get_redirect_after_login(user):
     """Get redirect URL after login based on user type."""
-    user_type = get_user_type(user)
-    if user_type in ('admin', 'broker'):
+    try:
+        user_type = get_user_type(user)
+        if user_type in ('admin', 'broker'):
+            return 'dashboard'
+        return 'user_dashboard'
+    except Exception:
         return 'dashboard'
-    return 'user_dashboard'
 
 
 def can_manage_brokers(user):
-    if has_permission(user, 'can_manage_brokers'):
-        return True
+    try:
+        if has_permission(user, 'can_manage_brokers'):
+            return True
+    except Exception:
+        pass
     return is_platform_admin(user) or is_main_broker(user)
 
 
 def can_manage_site_settings(user):
-    if has_permission(user, 'can_manage_settings'):
-        return True
+    try:
+        if has_permission(user, 'can_manage_settings'):
+            return True
+    except Exception:
+        pass
     return is_platform_admin(user)
 
 
