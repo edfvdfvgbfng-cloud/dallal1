@@ -17007,9 +17007,9 @@ def user_monitoring_detail(request, user_id):
     subscriptions = []
     if broker:
         try:
-            subscriptions = BrokerPlanSubscription.objects.filter(
+            subscriptions = list(BrokerPlanSubscription.objects.filter(
                 broker=broker
-            ).order_by('-created_at')
+            ).order_by('-created_at'))
         except Exception:
             pass
 
@@ -17017,18 +17017,18 @@ def user_monitoring_detail(request, user_id):
     properties = []
     if broker:
         try:
-            properties = Property.objects.filter(
+            properties = list(Property.objects.filter(
                 broker=broker
-            ).order_by('-created_at')[:20]
+            ).order_by('-created_at')[:20])
         except Exception:
             pass
 
     # Get activity logs
     activity_logs = []
     try:
-        activity_logs = ActivityLog.objects.filter(
+        activity_logs = list(ActivityLog.objects.filter(
             user=user
-        ).order_by('-created_at')[:50]
+        ).order_by('-created_at')[:50])
     except Exception:
         pass
 
@@ -17036,12 +17036,12 @@ def user_monitoring_detail(request, user_id):
     messages_sent = []
     messages_received = []
     try:
-        messages_sent = Message.objects.filter(
+        messages_sent = list(Message.objects.filter(
             sender=user
-        ).order_by('-created_at')[:20]
-        messages_received = Message.objects.filter(
+        ).order_by('-created_at')[:20])
+        messages_received = list(Message.objects.filter(
             recipient=user
-        ).order_by('-created_at')[:20]
+        ).order_by('-created_at')[:20])
     except Exception:
         pass
 
