@@ -2766,16 +2766,30 @@ def dashboard(request):
     if not request.user.is_superuser and not request.user.is_staff and not get_broker(request.user):
         return redirect('user_dashboard')
     
-    properties = get_accessible_properties(request.user).prefetch_related('gallery_images', 'broker', 'owner')
+    # Get properties with error handling
+    try:
+        properties = get_accessible_properties(request.user).prefetch_related('gallery_images', 'broker', 'owner')
+    except Exception:
+        properties = []
     
     # Add pagination for properties
-    paginator = Paginator(properties, 25)
-    page_number = request.GET.get('page', 1)
-    properties = paginator.get_page(page_number)
+    try:
+        paginator = Paginator(properties, 25)
+        page_number = request.GET.get('page', 1)
+        properties = paginator.get_page(page_number)
+    except Exception:
+        properties = []
     
     # Get unread messages with optimized query
-    unread = get_accessible_messages(request.user).filter(is_read=False)[:20]
-    broker = get_broker(request.user)
+    try:
+        unread = get_accessible_messages(request.user).filter(is_read=False)[:20]
+    except Exception:
+        unread = []
+    
+    try:
+        broker = get_broker(request.user)
+    except Exception:
+        broker = None
     
     # Try to get notes with optimized query
     notes = []
@@ -2813,9 +2827,19 @@ def dashboard(request):
     except Exception:
         activity_logs = []
     
-    settings = SiteSettings.get_solo()
-    settings_form = SiteSettingsForm(instance=settings)
-    property_form = PropertyForm()
+    # Get settings with error handling
+    try:
+        settings = SiteSettings.get_solo()
+        settings_form = SiteSettingsForm(instance=settings)
+    except Exception:
+        settings = None
+        settings_form = None
+    
+    # Get property form with error handling
+    try:
+        property_form = PropertyForm()
+    except Exception:
+        property_form = None
     
     # Only create note form if PropertyNote table exists
     try:
@@ -2823,12 +2847,22 @@ def dashboard(request):
     except Exception:
         note_form = None
 
-    stats = get_broker_stats(request.user)
-    stats['pending_notes'] = pending_notes_count
-    stats['unread_notifications'] = unread_notifications_count
-    stats['total'] = stats['total_properties']
-    stats['featured'] = stats['featured_properties']
-    stats['unread_messages'] = stats.get('unread_messages', 0)
+    # Get stats with error handling
+    try:
+        stats = get_broker_stats(request.user)
+        stats['pending_notes'] = pending_notes_count
+        stats['unread_notifications'] = unread_notifications_count
+        stats['total'] = stats['total_properties']
+        stats['featured'] = stats['featured_properties']
+        stats['unread_messages'] = stats.get('unread_messages', 0)
+    except Exception:
+        stats = {
+            'pending_notes': pending_notes_count,
+            'unread_notifications': unread_notifications_count,
+            'total': 0,
+            'featured': 0,
+            'unread_messages': 0
+        }
     
     # Get subscription info for timer
     subscriptions_info = []
@@ -2903,6 +2937,40 @@ def dashboard(request):
                 'active_users': User.objects.filter(is_active=True).count(),
                 'total_jobs': Job.objects.count(),
             }
+        except Exception as e:
+            # If any of the admin models don't exist, use empty defaults
+            all_conversations = []
+            all_reports = []
+            all_users = []
+            subscription_plans = []
+            pending_properties = []
+            recent_payments = []
+            staff_users = []
+            platform_stats = {
+                'total_users': 0,
+                'total_conversations': 0,
+                'total_messages': 0,
+                'total_reports': 0,
+                'total_brokers': 0,
+                'total_regular_users': 0,
+                'total_admins': 0,
+                'active_subscriptions': 0,
+                'total_revenue': 0,
+                'active_ads': 0,
+                'pending_payments': 0,
+                'completed_payments': 0,
+                'total_backups': 0,
+                'last_backup_size': 0,
+                'last_backup_date': '--',
+                'total_tickets': 0,
+                'pending_tickets': 0,
+                'resolved_tickets': 0,
+                'total_properties': 0,
+                'active_properties': 0,
+                'verified_properties': 0,
+                'active_users': 0,
+                'total_jobs': 0,
+            }
             
             # Get backups
             try:
@@ -2949,6 +3017,45 @@ def dashboard(request):
 
     from .constants import IRAQ_GOVERNORATES
     
+    # Get managed brokers with error handling
+    try:
+        managed_brokers = get_managed_brokers(request.user).annotate(
+            property_count=Count('user__owned_properties', distinct=True)
+        ) if can_manage_brokers(request.user) else []
+    except Exception:
+        managed_brokers = []
+    
+    # Get brokers stats with error handling
+    try:
+        brokers_stats = {
+            'total': Broker.objects.count(),
+            'active': Broker.objects.filter(is_active=True).count(),
+            'verified': Broker.objects.filter(is_verified=True).count(),
+            'by_role': {
+                'main': Broker.objects.filter(role='main').count(),
+                'sub': Broker.objects.filter(role='sub').count(),
+                'admin': Broker.objects.filter(role='admin').count()
+            }
+        } if can_manage_brokers(request.user) else {}
+    except Exception:
+        brokers_stats = {}
+    
+    # Get total properties count with error handling
+    try:
+        total_properties_count = sum(b.user.owned_properties.count() for b in get_managed_brokers(request.user)) if can_manage_brokers(request.user) else 0
+    except Exception:
+        total_properties_count = 0
+    
+    # Get user counts with error handling
+    try:
+        active_users_count = sum(1 for u in all_users if u.is_active)
+        inactive_users_count = sum(1 for u in all_users if not u.is_active)
+        superusers_count = sum(1 for u in all_users if u.is_superuser)
+    except Exception:
+        active_users_count = 0
+        inactive_users_count = 0
+        superusers_count = 0
+    
     return render(request, 'properties/dashboard.html', {
         'properties': properties,
         'messages_list': unread,
@@ -2964,26 +3071,15 @@ def dashboard(request):
         'broker': broker,
         'can_manage_brokers': can_manage_brokers(request.user),
         'can_manage_settings': can_manage_site_settings(request.user),
-        'managed_brokers': get_managed_brokers(request.user).annotate(
-            property_count=Count('user__owned_properties', distinct=True)
-        ) if can_manage_brokers(request.user) else [],
-        'brokers_stats': {
-            'total': Broker.objects.count(),
-            'active': Broker.objects.filter(is_active=True).count(),
-            'verified': Broker.objects.filter(is_verified=True).count(),
-            'by_role': {
-                'main': Broker.objects.filter(role='main').count(),
-                'sub': Broker.objects.filter(role='sub').count(),
-                'admin': Broker.objects.filter(role='admin').count()
-            }
-        } if can_manage_brokers(request.user) else {},
-        'total_properties_count': sum(b.user.owned_properties.count() for b in get_managed_brokers(request.user)) if can_manage_brokers(request.user) else 0,
+        'managed_brokers': managed_brokers,
+        'brokers_stats': brokers_stats,
+        'total_properties_count': total_properties_count,
         'all_conversations': all_conversations,
         'all_reports': all_reports,
         'all_users': all_users,
-        'active_users_count': sum(1 for u in all_users if u.is_active),
-        'inactive_users_count': sum(1 for u in all_users if not u.is_active),
-        'superusers_count': sum(1 for u in all_users if u.is_superuser),
+        'active_users_count': active_users_count,
+        'inactive_users_count': inactive_users_count,
+        'superusers_count': superusers_count,
         'subscription_plans': subscription_plans,
         'platform_stats': platform_stats,
         'pending_properties': pending_properties,
