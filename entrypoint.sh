@@ -85,16 +85,13 @@ fi
 echo "Attempting to merge conflicting migrations if any..."
 python manage.py makemigrations --merge --noinput 2>/dev/null || echo "No merge needed or merge failed"
 
-# Apply migrations normally first
-echo "Applying Django migrations..."
-python manage.py migrate --noinput
+# Fake the problematic migration that has duplicate index
+echo "Faking problematic migration with duplicate index..."
+python manage.py migrate properties.0004_propertyimage_sitesettings_alter_property_options_and_more --fake
 
-# If migrations fail, fake the problematic migration and continue
-if [ $? -ne 0 ]; then
-    echo "ERROR: Migrations failed. Faking problematic migration..."
-    python manage.py migrate properties.0004_propertyimage_sitesettings_alter_property_options_and_more --fake
-    python manage.py migrate --noinput
-fi
+# Apply all remaining migrations
+echo "Applying remaining Django migrations..."
+python manage.py migrate --noinput
 
 # If still failing, try --run-syncdb
 if [ $? -ne 0 ]; then
