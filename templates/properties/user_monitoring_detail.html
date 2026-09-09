@@ -101,6 +101,39 @@
 
                         <div class="col-md-6">
                             <div class="card">
+                                <div class="card-header bg-danger text-white">
+                                    <h5 class="mb-0">⚡ إجراءات الحساب</h5>
+                                </div>
+                                <div class="card-body">
+                                    <div class="d-grid gap-2">
+                                        {% if user.is_active %}
+                                            <button onclick="deactivateUser()" class="btn btn-warning">
+                                                🚫 تعطيل الحساب
+                                            </button>
+                                        {% else %}
+                                            <button onclick="activateUser()" class="btn btn-success">
+                                                ✅ تفعيل الحساب
+                                            </button>
+                                        {% endif %}
+
+                                        <button onclick="deleteUser()" class="btn btn-danger">
+                                            🗑️ حذف الحساب
+                                        </button>
+
+                                        <button onclick="showRestrictModal()" class="btn btn-secondary">
+                                                🔒 تقييد الحساب
+                                        </button>
+
+                                        <button onclick="showViolationModal()" class="btn btn-info">
+                                                ⚠️ إرسال مخالفة
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col-md-6">
+                            <div class="card">
                                 <div class="card-header bg-warning text-white">
                                     <h5 class="mb-0">🔐 معلومات الأمان</h5>
                                 </div>
@@ -384,11 +417,96 @@
     </div>
 </div>
 
+<!-- Restrict Modal -->
+<div class="modal fade" id="restrictModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-warning">
+                <h5 class="modal-title">🔒 تقييد الحساب</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="restrictForm">
+                    <div class="mb-3">
+                        <label class="form-label">نوع التقييد</label>
+                        <select class="form-select" name="restriction_type" required>
+                            <option value="posting">منع النشر</option>
+                            <option value="messaging">منع الرسائل</option>
+                            <option value="all">تقييد كامل</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">المدة (أيام)</label>
+                        <input type="number" class="form-control" name="duration_days" value="7" min="1" max="365" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">السبب</label>
+                        <textarea class="form-control" name="reason" rows="3" required></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">إلغاء</button>
+                <button type="button" onclick="restrictUser()" class="btn btn-warning">تقييد</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Violation Modal -->
+<div class="modal fade" id="violationModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-info">
+                <h5 class="modal-title">⚠️ إرسال مخالفة</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="violationForm">
+                    <div class="mb-3">
+                        <label class="form-label">نوع المخالفة</label>
+                        <select class="form-select" name="violation_type" required>
+                            <option value="general">عام</option>
+                            <option value="spam">إزعاج</option>
+                            <option value="harassment">تحرش</option>
+                            <option value="fraud">احتيال</option>
+                            <option value="inappropriate">محتوى غير لائق</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">الشدة</label>
+                        <select class="form-select" name="severity" required>
+                            <option value="warning">تحذير</option>
+                            <option value="minor">بسيطة</option>
+                            <option value="moderate">متوسطة</option>
+                            <option value="severe">شديدة</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">النقاط</label>
+                        <input type="number" class="form-control" name="points" value="1" min="1" max="10" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">الوصف</label>
+                        <textarea class="form-control" name="description" rows="3" required></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">إلغاء</button>
+                <button type="button" onclick="sendViolation()" class="btn btn-info">إرسال</button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <script>
+const userId = {{ user.id }};
+
 function showPassword() {
     const display = document.getElementById('password-display');
     const btn = event.target;
-    
+
     if (display.textContent === '••••••••') {
         display.textContent = 'غير متاح للعرض (مشفرة)';
         btn.textContent = 'إخفاء';
@@ -396,6 +514,147 @@ function showPassword() {
         display.textContent = '••••••••';
         btn.textContent = 'عرض';
     }
+}
+
+function deactivateUser() {
+    if (!confirm('هل أنت متأكد من تعطيل هذا الحساب؟')) return;
+
+    fetch(`/admin-panel/user-monitoring-panel/${userId}/deactivate/`, {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': getCookie('csrftoken'),
+            'Content-Type': 'application/json',
+        },
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert(data.message);
+            location.reload();
+        } else {
+            alert(data.error);
+        }
+    })
+    .catch(error => alert('حدث خطأ'));
+}
+
+function activateUser() {
+    if (!confirm('هل أنت متأكد من تفعيل هذا الحساب؟')) return;
+
+    fetch(`/admin-panel/user-monitoring-panel/${userId}/activate/`, {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': getCookie('csrftoken'),
+            'Content-Type': 'application/json',
+        },
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert(data.message);
+            location.reload();
+        } else {
+            alert(data.error);
+        }
+    })
+    .catch(error => alert('حدث خطأ'));
+}
+
+function deleteUser() {
+    if (!confirm('هل أنت متأكد من حذف هذا الحساب؟ لا يمكن التراجع عن هذا الإجراء!')) return;
+
+    fetch(`/admin-panel/user-monitoring-panel/${userId}/delete/`, {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': getCookie('csrftoken'),
+            'Content-Type': 'application/json',
+        },
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert(data.message);
+            window.location.href = '/admin-panel/user-monitoring-panel/';
+        } else {
+            alert(data.error);
+        }
+    })
+    .catch(error => alert('حدث خطأ'));
+}
+
+function showRestrictModal() {
+    const modal = new bootstrap.Modal(document.getElementById('restrictModal'));
+    modal.show();
+}
+
+function restrictUser() {
+    const form = document.getElementById('restrictForm');
+    const formData = new FormData(form);
+    const data = Object.fromEntries(formData.entries());
+
+    fetch(`/admin-panel/user-monitoring-panel/${userId}/restrict/`, {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': getCookie('csrftoken'),
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(data),
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert(data.message);
+            bootstrap.Modal.getInstance(document.getElementById('restrictModal')).hide();
+        } else {
+            alert(data.error);
+        }
+    })
+    .catch(error => alert('حدث خطأ'));
+}
+
+function showViolationModal() {
+    const modal = new bootstrap.Modal(document.getElementById('violationModal'));
+    modal.show();
+}
+
+function sendViolation() {
+    const form = document.getElementById('violationForm');
+    const formData = new FormData(form);
+    const data = Object.fromEntries(formData.entries());
+
+    fetch(`/admin-panel/user-monitoring-panel/${userId}/violation/`, {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': getCookie('csrftoken'),
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(data),
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert(data.message);
+            bootstrap.Modal.getInstance(document.getElementById('violationModal')).hide();
+        } else {
+            alert(data.error);
+        }
+    })
+    .catch(error => alert('حدث خطأ'));
+}
+
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
 }
 </script>
 {% endblock %}

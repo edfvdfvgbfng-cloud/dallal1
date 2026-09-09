@@ -17056,6 +17056,171 @@ def user_monitoring_detail(request, user_id):
     })
 
 
+@login_required
+@require_http_methods(["POST"])
+def admin_deactivate_user(request, user_id):
+    """تعطيل حساب مستخدم"""
+    from .permissions import is_platform_admin
+
+    if not is_platform_admin(request.user):
+        return JsonResponse({'success': False, 'error': 'ليس لديك صلاحية'})
+
+    try:
+        user = get_object_or_404(User, id=user_id)
+
+        # Prevent deactivating yourself
+        if user == request.user:
+            return JsonResponse({'success': False, 'error': 'لا يمكنك تعطيل حسابك'})
+
+        user.is_active = False
+        user.save()
+
+        logger.info(f'User {user.username} deactivated by {request.user.username}')
+        return JsonResponse({'success': True, 'message': 'تم تعطيل الحساب بنجاح'})
+    except Exception as e:
+        logger.exception(f'Error deactivating user: {e}')
+        return JsonResponse({'success': False, 'error': 'حدث خطأ أثناء تعطيل الحساب'})
+
+
+@login_required
+@require_http_methods(["POST"])
+def admin_activate_user(request, user_id):
+    """تفعيل حساب مستخدم"""
+    from .permissions import is_platform_admin
+
+    if not is_platform_admin(request.user):
+        return JsonResponse({'success': False, 'error': 'ليس لديك صلاحية'})
+
+    try:
+        user = get_object_or_404(User, id=user_id)
+        user.is_active = True
+        user.save()
+
+        logger.info(f'User {user.username} activated by {request.user.username}')
+        return JsonResponse({'success': True, 'message': 'تم تفعيل الحساب بنجاح'})
+    except Exception as e:
+        logger.exception(f'Error activating user: {e}')
+        return JsonResponse({'success': False, 'error': 'حدث خطأ أثناء تفعيل الحساب'})
+
+
+@login_required
+@require_http_methods(["POST"])
+def admin_delete_user(request, user_id):
+    """حذف حساب مستخدم"""
+    from .permissions import is_platform_admin
+
+    if not is_platform_admin(request.user):
+        return JsonResponse({'success': False, 'error': 'ليس لديك صلاحية'})
+
+    try:
+        user = get_object_or_404(User, id=user_id)
+
+        # Prevent deleting yourself
+        if user == request.user:
+            return JsonResponse({'success': False, 'error': 'لا يمكنك حذف حسابك'})
+
+        username = user.username
+        user.delete()
+
+        logger.info(f'User {username} deleted by {request.user.username}')
+        return JsonResponse({'success': True, 'message': 'تم حذف الحساب بنجاح'})
+    except Exception as e:
+        logger.exception(f'Error deleting user: {e}')
+        return JsonResponse({'success': False, 'error': 'حدث خطأ أثناء حذف الحساب'})
+
+
+@login_required
+@require_http_methods(["POST"])
+def admin_restrict_user(request, user_id):
+    """تقييد حساب مستخدم"""
+    from .permissions import is_platform_admin
+
+    if not is_platform_admin(request.user):
+        return JsonResponse({'success': False, 'error': 'ليس لديك صلاحية'})
+
+    try:
+        data = json.loads(request.body) if request.body else {}
+        restriction_type = data.get('restriction_type', 'posting')
+        duration_days = data.get('duration_days', 7)
+        reason = data.get('reason', '')
+
+        user = get_object_or_404(User, id=user_id)
+
+        # Prevent restricting yourself
+        if user == request.user:
+            return JsonResponse({'success': False, 'error': 'لا يمكنك تقييد حسابك'})
+
+        # Store restriction in user profile or metadata
+        try:
+            from .models import UserProfile
+            profile = UserProfile.objects.get(user=user)
+            if not profile.metadata:
+                profile.metadata = {}
+            profile.metadata['restriction'] = {
+                'type': restriction_type,
+                'start_date': timezone.now().isoformat(),
+                'end_date': (timezone.now() + timezone.timedelta(days=duration_days)).isoformat(),
+                'reason': reason,
+                'restricted_by': request.user.username
+            }
+            profile.save()
+        except Exception:
+            # If profile doesn't exist, skip metadata storage
+            pass
+
+        logger.info(f'User {user.username} restricted ({restriction_type}) by {request.user.username}')
+        return JsonResponse({'success': True, 'message': 'تم تقييد الحساب بنجاح'})
+    except Exception as e:
+        logger.exception(f'Error restricting user: {e}')
+        return JsonResponse({'success': False, 'error': 'حدث خطأ أثناء تقييد الحساب'})
+
+
+@login_required
+@require_http_methods(["POST"])
+def admin_send_violation(request, user_id):
+    """إرسال مخالفة لمستخدم"""
+    from .permissions import is_platform_admin
+
+    if not is_platform_admin(request.user):
+        return JsonResponse({'success': False, 'error': 'ليس لديك صلاحية'})
+
+    try:
+        data = json.loads(request.body) if request.body else {}
+        violation_type = data.get('violation_type', 'general')
+        severity = data.get('severity', 'warning')
+        description = data.get('description', '')
+        points = data.get('points', 1)
+
+        user = get_object_or_404(User, id=user_id)
+
+        # Store violation in user profile or metadata
+        try:
+            from .models import UserProfile
+            profile = UserProfile.objects.get(user=user)
+            if not profile.metadata:
+                profile.metadata = {}
+            if 'violations' not in profile.metadata:
+                profile.metadata['violations'] = []
+            profile.metadata['violations'].append({
+                'type': violation_type,
+                'severity': severity,
+                'description': description,
+                'points': points,
+                'date': timezone.now().isoformat(),
+                'issued_by': request.user.username
+            })
+            profile.save()
+        except Exception:
+            # If profile doesn't exist, skip metadata storage
+            pass
+
+        logger.info(f'Violation sent to user {user.username} by {request.user.username}')
+        return JsonResponse({'success': True, 'message': 'تم إرسال المخالفة بنجاح'})
+    except Exception as e:
+        logger.exception(f'Error sending violation: {e}')
+        return JsonResponse({'success': False, 'error': 'حدث خطأ أثناء إرسال المخالفة'})
+
+
 def get_client_ip(request):
     """الحصول على عنوان IP للعميل"""
     x_forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR')
