@@ -325,11 +325,6 @@ class Migration(migrations.Migration):
         ),
         migrations.AddField(
             model_name='sitesettings',
-            name='theme_mode',
-            field=models.CharField(choices=[('light', 'فاتح'), ('dark', 'داكن')], default='light', max_length=10, verbose_name='الوضع'),
-        ),
-        migrations.AddField(
-            model_name='sitesettings',
             name='time_format',
             field=models.CharField(default='H:i', max_length=20, verbose_name='تنسيق الوقت'),
         ),
