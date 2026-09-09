@@ -211,12 +211,39 @@
       <button type="button" class="map-control-btn" id="refresh-map" title="تحديث الخريطة">
         <span>🔄</span>
       </button>
+      <div class="settings-dropdown">
+        <button type="button" class="map-control-btn" id="settings-toggle" title="الإعدادات">
+          <span>⚙️</span>
+        </button>
+        <div class="settings-menu" id="settings-menu">
+          <div class="settings-menu-item" onclick="toggleSidebar()">
+            <span>☰</span> الشريط الجانبي
+          </div>
+          <div class="settings-menu-item" onclick="clearFilters()">
+            <span>🗑️</span> مسح الفلاتر
+          </div>
+          <div class="settings-menu-item" onclick="refreshMap()">
+            <span>🔄</span> تحديث الخريطة
+          </div>
+          <div class="settings-menu-divider"></div>
+          <div class="settings-menu-item" onclick="showLayerSelector()">
+            <span>🗺️</span> طبقات الخريطة
+          </div>
+          <div class="settings-menu-item" onclick="toggleHeatmap()">
+            <span>🔥</span> الخريطة الحرارية
+          </div>
+          <div class="settings-menu-item" onclick="toggleAmenities()">
+            <span>🏫</span> الخدمات
+          </div>
+        </div>
+      </div>
     </div>
 
-    <!-- Layer Selector -->
-    <div class="layer-selector">
+    <!-- Layer Selector (Hidden by default, shown via settings) -->
+    <div class="layer-selector hidden" id="layer-selector-panel">
       <div class="layer-selector-header">
         <span>🗺️ نوع الخريطة</span>
+        <button type="button" class="close-layer-selector" id="close-layer-selector">✕</button>
       </div>
       <div class="layer-selector-body">
         <button type="button" class="layer-btn active" data-layer="osm" onclick="switchMapLayer('osm')">

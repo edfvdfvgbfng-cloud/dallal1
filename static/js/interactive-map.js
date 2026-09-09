@@ -175,6 +175,12 @@ function setupEventListeners() {
     document.getElementById('clear-filters').addEventListener('click', clearFilters);
     document.getElementById('refresh-map').addEventListener('click', refreshMap);
 
+    // Settings toggle
+    document.getElementById('settings-toggle').addEventListener('click', toggleSettingsMenu);
+
+    // Layer selector close
+    document.getElementById('close-layer-selector').addEventListener('click', hideLayerSelector);
+
     // Area comparison
     document.getElementById('compare-areas-btn').addEventListener('click', compareAreas);
 
@@ -182,8 +188,44 @@ function setupEventListeners() {
     document.getElementById('close-popup').addEventListener('click', hidePropertyPopup);
     document.getElementById('popup-favorite-btn').addEventListener('click', toggleFavorite);
 
-    // Map click to hide popup
-    map.on('click', hidePropertyPopup);
+    // Map click to hide popup and settings menu
+    map.on('click', function() {
+        hidePropertyPopup();
+        hideSettingsMenu();
+    });
+}
+
+/**
+ * Toggle settings menu
+ */
+function toggleSettingsMenu() {
+    const menu = document.getElementById('settings-menu');
+    menu.classList.toggle('show');
+}
+
+/**
+ * Hide settings menu
+ */
+function hideSettingsMenu() {
+    const menu = document.getElementById('settings-menu');
+    menu.classList.remove('show');
+}
+
+/**
+ * Show layer selector
+ */
+function showLayerSelector() {
+    const selector = document.getElementById('layer-selector-panel');
+    selector.classList.remove('hidden');
+    hideSettingsMenu();
+}
+
+/**
+ * Hide layer selector
+ */
+function hideLayerSelector() {
+    const selector = document.getElementById('layer-selector-panel');
+    selector.classList.add('hidden');
 }
 
 /**
