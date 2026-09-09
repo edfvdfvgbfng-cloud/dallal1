@@ -85,23 +85,14 @@ fi
 echo "Attempting to merge conflicting migrations if any..."
 python manage.py makemigrations --merge --noinput 2>/dev/null || echo "No merge needed or merge failed"
 
-# Drop all tables and migration history to get clean state
-echo "Dropping all tables to get clean database state..."
-python manage.py shell << 'EOF'
-from django.db import connection
-cursor = connection.cursor()
-try:
-    # Drop all tables in public schema
-    cursor.execute("DROP SCHEMA public CASCADE")
-    cursor.execute("CREATE SCHEMA public")
-    print("Dropped and recreated public schema")
-except Exception as e:
-    print(f"Error dropping schema: {e}")
-EOF
+# Apply migrations with --fake-initial to skip existing objects
+echo "Applying Django migrations with --fake-initial..."
+python manage.py migrate --fake-initial --noinput
 
-# Apply migrations from scratch on clean database
-echo "Applying Django migrations on clean database..."
-python manage.py migrate --noinput
+if [ $? -ne 0 ]; then
+    echo "ERROR: Migrations failed with --fake-initial. Trying normal migrate..."
+    python manage.py migrate --noinput
+fi
 
 if [ $? -ne 0 ]; then
     echo "ERROR: Migrations failed. Attempting with --run-syncdb..."
