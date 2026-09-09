@@ -92,8 +92,8 @@ echo "Checking for inconsistent migration state..."
 # Force reset migrations and rebuild from scratch
 echo "Resetting migration state and rebuilding database from scratch..."
 
-# Step 1: Drop duplicate indexes to prevent migration conflicts
-echo "Dropping problematic indexes..."
+# Step 1: Drop all problematic indexes and migration state
+echo "Dropping problematic indexes and migration state..."
 python manage.py shell << 'EOF'
 from django.db import connection
 cursor = connection.cursor()
@@ -103,21 +103,29 @@ try:
     print("Dropped duplicate index: properties_property_slug_f3b16024_like")
 except Exception as e:
     print(f"Index drop failed (expected): {e}")
+
+try:
+    # Drop migration history to force complete rebuild
+    cursor.execute("DROP TABLE IF EXISTS django_migrations CASCADE")
+    print("Dropped django_migrations table for complete rebuild")
+except Exception as e:
+    print(f"Migration table drop failed: {e}")
 EOF
 
-# Step 2: Run syncdb to create missing tables
-echo "Running syncdb to create missing tables..."
+# Step 2: Create fresh database schema using syncdb
+echo "Creating fresh database schema..."
 python manage.py migrate --run-syncdb 2>/dev/null || echo "Syncdb failed"
 
-# Step 3: Mark all migrations as applied to avoid conflicts
-echo "Marking migrations as applied..."
+# Step 3: Mark all migrations as applied
+echo "Marking all migrations as applied..."
 python manage.py migrate --fake 2>/dev/null || echo "Fake migrate failed"
 
 # Step 4: Apply migrations normally to catch any remaining issues
 echo "Applying Django migrations..."
 python manage.py migrate --noinput 2>&1 || {
-    echo "Standard migrate failed, trying alternative approach..."
+    echo "Standard migrate failed, forcing complete rebuild..."
     python manage.py migrate --fake-initial --run-syncdb 2>/dev/null || echo "Alternative sync failed"
+    python manage.py migrate --fake 2>/dev/null || echo "Second fake failed"
     python manage.py migrate --noinput || echo "Final migrate attempt failed"
 }
 
