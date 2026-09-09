@@ -13477,45 +13477,60 @@ def chat_view(request):
 
 def channels_list_view(request):
     """View for displaying all broker channels"""
-    channels = BrokerChannel.objects.filter(
-        status='active'
-    ).select_related('broker').prefetch_related('followers')
-    
-    # Search functionality
-    search_query = request.GET.get('search', '')
-    if search_query:
-        channels = channels.filter(
-            Q(name__icontains=search_query) |
-            Q(description__icontains=search_query) |
-            Q(broker__display_name__icontains=search_query)
-        )
-    
-    # Get user's follows and saves
-    user_follows = set()
-    user_saves = set()
-    if request.user.is_authenticated:
-        user_follows = set(ChannelFollow.objects.filter(
-            user=request.user
-        ).values_list('channel_id', flat=True))
-        user_saves = set(ChannelSave.objects.filter(
-            user=request.user
-        ).values_list('channel_id', flat=True))
-    
-    # Pagination
-    paginator = Paginator(channels, 12)
-    page_number = request.GET.get('page')
-    page_obj = paginator.get_page(page_number)
-    
-    context = {
-        'page_obj': page_obj,
-        'channels': page_obj,
-        'user_follows': user_follows,
-        'user_saves': user_saves,
-        'page_title': 'قنوات الدلالين',
-        'search_query': search_query,
-    }
-    
-    return render(request, 'properties/channels.html', context)
+    try:
+        channels = BrokerChannel.objects.filter(
+            status='active'
+        ).select_related('broker').prefetch_related('followers')
+
+        # Search functionality
+        search_query = request.GET.get('search', '')
+        if search_query:
+            channels = channels.filter(
+                Q(name__icontains=search_query) |
+                Q(description__icontains=search_query) |
+                Q(broker__display_name__icontains=search_query)
+            )
+
+        # Get user's follows and saves
+        user_follows = set()
+        user_saves = set()
+        if request.user.is_authenticated:
+            user_follows = set(ChannelFollow.objects.filter(
+                user=request.user
+            ).values_list('channel_id', flat=True))
+            user_saves = set(ChannelSave.objects.filter(
+                user=request.user
+            ).values_list('channel_id', flat=True))
+
+        # Pagination
+        paginator = Paginator(channels, 12)
+        page_number = request.GET.get('page')
+        page_obj = paginator.get_page(page_number)
+
+        context = {
+            'page_obj': page_obj,
+            'channels': page_obj,
+            'user_follows': user_follows,
+            'user_saves': user_saves,
+            'page_title': 'قنوات الدلالين',
+            'search_query': search_query,
+        }
+
+        return render(request, 'properties/channels.html', context)
+    except Exception as e:
+        # Handle missing table errors gracefully
+        if 'no such table' in str(e).lower():
+            context = {
+                'page_obj': None,
+                'channels': [],
+                'user_follows': set(),
+                'user_saves': set(),
+                'page_title': 'قنوات الدلالين',
+                'search_query': '',
+                'error_message': 'قاعدة البيانات قيد التجهيز. يرجى المحاولة لاحقاً.'
+            }
+            return render(request, 'properties/channels.html', context)
+        raise
 
 
 def channel_detail_view(request, slug):
