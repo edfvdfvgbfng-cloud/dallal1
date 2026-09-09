@@ -12585,7 +12585,10 @@ def admin_users_list(request):
     # Statistics with error handling
     total_users = User.objects.count()
     active_users = User.objects.filter(is_active=True).count()
-    total_brokers = Broker.objects.count() if Broker else 0
+    try:
+        total_brokers = Broker.objects.count() if Broker else 0
+    except Exception:
+        total_brokers = 0
     total_subscriptions = 0
 
     context = {
