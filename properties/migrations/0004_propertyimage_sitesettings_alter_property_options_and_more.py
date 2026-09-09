@@ -236,7 +236,6 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name='property',
             name='slug',
-            field=models.SlugField(allow_unicode=True, blank=True, default='', max_length=220, unique=True),
+            field=models.SlugField(allow_unicode=True, blank=True, default='', max_length=220),
         ),
-        migrations.RunPython(remove_duplicate_slug_index_after, migrations.RunPython.noop),
     ]
