@@ -2433,8 +2433,12 @@ class SiteSettings(models.Model):
 
     @classmethod
     def get_solo(cls):
-        obj, _ = cls.objects.get_or_create(pk=1)
-        return obj
+        try:
+            obj, _ = cls.objects.get_or_create(pk=1)
+            return obj
+        except Exception:
+            # Return None if table doesn't exist or other error
+            return None
 
 
 class PropertyVerification(models.Model):

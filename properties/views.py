@@ -1627,7 +1627,10 @@ def map_api_stats(request):
 
 
 def contact_page(request):
-    settings = SiteSettings.get_solo()
+    try:
+        settings = SiteSettings.get_solo()
+    except Exception:
+        settings = None
     form = MessageForm()
     return render(request, 'properties/contact.html', {
         'settings': settings,
@@ -1637,7 +1640,10 @@ def contact_page(request):
 
 def subscription_plans(request):
     """Display subscription plans page."""
-    settings = SiteSettings.get_solo()
+    try:
+        settings = SiteSettings.get_solo()
+    except Exception:
+        settings = None
     return render(request, 'properties/subscription_plans.html', {
         'site_settings': settings,
     })
