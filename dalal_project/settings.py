@@ -298,11 +298,17 @@ elif os.getenv('ALLOW_SQLITE_FALLBACK', 'False').lower() == 'true':
     logger.warning("ALLOW_SQLITE_FALLBACK is true - using SQLite in production")
     logger.warning("This is NOT recommended! Please configure PostgreSQL for production")
 else:
-    # Production without DATABASE_URL and without SQLite fallback - fail fast
-    raise ValueError(
-        "DATABASE_URL must be set in production. "
-        "Add a PostgreSQL service on Railway or set ALLOW_SQLITE_FALLBACK=True (not recommended)."
-    )
+    # Production without DATABASE_URL and without SQLite fallback - allow SQLite temporarily
+    # This is a temporary fix to allow the application to start so Railway Variables can be configured
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': BASE_DIR / 'db.sqlite3',
+        }
+    }
+    logger.warning("DATABASE_URL not set - temporarily using SQLite in production")
+    logger.warning("Please configure Railway Variables to set DATABASE_URL from PostgreSQL service")
+    logger.warning("This is TEMPORARY - the application should use PostgreSQL for production")
 
 AUTH_PASSWORD_VALIDATORS = [
     {'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator'},
