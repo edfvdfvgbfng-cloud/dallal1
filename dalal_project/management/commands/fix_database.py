@@ -29,21 +29,21 @@ class Command(BaseCommand):
         
         # 2. Drop all properties indexes
         self.stdout.write("Step 2: Dropping all properties indexes...")
-        # First try to find indexes
+        # Try to find indexes using pg_indexes
         cursor.execute("""
             SELECT indexname FROM pg_indexes 
             WHERE schemaname = 'public' AND indexname LIKE 'properties_%'
         """)
         indexes = [row[0] for row in cursor.fetchall()]
         
-        # Also specifically look for the problematic slug index
+        # Also specifically look for the problematic slug index using pg_class
         cursor.execute("""
-            SELECT indexname FROM pg_indexes 
-            WHERE schemaname = 'public' AND indexname LIKE '%slug%'
+            SELECT relname FROM pg_class 
+            WHERE relkind = 'i' AND relname LIKE '%slug%'
         """)
         slug_indexes = [row[0] for row in cursor.fetchall()]
         
-        # Combine both lists
+        # Combine both lists and remove duplicates
         all_indexes = list(set(indexes + slug_indexes))
         
         for index in all_indexes:
