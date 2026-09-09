@@ -85,14 +85,17 @@ fi
 echo "Attempting to merge conflicting migrations if any..."
 python manage.py makemigrations --merge --noinput 2>/dev/null || echo "No merge needed or merge failed"
 
-# Apply migrations using --run-syncdb to create all tables from scratch
-# This is critical for a fresh PostgreSQL database
-echo "Applying Django migrations with --run-syncdb..."
-python manage.py migrate --run-syncdb --noinput
+# Force flush database to ensure clean state
+echo "Flushing database to ensure clean state..."
+python manage.py flush --noinput 2>/dev/null || echo "Flush failed (expected if database is empty)"
+
+# Apply migrations normally - this will create all tables including Django core tables
+echo "Applying Django migrations..."
+python manage.py migrate --noinput
 
 if [ $? -ne 0 ]; then
-    echo "ERROR: Migrations failed. Attempting standard migrate..."
-    python manage.py migrate --noinput
+    echo "ERROR: Migrations failed. Attempting with --run-syncdb..."
+    python manage.py migrate --run-syncdb --noinput
 fi
 
 if [ $? -ne 0 ]; then
