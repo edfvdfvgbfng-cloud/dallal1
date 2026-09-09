@@ -10071,41 +10071,81 @@ def admin_panel_enhanced(request):
         return redirect('home')
     
     from django.contrib.auth.models import User
-    from .models import Property, Broker, SubscriptionPlan, FinancialTransaction
+    from .models import Property, Broker, SubscriptionPlan
     from .constants import IRAQ_GOVERNORATES
     from django.db.models import Sum, Count, Q, Avg
     from datetime import timedelta, datetime
     
-    # إحصائيات أساسية
-    total_properties = Property.objects.count()
-    active_properties = Property.objects.filter(status='active').count()
-    sold_properties = Property.objects.filter(status='sold').count()
+    # إحصائيات أساسية - مع معالجة الأخطاء
+    try:
+        total_properties = Property.objects.count()
+    except Exception:
+        total_properties = 0
     
-    total_users = User.objects.count()
-    active_users = User.objects.filter(is_active=True).count()
-    total_brokers = Broker.objects.count()
+    try:
+        active_properties = Property.objects.filter(status='active').count()
+    except Exception:
+        active_properties = 0
+    
+    try:
+        sold_properties = Property.objects.filter(status='sold').count()
+    except Exception:
+        sold_properties = 0
+    
+    try:
+        total_users = User.objects.count()
+    except Exception:
+        total_users = 0
+    
+    try:
+        active_users = User.objects.filter(is_active=True).count()
+    except Exception:
+        active_users = 0
+    
+    try:
+        total_brokers = Broker.objects.count()
+    except Exception:
+        total_brokers = 0
     
     # إحصائيات الاشتراكات
-    from .models import BrokerPlanSubscription
-    total_subscriptions = BrokerPlanSubscription.objects.filter(status='active').count()
+    try:
+        from .models import BrokerPlanSubscription
+        total_subscriptions = BrokerPlanSubscription.objects.filter(status='active').count()
+    except Exception:
+        total_subscriptions = 0
     
     # إحصائيات الدلالين
-    active_brokers = Broker.objects.filter(is_active=True).count()
-    verified_brokers = Broker.objects.filter(is_verified=True).count()
+    try:
+        active_brokers = Broker.objects.filter(is_active=True).count()
+    except Exception:
+        active_brokers = 0
+    
+    try:
+        verified_brokers = Broker.objects.filter(is_verified=True).count()
+    except Exception:
+        verified_brokers = 0
     
     # إحصائيات الإيرادات
     today = timezone.now().date()
     yesterday = today - timedelta(days=1)
     
-    daily_revenue = FinancialTransaction.objects.filter(
-        created_at__date=today,
-        status='completed'
-    ).aggregate(total=Sum('sale_price'))['total'] or 0
+    try:
+        from .models import FinancialTransaction
+        daily_revenue = FinancialTransaction.objects.filter(
+            created_at__date=today,
+            status='completed'
+        ).aggregate(total=Sum('sale_price'))['total'] or 0
+    except Exception:
+        daily_revenue = 0
     
-    avg_revenue = FinancialTransaction.objects.filter(
-        created_at__date__gte=today - timedelta(days=30),
-        status='completed'
-    ).aggregate(avg=Avg('sale_price'))['avg'] or 0
+    try:
+        from .models import FinancialTransaction
+        avg_revenue = FinancialTransaction.objects.filter(
+            created_at__date__gte=today - timedelta(days=30),
+            status='completed'
+        ).aggregate(avg=Avg('sale_price'))['avg'] or 0
+    except Exception:
+        avg_revenue = 0
     
     # إحصائيات المشاهدات
     try:
@@ -10119,21 +10159,27 @@ def admin_panel_enhanced(request):
         yesterday_views = 0
     
     # المستخدمين المتصلين (محاكاة)
-    online_users = int(active_users * 0.15)  # تقدير 15% من المستخدمين النشطين
+    online_users = int(active_users * 0.15) if active_users > 0 else 0  # تقدير 15% من المستخدمين النشطين
     
     # إحصائيات المحافظات
     governorate_stats = []
-    for code, name in IRAQ_GOVERNORATES:
-        count = Property.objects.filter(governorate=code).count()
-        if count > 0:
-            governorate_stats.append({
-                'code': code,
-                'name': name,
-                'count': count
-            })
-    
-    # ترتيب حسب العدد
-    governorate_stats.sort(key=lambda x: x['count'], reverse=True)
+    try:
+        for code, name in IRAQ_GOVERNORATES:
+            try:
+                count = Property.objects.filter(governate=code).count()
+                if count > 0:
+                    governorate_stats.append({
+                        'code': code,
+                        'name': name,
+                        'count': count
+                    })
+            except Exception:
+                continue
+        
+        # ترتيب حسب العدد
+        governorate_stats.sort(key=lambda x: x['count'], reverse=True)
+    except Exception:
+        governorate_stats = []
     
     context = {
         'total_properties': total_properties,
