@@ -5293,7 +5293,7 @@ def unified_search_view(request):
     form = PropertySearchForm(request.GET)
     category = request.GET.get('category', '')
     q = request.GET.get('q', '')
-    
+
     # Initialize result containers
     properties = []
     hotels = []
@@ -5302,96 +5302,97 @@ def unified_search_view(request):
     building_requests = []
     auctions = []
     jobs = []
-    
+
     # Search in Properties (Iraq and outside Iraq)
-    if category in ['', 'property_iraq', 'property_outside']:
-        property_queryset = get_public_properties()
-        
-        # Filter by category (Iraq vs outside Iraq)
-        if category == 'property_iraq':
-            property_queryset = [p for p in property_queryset if p.country == 'Iraq' or not hasattr(p, 'country')]
-        elif category == 'property_outside':
-            property_queryset = [p for p in property_queryset if hasattr(p, 'country') and p.country != 'Iraq']
-        
-        # Apply text search
-        if q:
-            property_queryset = [
-                p for p in property_queryset
-                if q.lower() in p.title.lower() or 
-                   q.lower() in p.district.lower() or 
+    try:
+        if category in ['', 'property_iraq', 'property_outside']:
+            property_queryset = get_public_properties()
+
+            # Filter by category (Iraq vs outside Iraq)
+            if category == 'property_iraq':
+                property_queryset = [p for p in property_queryset if p.country == 'Iraq' or not hasattr(p, 'country')]
+            elif category == 'property_outside':
+                property_queryset = [p for p in property_queryset if hasattr(p, 'country') and p.country != 'Iraq']
+
+            # Apply text search
+            if q:
+                property_queryset = [
+                    p for p in property_queryset
+                    if q.lower() in p.title.lower() or
+                   q.lower() in p.district.lower() or
                    q.lower() in p.location.lower() or
                    (p.broker and q.lower() in p.broker.display_name.lower())
-            ]
-        
-        # Apply filters
-        governorate = request.GET.get('governorate')
-        if governorate:
-            property_queryset = [
-                p for p in property_queryset
-                if (getattr(p, 'governorate', None) and governorate in p.governorate)
-                or (getattr(p, 'district', None) and governorate in p.district)
-                or (getattr(p, 'region', None) and governorate in (p.region or ''))
-            ]
-        
-        district = request.GET.get('district')
-        if district:
-            property_queryset = [p for p in property_queryset if district.lower() in p.district.lower()]
-        
-        city = request.GET.get('city')
-        if city:
-            property_queryset = [p for p in property_queryset if city.lower() in p.location.lower()]
-        
-        country = request.GET.get('country')
-        if country:
-            property_queryset = [p for p in property_queryset if hasattr(p, 'country') and country.lower() in p.country.lower()]
-        
-        property_type = request.GET.get('type')
-        if property_type:
-            property_queryset = [p for p in property_queryset if p.type == property_type]
-        
-        status = request.GET.get('status')
-        if status:
-            property_queryset = [p for p in property_queryset if p.status == status]
-        
-        purpose = request.GET.get('purpose')
-        if purpose:
-            property_queryset = [p for p in property_queryset if p.purpose == purpose]
-        
-        verification_status = request.GET.get('verification_status')
-        if verification_status:
-            property_queryset = [
-                p for p in property_queryset
-                if hasattr(p, 'verification') and p.verification and p.verification.verification_status == verification_status
-            ]
-        
-        furnishing_status = request.GET.get('furnishing_status')
-        if furnishing_status:
-            property_queryset = [p for p in property_queryset if p.furnishing_status == furnishing_status]
-        
-        price_min = request.GET.get('price_min')
-        if price_min:
-            property_queryset = [p for p in property_queryset if p.price >= int(price_min)]
-        
-        price_max = request.GET.get('price_max')
-        if price_max:
-            property_queryset = [p for p in property_queryset if p.price <= int(price_max)]
-        
-        area_min = request.GET.get('area_min')
-        if area_min:
-            property_queryset = [p for p in property_queryset if p.area >= int(area_min)]
-        
-        area_max = request.GET.get('area_max')
-        if area_max:
-            property_queryset = [p for p in property_queryset if p.area <= int(area_max)]
-        
-        bedrooms = request.GET.get('bedrooms')
-        if bedrooms:
-            property_queryset = [p for p in property_queryset if p.bedrooms == int(bedrooms)]
+                ]
+
+            # Apply filters
+            governorate = request.GET.get('governorate')
+            if governorate:
+                property_queryset = [
+                    p for p in property_queryset
+                    if (getattr(p, 'governorate', None) and governorate in p.governorate)
+                    or (getattr(p, 'district', None) and governorate in p.district)
+                    or (getattr(p, 'region', None) and governorate in (p.region or ''))
+                ]
+
+            district = request.GET.get('district')
+            if district:
+                property_queryset = [p for p in property_queryset if district.lower() in p.district.lower()]
+
+            city = request.GET.get('city')
+            if city:
+                property_queryset = [p for p in property_queryset if city.lower() in p.location.lower()]
+
+            country = request.GET.get('country')
+            if country:
+                property_queryset = [p for p in property_queryset if hasattr(p, 'country') and country.lower() in p.country.lower()]
+
+            property_type = request.GET.get('type')
+            if property_type:
+                property_queryset = [p for p in property_queryset if p.type == property_type]
+
+            status = request.GET.get('status')
+            if status:
+                property_queryset = [p for p in property_queryset if p.status == status]
+
+            purpose = request.GET.get('purpose')
+            if purpose:
+                property_queryset = [p for p in property_queryset if p.purpose == purpose]
+
+            verification_status = request.GET.get('verification_status')
+            if verification_status:
+                property_queryset = [
+                    p for p in property_queryset
+                    if hasattr(p, 'verification') and p.verification and p.verification.verification_status == verification_status
+                ]
+
+            furnishing_status = request.GET.get('furnishing_status')
+            if furnishing_status:
+                property_queryset = [p for p in property_queryset if p.furnishing_status == furnishing_status]
+
+            price_min = request.GET.get('price_min')
+            if price_min:
+                property_queryset = [p for p in property_queryset if p.price >= int(price_min)]
+
+            price_max = request.GET.get('price_max')
+            if price_max:
+                property_queryset = [p for p in property_queryset if p.price <= int(price_max)]
+
+            area_min = request.GET.get('area_min')
+            if area_min:
+                property_queryset = [p for p in property_queryset if p.area >= int(area_min)]
+
+            area_max = request.GET.get('area_max')
+            if area_max:
+                property_queryset = [p for p in property_queryset if p.area <= int(area_max)]
+
+            bedrooms = request.GET.get('bedrooms')
+            if bedrooms:
+                property_queryset = [p for p in property_queryset if p.bedrooms == int(bedrooms)]
         
         bathrooms = request.GET.get('bathrooms')
         if bathrooms:
             property_queryset = [p for p in property_queryset if p.bathrooms == int(bathrooms)]
-        
+
         floors = request.GET.get('floors')
         if floors:
             property_queryset = [p for p in property_queryset if p.floors == int(floors)]
@@ -5494,149 +5495,166 @@ def unified_search_view(request):
             property_queryset = sorted(property_queryset, key=lambda x: x.views_count, reverse=True)
         elif sort == 'rating':
             property_queryset = sorted(property_queryset, key=lambda x: getattr(x, 'average_rating', 0), reverse=True)
-        
+
         properties = property_queryset
-    
+    except Exception:
+        properties = []
+
     # Search in Hotels
     if category in ['', 'hotel']:
-        hotel_queryset = Hotel.objects.filter(is_active=True)
-        
-        if q:
-            hotel_queryset = hotel_queryset.filter(
-                Q(name__icontains=q) |
-                Q(description__icontains=q) |
-                Q(city__icontains=q)
-            )
-        
-        city = request.GET.get('city')
-        if city:
-            hotel_queryset = hotel_queryset.filter(city__icontains=city)
-        
-        price_range = request.GET.get('price_range')
-        if price_range:
-            hotel_queryset = hotel_queryset.filter(price_range=price_range)
-        
-        star_rating = request.GET.get('star_rating')
-        if star_rating:
-            hotel_queryset = hotel_queryset.filter(star_rating=int(star_rating))
-        
-        featured_only = request.GET.get('featured_only')
-        if featured_only:
-            hotel_queryset = hotel_queryset.filter(is_featured=True)
-        
-        hotels = list(hotel_queryset)
+        try:
+            hotel_queryset = Hotel.objects.filter(is_active=True)
+
+            if q:
+                hotel_queryset = hotel_queryset.filter(
+                    Q(name__icontains=q) |
+                    Q(description__icontains=q) |
+                    Q(city__icontains=q)
+                )
+
+            city = request.GET.get('city')
+            if city:
+                hotel_queryset = hotel_queryset.filter(city__icontains=city)
+
+            price_range = request.GET.get('price_range')
+            if price_range:
+                hotel_queryset = hotel_queryset.filter(price_range=price_range)
+
+            star_rating = request.GET.get('star_rating')
+            if star_rating:
+                hotel_queryset = hotel_queryset.filter(star_rating=int(star_rating))
+
+            featured_only = request.GET.get('featured_only')
+            if featured_only:
+                hotel_queryset = hotel_queryset.filter(is_featured=True)
+
+            hotels = list(hotel_queryset)
+        except Exception:
+            hotels = []
     
     # Search in Resorts
     if category in ['', 'resort']:
-        resort_queryset = Resort.objects.filter(status='active')
-        
-        if q:
-            resort_queryset = resort_queryset.filter(
-                Q(name__icontains=q) |
-                Q(description__icontains=q) |
-                Q(city__icontains=q)
-            )
-        
-        governorate = request.GET.get('governorate')
-        if governorate:
-            resort_queryset = resort_queryset.filter(governorate=governorate)
-        
-        city = request.GET.get('city')
-        if city:
-            resort_queryset = resort_queryset.filter(city__icontains=city)
-        
-        resort_type = request.GET.get('resort_type')
-        if resort_type:
-            resort_queryset = resort_queryset.filter(resort_type=resort_type)
-        
-        featured_only = request.GET.get('featured_only')
-        if featured_only:
-            resort_queryset = resort_queryset.filter(is_featured=True)
-        
-        resorts = list(resort_queryset)
+        try:
+            resort_queryset = Resort.objects.filter(status='active')
+
+            if q:
+                resort_queryset = resort_queryset.filter(
+                    Q(name__icontains=q) |
+                    Q(description__icontains=q) |
+                    Q(city__icontains=q)
+                )
+
+            governorate = request.GET.get('governorate')
+            if governorate:
+                resort_queryset = resort_queryset.filter(governorate=governorate)
+
+            city = request.GET.get('city')
+            if city:
+                resort_queryset = resort_queryset.filter(city__icontains=city)
+
+            resort_type = request.GET.get('resort_type')
+            if resort_type:
+                resort_queryset = resort_queryset.filter(resort_type=resort_type)
+
+            featured_only = request.GET.get('featured_only')
+            if featured_only:
+                resort_queryset = resort_queryset.filter(is_featured=True)
+
+            resorts = list(resort_queryset)
+        except Exception:
+            resorts = []
     
     # Search in Services
     if category in ['', 'service']:
-        service_queryset = ServiceAdvertisement.objects.filter(status='active')
-        
-        if q:
-            service_queryset = service_queryset.filter(
-                Q(title__icontains=q) |
-                Q(description__icontains=q) |
-                Q(location__icontains=q)
-            )
-        
-        governorate = request.GET.get('governorate')
-        if governorate:
-            service_queryset = service_queryset.filter(governorate=governorate)
-        
-        service_type = request.GET.get('service_type')
-        if service_type:
-            service_queryset = service_queryset.filter(service_type=service_type)
-        
-        price_min = request.GET.get('price_min')
-        if price_min:
-            service_queryset = service_queryset.filter(price__gte=price_min)
-        
-        price_max = request.GET.get('price_max')
-        if price_max:
-            service_queryset = service_queryset.filter(price__lte=price_max)
-        
-        services = list(service_queryset)
+        try:
+            service_queryset = ServiceAdvertisement.objects.filter(status='active')
+
+            if q:
+                service_queryset = service_queryset.filter(
+                    Q(title__icontains=q) |
+                    Q(description__icontains=q) |
+                    Q(location__icontains=q)
+                )
+
+            governorate = request.GET.get('governorate')
+            if governorate:
+                service_queryset = service_queryset.filter(governorate=governorate)
+
+            service_type = request.GET.get('service_type')
+            if service_type:
+                service_queryset = service_queryset.filter(service_type=service_type)
+
+            price_min = request.GET.get('price_min')
+            if price_min:
+                service_queryset = service_queryset.filter(price__gte=price_min)
+
+            price_max = request.GET.get('price_max')
+            if price_max:
+                service_queryset = service_queryset.filter(price__lte=price_max)
+
+            services = list(service_queryset)
+        except Exception:
+            services = []
     
     # Search in Building Requests
     # Search in Auctions
     if category in ['', 'auction']:
-        auction_queryset = Auction.objects.filter(status='active')
-        
-        if q:
-            auction_queryset = auction_queryset.filter(
-                Q(title__icontains=q) |
-                Q(description__icontains=q)
-            )
-        
-        auction_type = request.GET.get('auction_type')
-        if auction_type:
-            auction_queryset = auction_queryset.filter(auction_type=auction_type)
-        
-        price_min = request.GET.get('price_min')
-        if price_min:
-            auction_queryset = auction_queryset.filter(starting_price__gte=price_min)
-        
-        price_max = request.GET.get('price_max')
-        if price_max:
-            auction_queryset = auction_queryset.filter(starting_price__lte=price_max)
-        
-        auctions = list(auction_queryset)
+        try:
+            auction_queryset = Auction.objects.filter(status='active')
+
+            if q:
+                auction_queryset = auction_queryset.filter(
+                    Q(title__icontains=q) |
+                    Q(description__icontains=q)
+                )
+
+            auction_type = request.GET.get('auction_type')
+            if auction_type:
+                auction_queryset = auction_queryset.filter(auction_type=auction_type)
+
+            price_min = request.GET.get('price_min')
+            if price_min:
+                auction_queryset = auction_queryset.filter(starting_price__gte=price_min)
+
+            price_max = request.GET.get('price_max')
+            if price_max:
+                auction_queryset = auction_queryset.filter(starting_price__lte=price_max)
+
+            auctions = list(auction_queryset)
+        except Exception:
+            auctions = []
     
     # Search in Jobs
     if category in ['', 'job']:
-        job_queryset = Job.objects.filter(status='active')
-        
-        if q:
-            job_queryset = job_queryset.filter(
-                Q(title__icontains=q) |
-                Q(description__icontains=q) |
-                Q(location__icontains=q)
-            )
-        
-        governorate = request.GET.get('governorate')
-        if governorate:
-            job_queryset = job_queryset.filter(governorate=governorate)
-        
-        job_type = request.GET.get('job_type')
-        if job_type:
-            job_queryset = job_queryset.filter(job_type=job_type)
-        
-        salary_min = request.GET.get('price_min')
-        if salary_min:
-            job_queryset = job_queryset.filter(salary_min__gte=salary_min)
-        
-        salary_max = request.GET.get('price_max')
-        if salary_max:
-            job_queryset = job_queryset.filter(salary_max__lte=salary_max)
-        
-        jobs = list(job_queryset)
+        try:
+            job_queryset = Job.objects.filter(status='active')
+
+            if q:
+                job_queryset = job_queryset.filter(
+                    Q(title__icontains=q) |
+                    Q(description__icontains=q) |
+                    Q(location__icontains=q)
+                )
+
+            governorate = request.GET.get('governorate')
+            if governorate:
+                job_queryset = job_queryset.filter(governorate=governorate)
+
+            job_type = request.GET.get('job_type')
+            if job_type:
+                job_queryset = job_queryset.filter(job_type=job_type)
+
+            salary_min = request.GET.get('price_min')
+            if salary_min:
+                job_queryset = job_queryset.filter(salary_min__gte=salary_min)
+
+            salary_max = request.GET.get('price_max')
+            if salary_max:
+                job_queryset = job_queryset.filter(salary_max__lte=salary_max)
+
+            jobs = list(job_queryset)
+        except Exception:
+            jobs = []
     
     # Combine all results for pagination
     all_results = []
@@ -5733,8 +5751,12 @@ def unified_search_view(request):
     user_likes = set()
     user_saves = set()
     if request.user.is_authenticated:
-        user_likes = set(PropertyLike.objects.filter(user=request.user).values_list('property_id', flat=True))
-        user_saves = set(PropertySave.objects.filter(user=request.user).values_list('property_id', flat=True))
+        try:
+            user_likes = set(PropertyLike.objects.filter(user=request.user).values_list('property_id', flat=True))
+            user_saves = set(PropertySave.objects.filter(user=request.user).values_list('property_id', flat=True))
+        except Exception:
+            user_likes = set()
+            user_saves = set()
     
     return render(request, 'properties/unified_search.html', {
         'form': form,
