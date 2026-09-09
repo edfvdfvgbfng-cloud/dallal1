@@ -80,31 +80,31 @@ python manage.py makemigrations --merge --noinput 2>/dev/null || echo "No merge 
 echo "Creating any missing migrations..."
 python manage.py makemigrations --noinput 2>/dev/null || echo "No new migrations needed"
 
-# Apply migrations - skip PostgreSQL-specific ones when using SQLite
-if [ -z "$DATABASE_URL" ]; then
-    echo "Using SQLite - skipping PostgreSQL-specific migrations"
-    # Apply base migrations first
-    echo "Applying base Django migrations..."
-    python manage.py migrate auth --noinput 2>/dev/null || echo "Auth migrations failed"
-    python manage.py migrate contenttypes --noinput 2>/dev/null || echo "Contenttypes migrations failed"
-    python manage.py migrate sessions --noinput 2>/dev/null || echo "Sessions migrations failed"
-    python manage.py migrate admin --noinput 2>/dev/null || echo "Admin migrations failed"
-    
-    # Skip migrations that use PostgreSQL-specific syntax
-    python manage.py migrate properties 0227 --fake 2>/dev/null || echo "0227 skipped"
-    python manage.py migrate properties 0228 --fake 2>/dev/null || echo "0228 skipped"
-    python manage.py migrate properties 0229 --fake 2>/dev/null || echo "0229 skipped"
-    python manage.py migrate properties 0230 --fake 2>/dev/null || echo "0230 skipped"
-    
-    # Apply remaining migrations normally
-    echo "Applying remaining migrations..."
-    python manage.py migrate --noinput 2>/dev/null
-else
-    # Apply all migrations normally with PostgreSQL
-    echo "Applying all migrations with PostgreSQL..."
-    # Handle duplicate index errors gracefully - use --fake-initial
-    python manage.py migrate --fake-initial --noinput || python manage.py migrate --fake 2>/dev/null || echo "Migrations completed with warnings"
-fi
+# Force SQLite for now until migrations are fixed
+# PostgreSQL migrations are failing due to duplicate index errors
+# This ensures the application works with SQLite for now
+export DATABASE_URL=""
+export ALLOW_SQLITE_FALLBACK=true
+export DEBUG=true
+
+echo "Using SQLite for development (PostgreSQL migrations have issues)"
+
+# Apply base migrations first
+echo "Applying base Django migrations..."
+python manage.py migrate auth --noinput 2>/dev/null || echo "Auth migrations failed"
+python manage.py migrate contenttypes --noinput 2>/dev/null || echo "Contenttypes migrations failed"
+python manage.py migrate sessions --noinput 2>/dev/null || echo "Sessions migrations failed"
+python manage.py migrate admin --noinput 2>/dev/null || echo "Admin migrations failed"
+
+# Skip migrations that use PostgreSQL-specific syntax
+python manage.py migrate properties 0227 --fake 2>/dev/null || echo "0227 skipped"
+python manage.py migrate properties 0228 --fake 2>/dev/null || echo "0228 skipped"
+python manage.py migrate properties 0229 --fake 2>/dev/null || echo "0229 skipped"
+python manage.py migrate properties 0230 --fake 2>/dev/null || echo "0230 skipped"
+
+# Apply remaining migrations normally
+echo "Applying remaining migrations..."
+python manage.py migrate --noinput 2>/dev/null
 
 if [ $? -ne 0 ]; then
     echo "ERROR: Migrations failed. This is a critical error."
