@@ -6,6 +6,17 @@ from django.db import migrations, models
 from django.utils.text import slugify
 
 
+def remove_duplicate_slug_index(apps, schema_editor):
+    """Remove the duplicate slug index if it exists"""
+    try:
+        with schema_editor.connection.cursor() as cursor:
+            # Try to drop the problematic index
+            cursor.execute("DROP INDEX IF EXISTS properties_property_slug_f3b16024_like")
+            print("Dropped duplicate slug index")
+    except Exception as e:
+        print(f"Error dropping index (may not exist): {e}")
+
+
 def populate_property_slugs(apps, schema_editor):
     Property = apps.get_model('properties', 'Property')
     for prop in Property.objects.all():
@@ -22,6 +33,7 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
+        migrations.RunPython(remove_duplicate_slug_index, migrations.RunPython.noop),
         migrations.CreateModel(
             name='PropertyImage',
             fields=[
