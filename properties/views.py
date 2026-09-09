@@ -17227,16 +17227,17 @@ def admin_send_notification(request):
 
                 elif target_audience == 'specific_brokers':
                     # Send to specific brokers
-                    specific_brokers = form.cleaned_data['specific_brokers']
-                    for broker in specific_brokers:
-                        NotificationRecipient.objects.create(
-                            notification=notification,
-                            user=broker.user,
-                            broker=broker
-                        )
-                        recipients.append(broker.user)
-                except Exception:
-                    pass
+                    try:
+                        specific_brokers = form.cleaned_data['specific_brokers']
+                        for broker in specific_brokers:
+                            NotificationRecipient.objects.create(
+                                notification=notification,
+                                user=broker.user,
+                                broker=broker
+                            )
+                            recipients.append(broker.user)
+                    except Exception:
+                        pass
 
                 # Send immediately if requested
                 if form.cleaned_data['send_immediately']:
