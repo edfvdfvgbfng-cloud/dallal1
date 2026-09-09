@@ -1,5 +1,9 @@
 [phases.build]
-cmds = ["pip install -r requirements.txt", "python manage.py collectstatic --noinput"]
+cmds = [
+  "pip install -r requirements.txt",
+  "pip install gunicorn",
+  "python manage.py collectstatic --noinput"
+]
 
 [phases.start]
 cmd = "bash entrypoint.sh"
@@ -14,6 +18,7 @@ DJANGO_SETTINGS_MODULE = "dalal_project.settings"
 GUNICORN_WORKERS = "2"
 GUNICORN_THREADS = "4"
 GUNICORN_TIMEOUT = "300"
+SECRET_KEY = "django-insecure-production-secret-key-minimum-50-characters-long-change-this-immediately"
 
 # CRITICAL: Force PostgreSQL and prevent SQLite
 # DATABASE_URL will be automatically set by Railway from PostgreSQL service
