@@ -27,13 +27,22 @@ class Command(BaseCommand):
         
         self.stdout.write(f"Dropped {len(tables)} properties tables")
         
-        # 2. Drop problematic index
-        self.stdout.write("Step 2: Dropping problematic index...")
-        try:
-            cursor.execute("DROP INDEX IF EXISTS properties_property_slug_f3b16024_like")
-            self.stdout.write("  Dropped duplicate slug index")
-        except Exception as e:
-            self.stdout.write(f"  Error dropping index: {e}")
+        # 2. Drop all properties indexes
+        self.stdout.write("Step 2: Dropping all properties indexes...")
+        cursor.execute("""
+            SELECT indexname FROM pg_indexes 
+            WHERE schemaname = 'public' AND indexname LIKE 'properties_%'
+        """)
+        indexes = [row[0] for row in cursor.fetchall()]
+        
+        for index in indexes:
+            try:
+                cursor.execute(f"DROP INDEX IF EXISTS {index}")
+                self.stdout.write(f"  Dropped index: {index}")
+            except Exception as e:
+                self.stdout.write(f"  Error dropping index {index}: {e}")
+        
+        self.stdout.write(f"Dropped {len(indexes)} properties indexes")
         
         # 3. Delete migration records for properties app
         self.stdout.write("Step 3: Resetting migration history...")
@@ -43,7 +52,15 @@ class Command(BaseCommand):
         except Exception as e:
             self.stdout.write(f"  Error resetting migrations: {e}")
         
-        # 4. Commit changes
+        # 4. Also reset django_contenttypes to avoid foreign key issues
+        self.stdout.write("Step 4: Resetting content types...")
+        try:
+            cursor.execute("DELETE FROM django_content_type WHERE app_label = 'properties'")
+            self.stdout.write("  Reset properties content types")
+        except Exception as e:
+            self.stdout.write(f"  Error resetting content types: {e}")
+        
+        # 5. Commit changes
         transaction.commit()
         
         self.stdout.write("Database fix completed successfully!")
