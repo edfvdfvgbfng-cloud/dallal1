@@ -85,11 +85,11 @@ fi
 echo "Attempting to merge conflicting migrations if any..."
 python manage.py makemigrations --merge --noinput 2>/dev/null || echo "No merge needed or merge failed"
 
-# Force flush database to ensure clean state
-echo "Flushing database to ensure clean state..."
-python manage.py flush --noinput 2>/dev/null || echo "Flush failed (expected if database is empty)"
+# Create Django core tables manually to ensure they exist
+echo "Creating Django core tables manually..."
+python create_django_tables.py
 
-# Apply migrations normally - this will create all tables including Django core tables
+# Apply migrations normally
 echo "Applying Django migrations..."
 python manage.py migrate --noinput
 
