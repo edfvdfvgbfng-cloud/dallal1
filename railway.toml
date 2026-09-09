@@ -1,5 +1,5 @@
 # Railway configuration for Dalal Platform
-# Force rebuild - 2026-09-05-04-40 - Switch back to Dockerfile for proper file copying
+# Force rebuild - 2026-09-09-08-35 - Fix PostgreSQL configuration
 [build]
 builder = "DOCKERFILE"
 
@@ -9,13 +9,16 @@ healthcheckTimeout = 30
 restartPolicyType = "ON_FAILURE"
 restartPolicyMaxRetries = 10
 
+# Ensure DATABASE_URL is set from Railway PostgreSQL service
+# Railway automatically sets DATABASE_URL when you add a PostgreSQL service
+
 [variables]
 DEBUG = "false"
 PORT = "8080"
 PYTHONUNBUFFERED = "1"
 PYTHONPATH = "/app"
 DJANGO_SETTINGS_MODULE = "dalal_project.settings"
-ALLOW_SQLITE_FALLBACK = "true"
+ALLOW_SQLITE_FALLBACK = "false"
 ALLOWED_HOSTS = "muqq.up.railway.app"
 GUNICORN_WORKERS = "2"
 GUNICORN_THREADS = "4"
@@ -24,7 +27,7 @@ SECRET_KEY = "railway-temporary-key-change-in-production-minimum-50-chars"
 
 # CRITICAL: Database Protection Settings
 # These settings ensure Railway PostgreSQL is never deleted or reset
-# - ALLOW_SQLITE_FALLBACK = False: Prevents SQLite in production
+# - ALLOW_SQLITE_FALLBACK = false: Prevents SQLite in production
 # - settings.py validates DATABASE_URL and rejects SQLite in production
 # - run_server.py uses migrate --noinput only (never flush or reset)
 # - No makemigrations in production (only migrate existing migrations)
