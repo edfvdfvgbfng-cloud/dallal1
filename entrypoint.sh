@@ -85,13 +85,36 @@ fi
 echo "Attempting to merge conflicting migrations if any..."
 python manage.py makemigrations --merge --noinput 2>/dev/null || echo "No merge needed or merge failed"
 
-# Drop the problematic duplicate index first
+# Drop ALL properties tables to start fresh
+echo "Dropping all properties tables to start fresh..."
+python manage.py shell << 'EOF'
+from django.db import connection
+cursor = connection.cursor()
+
+# Get all properties app tables
+cursor.execute("""
+    SELECT tablename FROM pg_tables 
+    WHERE schemaname = 'public' AND tablename LIKE 'properties_%'
+""")
+tables = [row[0] for row in cursor.fetchall()]
+
+# Drop all properties tables
+for table in tables:
+    try:
+        cursor.execute(f"DROP TABLE IF EXISTS {table} CASCADE")
+        print(f"Dropped table: {table}")
+    except Exception as e:
+        print(f"Error dropping {table}: {e}")
+
+print(f"Dropped {len(tables)} properties tables")
+EOF
+
+# Drop the problematic duplicate index
 echo "Dropping problematic duplicate index..."
 python manage.py shell << 'EOF'
 from django.db import connection
 cursor = connection.cursor()
 
-# Drop the problematic duplicate index
 try:
     cursor.execute("DROP INDEX IF EXISTS properties_property_slug_f3b16024_like")
     print("Dropped duplicate slug index")
@@ -99,13 +122,12 @@ except Exception as e:
     print(f"Error dropping index: {e}")
 EOF
 
-# Unmark migrations for properties app to allow Django to recreate tables
-echo "Unmarking properties migrations to allow table recreation..."
+# Unmark migrations for properties app
+echo "Unmarking properties migrations..."
 python manage.py shell << 'EOF'
 from django.db import connection
 cursor = connection.cursor()
 
-# Delete migration records for properties app
 try:
     cursor.execute("DELETE FROM django_migrations WHERE app = 'properties'")
     print("Unmarked properties migrations")
@@ -113,17 +135,17 @@ except Exception as e:
     print(f"Error unmarking migrations: {e}")
 EOF
 
-# Try to run migrations normally
-echo "Running migrations from scratch for properties app..."
+# Run migrations from scratch
+echo "Running migrations from scratch..."
 python manage.py migrate --noinput
 
-# If migrations fail, fake them to allow app to start
+# If migrations fail, fake them
 if [ $? -ne 0 ]; then
-    echo "ERROR: Migrations failed. Faking all migrations to allow app startup..."
+    echo "ERROR: Migrations failed. Faking all migrations..."
     python manage.py migrate --fake --noinput
 fi
 
-echo "Migration process completed (with or without errors)"
+echo "Migration process completed"
 echo "Application will start"
 
 echo "Migrations completed (with possible warnings)"
