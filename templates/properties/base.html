@@ -1195,7 +1195,7 @@
   <script>
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', function () {
-        navigator.serviceWorker.register('/static/js/sw.js', { scope: '/' }).catch(function () {});
+        navigator.serviceWorker.register('/static/js/sw.js').catch(function () {});
       });
     }
     let deferredInstallPrompt = null;

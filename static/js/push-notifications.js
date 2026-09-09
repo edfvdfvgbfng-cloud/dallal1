@@ -21,7 +21,7 @@ class PushNotificationManager {
         }
 
         try {
-            // Register service worker
+            // Register service worker without scope parameter
             const registration = await navigator.serviceWorker.register('/static/js/sw.js');
             console.log('Service Worker registered:', registration);
 
