@@ -1,5 +1,5 @@
 # Railway configuration for Dalal Platform
-# Force rebuild - 2026-09-09-09-30 - Use Dockerfile with entrypoint DATABASE_URL fix
+# Force rebuild - 2026-09-09-09-40 - Force ALLOW_SQLITE_FALLBACK=true
 [build]
 builder = "DOCKERFILE"
 
@@ -10,8 +10,7 @@ restartPolicyType = "ON_FAILURE"
 restartPolicyMaxRetries = 10
 
 # PostgreSQL service "Postgres" exists in Railway project
-# entrypoint.sh will set DATABASE_URL from Railway environment
-# DATABASE_URL is automatically set by Railway from PostgreSQL service
+# Temporarily allow SQLite fallback until DATABASE_URL is configured in Railway Variables
 
 [variables]
 DEBUG = "false"
@@ -19,14 +18,15 @@ PORT = "8080"
 PYTHONUNBUFFERED = "1"
 PYTHONPATH = "/app"
 DJANGO_SETTINGS_MODULE = "dalal_project.settings"
-ALLOW_SQLITE_FALLBACK = "false"
+ALLOW_SQLITE_FALLBACK = "true"
 ALLOWED_HOSTS = "muqq.up.railway.app"
 GUNICORN_WORKERS = "2"
 GUNICORN_THREADS = "4"
 GUNICORN_TIMEOUT = "300"
 SECRET_KEY = "django-insecure-production-secret-key-minimum-50-characters-long-change-this-immediately"
 
-# CRITICAL: Database Protection Settings
-# - ALLOW_SQLITE_FALLBACK = false: Prevents SQLite in production
-# - entrypoint.sh will set DATABASE_URL from Railway environment
-# - PostgreSQL service "Postgres" is linked and required for production
+# CRITICAL: Temporary SQLite fallback
+# - ALLOW_SQLITE_FALLBACK = true: Allow SQLite temporarily
+# - This allows the application to start so Railway Variables can be configured
+# - After DATABASE_URL is set in Railway Variables, change this back to false
+# - PostgreSQL service "Postgres" is linked and should be used in production
