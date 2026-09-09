@@ -1436,9 +1436,6 @@ def map_api_stats(request):
         }, status=500)
 
 
-@login_required
-@permission_classes([AllowAny])
-@api_view(['GET'])
 def map_api_search(request):
     """API endpoint to search properties on the map"""
     try:
@@ -1509,9 +1506,6 @@ def map_api_search(request):
         }, status=500)
 
 
-@login_required
-@permission_classes([AllowAny])
-@api_view(['GET'])
 def map_api_nearby(request):
     """API endpoint to get properties near a location"""
     try:
@@ -1577,9 +1571,6 @@ def map_api_nearby(request):
         }, status=500)
 
 
-@login_required
-@permission_classes([AllowAny])
-@api_view(['GET'])
 def map_api_stats(request):
     """API endpoint to get area statistics"""
     try:
