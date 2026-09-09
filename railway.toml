@@ -1,5 +1,5 @@
 # Railway configuration for Dalal Platform
-# Force rebuild - 2026-09-09-08-35 - Fix PostgreSQL configuration
+# Force rebuild - 2026-09-09-09-10 - PostgreSQL service exists, ensure connection
 [build]
 builder = "DOCKERFILE"
 
@@ -9,8 +9,9 @@ healthcheckTimeout = 30
 restartPolicyType = "ON_FAILURE"
 restartPolicyMaxRetries = 10
 
-# Ensure DATABASE_URL is set from Railway PostgreSQL service
-# Railway automatically sets DATABASE_URL when you add a PostgreSQL service
+# PostgreSQL service "Postgres" exists in Railway project
+# DATABASE_URL is automatically set by Railway environment
+# Application will use PostgreSQL automatically
 
 [variables]
 DEBUG = "false"
@@ -26,8 +27,7 @@ GUNICORN_TIMEOUT = "300"
 SECRET_KEY = "django-insecure-production-secret-key-minimum-50-characters-long-change-this-immediately"
 
 # CRITICAL: Database Protection Settings
-# These settings ensure Railway PostgreSQL is never deleted or reset
 # - ALLOW_SQLITE_FALLBACK = false: Prevents SQLite in production
 # - settings.py validates DATABASE_URL and rejects SQLite in production
-# - run_server.py uses migrate --noinput only (never flush or reset)
-# - No makemigrations in production (only migrate existing migrations)
+# - entrypoint.sh uses migrate --noinput only (never flush or reset)
+# - PostgreSQL service "Postgres" is linked and required for production

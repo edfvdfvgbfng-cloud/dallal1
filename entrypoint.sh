@@ -11,25 +11,14 @@ echo "SECRET_KEY exists: $(if [ -n "$SECRET_KEY" ]; then echo "YES"; else echo "
 echo "ALLOW_SQLITE_FALLBACK=$ALLOW_SQLITE_FALLBACK"
 echo ""
 
-# Force SQLite fallback for now until PostgreSQL migrations are fixed
-# This ensures the application works with SQLite
-export DATABASE_URL=""
-export ALLOW_SQLITE_FALLBACK="true"
-export DEBUG="true"
-echo "FORCING SQLite fallback (PostgreSQL migrations have issues)"
-echo "DATABASE_URL set to empty"
-echo "ALLOW_SQLITE_FALLBACK set to true"
-echo "DEBUG set to true"
-echo ""
+# PostgreSQL service exists in Railway project
+# DATABASE_URL is automatically set by Railway
+# Do NOT force SQLite fallback
 
 # Set default environment variables if not set (Railway.toml may not work properly)
-# Force development mode when using SQLite
-if [ -z "$DATABASE_URL" ]; then
-    export DEBUG="true"
-    echo "Auto-setting DEBUG=true for SQLite deployment"
-elif [ -z "$DEBUG" ] || [ "$DEBUG" = "False" ] || [ "$DEBUG" = "false" ]; then
-    export DEBUG="true"
-    echo "Auto-setting DEBUG=true for SQLite deployment"
+if [ -z "$DEBUG" ]; then
+    export DEBUG="false"
+    echo "Auto-setting DEBUG=false for production"
 fi
 
 # Set ALLOWED_HOSTS if not set (use Railway domain)
@@ -66,51 +55,24 @@ fi
 
 echo "Running Django migrations..."
 
-# Delete SQLite database to ensure clean start when using SQLite
-if [ -z "$DATABASE_URL" ]; then
-    echo "Using SQLite - recreating database for clean start"
-    rm -f db.sqlite3
-    echo "Deleted old SQLite database (if existed)"
-else
+# Use PostgreSQL database (DATABASE_URL is set by Railway)
+if [ -n "$DATABASE_URL" ]; then
     echo "Using PostgreSQL database"
+else
+    echo "WARNING: DATABASE_URL not set, will fail in production"
 fi
 
-# Try to drop conflicting index before migrations using Python script
-python drop_conflicting_index.py || echo "Could not drop index, trying migrations anyway..."
-
-# Try to merge conflicting migrations automatically (ignore errors if no conflicts)
-echo "Attempting to merge conflicting migrations if any..."
-python manage.py makemigrations --merge --noinput 2>/dev/null || echo "No merge needed"
-
-# Create missing migrations for new models (like ActivityLog)
-echo "Creating any missing migrations..."
-python manage.py makemigrations --noinput 2>/dev/null || echo "No new migrations needed"
-
-echo "Using SQLite for development (PostgreSQL migrations have issues)"
-
-# Apply base migrations first
-echo "Applying base Django migrations..."
-python manage.py migrate auth --noinput 2>/dev/null || echo "Auth migrations failed"
-python manage.py migrate contenttypes --noinput 2>/dev/null || echo "Contenttypes migrations failed"
-python manage.py migrate sessions --noinput 2>/dev/null || echo "Sessions migrations failed"
-python manage.py migrate admin --noinput 2>/dev/null || echo "Admin migrations failed"
-
-# Skip migrations that use PostgreSQL-specific syntax
-python manage.py migrate properties 0227 --fake 2>/dev/null || echo "0227 skipped"
-python manage.py migrate properties 0228 --fake 2>/dev/null || echo "0228 skipped"
-python manage.py migrate properties 0229 --fake 2>/dev/null || echo "0229 skipped"
-python manage.py migrate properties 0230 --fake 2>/dev/null || echo "0230 skipped"
-
-# Apply remaining migrations normally
-echo "Applying remaining migrations..."
-python manage.py migrate --noinput 2>/dev/null
+# Apply all migrations normally for PostgreSQL
+echo "Applying Django migrations..."
+python manage.py migrate --noinput
 
 if [ $? -ne 0 ]; then
-    echo "WARNING: Some migrations failed, but continuing anyway."
-    echo "The application may work with limited functionality."
-    echo "Please check the migration files and database state."
-    # Don't exit - continue starting the server
+    echo "ERROR: Migrations failed. Cannot start application."
+    echo "Please check migration files and database state."
+    exit 1
 fi
+
+echo "Migrations completed successfully"
 
 # Create admin user if it doesn't exist
 echo "Creating admin user if needed..."
