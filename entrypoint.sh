@@ -92,24 +92,29 @@ echo "Checking for inconsistent migration state..."
 # Force reset migrations and rebuild from scratch
 echo "Resetting migration state and rebuilding database from scratch..."
 
-# Step 1: Drop all problematic indexes and migration state
-echo "Dropping problematic indexes and migration state..."
+# Step 1: Drop all Django tables and migration state
+echo "Dropping all Django tables and migration state..."
 python manage.py shell << 'EOF'
 from django.db import connection
 cursor = connection.cursor()
 try:
-    # Drop duplicate index if exists
-    cursor.execute("DROP INDEX IF EXISTS properties_property_slug_f3b16024_like")
-    print("Dropped duplicate index: properties_property_slug_f3b16024_like")
+    # Drop all Django tables (CASCADE to handle foreign keys)
+    cursor.execute("DROP SCHEMA public CASCADE")
+    cursor.execute("CREATE SCHEMA public")
+    print("Dropped and recreated public schema")
 except Exception as e:
-    print(f"Index drop failed (expected): {e}")
-
-try:
-    # Drop migration history to force complete rebuild
-    cursor.execute("DROP TABLE IF EXISTS django_migrations CASCADE")
-    print("Dropped django_migrations table for complete rebuild")
-except Exception as e:
-    print(f"Migration table drop failed: {e}")
+    print(f"Schema reset failed: {e}")
+    # Alternative: drop individual tables
+    try:
+        cursor.execute("DROP TABLE IF EXISTS django_migrations CASCADE")
+        cursor.execute("DROP TABLE IF EXISTS django_content_type CASCADE")
+        cursor.execute("DROP TABLE IF EXISTS django_session CASCADE")
+        cursor.execute("DROP TABLE IF EXISTS properties_property CASCADE")
+        cursor.execute("DROP TABLE IF EXISTS properties_broker CASCADE")
+        cursor.execute("DROP TABLE IF EXISTS properties_sitesettings CASCADE")
+        print("Dropped individual tables")
+    except Exception as e2:
+        print(f"Individual table drop failed: {e2}")
 EOF
 
 # Step 2: Create fresh database schema using syncdb
