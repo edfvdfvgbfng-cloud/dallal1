@@ -1,0 +1,89 @@
+{% extends 'properties/broker_ads/broker_ads_base.html' %}
+{% load static %}
+
+{% block filter_fields %}
+<div class="form-group">
+  <label>
+    <span class="label-icon">🏛️</span>
+    المحافظة
+  </label>
+  <select name="governorate" class="form-control">
+    <option value="">كل المحافظات</option>
+    {% for code, name in governorates %}
+    <option value="{{ code }}" {% if governorate == code %}selected{% endif %}>{{ name }}</option>
+    {% endfor %}
+  </select>
+</div>
+<div class="form-group">
+  <label>
+    <span class="label-icon">📍</span>
+    المنطقة
+  </label>
+  <input type="text" name="district" class="form-control" placeholder="اكتب اسم المنطقة..." value="{{ district }}">
+</div>
+<div class="form-group">
+  <label>
+    <span class="label-icon">💰</span>
+    الحالة
+  </label>
+  <select name="status" class="form-control">
+    <option value="">كل الحالات</option>
+    <option value="sale" {% if status == 'sale' %}selected{% endif %}>بيع</option>
+    <option value="rent" {% if status == 'rent' %}selected{% endif %}>إيجار</option>
+    <option value="investment" {% if status == 'investment' %}selected{% endif %}>استثمار</option>
+  </select>
+</div>
+<div class="form-group">
+  <label>
+    <span class="label-icon">🏢</span>
+    نوع العقار
+  </label>
+  <select name="type" class="form-control">
+    <option value="">كل الأنواع</option>
+    <option value="apartment" {% if type == 'apartment' %}selected{% endif %}>شقة</option>
+    <option value="house" {% if type == 'house' %}selected{% endif %}>منزل</option>
+    <option value="villa" {% if type == 'villa' %}selected{% endif %}>فيلا</option>
+    <option value="land" {% if type == 'land' %}selected{% endif %}>أرض</option>
+    <option value="building" {% if type == 'building' %}selected{% endif %}>بناية</option>
+    <option value="store" {% if type == 'store' %}selected{% endif %}>محل تجاري</option>
+    <option value="office" {% if type == 'office' %}selected{% endif %}>مكتب</option>
+  </select>
+</div>
+<div class="form-group">
+  <label>
+    <span class="label-icon">💵</span>
+    السعر من
+  </label>
+  <input type="number" name="price_min" class="form-control" placeholder="السعر الأدنى" value="{{ price_min }}">
+</div>
+<div class="form-group">
+  <label>
+    <span class="label-icon">💰</span>
+    السعر إلى
+  </label>
+  <input type="number" name="price_max" class="form-control" placeholder="السعر الأعلى" value="{{ price_max }}">
+</div>
+{% endblock %}
+
+{% block content_grid %}
+<div class="view-toolbar">
+  <div>
+    <h2 class="section-title">عقارات داخل العراق</h2>
+    <p class="section-subtitle">{{ properties|length }} نتيجة</p>
+  </div>
+</div>
+
+{% if properties %}
+<div class="properties-grid">
+  {% for property in properties %}
+    {% include 'properties/_property_card.html' %}
+  {% endfor %}
+</div>
+{% else %}
+<div class="empty-state">
+  <div class="icon">🏠</div>
+  <h3>لا توجد إعلانات</h3>
+  <p>لا توجد عقارات داخل العراق حالياً</p>
+</div>
+{% endif %}
+{% endblock %}

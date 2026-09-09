@@ -411,7 +411,19 @@ urlpatterns = [
     path('resorts-outside-iraq/', views.resorts_outside_iraq_view, name='resorts_outside_iraq'),
     path('resorts-outside-iraq/create/', views.resort_create_outside_iraq, name='resort_create_outside_iraq'),
     path('resorts-outside-iraq/<int:pk>/', views.resort_outside_detail, name='resort_outside_detail'),
-    
+
+    # Broker Ads
+    path('broker-ads/iraq-inside/', views.broker_ads_iraq_inside, name='broker_ads_iraq_inside'),
+    path('broker-ads/iraq-outside/', views.broker_ads_iraq_outside, name='broker_ads_iraq_outside'),
+    path('broker-ads/hotels-inside/', views.broker_ads_hotels_inside, name='broker_ads_hotels_inside'),
+    path('broker-ads/hotels-outside/', views.broker_ads_hotels_outside, name='broker_ads_hotels_outside'),
+    path('broker-ads/resorts-inside/', views.broker_ads_resorts_inside, name='broker_ads_resorts_inside'),
+    path('broker-ads/resorts-outside/', views.broker_ads_resorts_outside, name='broker_ads_resorts_outside'),
+    path('broker-ads/travel-companies/', views.broker_ads_travel_companies, name='broker_ads_travel_companies'),
+    path('broker-ads/jobs/', views.broker_ads_jobs, name='broker_ads_jobs'),
+    path('broker-ads/services/', views.broker_ads_services, name='broker_ads_services'),
+    path('broker-ads/auctions/', views.broker_ads_auctions, name='broker_ads_auctions'),
+
     # Dynamic property addition
     path('add/dynamic/', views.dynamic_add_property, name='dynamic_add_property'),
     

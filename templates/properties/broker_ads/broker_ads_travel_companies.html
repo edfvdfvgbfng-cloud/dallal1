@@ -1,0 +1,50 @@
+{% extends 'properties/broker_ads/broker_ads_base.html' %}
+{% load static %}
+
+{% block filter_fields %}
+<div class="form-group">
+  <label>
+    <span class="label-icon">ℹ️</span>
+    تصفح جميع شركات السفر المتاحة
+  </label>
+  <p style="color: var(--text-muted); font-size: 0.9rem;">لا توجد خيارات تصفية إضافية</p>
+</div>
+{% endblock %}
+
+{% block content_grid %}
+<div class="view-toolbar">
+  <div>
+    <h2 class="section-title">شركات السفر</h2>
+    <p class="section-subtitle">{{ companies|length }} شركة</p>
+  </div>
+</div>
+
+{% if companies %}
+<div class="properties-grid">
+  {% for company in companies %}
+  <div class="property-card card">
+    {% if company.logo %}
+    <img src="{{ company.logo.url }}" alt="{{ company.name }}" class="property-image">
+    {% else %}
+    <div class="property-image placeholder">✈️</div>
+    {% endif %}
+    <div class="property-content">
+      <h3>{{ company.name }}</h3>
+      <p class="property-location">{{ company.location }}</p>
+      <div class="property-meta">
+        <span>📞 {{ company.phone }}</span>
+        <span>⭐ {{ company.rating|default:0 }}/5</span>
+      </div>
+      <a href="{% url 'travel_company_detail' company.id %}" class="btn btn-primary">عرض التفاصيل</a>
+    </div>
+  </div>
+  {% endfor %}
+</div>
+{% else %}
+<div class="empty-state">
+  <div class="icon">✈️</div>
+  <h3>لا توجد إعلانات</h3>
+  <p>لا توجد شركات سفر حالياً</p>
+</div>
+{% endif %}
+{% endblock %}

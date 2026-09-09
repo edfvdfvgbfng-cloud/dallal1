@@ -1,0 +1,83 @@
+{% extends 'properties/broker_ads/broker_ads_base.html' %}
+{% load static %}
+
+{% block filter_fields %}
+<div class="form-group">
+  <label>
+    <span class="label-icon">📊</span>
+    حالة المزاد
+  </label>
+  <select name="status" class="form-control">
+    <option value="">كل الحالات</option>
+    <option value="active" {% if status == 'active' %}selected{% endif %}>نشط</option>
+    <option value="pending" {% if status == 'pending' %}selected{% endif %}>قيد الانتظار</option>
+    <option value="completed" {% if status == 'completed' %}selected{% endif %}>مكتمل</option>
+    <option value="cancelled" {% if status == 'cancelled' %}selected{% endif %}>ملغي</option>
+  </select>
+</div>
+<div class="form-group">
+  <label>
+    <span class="label-icon">🔨</span>
+    نوع المزاد
+  </label>
+  <select name="auction_type" class="form-control">
+    <option value="">كل الأنواع</option>
+    <option value="property" {% if auction_type == 'property' %}selected{% endif %}>عقار</option>
+    <option value="vehicle" {% if auction_type == 'vehicle' %}selected{% endif %}>مركبة</option>
+    <option value="equipment" {% if auction_type == 'equipment' %}selected{% endif %}>معدات</option>
+  </select>
+</div>
+<div class="form-group">
+  <label>
+    <span class="label-icon">💵</span>
+    السعر الافتتاحي من
+  </label>
+  <input type="number" name="min_bid" class="form-control" placeholder="السعر الأدنى" value="{{ min_bid }}">
+</div>
+<div class="form-group">
+  <label>
+    <span class="label-icon">💰</span>
+    السعر الافتتاحي إلى
+  </label>
+  <input type="number" name="max_bid" class="form-control" placeholder="السعر الأعلى" value="{{ max_bid }}">
+</div>
+{% endblock %}
+
+{% block content_grid %}
+<div class="view-toolbar">
+  <div>
+    <h2 class="section-title">المزادات</h2>
+    <p class="section-subtitle">{{ auctions|length }} مزاد</p>
+  </div>
+</div>
+
+{% if auctions %}
+<div class="properties-grid">
+  {% for auction in auctions %}
+  <div class="property-card card">
+    {% if auction.property.main_image %}
+    <img src="{{ auction.property.main_image.url }}" alt="{{ auction.title }}" class="property-image">
+    {% else %}
+    <div class="property-image placeholder">🔨</div>
+    {% endif %}
+    <div class="property-content">
+      <h3>{{ auction.title }}</h3>
+      <p class="property-location">{{ auction.property.location }}</p>
+      <div class="property-meta">
+        <span>🔨 {{ auction.auction_type }}</span>
+        <span>💰 {{ auction.starting_bid }}$</span>
+        <span>📊 {{ auction.status }}</span>
+      </div>
+      <a href="{% url 'auction_detail' auction.id %}" class="btn btn-primary">عرض التفاصيل</a>
+    </div>
+  </div>
+  {% endfor %}
+</div>
+{% else %}
+<div class="empty-state">
+  <div class="icon">🔨</div>
+  <h3>لا توجد إعلانات</h3>
+  <p>لا توجد مزادات حالياً</p>
+</div>
+{% endif %}
+{% endblock %}

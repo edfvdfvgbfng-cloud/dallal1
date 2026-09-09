@@ -1,0 +1,78 @@
+{% extends 'properties/broker_ads/broker_ads_base.html' %}
+{% load static %}
+
+{% block filter_fields %}
+<div class="form-group">
+  <label>
+    <span class="label-icon">🔧</span>
+    نوع الخدمة
+  </label>
+  <select name="service_type" class="form-control">
+    <option value="">كل الأنواع</option>
+    <option value="maintenance" {% if service_type == 'maintenance' %}selected{% endif %}>صيانة</option>
+    <option value="cleaning" {% if service_type == 'cleaning' %}selected{% endif %}>تنظيف</option>
+    <option value="transport" {% if service_type == 'transport' %}selected{% endif %}>نقل</option>
+    <option value="security" {% if service_type == 'security' %}selected{% endif %}>أمن</option>
+    <option value="consulting" {% if service_type == 'consulting' %}selected{% endif %}>استشارات</option>
+  </select>
+</div>
+<div class="form-group">
+  <label>
+    <span class="label-icon">📍</span>
+    الموقع
+  </label>
+  <input type="text" name="location" class="form-control" placeholder="اكتب الموقع..." value="{{ location }}">
+</div>
+<div class="form-group">
+  <label>
+    <span class="label-icon">💵</span>
+    السعر من
+  </label>
+  <input type="number" name="price_min" class="form-control" placeholder="السعر الأدنى" value="{{ price_min }}">
+</div>
+<div class="form-group">
+  <label>
+    <span class="label-icon">💰</span>
+    السعر إلى
+  </label>
+  <input type="number" name="price_max" class="form-control" placeholder="السعر الأعلى" value="{{ price_max }}">
+</div>
+{% endblock %}
+
+{% block content_grid %}
+<div class="view-toolbar">
+  <div>
+    <h2 class="section-title">الخدمات</h2>
+    <p class="section-subtitle">{{ services|length }} خدمة</p>
+  </div>
+</div>
+
+{% if services %}
+<div class="properties-grid">
+  {% for service in services %}
+  <div class="property-card card">
+    {% if service.image %}
+    <img src="{{ service.image.url }}" alt="{{ service.title }}" class="property-image">
+    {% else %}
+    <div class="property-image placeholder">🔧</div>
+    {% endif %}
+    <div class="property-content">
+      <h3>{{ service.title }}</h3>
+      <p class="property-location">{{ service.location }}</p>
+      <div class="property-meta">
+        <span>🔧 {{ service.service_type }}</span>
+        <span>💰 {{ service.price }}</span>
+      </div>
+      <a href="{% url 'service_advertisement_detail' service.id %}" class="btn btn-primary">عرض التفاصيل</a>
+    </div>
+  </div>
+  {% endfor %}
+</div>
+{% else %}
+<div class="empty-state">
+  <div class="icon">🔧</div>
+  <h3>لا توجد إعلانات</h3>
+  <p>لا توجد خدمات حالياً</p>
+</div>
+{% endif %}
+{% endblock %}

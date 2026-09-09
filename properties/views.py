@@ -27587,10 +27587,409 @@ def unified_marketplace(request):
             if location:
                 services = services.filter(location__icontains=location)
             results.extend([{'type': 'service', 'item': s} for s in services])
-    
+
     return render(request, 'properties/unified_marketplace.html', {
         'results': results,
         'search_query': search_query,
         'category': category,
         'location': location,
+    })
+
+
+def broker_ads_iraq_inside(request):
+    """View for broker ads - properties inside Iraq"""
+    from properties.models import Property
+    from properties.constants import IRAQ_GOVERNORATES
+
+    # Get filters
+    governorate = request.GET.get('governorate', '')
+    district = request.GET.get('district', '')
+    status = request.GET.get('status', '')
+    type = request.GET.get('type', '')
+    price_min = request.GET.get('price_min', '')
+    price_max = request.GET.get('price_max', '')
+
+    properties = Property.objects.filter(country__code='IQ')
+
+    if governorate:
+        properties = properties.filter(governorate=governorate)
+
+    if district:
+        properties = properties.filter(district__icontains=district)
+
+    if status:
+        properties = properties.filter(status=status)
+
+    if type:
+        properties = properties.filter(type=type)
+
+    if price_min:
+        properties = properties.filter(price__gte=int(price_min))
+
+    if price_max:
+        properties = properties.filter(price__lte=int(price_max))
+
+    return render(request, 'properties/broker_ads/broker_ads_iraq_inside.html', {
+        'properties': properties,
+        'governorate': governorate,
+        'district': district,
+        'status': status,
+        'type': type,
+        'price_min': price_min,
+        'price_max': price_max,
+        'governorates': IRAQ_GOVERNORATES,
+        'category_title': 'عقارات داخل العراق',
+        'category_description': 'شكد العقد العقاري سعره فيي مكتب كم نسبه الدلاليه',
+        'category_icon': '🏠',
+    })
+
+
+def broker_ads_iraq_outside(request):
+    """View for broker ads - properties outside Iraq"""
+    from properties.models import Property, Country
+
+    # Get filters
+    country_id = request.GET.get('country', '')
+    district = request.GET.get('district', '')
+    status = request.GET.get('status', '')
+    type = request.GET.get('type', '')
+    price_min = request.GET.get('price_min', '')
+    price_max = request.GET.get('price_max', '')
+
+    properties = Property.objects.exclude(country__code='IQ')
+
+    if country_id:
+        properties = properties.filter(country_id=int(country_id))
+
+    if district:
+        properties = properties.filter(district__icontains=district)
+
+    if status:
+        properties = properties.filter(status=status)
+
+    if type:
+        properties = properties.filter(type=type)
+
+    if price_min:
+        properties = properties.filter(price__gte=int(price_min))
+
+    if price_max:
+        properties = properties.filter(price__lte=int(price_max))
+
+    countries = Country.objects.all().order_by('name_ar')
+
+    return render(request, 'properties/broker_ads/broker_ads_iraq_outside.html', {
+        'properties': properties,
+        'country_id': country_id,
+        'district': district,
+        'status': status,
+        'type': type,
+        'price_min': price_min,
+        'price_max': price_max,
+        'countries': countries,
+        'category_title': 'عقارات خارج العراق',
+        'category_description': 'مثل اعوغيره لانات شكد اجور شنو قوانين دول',
+        'category_icon': '🌍',
+    })
+
+
+def broker_ads_hotels_inside(request):
+    """View for broker ads - hotels inside Iraq"""
+    from properties.models import PropertyHotel
+    from properties.constants import IRAQ_GOVERNORATES
+
+    # Get filters
+    star_rating = request.GET.get('star_rating', '')
+    governorate = request.GET.get('governorate', '')
+    district = request.GET.get('district', '')
+    rent_type = request.GET.get('rent_type', '')
+    price_min = request.GET.get('price_min', '')
+    price_max = request.GET.get('price_max', '')
+
+    hotels = PropertyHotel.objects.filter(property__country__code='IQ')
+
+    if star_rating:
+        hotels = hotels.filter(star_rating=int(star_rating))
+
+    if governorate:
+        hotels = hotels.filter(governorate=governorate)
+
+    if district:
+        hotels = hotels.filter(district__icontains=district)
+
+    if rent_type == 'collective':
+        hotels = hotels.filter(supports_collective_rent=True)
+
+    if price_min:
+        hotels = [h for h in hotels if h.price_per_night and h.price_per_night >= int(price_min)]
+    if price_max:
+        hotels = [h for h in hotels if h.price_per_night and h.price_per_night <= int(price_max)]
+
+    return render(request, 'properties/broker_ads/broker_ads_hotels_inside.html', {
+        'hotels': hotels,
+        'star_rating': star_rating,
+        'governorate': governorate,
+        'district': district,
+        'rent_type': rent_type,
+        'price_min': price_min,
+        'price_max': price_max,
+        'governorates': IRAQ_GOVERNORATES,
+        'category_title': 'فنادق داخل العراق',
+        'category_description': 'هم اعلانات',
+        'category_icon': '🏨🇮🇶',
+    })
+
+
+def broker_ads_hotels_outside(request):
+    """View for broker ads - hotels outside Iraq"""
+    from properties.models import PropertyHotel, Country
+
+    # Get filters
+    star_rating = request.GET.get('star_rating', '')
+    country_id = request.GET.get('country', '')
+    district = request.GET.get('district', '')
+    rent_type = request.GET.get('rent_type', '')
+    price_min = request.GET.get('price_min', '')
+    price_max = request.GET.get('price_max', '')
+
+    hotels = PropertyHotel.objects.exclude(property__country__code='IQ')
+
+    if star_rating:
+        hotels = hotels.filter(star_rating=int(star_rating))
+
+    if country_id:
+        hotels = hotels.filter(country_id=int(country_id))
+
+    if district:
+        hotels = hotels.filter(district__icontains=district)
+
+    if rent_type == 'collective':
+        hotels = hotels.filter(supports_collective_rent=True)
+
+    if price_min:
+        hotels = [h for h in hotels if h.price_per_night and h.price_per_night >= int(price_min)]
+    if price_max:
+        hotels = [h for h in hotels if h.price_per_night and h.price_per_night <= int(price_max)]
+
+    countries = Country.objects.all().order_by('name_ar')
+
+    return render(request, 'properties/broker_ads/broker_ads_hotels_outside.html', {
+        'hotels': hotels,
+        'star_rating': star_rating,
+        'country_id': country_id,
+        'district': district,
+        'rent_type': rent_type,
+        'price_min': price_min,
+        'price_max': price_max,
+        'countries': countries,
+        'category_title': 'فنادق خارج العراق',
+        'category_description': 'هم اعلانات',
+        'category_icon': '🏨🌍',
+    })
+
+
+def broker_ads_resorts_inside(request):
+    """View for broker ads - resorts inside Iraq"""
+    from properties.models import PropertyResort
+    from properties.constants import IRAQ_GOVERNORATES
+
+    # Get filters
+    governorate = request.GET.get('governorate', '')
+    district = request.GET.get('district', '')
+    resort_type = request.GET.get('resort_type', '')
+    price_min = request.GET.get('price_min', '')
+    price_max = request.GET.get('price_max', '')
+
+    resorts = PropertyResort.objects.filter(property__country__code='IQ')
+
+    if governorate:
+        resorts = resorts.filter(governorate=governorate)
+
+    if district:
+        resorts = resorts.filter(district__icontains=district)
+
+    if resort_type:
+        resorts = resorts.filter(resort_type=resort_type)
+
+    if price_min:
+        resorts = [r for r in resorts if r.price_per_night and r.price_per_night >= int(price_min)]
+    if price_max:
+        resorts = [r for r in resorts if r.price_per_night and r.price_per_night <= int(price_max)]
+
+    return render(request, 'properties/broker_ads/broker_ads_resorts_inside.html', {
+        'resorts': resorts,
+        'governorate': governorate,
+        'district': district,
+        'resort_type': resort_type,
+        'price_min': price_min,
+        'price_max': price_max,
+        'governorates': IRAQ_GOVERNORATES,
+        'category_title': 'منتجعات داخل العراق',
+        'category_description': 'هم اعلانات',
+        'category_icon': '🏝️🇮🇶',
+    })
+
+
+def broker_ads_resorts_outside(request):
+    """View for broker ads - resorts outside Iraq"""
+    from properties.models import PropertyResort, Country
+
+    # Get filters
+    country_id = request.GET.get('country', '')
+    district = request.GET.get('district', '')
+    resort_type = request.GET.get('resort_type', '')
+    price_min = request.GET.get('price_min', '')
+    price_max = request.GET.get('price_max', '')
+
+    resorts = PropertyResort.objects.exclude(property__country__code='IQ')
+
+    if country_id:
+        resorts = resorts.filter(country_id=int(country_id))
+
+    if district:
+        resorts = resorts.filter(district__icontains=district)
+
+    if resort_type:
+        resorts = resorts.filter(resort_type=resort_type)
+
+    if price_min:
+        resorts = [r for r in resorts if r.price_per_night and r.price_per_night >= int(price_min)]
+    if price_max:
+        resorts = [r for r in resorts if r.price_per_night and r.price_per_night <= int(price_max)]
+
+    countries = Country.objects.all().order_by('name_ar')
+
+    return render(request, 'properties/broker_ads/broker_ads_resorts_outside.html', {
+        'resorts': resorts,
+        'country_id': country_id,
+        'district': district,
+        'resort_type': resort_type,
+        'price_min': price_min,
+        'price_max': price_max,
+        'countries': countries,
+        'category_title': 'منتجعات خارج العراق',
+        'category_description': 'هم اعلانات',
+        'category_icon': '🏝️🌍',
+    })
+
+
+def broker_ads_travel_companies(request):
+    """View for broker ads - travel companies"""
+    from properties.models import TravelCompany
+
+    companies = TravelCompany.objects.all()
+
+    return render(request, 'properties/broker_ads/broker_ads_travel_companies.html', {
+        'companies': companies,
+        'category_title': 'نشر شركة سفر',
+        'category_description': 'هم اعلانات',
+        'category_icon': '✈️',
+    })
+
+
+def broker_ads_jobs(request):
+    """View for broker ads - jobs"""
+    from properties.models import Job
+
+    # Get filters
+    job_type = request.GET.get('job_type', '')
+    location = request.GET.get('location', '')
+    salary_min = request.GET.get('salary_min', '')
+    salary_max = request.GET.get('salary_max', '')
+
+    jobs = Job.objects.all()
+
+    if job_type:
+        jobs = jobs.filter(job_type=job_type)
+
+    if location:
+        jobs = jobs.filter(location__icontains=location)
+
+    if salary_min:
+        jobs = jobs.filter(salary__gte=int(salary_min))
+
+    if salary_max:
+        jobs = jobs.filter(salary__lte=int(salary_max))
+
+    return render(request, 'properties/broker_ads/broker_ads_jobs.html', {
+        'jobs': jobs,
+        'job_type': job_type,
+        'location': location,
+        'salary_min': salary_min,
+        'salary_max': salary_max,
+        'category_title': 'نشر وظيفة',
+        'category_description': 'هم اعلانات',
+        'category_icon': '➕',
+    })
+
+
+def broker_ads_services(request):
+    """View for broker ads - services"""
+    from properties.models import ServiceAdvertisement
+
+    # Get filters
+    service_type = request.GET.get('service_type', '')
+    location = request.GET.get('location', '')
+    price_min = request.GET.get('price_min', '')
+    price_max = request.GET.get('price_max', '')
+
+    services = ServiceAdvertisement.objects.all()
+
+    if service_type:
+        services = services.filter(service_type=service_type)
+
+    if location:
+        services = services.filter(location__icontains=location)
+
+    if price_min:
+        services = services.filter(price__gte=int(price_min))
+
+    if price_max:
+        services = services.filter(price__lte=int(price_max))
+
+    return render(request, 'properties/broker_ads/broker_ads_services.html', {
+        'services': services,
+        'service_type': service_type,
+        'location': location,
+        'price_min': price_min,
+        'price_max': price_max,
+        'category_title': 'نشر خدمة',
+        'category_description': 'هم اعلانات',
+        'category_icon': '🔧',
+    })
+
+
+def broker_ads_auctions(request):
+    """View for broker ads - auctions"""
+    from properties.models import Auction
+
+    # Get filters
+    status = request.GET.get('status', '')
+    auction_type = request.GET.get('auction_type', '')
+    min_bid = request.GET.get('min_bid', '')
+    max_bid = request.GET.get('max_bid', '')
+
+    auctions = Auction.objects.all()
+
+    if status:
+        auctions = auctions.filter(status=status)
+
+    if auction_type:
+        auctions = auctions.filter(auction_type=auction_type)
+
+    if min_bid:
+        auctions = auctions.filter(starting_bid__gte=int(min_bid))
+
+    if max_bid:
+        auctions = auctions.filter(starting_bid__lte=int(max_bid))
+
+    return render(request, 'properties/broker_ads/broker_ads_auctions.html', {
+        'auctions': auctions,
+        'status': status,
+        'auction_type': auction_type,
+        'min_bid': min_bid,
+        'max_bid': max_bid,
+        'category_title': 'نشر مزاد',
+        'category_description': 'مثل اي خانه اعلانات دلالب ورقيه',
+        'category_icon': '🔨',
     })

@@ -1,0 +1,89 @@
+{% extends 'properties/broker_ads/broker_ads_base.html' %}
+{% load static %}
+
+{% block filter_fields %}
+<div class="form-group">
+  <label>
+    <span class="label-icon">🏛️</span>
+    المحافظة
+  </label>
+  <select name="governorate" class="form-control">
+    <option value="">كل المحافظات</option>
+    {% for code, name in governorates %}
+    <option value="{{ code }}" {% if governorate == code %}selected{% endif %}>{{ name }}</option>
+    {% endfor %}
+  </select>
+</div>
+<div class="form-group">
+  <label>
+    <span class="label-icon">📍</span>
+    المنطقة
+  </label>
+  <input type="text" name="district" class="form-control" placeholder="اكتب اسم المنطقة..." value="{{ district }}">
+</div>
+<div class="form-group">
+  <label>
+    <span class="label-icon">🏝️</span>
+    نوع المنتجع
+  </label>
+  <select name="resort_type" class="form-control">
+    <option value="">كل الأنواع</option>
+    <option value="family" {% if resort_type == 'family' %}selected{% endif %}>عائلي</option>
+    <option value="luxury" {% if resort_type == 'luxury' %}selected{% endif %}>فاخر</option>
+    <option value="beach" {% if resort_type == 'beach' %}selected{% endif %}>شاطئي</option>
+    <option value="mountain" {% if resort_type == 'mountain' %}selected{% endif %}>جبلي</option>
+  </select>
+</div>
+<div class="form-group">
+  <label>
+    <span class="label-icon">💵</span>
+    السعر من
+  </label>
+  <input type="number" name="price_min" class="form-control" placeholder="السعر الأدنى" value="{{ price_min }}">
+</div>
+<div class="form-group">
+  <label>
+    <span class="label-icon">💰</span>
+    السعر إلى
+  </label>
+  <input type="number" name="price_max" class="form-control" placeholder="السعر الأعلى" value="{{ price_max }}">
+</div>
+{% endblock %}
+
+{% block content_grid %}
+<div class="view-toolbar">
+  <div>
+    <h2 class="section-title">منتجعات داخل العراق</h2>
+    <p class="section-subtitle">{{ resorts|length }} نتيجة</p>
+  </div>
+</div>
+
+{% if resorts %}
+<div class="properties-grid">
+  {% for resort in resorts %}
+  <div class="property-card card">
+    {% if resort.property.main_image %}
+    <img src="{{ resort.property.main_image.url }}" alt="{{ resort.property.title }}" class="property-image">
+    {% else %}
+    <div class="property-image placeholder">🏝️</div>
+    {% endif %}
+    <div class="property-content">
+      <h3>{{ resort.property.title }}</h3>
+      <p class="property-location">{{ resort.governorate_name }}</p>
+      <div class="property-meta">
+        <span>🏝️ {{ resort.resort_type }}</span>
+        <span>💰 {{ resort.price_per_night }}$ / ليلة</span>
+      </div>
+      <a href="{% url 'resort_inside_detail' resort.id %}" class="btn btn-primary">عرض التفاصيل</a>
+    </div>
+  </div>
+  {% endfor %}
+</div>
+{% else %}
+<div class="empty-state">
+  <div class="icon">🏝️</div>
+  <h3>لا توجد إعلانات</h3>
+  <p>لا توجد منتجعات داخل العراق حالياً</p>
+</div>
+{% endif %}
+{% endblock %}
