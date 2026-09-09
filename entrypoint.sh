@@ -85,54 +85,15 @@ fi
 echo "Attempting to merge conflicting migrations if any..."
 python manage.py makemigrations --merge --noinput 2>/dev/null || echo "No merge needed or merge failed"
 
-# Fix the issue where django_migrations table exists but actual tables don't
-# This can happen if migrations were marked as applied but tables weren't created
-echo "Checking for inconsistent migration state..."
+# Apply migrations using --run-syncdb to create all tables from scratch
+# This is critical for a fresh PostgreSQL database
+echo "Applying Django migrations with --run-syncdb..."
+python manage.py migrate --run-syncdb --noinput
 
-# Force reset migrations and rebuild from scratch
-echo "Resetting migration state and rebuilding database from scratch..."
-
-# Step 1: Drop all Django tables and migration state
-echo "Dropping all Django tables and migration state..."
-python manage.py shell << 'EOF'
-from django.db import connection
-cursor = connection.cursor()
-try:
-    # Drop all Django tables (CASCADE to handle foreign keys)
-    cursor.execute("DROP SCHEMA public CASCADE")
-    cursor.execute("CREATE SCHEMA public")
-    print("Dropped and recreated public schema")
-except Exception as e:
-    print(f"Schema reset failed: {e}")
-    # Alternative: drop individual tables
-    try:
-        cursor.execute("DROP TABLE IF EXISTS django_migrations CASCADE")
-        cursor.execute("DROP TABLE IF EXISTS django_content_type CASCADE")
-        cursor.execute("DROP TABLE IF EXISTS django_session CASCADE")
-        cursor.execute("DROP TABLE IF EXISTS properties_property CASCADE")
-        cursor.execute("DROP TABLE IF EXISTS properties_broker CASCADE")
-        cursor.execute("DROP TABLE IF EXISTS properties_sitesettings CASCADE")
-        print("Dropped individual tables")
-    except Exception as e2:
-        print(f"Individual table drop failed: {e2}")
-EOF
-
-# Step 2: Create fresh database schema using syncdb
-echo "Creating fresh database schema..."
-python manage.py migrate --run-syncdb 2>/dev/null || echo "Syncdb failed"
-
-# Step 3: Mark all migrations as applied
-echo "Marking all migrations as applied..."
-python manage.py migrate --fake 2>/dev/null || echo "Fake migrate failed"
-
-# Step 4: Apply migrations normally to catch any remaining issues
-echo "Applying Django migrations..."
-python manage.py migrate --noinput 2>&1 || {
-    echo "Standard migrate failed, forcing complete rebuild..."
-    python manage.py migrate --fake-initial --run-syncdb 2>/dev/null || echo "Alternative sync failed"
-    python manage.py migrate --fake 2>/dev/null || echo "Second fake failed"
-    python manage.py migrate --noinput || echo "Final migrate attempt failed"
-}
+if [ $? -ne 0 ]; then
+    echo "ERROR: Migrations failed. Attempting standard migrate..."
+    python manage.py migrate --noinput
+fi
 
 if [ $? -ne 0 ]; then
     echo "ERROR: Migrations failed. Attempting to continue anyway."
