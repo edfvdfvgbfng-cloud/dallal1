@@ -181,6 +181,13 @@ function setupEventListeners() {
     // Layer selector close
     document.getElementById('close-layer-selector').addEventListener('click', hideLayerSelector);
 
+    // Zoom controls
+    document.getElementById('zoom-in').addEventListener('click', zoomIn);
+    document.getElementById('zoom-out').addEventListener('click', zoomOut);
+    document.getElementById('zoom-reset').addEventListener('click', zoomReset);
+    document.getElementById('zoom-fit').addEventListener('click', zoomToFit);
+    document.getElementById('zoom-location').addEventListener('click', zoomToLocation);
+
     // Area comparison
     document.getElementById('compare-areas-btn').addEventListener('click', compareAreas);
 
@@ -226,6 +233,86 @@ function showLayerSelector() {
 function hideLayerSelector() {
     const selector = document.getElementById('layer-selector-panel');
     selector.classList.add('hidden');
+}
+
+/**
+ * Zoom in
+ */
+function zoomIn() {
+    try {
+        if (map) {
+            map.zoomIn();
+        }
+    } catch (error) {
+        console.error('Error zooming in:', error);
+    }
+}
+
+/**
+ * Zoom out
+ */
+function zoomOut() {
+    try {
+        if (map) {
+            map.zoomOut();
+        }
+    } catch (error) {
+        console.error('Error zooming out:', error);
+    }
+}
+
+/**
+ * Reset zoom to default
+ */
+function zoomReset() {
+    try {
+        if (map) {
+            map.setView([33.3152, 44.3661], 6); // Baghdad coordinates
+        }
+    } catch (error) {
+        console.error('Error resetting zoom:', error);
+    }
+}
+
+/**
+ * Zoom to fit all markers
+ */
+function zoomToFit() {
+    try {
+        if (map && propertyMarkers.length > 0) {
+            const bounds = L.latLngBounds(
+                propertyMarkers.map(marker => marker.getLatLng())
+            );
+            map.fitBounds(bounds, { padding: [50, 50] });
+        }
+    } catch (error) {
+        console.error('Error zooming to fit:', error);
+    }
+}
+
+/**
+ * Zoom to current location
+ */
+function zoomToLocation() {
+    try {
+        if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(
+                (position) => {
+                    const lat = position.coords.latitude;
+                    const lng = position.coords.longitude;
+                    map.setView([lat, lng], 15);
+                },
+                (error) => {
+                    console.error('Error getting location:', error);
+                    showErrorMessage('غير قادر على الحصول على موقعك');
+                }
+            );
+        } else {
+            showErrorMessage('المتصفح لا يدعم تحديد الموقع');
+        }
+    } catch (error) {
+        console.error('Error in zoomToLocation:', error);
+    }
 }
 
 /**
