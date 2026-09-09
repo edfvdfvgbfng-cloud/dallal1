@@ -167,6 +167,7 @@ if DEBUG:
     logger.info(f"Properties in INSTALLED_APPS: {'properties' in INSTALLED_APPS}")
 
 MIDDLEWARE = [
+    'dalal_project.ensure_tables_middleware.EnsureTablesMiddleware',  # Ensure tables exist
     'django.middleware.security.SecurityMiddleware',
     'whitenoise.middleware.WhiteNoiseMiddleware',
     'corsheaders.middleware.CorsMiddleware',
