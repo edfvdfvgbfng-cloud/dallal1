@@ -29,20 +29,31 @@ class Command(BaseCommand):
         
         # 2. Drop all properties indexes
         self.stdout.write("Step 2: Dropping all properties indexes...")
+        # First try to find indexes
         cursor.execute("""
             SELECT indexname FROM pg_indexes 
             WHERE schemaname = 'public' AND indexname LIKE 'properties_%'
         """)
         indexes = [row[0] for row in cursor.fetchall()]
         
-        for index in indexes:
+        # Also specifically look for the problematic slug index
+        cursor.execute("""
+            SELECT indexname FROM pg_indexes 
+            WHERE schemaname = 'public' AND indexname LIKE '%slug%'
+        """)
+        slug_indexes = [row[0] for row in cursor.fetchall()]
+        
+        # Combine both lists
+        all_indexes = list(set(indexes + slug_indexes))
+        
+        for index in all_indexes:
             try:
                 cursor.execute(f"DROP INDEX IF EXISTS {index}")
                 self.stdout.write(f"  Dropped index: {index}")
             except Exception as e:
                 self.stdout.write(f"  Error dropping index {index}: {e}")
         
-        self.stdout.write(f"Dropped {len(indexes)} properties indexes")
+        self.stdout.write(f"Dropped {len(all_indexes)} properties indexes")
         
         # 3. Delete migration records for properties app
         self.stdout.write("Step 3: Resetting migration history...")
@@ -55,10 +66,13 @@ class Command(BaseCommand):
         # 4. Also reset django_contenttypes to avoid foreign key issues
         self.stdout.write("Step 4: Resetting content types...")
         try:
+            # First try to delete in correct order (delete permissions first)
+            cursor.execute("DELETE FROM auth_permission WHERE content_type_id IN (SELECT id FROM django_content_type WHERE app_label = 'properties')")
             cursor.execute("DELETE FROM django_content_type WHERE app_label = 'properties'")
             self.stdout.write("  Reset properties content types")
         except Exception as e:
             self.stdout.write(f"  Error resetting content types: {e}")
+            # Continue anyway - this is not critical
         
         # 5. Commit changes
         transaction.commit()
