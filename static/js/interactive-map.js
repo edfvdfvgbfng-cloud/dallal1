@@ -12,35 +12,59 @@ let currentPropertyData = null;
 // API Base URL
 const API_BASE = '/api/map';
 
+/**
+ * Show error message
+ */
+function showErrorMessage(message) {
+    const notification = document.createElement('div');
+    notification.className = 'alert alert-danger alert-dismissible fade show';
+    notification.innerHTML = `
+        ${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    `;
+    document.querySelector('.map-container').insertBefore(notification, document.querySelector('.map-container').firstChild);
+    setTimeout(() => notification.remove(), 5000);
+}
+
 // Initialize map when DOM is ready
 document.addEventListener('DOMContentLoaded', function() {
-    initializeMap();
-    setupEventListeners();
-    loadInitialData();
+    try {
+        initializeMap();
+        setupEventListeners();
+        loadInitialData();
+    } catch (error) {
+        console.error('Error initializing map:', error);
+        showErrorMessage('حدث خطأ أثناء تحميل الخريطة');
+    }
 });
 
 /**
  * Initialize Leaflet map
  */
 function initializeMap() {
-    // Default center on Iraq
-    const defaultCenter = [33.3152, 44.3661]; // Baghdad coordinates
-    const defaultZoom = 6;
+    try {
+        // Default center on Iraq
+        const defaultCenter = [33.3152, 44.3661]; // Baghdad coordinates
+        const defaultZoom = 6;
 
-    map = L.map('map').setView(defaultCenter, defaultZoom);
+        map = L.map('map').setView(defaultCenter, defaultZoom);
 
-    // Add dark-themed tile layer
-    L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
-        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
-        subdomains: 'abcd',
-        maxZoom: 19
-    }).addTo(map);
+        // Add dark-themed tile layer
+        L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
+            subdomains: 'abcd',
+            maxZoom: 19
+        }).addTo(map);
 
-    // Add scale control
-    L.control.scale({
-        imperial: false,
-        metric: true
-    }).addTo(map);
+        // Add scale control
+        L.control.scale({
+            imperial: false,
+            metric: true
+        }).addTo(map);
+    } catch (error) {
+        console.error('Error creating map:', error);
+        throw error;
+    }
 }
 
 /**
@@ -92,15 +116,21 @@ function setupEventListeners() {
  * Load initial data
  */
 function loadInitialData() {
-    showLoading();
-    
-    // Load properties for default view
-    loadPropertiesOnMap();
-    
-    // Load area statistics
-    loadAreaStatistics();
-    
-    hideLoading();
+    try {
+        showLoading();
+
+        // Load properties for default view
+        loadPropertiesOnMap();
+
+        // Load area statistics
+        loadAreaStatistics();
+
+        hideLoading();
+    } catch (error) {
+        console.error('Error loading initial data:', error);
+        hideLoading();
+        showErrorMessage('حدث خطأ أثناء تحميل البيانات');
+    }
 }
 
 /**
@@ -125,7 +155,7 @@ function performSearch() {
     const minArea = document.getElementById('min-area-input').value;
 
     // Build API URL
-    let apiUrl = `${API_BASE}/properties/?limit=100`;
+    let apiUrl = '/api/map/search/?limit=100';
     
     if (governorate) apiUrl += `&governorate=${encodeURIComponent(governorate)}`;
     if (city) apiUrl += `&city=${encodeURIComponent(city)}`;
@@ -247,16 +277,24 @@ function performLocationSearch() {
  * Load properties on map
  */
 function loadPropertiesOnMap() {
-    const apiUrl = `${API_BASE}/properties/?limit=100`;
+    try {
+        const apiUrl = '/api/map/properties/?limit=100';
 
-    fetch(apiUrl)
-        .then(response => response.json())
-        .then(data => {
-            displayPropertiesOnMap(data.properties);
-        })
-        .catch(error => {
-            console.error('Error loading properties:', error);
-        });
+        fetch(apiUrl)
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    displayPropertiesOnMap(data.properties);
+                } else {
+                    console.error('API error:', data.error);
+                }
+            })
+            .catch(error => {
+                console.error('Error loading properties:', error);
+            });
+    } catch (error) {
+        console.error('Error in loadPropertiesOnMap:', error);
+    }
 }
 
 /**

@@ -709,6 +709,10 @@ urlpatterns = [
     
     path('api/real-estate/payments/', views.payments_commissions, name='payments_commissions'),
     path('api/real-estate/maps/', views.geographic_maps, name='geographic_maps'),
+    path('api/map/properties/', views.map_api_properties, name='map_api_properties'),
+    path('api/map/search/', views.map_api_search, name='map_api_search'),
+    path('api/map/nearby/', views.map_api_nearby, name='map_api_nearby'),
+    path('api/map/stats/', views.map_api_stats, name='map_api_stats'),
     path('api/advanced/reports/', views.advanced_reports_management, name='advanced_reports_management'),
 
     # Real Estate Contracts Page

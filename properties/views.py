@@ -28,6 +28,13 @@ from django.http import JsonResponse, HttpResponse
 from django.urls import reverse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.views.decorators.http import require_http_methods, require_POST, require_GET
+
+# REST Framework imports for API views
+try:
+    from rest_framework.decorators import api_view, permission_classes
+    from rest_framework.permissions import AllowAny, IsAuthenticated
+except ImportError:
+    api_view = permission_classes = AllowAny = IsAuthenticated = None
 from django.views.decorators.csrf import csrf_exempt
 from django.conf import settings
 from django.utils import timezone
@@ -1092,7 +1099,540 @@ def navigation_error_view(request):
 
 def interactive_map_view(request):
     """Interactive map page for property search and visualization"""
-    return render(request, 'properties/interactive_map.html')
+    try:
+        properties = []
+        try:
+            properties = list(Property.objects.filter(
+                is_published=True,
+                status='available'
+            ).select_related('broker').order_by('-created_at')[:100])
+        except Exception:
+            pass
+
+        property_data = []
+        for prop in properties:
+            try:
+                property_data.append({
+                    'id': prop.id,
+                    'title': prop.title,
+                    'slug': prop.slug,
+                    'price': prop.price,
+                    'currency': prop.currency,
+                    'property_type': prop.property_type,
+                    'transaction_type': prop.transaction_type,
+                    'area': prop.area,
+                    'bedrooms': prop.bedrooms,
+                    'bathrooms': prop.bathrooms,
+                    'governorate': prop.governorate,
+                    'city': prop.city,
+                    'latitude': prop.latitude,
+                    'longitude': prop.longitude,
+                    'main_image': prop.main_image.url if prop.main_image else None,
+                    'broker_name': prop.broker.display_name if prop.broker else None,
+                    'created_at': prop.created_at.isoformat() if prop.created_at else None,
+                })
+            except Exception:
+                pass
+
+        return render(request, 'properties/interactive_map.html', {
+            'initial_properties': property_data,
+        })
+    except Exception as e:
+        logger.exception(f'Error loading map view: {e}')
+        return render(request, 'properties/interactive_map.html', {
+            'initial_properties': [],
+        })
+
+
+def map_api_properties(request):
+    """API endpoint to get properties for the map"""
+    try:
+        properties = []
+        try:
+            properties = Property.objects.filter(
+                is_published=True,
+                status='available'
+            ).select_related('broker').order_by('-created_at')[:200]
+        except Exception:
+            pass
+
+        property_data = []
+        for prop in properties:
+            try:
+                if prop.latitude and prop.longitude:
+                    property_data.append({
+                        'id': prop.id,
+                        'title': prop.title,
+                        'slug': prop.slug,
+                        'price': prop.price,
+                        'currency': prop.currency,
+                        'property_type': prop.property_type,
+                        'transaction_type': prop.transaction_type,
+                        'area': prop.area,
+                        'bedrooms': prop.bedrooms,
+                        'bathrooms': prop.bathrooms,
+                        'governorate': prop.governorate,
+                        'city': prop.city,
+                        'latitude': float(prop.latitude),
+                        'longitude': float(prop.longitude),
+                        'main_image': prop.main_image.url if prop.main_image else None,
+                        'broker_name': prop.broker.display_name if prop.broker else None,
+                        'created_at': prop.created_at.isoformat() if prop.created_at else None,
+                    })
+            except Exception:
+                pass
+
+        return JsonResponse({
+            'success': True,
+            'properties': property_data,
+            'total': len(property_data)
+        })
+    except Exception as e:
+        logger.exception(f'Error fetching map properties: {e}')
+        return JsonResponse({
+            'success': False,
+            'error': str(e),
+            'properties': [],
+            'total': 0
+        }, status=500)
+
+
+def map_api_search(request):
+    """API endpoint to search properties on the map"""
+    try:
+        governorate = request.GET.get('governorate')
+        city = request.GET.get('city')
+        property_type = request.GET.get('property_type')
+        transaction_type = request.GET.get('transaction_type')
+        max_price = request.GET.get('max_price')
+        min_area = request.GET.get('min_area')
+
+        properties = Property.objects.filter(
+            is_published=True,
+            status='available'
+        ).select_related('broker')
+
+        if governorate:
+            properties = properties.filter(governorate__icontains=governorate)
+        if city:
+            properties = properties.filter(city__icontains=city)
+        if property_type:
+            properties = properties.filter(property_type=property_type)
+        if transaction_type:
+            properties = properties.filter(transaction_type=transaction_type)
+        if max_price:
+            properties = properties.filter(price__lte=max_price)
+        if min_area:
+            properties = properties.filter(area__gte=min_area)
+
+        properties = properties.order_by('-created_at')[:200]
+
+        property_data = []
+        for prop in properties:
+            try:
+                if prop.latitude and prop.longitude:
+                    property_data.append({
+                        'id': prop.id,
+                        'title': prop.title,
+                        'slug': prop.slug,
+                        'price': prop.price,
+                        'currency': prop.currency,
+                        'property_type': prop.property_type,
+                        'transaction_type': prop.transaction_type,
+                        'area': prop.area,
+                        'bedrooms': prop.bedrooms,
+                        'bathrooms': prop.bathrooms,
+                        'governorate': prop.governorate,
+                        'city': prop.city,
+                        'latitude': float(prop.latitude),
+                        'longitude': float(prop.longitude),
+                        'main_image': prop.main_image.url if prop.main_image else None,
+                        'broker_name': prop.broker.display_name if prop.broker else None,
+                    })
+            except Exception:
+                pass
+
+        return JsonResponse({
+            'success': True,
+            'properties': property_data,
+            'total': len(property_data)
+        })
+    except Exception as e:
+        logger.exception(f'Error searching map properties: {e}')
+        return JsonResponse({
+            'success': False,
+            'error': str(e),
+            'properties': [],
+            'total': 0
+        }, status=500)
+
+
+def map_api_nearby(request):
+    """API endpoint to get properties near a location"""
+    try:
+        lat = float(request.GET.get('lat', 0))
+        lng = float(request.GET.get('lng', 0))
+        radius = float(request.GET.get('radius', 5))  # km
+
+        from math import radians, cos, sin, sqrt, asin
+
+        # Simple distance calculation
+        def distance(lat1, lon1, lat2, lon2):
+            R = 6371  # Earth radius in km
+            dLat = radians(lat2 - lat1)
+            dLon = radians(lon2 - lon1)
+            a = sin(dLat/2) * sin(dLat/2) + cos(radians(lat1)) * cos(radians(lat2)) * sin(dLon/2) * sin(dLon/2)
+            c = 2 * asin(sqrt(a))
+            return R * c
+
+        properties = Property.objects.filter(
+            is_published=True,
+            status='available',
+            latitude__isnull=False,
+            longitude__isnull=False
+        ).select_related('broker')
+
+        nearby_properties = []
+        for prop in properties:
+            try:
+                dist = distance(lat, lng, float(prop.latitude), float(prop.longitude))
+                if dist <= radius:
+                    nearby_properties.append({
+                        'id': prop.id,
+                        'title': prop.title,
+                        'slug': prop.slug,
+                        'price': prop.price,
+                        'currency': prop.currency,
+                        'property_type': prop.property_type,
+                        'transaction_type': prop.transaction_type,
+                        'area': prop.area,
+                        'latitude': float(prop.latitude),
+                        'longitude': float(prop.longitude),
+                        'distance': round(dist, 2),
+                        'main_image': prop.main_image.url if prop.main_image else None,
+                    })
+            except Exception:
+                pass
+
+        nearby_properties.sort(key=lambda x: x['distance'])
+
+        return JsonResponse({
+            'success': True,
+            'properties': nearby_properties[:50],
+            'total': len(nearby_properties)
+        })
+    except Exception as e:
+        logger.exception(f'Error fetching nearby properties: {e}')
+        return JsonResponse({
+            'success': False,
+            'error': str(e),
+            'properties': [],
+            'total': 0
+        }, status=500)
+
+
+def map_api_stats(request):
+    """API endpoint to get area statistics"""
+    try:
+        governorate = request.GET.get('governorate')
+
+        properties = Property.objects.filter(
+            is_published=True,
+            status='available'
+        )
+
+        if governorate:
+            properties = properties.filter(governorate__icontains=governorate)
+
+        try:
+            total_count = properties.count()
+        except Exception:
+            total_count = 0
+
+        try:
+            prices = [p.price for p in properties if p.price]
+            avg_price = sum(prices) / len(prices) if prices else 0
+        except Exception:
+            avg_price = 0
+
+        try:
+            property_types = {}
+            for prop in properties:
+                if prop.property_type:
+                    property_types[prop.property_type] = property_types.get(prop.property_type, 0) + 1
+        except Exception:
+            property_types = {}
+
+        return JsonResponse({
+            'success': True,
+            'stats': {
+                'total_properties': total_count,
+                'average_price': avg_price,
+                'property_types': property_types,
+                'price_trend': 'stable'  # Placeholder
+            }
+        })
+    except Exception as e:
+        logger.exception(f'Error fetching map stats: {e}')
+        return JsonResponse({
+            'success': False,
+            'error': str(e),
+            'stats': {
+                'total_properties': 0,
+                'average_price': 0,
+                'property_types': {},
+                'price_trend': 'unknown'
+            }
+        }, status=500)
+    """API endpoint to get properties for the map"""
+    try:
+        properties = []
+        try:
+            properties = Property.objects.filter(
+                is_published=True,
+                status='available'
+            ).select_related('broker').order_by('-created_at')[:200]
+        except Exception:
+            pass
+
+        property_data = []
+        for prop in properties:
+            try:
+                if prop.latitude and prop.longitude:
+                    property_data.append({
+                        'id': prop.id,
+                        'title': prop.title,
+                        'slug': prop.slug,
+                        'price': prop.price,
+                        'currency': prop.currency,
+                        'property_type': prop.property_type,
+                        'transaction_type': prop.transaction_type,
+                        'area': prop.area,
+                        'bedrooms': prop.bedrooms,
+                        'bathrooms': prop.bathrooms,
+                        'governorate': prop.governorate,
+                        'city': prop.city,
+                        'latitude': float(prop.latitude),
+                        'longitude': float(prop.longitude),
+                        'main_image': prop.main_image.url if prop.main_image else None,
+                        'broker_name': prop.broker.display_name if prop.broker else None,
+                        'created_at': prop.created_at.isoformat() if prop.created_at else None,
+                    })
+            except Exception:
+                pass
+
+        return JsonResponse({
+            'success': True,
+            'properties': property_data,
+            'total': len(property_data)
+        })
+    except Exception as e:
+        logger.exception(f'Error fetching map properties: {e}')
+        return JsonResponse({
+            'success': False,
+            'error': str(e),
+            'properties': [],
+            'total': 0
+        }, status=500)
+
+
+@login_required
+@permission_classes([AllowAny])
+@api_view(['GET'])
+def map_api_search(request):
+    """API endpoint to search properties on the map"""
+    try:
+        governorate = request.GET.get('governorate')
+        city = request.GET.get('city')
+        property_type = request.GET.get('property_type')
+        transaction_type = request.GET.get('transaction_type')
+        max_price = request.GET.get('max_price')
+        min_area = request.GET.get('min_area')
+
+        properties = Property.objects.filter(
+            is_published=True,
+            status='available'
+        ).select_related('broker')
+
+        if governorate:
+            properties = properties.filter(governorate__icontains=governorate)
+        if city:
+            properties = properties.filter(city__icontains=city)
+        if property_type:
+            properties = properties.filter(property_type=property_type)
+        if transaction_type:
+            properties = properties.filter(transaction_type=transaction_type)
+        if max_price:
+            properties = properties.filter(price__lte=max_price)
+        if min_area:
+            properties = properties.filter(area__gte=min_area)
+
+        properties = properties.order_by('-created_at')[:200]
+
+        property_data = []
+        for prop in properties:
+            try:
+                if prop.latitude and prop.longitude:
+                    property_data.append({
+                        'id': prop.id,
+                        'title': prop.title,
+                        'slug': prop.slug,
+                        'price': prop.price,
+                        'currency': prop.currency,
+                        'property_type': prop.property_type,
+                        'transaction_type': prop.transaction_type,
+                        'area': prop.area,
+                        'bedrooms': prop.bedrooms,
+                        'bathrooms': prop.bathrooms,
+                        'governorate': prop.governorate,
+                        'city': prop.city,
+                        'latitude': float(prop.latitude),
+                        'longitude': float(prop.longitude),
+                        'main_image': prop.main_image.url if prop.main_image else None,
+                        'broker_name': prop.broker.display_name if prop.broker else None,
+                    })
+            except Exception:
+                pass
+
+        return JsonResponse({
+            'success': True,
+            'properties': property_data,
+            'total': len(property_data)
+        })
+    except Exception as e:
+        logger.exception(f'Error searching map properties: {e}')
+        return JsonResponse({
+            'success': False,
+            'error': str(e),
+            'properties': [],
+            'total': 0
+        }, status=500)
+
+
+@login_required
+@permission_classes([AllowAny])
+@api_view(['GET'])
+def map_api_nearby(request):
+    """API endpoint to get properties near a location"""
+    try:
+        lat = float(request.GET.get('lat', 0))
+        lng = float(request.GET.get('lng', 0))
+        radius = float(request.GET.get('radius', 5))  # km
+
+        from django.db.models import F
+        from math import radians, cos, sin, sqrt, asin
+
+        # Simple distance calculation
+        def distance(lat1, lon1, lat2, lon2):
+            R = 6371  # Earth radius in km
+            dLat = radians(lat2 - lat1)
+            dLon = radians(lon2 - lon1)
+            a = sin(dLat/2) * sin(dLat/2) + cos(radians(lat1)) * cos(radians(lat2)) * sin(dLon/2) * sin(dLon/2)
+            c = 2 * asin(sqrt(a))
+            return R * c
+
+        properties = Property.objects.filter(
+            is_published=True,
+            status='available',
+            latitude__isnull=False,
+            longitude__isnull=False
+        ).select_related('broker')
+
+        nearby_properties = []
+        for prop in properties:
+            try:
+                dist = distance(lat, lng, float(prop.latitude), float(prop.longitude))
+                if dist <= radius:
+                    nearby_properties.append({
+                        'id': prop.id,
+                        'title': prop.title,
+                        'slug': prop.slug,
+                        'price': prop.price,
+                        'currency': prop.currency,
+                        'property_type': prop.property_type,
+                        'transaction_type': prop.transaction_type,
+                        'area': prop.area,
+                        'latitude': float(prop.latitude),
+                        'longitude': float(prop.longitude),
+                        'distance': round(dist, 2),
+                        'main_image': prop.main_image.url if prop.main_image else None,
+                    })
+            except Exception:
+                pass
+
+        nearby_properties.sort(key=lambda x: x['distance'])
+
+        return JsonResponse({
+            'success': True,
+            'properties': nearby_properties[:50],
+            'total': len(nearby_properties)
+        })
+    except Exception as e:
+        logger.exception(f'Error fetching nearby properties: {e}')
+        return JsonResponse({
+            'success': False,
+            'error': str(e),
+            'properties': [],
+            'total': 0
+        }, status=500)
+
+
+@login_required
+@permission_classes([AllowAny])
+@api_view(['GET'])
+def map_api_stats(request):
+    """API endpoint to get area statistics"""
+    try:
+        governorate = request.GET.get('governorate')
+
+        properties = Property.objects.filter(
+            is_published=True,
+            status='available'
+        )
+
+        if governorate:
+            properties = properties.filter(governorate__icontains=governorate)
+
+        try:
+            total_count = properties.count()
+        except Exception:
+            total_count = 0
+
+        try:
+            prices = [p.price for p in properties if p.price]
+            avg_price = sum(prices) / len(prices) if prices else 0
+        except Exception:
+            avg_price = 0
+
+        try:
+            property_types = {}
+            for prop in properties:
+                if prop.property_type:
+                    property_types[prop.property_type] = property_types.get(prop.property_type, 0) + 1
+        except Exception:
+            property_types = {}
+
+        return JsonResponse({
+            'success': True,
+            'stats': {
+                'total_properties': total_count,
+                'average_price': avg_price,
+                'property_types': property_types,
+                'price_trend': 'stable'  # Placeholder
+            }
+        })
+    except Exception as e:
+        logger.exception(f'Error fetching map stats: {e}')
+        return JsonResponse({
+            'success': False,
+            'error': str(e),
+            'stats': {
+                'total_properties': 0,
+                'average_price': 0,
+                'property_types': {},
+                'price_trend': 'unknown'
+            }
+        }, status=500)
 
 
 def contact_page(request):
