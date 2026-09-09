@@ -8,9 +8,40 @@ let propertyMarkers = [];
 let amenityMarkers = [];
 let heatmapLayer = null;
 let currentPropertyData = null;
+let currentTileLayer = null;
 
 // API Base URL
 const API_BASE = '/api/map';
+
+// Map layer configurations
+const MAP_LAYERS = {
+    osm: {
+        name: 'OpenStreetMap',
+        url: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
+        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+    },
+    satellite: {
+        name: 'Satellite',
+        url: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
+        attribution: 'Tiles &copy; Esri &mdash; Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community'
+    },
+    terrain: {
+        name: 'Terrain',
+        url: 'https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png',
+        attribution: 'Map data: &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors, <a href="https://viewfinderpanoramas.org">SRTM</a> | Map style: &copy; <a href="https://opentopomap.org">OpenTopoMap</a> (<a href="https://creativecommons.org/licenses/by-sa/3.0/">CC-BY-SA</a>)'
+    },
+    dark: {
+        name: 'Dark',
+        url: 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',
+        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
+        subdomains: 'abcd'
+    },
+    hybrid: {
+        name: 'Hybrid',
+        url: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
+        attribution: 'Tiles &copy; Esri &mdash; Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community'
+    }
+};
 
 /**
  * Show error message
@@ -49,10 +80,10 @@ function initializeMap() {
 
         map = L.map('map').setView(defaultCenter, defaultZoom);
 
-        // Add dark-themed tile layer
-        L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
-            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
-            subdomains: 'abcd',
+        // Add default tile layer (OpenStreetMap)
+        const defaultLayer = MAP_LAYERS.osm;
+        currentTileLayer = L.tileLayer(defaultLayer.url, {
+            attribution: defaultLayer.attribution,
             maxZoom: 19
         }).addTo(map);
 
@@ -61,9 +92,52 @@ function initializeMap() {
             imperial: false,
             metric: true
         }).addTo(map);
+
+        // Add layer control
+        const baseLayers = {};
+        Object.keys(MAP_LAYERS).forEach(key => {
+            const layer = MAP_LAYERS[key];
+            baseLayers[layer.name] = L.tileLayer(layer.url, {
+                attribution: layer.attribution,
+                subdomains: layer.subdomains || 'abc',
+                maxZoom: 19
+            });
+        });
+
+        L.control.layers(baseLayers).addTo(map);
     } catch (error) {
         console.error('Error creating map:', error);
         throw error;
+    }
+}
+
+/**
+ * Switch map layer
+ */
+function switchMapLayer(layerKey) {
+    try {
+        if (!map || !currentTileLayer) return;
+
+        const layerConfig = MAP_LAYERS[layerKey];
+        if (!layerConfig) return;
+
+        // Remove current layer
+        map.removeLayer(currentTileLayer);
+
+        // Add new layer
+        currentTileLayer = L.tileLayer(layerConfig.url, {
+            attribution: layerConfig.attribution,
+            subdomains: layerConfig.subdomains || 'abc',
+            maxZoom: 19
+        }).addTo(map);
+
+        // Update active state in UI
+        document.querySelectorAll('.layer-btn').forEach(btn => {
+            btn.classList.remove('active');
+        });
+        document.querySelector(`[data-layer="${layerKey}"]`).classList.add('active');
+    } catch (error) {
+        console.error('Error switching layer:', error);
     }
 }
 

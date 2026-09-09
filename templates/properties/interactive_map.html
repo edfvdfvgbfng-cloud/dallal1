@@ -213,6 +213,30 @@
       </button>
     </div>
 
+    <!-- Layer Selector -->
+    <div class="layer-selector">
+      <div class="layer-selector-header">
+        <span>🗺️ نوع الخريطة</span>
+      </div>
+      <div class="layer-selector-body">
+        <button type="button" class="layer-btn active" data-layer="osm" onclick="switchMapLayer('osm')">
+          <span>🗺️</span> OpenStreetMap
+        </button>
+        <button type="button" class="layer-btn" data-layer="satellite" onclick="switchMapLayer('satellite')">
+          <span>🛰️</span> Satellite
+        </button>
+        <button type="button" class="layer-btn" data-layer="terrain" onclick="switchMapLayer('terrain')">
+          <span>⛰️</span> Terrain
+        </button>
+        <button type="button" class="layer-btn" data-layer="dark" onclick="switchMapLayer('dark')">
+          <span>🌙</span> Dark
+        </button>
+        <button type="button" class="layer-btn" data-layer="hybrid" onclick="switchMapLayer('hybrid')">
+          <span>🌍</span> Hybrid
+        </button>
+      </div>
+    </div>
+
     <!-- Property Info Popup -->
     <div id="property-popup" class="property-popup hidden">
       <div class="popup-content">
