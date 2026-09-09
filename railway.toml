@@ -1,5 +1,5 @@
 # Railway configuration for Dalal Platform
-# Force rebuild - 2026-09-09-09-40 - Force ALLOW_SQLITE_FALLBACK=true
+# Force rebuild - 2026-09-09-08-05 - Force PostgreSQL only (no SQLite fallback)
 [build]
 builder = "DOCKERFILE"
 
@@ -10,7 +10,7 @@ restartPolicyType = "ON_FAILURE"
 restartPolicyMaxRetries = 10
 
 # PostgreSQL service "Postgres" exists in Railway project
-# Temporarily allow SQLite fallback until DATABASE_URL is configured in Railway Variables
+# CRITICAL: DISABLE SQLite fallback - force PostgreSQL only
 
 [variables]
 DEBUG = "false"
@@ -18,15 +18,10 @@ PORT = "8080"
 PYTHONUNBUFFERED = "1"
 PYTHONPATH = "/app"
 DJANGO_SETTINGS_MODULE = "dalal_project.settings"
-ALLOW_SQLITE_FALLBACK = "true"
+ALLOW_SQLITE_FALLBACK = "false"
 ALLOWED_HOSTS = "muqq.up.railway.app"
 GUNICORN_WORKERS = "2"
 GUNICORN_THREADS = "4"
 GUNICORN_TIMEOUT = "300"
-SECRET_KEY = "django-insecure-production-secret-key-minimum-50-characters-long-change-this-immediately"
-
-# CRITICAL: Temporary SQLite fallback
-# - ALLOW_SQLITE_FALLBACK = true: Allow SQLite temporarily
-# - This allows the application to start so Railway Variables can be configured
-# - After DATABASE_URL is set in Railway Variables, change this back to false
-# - PostgreSQL service "Postgres" is linked and should be used in production
+# SECRET_KEY should be set in Railway Variables, not here
+# Remove from here to force Railway to use environment variable
