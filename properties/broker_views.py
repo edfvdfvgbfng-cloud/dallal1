@@ -853,111 +853,118 @@ def broker_create(request):
     from django.contrib.auth import get_user_model
     User = get_user_model()
 
-    if request.method == 'POST':
-        form = BrokerCreateForm(request.POST, creator=request.user)
-        if form.is_valid():
-            username = form.cleaned_data['username']
-            password = form.cleaned_data['password']
-            email = form.cleaned_data.get('email', '')
-            
-            # Check for duplicate username or email
-            if User.objects.filter(username=username).exists():
-                messages.error(request, 'اسم المستخدم مستخدم بالفعل')
-                return render(request, 'properties/broker_create.html', {'form': form})
-            
-            if email and User.objects.filter(email=email).exists():
-                messages.error(request, 'البريد الإلكتروني مستخدم بالفعل')
-                return render(request, 'properties/broker_create.html', {'form': form})
-            
-            # Check for duplicate phone
-            phone = form.cleaned_data['phone']
-            if Broker.objects.filter(phone=phone).exists():
-                messages.error(request, 'رقم الهاتف مستخدم بالفعل')
-                return render(request, 'properties/broker_create.html', {'form': form})
-            
-            # Generate password if not provided
-            if not password:
-                password = _generate_password(12)
-            
-            user = User.objects.create_user(
-                username=username,
-                password=password,
-                email=email,
-                first_name=form.cleaned_data['first_name'],
-                last_name=form.cleaned_data.get('last_name', ''),
-                is_staff=True,
-                is_active=True,
-            )
-            user.save()
+    try:
+        if request.method == 'POST':
+            form = BrokerCreateForm(request.POST, creator=request.user)
+            if form.is_valid():
+                username = form.cleaned_data['username']
+                password = form.cleaned_data['password']
+                email = form.cleaned_data.get('email', '')
 
-            creator_broker = get_broker(request.user)
-            office = creator_broker.office if creator_broker else None
-            role = form.cleaned_data['role']
-            office_name = form.cleaned_data.get('office_name', '')
+                # Check for duplicate username or email
+                if User.objects.filter(username=username).exists():
+                    messages.error(request, 'اسم المستخدم مستخدم بالفعل')
+                    return render(request, 'properties/broker_create.html', {'form': form})
 
-            parent = None
-            if role == Broker.ROLE_SUB and creator_broker and creator_broker.role == Broker.ROLE_MAIN:
-                parent = creator_broker
+                if email and User.objects.filter(email=email).exists():
+                    messages.error(request, 'البريد الإلكتروني مستخدم بالفعل')
+                    return render(request, 'properties/broker_create.html', {'form': form})
 
-            broker = Broker.objects.create(
-                user=user,
-                phone=phone,
-                governorate=form.cleaned_data.get('governorate', ''),
-                office_name=office_name,
-                office=office,
-                role=role,
-                parent=parent,
-                is_active=True,
-            )
-            
-            # Log activity
-            ActivityLog.log(
-                user=request.user,
-                action='create',
-                model_type='broker',
-                object_id=broker.id,
-                object_repr=broker.display_name,
-                description=f'إنشاء دلال جديد: {broker.display_name}',
-                ip_address=get_client_ip(request),
-                user_agent=request.META.get('HTTP_USER_AGENT', ''),
-                metadata={'role': role, 'office': office_name if office else None}
-            )
-            
-            # Create notification for creator
-            Notification.create(
-                user=request.user,
-                notification_type='broker_created',
-                title='إنشاء دلال جديد',
-                message=f'تم إنشاء حساب دلال جديد: {broker.display_name}',
-                link=f'/dashboard/brokers/{broker.id}/edit/',
-                metadata={'broker_id': broker.id, 'broker_name': broker.display_name}
-            )
+                # Check for duplicate phone
+                phone = form.cleaned_data['phone']
+                if Broker.objects.filter(phone=phone).exists():
+                    messages.error(request, 'رقم الهاتف مستخدم بالفعل')
+                    return render(request, 'properties/broker_create.html', {'form': form})
 
-            # Send notifications to admin users
-            admin_users = User.objects.filter(is_staff=True, is_superuser=True).exclude(id=request.user.id)
-            for admin in admin_users:
+                # Generate password if not provided
+                if not password:
+                    password = _generate_password(12)
+
+                user = User.objects.create_user(
+                    username=username,
+                    password=password,
+                    email=email,
+                    first_name=form.cleaned_data['first_name'],
+                    last_name=form.cleaned_data.get('last_name', ''),
+                    is_staff=True,
+                    is_active=True,
+                )
+                user.save()
+
+                creator_broker = get_broker(request.user)
+                office = creator_broker.office if creator_broker else None
+                role = form.cleaned_data['role']
+                office_name = form.cleaned_data.get('office_name', '')
+
+                parent = None
+                if role == Broker.ROLE_SUB and creator_broker and creator_broker.role == Broker.ROLE_MAIN:
+                    parent = creator_broker
+
+                broker = Broker.objects.create(
+                    user=user,
+                    phone=phone,
+                    governorate=form.cleaned_data.get('governorate', ''),
+                    office_name=office_name,
+                    office=office,
+                    role=role,
+                    parent=parent,
+                    is_active=True,
+                )
+
+                # Log activity
+                ActivityLog.log(
+                    user=request.user,
+                    action='create',
+                    model_type='broker',
+                    object_id=broker.id,
+                    object_repr=broker.display_name,
+                    description=f'إنشاء دلال جديد: {broker.display_name}',
+                    ip_address=get_client_ip(request),
+                    user_agent=request.META.get('HTTP_USER_AGENT', ''),
+                    metadata={'role': role, 'office': office_name if office else None}
+                )
+
+                # Create notification for creator
                 Notification.create(
-                    user=admin,
+                    user=request.user,
                     notification_type='broker_created',
                     title='إنشاء دلال جديد',
-                    message=f'تم إنشاء حساب دلال جديد: {broker.display_name} بواسطة {request.user.username}',
+                    message=f'تم إنشاء حساب دلال جديد: {broker.display_name}',
                     link=f'/dashboard/brokers/{broker.id}/edit/',
-                    metadata={'broker_id': broker.id, 'broker_name': broker.display_name, 'creator': request.user.username}
+                    metadata={'broker_id': broker.id, 'broker_name': broker.display_name}
                 )
-            
-            # Update system statistics
-            from .models import BrokerSystemStats, BrokerIndividualStats
-            BrokerSystemStats.update_stats()
 
-            # Create individual stats for the new broker
-            BrokerIndividualStats.objects.get_or_create(broker=broker)
+                # Send notifications to admin users
+                admin_users = User.objects.filter(is_staff=True, is_superuser=True).exclude(id=request.user.id)
+                for admin in admin_users:
+                    Notification.create(
+                        user=admin,
+                        notification_type='broker_created',
+                        title='إنشاء دلال جديد',
+                        message=f'تم إنشاء حساب دلال جديد: {broker.display_name} بواسطة {request.user.username}',
+                        link=f'/dashboard/brokers/{broker.id}/edit/',
+                        metadata={'broker_id': broker.id, 'broker_name': broker.display_name, 'creator': request.user.username}
+                    )
 
-            messages.success(request, f'تم إنشاء حساب الدلال: {broker.display_name}. كلمة المرور: {password}')
-            return redirect('broker_list')
-        messages.error(request, 'يرجى تصحيح الأخطاء')
-    else:
-        form = BrokerCreateForm(creator=request.user)
-    return render(request, 'properties/broker_create.html', {'form': form})
+                # Update system statistics
+                from .models import BrokerSystemStats, BrokerIndividualStats
+                BrokerSystemStats.update_stats()
+
+                # Create individual stats for the new broker
+                BrokerIndividualStats.objects.get_or_create(broker=broker)
+
+                messages.success(request, f'تم إنشاء حساب الدلال: {broker.display_name}. كلمة المرور: {password}')
+                return redirect('broker_list')
+            messages.error(request, 'يرجى تصحيح الأخطاء')
+        else:
+            form = BrokerCreateForm(creator=request.user)
+        return render(request, 'properties/broker_create.html', {'form': form})
+    except Exception as e:
+        # Handle missing table errors gracefully
+        if 'no such table' in str(e).lower():
+            messages.error(request, 'قاعدة البيانات قيد التجهيز. يرجى المحاولة لاحقاً.')
+            return redirect('dashboard')
+        raise
 
 
 @login_required

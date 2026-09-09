@@ -51,11 +51,15 @@ class BrokerCreateForm(forms.Form):
         super().__init__(*args, **kwargs)
         self.creator = creator
         if creator and hasattr(creator, 'broker_profile'):
-            bp = creator.broker_profile
-            if bp.role == Broker.ROLE_ADMIN:
-                self.fields['role'].choices = Broker.ROLE_CHOICES
-            elif bp.role == Broker.ROLE_MAIN:
-                self.fields['role'].choices = [(Broker.ROLE_SUB, 'دلال فرعي')]
+            try:
+                bp = creator.broker_profile
+                if bp.role == Broker.ROLE_ADMIN:
+                    self.fields['role'].choices = Broker.ROLE_CHOICES
+                elif bp.role == Broker.ROLE_MAIN:
+                    self.fields['role'].choices = [(Broker.ROLE_SUB, 'دلال فرعي')]
+            except Exception:
+                # Handle missing table errors gracefully
+                pass
 
     def clean_username(self):
         username = self.cleaned_data['username'].strip()
