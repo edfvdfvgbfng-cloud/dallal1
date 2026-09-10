@@ -28174,6 +28174,21 @@ def broker_ads_iraq_outside(request):
     """View for broker ads - properties outside Iraq"""
     from properties.models import Property, Country
 
+    # Handle deletion
+    if request.method == 'POST' and 'delete_property' in request.POST:
+        property_id = request.POST.get('property_id')
+        try:
+            property = Property.objects.get(id=property_id)
+            # Check if user has permission to delete
+            if request.user == property.owner or request.user.is_superuser or request.user.is_staff:
+                property.delete()
+                messages.success(request, 'تم حذف الإعلان بنجاح')
+            else:
+                messages.error(request, 'ليس لديك صلاحية حذف هذا الإعلان')
+        except Property.DoesNotExist:
+            messages.error(request, 'الإعلان غير موجود')
+        return redirect('broker_ads_iraq_outside')
+
     # Get filters
     country_id = request.GET.get('country', '')
     district = request.GET.get('district', '')
@@ -28223,6 +28238,21 @@ def broker_ads_hotels_inside(request):
     """View for broker ads - hotels inside Iraq"""
     from properties.models import PropertyHotel
     from properties.constants import IRAQ_GOVERNORATES
+
+    # Handle deletion
+    if request.method == 'POST' and 'delete_hotel' in request.POST:
+        hotel_id = request.POST.get('hotel_id')
+        try:
+            hotel = PropertyHotel.objects.get(id=hotel_id)
+            # Check if user has permission to delete
+            if request.user == hotel.property.owner or request.user.is_superuser or request.user.is_staff:
+                hotel.property.delete()
+                messages.success(request, 'تم حذف الإعلان بنجاح')
+            else:
+                messages.error(request, 'ليس لديك صلاحية حذف هذا الإعلان')
+        except PropertyHotel.DoesNotExist:
+            messages.error(request, 'الإعلان غير موجود')
+        return redirect('broker_ads_hotels_inside')
 
     # Get filters
     star_rating = request.GET.get('star_rating', '')
