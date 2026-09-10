@@ -19,8 +19,16 @@ def drop_conflicting_tables(apps, schema_editor):
             cursor.execute("DROP TABLE IF EXISTS properties_country CASCADE")
             cursor.execute("DROP TABLE IF EXISTS properties_brokerchannel CASCADE")
             print("Dropped Hotel, Resort, Country, BrokerChannel tables to avoid conflicts")
+            
+            # Drop conflicting columns from properties_property if they exist
+            conflicting_columns = ['publication_end_date', 'expiry_date', 'is_pinned', 'pinned_until']
+            for column in conflicting_columns:
+                cursor.execute(f"""
+                    ALTER TABLE properties_property DROP COLUMN IF EXISTS {column} CASCADE
+                """)
+            print(f"Dropped conflicting columns from properties_property: {', '.join(conflicting_columns)}")
     except Exception as e:
-        print(f"Error dropping conflicting tables: {e}")
+        print(f"Error dropping conflicting tables/columns: {e}")
 
 
 class Migration(migrations.Migration):

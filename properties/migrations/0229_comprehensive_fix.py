@@ -130,69 +130,9 @@ def comprehensive_fix(apps, schema_editor):
             except Exception as e:
                 print(f"Could not add foreign key: {e}")
         
-        # Step 5: Add missing columns to properties_property
-        property_columns = [
-            ('is_pinned', 'BOOLEAN', 'FALSE'),
-            ('pinned_until', 'TIMESTAMP WITH TIME ZONE', 'NULL'),
-            ('publication_end_date', 'TIMESTAMP WITH TIME ZONE', 'NULL'),
-        ]
-        
-        for col_name, col_type, default_val in property_columns:
-            cursor.execute("""
-                SELECT EXISTS (
-                    SELECT FROM information_schema.columns 
-                    WHERE table_name = 'properties_property' 
-                    AND column_name = %s
-                );
-            """, [col_name])
-            if not cursor.fetchone()[0]:
-                if default_val == 'NULL':
-                    cursor.execute(f"""
-                        ALTER TABLE properties_property 
-                        ADD COLUMN {col_name} {col_type} NULL;
-                    """)
-                elif col_type == 'BOOLEAN':
-                    cursor.execute(f"""
-                        ALTER TABLE properties_property 
-                        ADD COLUMN {col_name} {col_type} DEFAULT {default_val} NOT NULL;
-                    """)
-                else:
-                    cursor.execute(f"""
-                        ALTER TABLE properties_property 
-                        ADD COLUMN {col_name} {col_type} DEFAULT '{default_val}' NOT NULL;
-                    """)
-                print(f"Added {col_name} column to properties_property")
-        
-        # Step 6: Add missing columns to properties_property (both publication_end_date and expiry_date)
-        additional_property_columns = [
-            ('expiry_date', 'TIMESTAMP WITH TIME ZONE', 'NULL'),
-        ]
-        
-        for col_name, col_type, default_val in additional_property_columns:
-            cursor.execute("""
-                SELECT EXISTS (
-                    SELECT FROM information_schema.columns 
-                    WHERE table_name = 'properties_property' 
-                    AND column_name = %s
-                );
-            """, [col_name])
-            if not cursor.fetchone()[0]:
-                if default_val == 'NULL':
-                    cursor.execute(f"""
-                        ALTER TABLE properties_property 
-                        ADD COLUMN {col_name} {col_type} NULL;
-                    """)
-                elif col_type == 'BOOLEAN':
-                    cursor.execute(f"""
-                        ALTER TABLE properties_property 
-                        ADD COLUMN {col_name} {col_type} DEFAULT {default_val} NOT NULL;
-                    """)
-                else:
-                    cursor.execute(f"""
-                        ALTER TABLE properties_property 
-                        ADD COLUMN {col_name} {col_type} DEFAULT '{default_val}' NOT NULL;
-                    """)
-                print(f"Added {col_name} column to properties_property")
+        # Step 5: Skip adding property columns - they will be added by later migrations
+        # This avoids conflicts with migrations that expect to add these columns themselves
+        print("Skipping property column additions - they will be handled by later migrations")
         
         # Step 7: Add theme_mode to properties_sitesettings if it doesn't exist
         cursor.execute("""
