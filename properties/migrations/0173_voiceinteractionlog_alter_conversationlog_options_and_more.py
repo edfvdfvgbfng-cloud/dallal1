@@ -5,11 +5,19 @@ from django.conf import settings
 from django.db import migrations, models
 
 
-def drop_voice_interaction_log_if_exists(apps, schema_editor):
-    """Drop ai_voice_interaction_log table if it exists to avoid conflicts"""
+def drop_all_ai_tables_if_exist(apps, schema_editor):
+    """Drop all AI tables if they exist to avoid conflicts"""
     try:
         with schema_editor.connection.cursor() as cursor:
-            cursor.execute("DROP TABLE IF EXISTS ai_voice_interaction_log CASCADE")
+            # Drop all tables starting with 'ai_'
+            cursor.execute("""
+                SELECT tablename FROM pg_tables 
+                WHERE schemaname = 'public' AND tablename LIKE 'ai_%'
+            """)
+            ai_tables = [row[0] for row in cursor.fetchall()]
+            
+            for table in ai_tables:
+                cursor.execute(f"DROP TABLE IF EXISTS {table} CASCADE")
     except Exception as e:
         pass  # Silent failure
 
@@ -22,7 +30,7 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        migrations.RunPython(drop_voice_interaction_log_if_exists, migrations.RunPython.noop),
+        migrations.RunPython(drop_all_ai_tables_if_exist, migrations.RunPython.noop),
         migrations.CreateModel(
             name='VoiceInteractionLog',
             fields=[
