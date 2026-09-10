@@ -27,6 +27,14 @@ class Command(BaseCommand):
         
         self.stdout.write(f"Dropped {len(tables)} properties tables")
         
+        # 1.5. Also specifically drop ActivityLog table if it exists
+        self.stdout.write("Step 1.5: Dropping ActivityLog table if it exists...")
+        try:
+            cursor.execute("DROP TABLE IF EXISTS properties_activitylog CASCADE")
+            self.stdout.write("  Dropped ActivityLog table")
+        except Exception as e:
+            self.stdout.write(f"  Error dropping ActivityLog: {e}")
+        
         # 2. Drop all properties indexes
         self.stdout.write("Step 2: Dropping all properties indexes...")
         # Try to find indexes using pg_indexes
