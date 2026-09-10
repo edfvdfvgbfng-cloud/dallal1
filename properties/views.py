@@ -10,6 +10,7 @@ from django.contrib import messages
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required, user_passes_test
 from django.contrib.auth.models import User
+from .decorators import admin_required, broker_required, user_required
 from django.core.paginator import Paginator
 from django.db.models import Q, Count, Sum, Avg
 from .utils import match_advertisement_with_targets
@@ -417,7 +418,7 @@ def notification_settings(request):
     })
 
 
-from .decorators import broker_required, rate_limit
+from .decorators import broker_required
 from .forms import MessageForm, PropertyForm, PropertySearchForm, SiteSettingsForm, PropertyNoteForm, VirtualTour360Form, AuctionForm, BidForm, ReportForm, FinancialTransactionForm, ExpenseForm, ProfitForm, SubscriptionPlanForm, UserProfileForm, UserBasicInfoForm, UserSecurityForm, UserNotificationForm, UserPrivacyForm, UserPreferencesForm, BlockUserForm, SavedSearchForm, AutoBidForm, AuctionRatingForm, AuctionLiveStreamForm, AuctionAdvertisementForm, HotelSearchForm, ResortSearchForm, PropertyPublicationForm, PropertyPaymentForm, ServiceProviderForm, ServiceAdvertisementForm, DynamicPropertyForm, PropertyInsideIraqForm, PropertyOutsideIraqForm, PropertyHotelForm, PropertyResortForm, JobForm, SupportMessageForm
 from .enhanced_forms import EnhancedPropertyForm, EnhancedOutsidePropertyForm
 from .enhanced_forms import EnhancedPropertyForm
@@ -1098,21 +1099,48 @@ def navigation_error_view(request):
 
 
 def interactive_map_view(request):
-    """Interactive map page for property search and visualization"""
+    """Interactive map page for property search and visualization - SECURE VERSION"""
     try:
-        properties = []
-        try:
-            properties = list(Property.objects.filter(
-                is_published=True,
-                status='available'
-            ).select_related('broker').order_by('-created_at')[:100])
-        except Exception:
-            pass
-
+        from .permissions import get_user_type
+        
+        # Get filter parameters
+        governorate = request.GET.get('governorate')
+        city = request.GET.get('city')
+        
+        # Base queryset - only published properties with valid coordinates
+        properties = Property.objects.filter(
+            is_published=True,
+            status__in=PUBLIC_STATUSES,
+            latitude__isnull=False,
+            longitude__isnull=False
+        ).select_related('broker', 'owner').prefetch_related('gallery_images').order_by('-created_at')[:100]
+        
+        # Apply filters from Backend
+        if governorate:
+            properties = properties.filter(governorate=governorate)
+        if city:
+            properties = properties.filter(city=city)
+        
+        # Check user permissions
+        user_type = get_user_type(request.user) if request.user.is_authenticated else None
+        
         property_data = []
         for prop in properties:
             try:
-                property_data.append({
+                # Validate coordinates are reasonable
+                lat = float(prop.latitude)
+                lng = float(prop.longitude)
+                
+                # Skip invalid coordinates (0,0)
+                if lat == 0 and lng == 0:
+                    continue
+                
+                # Skip coordinates outside valid ranges
+                if not (-90 <= lat <= 90) or not (-180 <= lng <= 180):
+                    continue
+                
+                # Build property data - MINIMAL PUBLIC DATA ONLY
+                prop_data = {
                     'id': prop.id,
                     'title': prop.title,
                     'slug': prop.slug,
@@ -1125,14 +1153,24 @@ def interactive_map_view(request):
                     'bathrooms': prop.bathrooms,
                     'governorate': prop.governorate,
                     'city': prop.city,
-                    'latitude': prop.latitude,
-                    'longitude': prop.longitude,
-                    'main_image': prop.main_image.url if prop.main_image else None,
-                    'broker_name': prop.broker.display_name if prop.broker else None,
-                    'created_at': prop.created_at.isoformat() if prop.created_at else None,
-                })
+                    'latitude': lat,
+                    'longitude': lng,
+                    'url': f'/property/{prop.slug}/' if prop.slug else '',
+                }
+                
+                # Add image safely
+                if prop.main_image:
+                    prop_data['image'] = f'/media/{prop.main_image.name}'
+                
+                # SECURITY: Only add broker data for authorized users
+                if user_type in ['admin', 'broker']:
+                    if prop.broker:
+                        prop_data['broker_name'] = prop.broker.display_name
+                
+                property_data.append(prop_data)
+                
             except Exception:
-                pass
+                continue
 
         return render(request, 'properties/interactive_map.html', {
             'initial_properties': property_data,
@@ -1145,61 +1183,137 @@ def interactive_map_view(request):
 
 
 def map_api_properties(request):
-    """API endpoint to get properties for the map"""
+    """API endpoint to get properties for the map - SECURE VERSION"""
     try:
-        properties = []
-        try:
-            properties = Property.objects.filter(
-                is_published=True,
-                status='available'
-            ).select_related('broker').order_by('-created_at')[:200]
-        except Exception:
-            pass
-
+        from .permissions import get_user_type
+        import json
+        
+        # Get filter parameters
+        governorate = request.GET.get('governorate')
+        city = request.GET.get('city')
+        property_type = request.GET.get('property_type')
+        transaction_type = request.GET.get('transaction_type')
+        price_min = request.GET.get('price_min')
+        price_max = request.GET.get('price_max')
+        bounds = request.GET.get('bounds')
+        
+        # Base queryset - only published properties with valid coordinates
+        properties = Property.objects.filter(
+            is_published=True,
+            status__in=PUBLIC_STATUSES,
+            latitude__isnull=False,
+            longitude__isnull=False
+        ).select_related('broker', 'owner').prefetch_related('gallery_images').order_by('-created_at')[:200]
+        
+        # Apply filters from Backend (not just JavaScript)
+        if governorate:
+            properties = properties.filter(governorate=governorate)
+        if city:
+            properties = properties.filter(city=city)
+        if property_type:
+            properties = properties.filter(property_type=property_type)
+        if transaction_type:
+            properties = properties.filter(transaction_type=transaction_type)
+        if price_min:
+            try:
+                properties = properties.filter(price__gte=float(price_min))
+            except ValueError:
+                pass
+        if price_max:
+            try:
+                properties = properties.filter(price__lte=float(price_max))
+            except ValueError:
+                pass
+        
+        # Apply bounding box filter for performance
+        if bounds:
+            try:
+                bounds_data = json.loads(bounds)
+                south = float(bounds_data.get('south'))
+                north = float(bounds_data.get('north'))
+                west = float(bounds_data.get('west'))
+                east = float(bounds_data.get('east'))
+                properties = properties.filter(
+                    latitude__gte=south,
+                    latitude__lte=north,
+                    longitude__gte=west,
+                    longitude__lte=east
+                )
+            except (json.JSONDecodeError, ValueError, TypeError):
+                pass
+        
+        # Check user permissions
+        user_type = get_user_type(request.user) if request.user.is_authenticated else None
+        
         property_data = []
         for prop in properties:
             try:
-                if prop.latitude and prop.longitude:
-                    property_data.append({
-                        'id': prop.id,
-                        'title': prop.title,
-                        'slug': prop.slug,
-                        'price': prop.price,
-                        'currency': prop.currency,
-                        'property_type': prop.property_type,
-                        'transaction_type': prop.transaction_type,
-                        'area': prop.area,
-                        'bedrooms': prop.bedrooms,
-                        'bathrooms': prop.bathrooms,
-                        'governorate': prop.governorate,
-                        'city': prop.city,
-                        'latitude': float(prop.latitude),
-                        'longitude': float(prop.longitude),
-                        'main_image': prop.main_image.url if prop.main_image else None,
-                        'broker_name': prop.broker.display_name if prop.broker else None,
-                        'created_at': prop.created_at.isoformat() if prop.created_at else None,
-                    })
+                # Validate coordinates are reasonable
+                lat = float(prop.latitude)
+                lng = float(prop.longitude)
+                
+                # Skip invalid coordinates (0,0)
+                if lat == 0 and lng == 0:
+                    continue
+                
+                # Skip coordinates outside valid ranges
+                if not (-90 <= lat <= 90) or not (-180 <= lng <= 180):
+                    continue
+                
+                # Build property data - MINIMAL PUBLIC DATA ONLY
+                prop_data = {
+                    'id': prop.id,
+                    'title': prop.title,
+                    'slug': prop.slug,
+                    'price': prop.price,
+                    'currency': prop.currency,
+                    'property_type': prop.property_type,
+                    'transaction_type': prop.transaction_type,
+                    'area': prop.area,
+                    'bedrooms': prop.bedrooms,
+                    'bathrooms': prop.bathrooms,
+                    'governorate': prop.governorate,
+                    'city': prop.city,
+                    'latitude': lat,
+                    'longitude': lng,
+                    'url': f'/property/{prop.slug}/' if prop.slug else '',
+                }
+                
+                # Add image safely - don't expose full URL
+                if prop.main_image:
+                    prop_data['image'] = f'/media/{prop.main_image.name}'
+                
+                # SECURITY: Only add broker data for authorized users
+                if user_type in ['admin', 'broker']:
+                    if prop.broker:
+                        prop_data['broker_name'] = prop.broker.display_name
+                
+                property_data.append(prop_data)
+                
             except Exception:
-                pass
+                continue
 
         return JsonResponse({
             'success': True,
             'properties': property_data,
-            'total': len(property_data)
+            'total': len(property_data),
+            'filtered': len(property_data)
         })
     except Exception as e:
-        logger.exception(f'Error fetching map properties: {e}')
+        logger.exception(f"Error fetching map properties: {e}")
         return JsonResponse({
             'success': False,
-            'error': str(e),
+            'error': 'تعذر تحميل العقارات حالياً',
             'properties': [],
             'total': 0
         }, status=500)
 
 
 def map_api_search(request):
-    """API endpoint to search properties on the map"""
+    """API endpoint to search properties on the map - SECURE VERSION"""
     try:
+        from .permissions import get_user_type
+        
         governorate = request.GET.get('governorate')
         city = request.GET.get('city')
         property_type = request.GET.get('property_type')
@@ -1209,8 +1323,10 @@ def map_api_search(request):
 
         properties = Property.objects.filter(
             is_published=True,
-            status='available'
-        ).select_related('broker')
+            status__in=PUBLIC_STATUSES,
+            latitude__isnull=False,
+            longitude__isnull=False
+        ).select_related('broker', 'owner').prefetch_related('gallery_images')
 
         if governorate:
             properties = properties.filter(governorate__icontains=governorate)
@@ -1221,34 +1337,65 @@ def map_api_search(request):
         if transaction_type:
             properties = properties.filter(transaction_type=transaction_type)
         if max_price:
-            properties = properties.filter(price__lte=max_price)
+            try:
+                properties = properties.filter(price__lte=float(max_price))
+            except ValueError:
+                pass
         if min_area:
-            properties = properties.filter(area__gte=min_area)
+            try:
+                properties = properties.filter(area__gte=float(min_area))
+            except ValueError:
+                pass
 
         properties = properties.order_by('-created_at')[:200]
+        
+        # Check user permissions
+        user_type = get_user_type(request.user) if request.user.is_authenticated else None
 
         property_data = []
         for prop in properties:
             try:
-                if prop.latitude and prop.longitude:
-                    property_data.append({
-                        'id': prop.id,
-                        'title': prop.title,
-                        'slug': prop.slug,
-                        'price': prop.price,
-                        'currency': prop.currency,
-                        'property_type': prop.property_type,
-                        'transaction_type': prop.transaction_type,
-                        'area': prop.area,
-                        'bedrooms': prop.bedrooms,
-                        'bathrooms': prop.bathrooms,
-                        'governorate': prop.governorate,
-                        'city': prop.city,
-                        'latitude': float(prop.latitude),
-                        'longitude': float(prop.longitude),
-                        'main_image': prop.main_image.url if prop.main_image else None,
-                        'broker_name': prop.broker.display_name if prop.broker else None,
-                    })
+                # Validate coordinates are reasonable
+                lat = float(prop.latitude)
+                lng = float(prop.longitude)
+                
+                # Skip invalid coordinates (0,0)
+                if lat == 0 and lng == 0:
+                    continue
+                
+                # Skip coordinates outside valid ranges
+                if not (-90 <= lat <= 90) or not (-180 <= lng <= 180):
+                    continue
+                
+                # Build property data - MINIMAL PUBLIC DATA ONLY
+                prop_data = {
+                    'id': prop.id,
+                    'title': prop.title,
+                    'slug': prop.slug,
+                    'price': prop.price,
+                    'currency': prop.currency,
+                    'property_type': prop.property_type,
+                    'transaction_type': prop.transaction_type,
+                    'area': prop.area,
+                    'bedrooms': prop.bedrooms,
+                    'bathrooms': prop.bathrooms,
+                    'governorate': prop.governorate,
+                    'city': prop.city,
+                    'latitude': lat,
+                    'longitude': lng,
+                    'url': f'/property/{prop.slug}/' if prop.slug else '',
+                }
+                
+                # Add image safely
+                if prop.main_image:
+                    prop_data['image'] = f'/media/{prop.main_image.name}'
+                
+                # SECURITY: Only add broker data for authorized users
+                if user_type in ['admin', 'broker']:
+                    if prop.broker:
+                        prop_data['broker_name'] = prop.broker.display_name
+                
+                property_data.append(prop_data)
             except Exception:
                 pass
 
@@ -1261,7 +1408,7 @@ def map_api_search(request):
         logger.exception(f'Error searching map properties: {e}')
         return JsonResponse({
             'success': False,
-            'error': str(e),
+            'error': 'تعذر تحميل العقارات حالياً',
             'properties': [],
             'total': 0
         }, status=500)
@@ -1437,8 +1584,10 @@ def map_api_stats(request):
 
 
 def map_api_search(request):
-    """API endpoint to search properties on the map"""
+    """API endpoint to search properties on the map - SECURE VERSION"""
     try:
+        from .permissions import get_user_type
+        
         governorate = request.GET.get('governorate')
         city = request.GET.get('city')
         property_type = request.GET.get('property_type')
@@ -1448,8 +1597,10 @@ def map_api_search(request):
 
         properties = Property.objects.filter(
             is_published=True,
-            status='available'
-        ).select_related('broker')
+            status__in=PUBLIC_STATUSES,
+            latitude__isnull=False,
+            longitude__isnull=False
+        ).select_related('broker', 'owner').prefetch_related('gallery_images')
 
         if governorate:
             properties = properties.filter(governorate__icontains=governorate)
@@ -1460,34 +1611,65 @@ def map_api_search(request):
         if transaction_type:
             properties = properties.filter(transaction_type=transaction_type)
         if max_price:
-            properties = properties.filter(price__lte=max_price)
+            try:
+                properties = properties.filter(price__lte=float(max_price))
+            except ValueError:
+                pass
         if min_area:
-            properties = properties.filter(area__gte=min_area)
+            try:
+                properties = properties.filter(area__gte=float(min_area))
+            except ValueError:
+                pass
 
         properties = properties.order_by('-created_at')[:200]
+        
+        # Check user permissions
+        user_type = get_user_type(request.user) if request.user.is_authenticated else None
 
         property_data = []
         for prop in properties:
             try:
-                if prop.latitude and prop.longitude:
-                    property_data.append({
-                        'id': prop.id,
-                        'title': prop.title,
-                        'slug': prop.slug,
-                        'price': prop.price,
-                        'currency': prop.currency,
-                        'property_type': prop.property_type,
-                        'transaction_type': prop.transaction_type,
-                        'area': prop.area,
-                        'bedrooms': prop.bedrooms,
-                        'bathrooms': prop.bathrooms,
-                        'governorate': prop.governorate,
-                        'city': prop.city,
-                        'latitude': float(prop.latitude),
-                        'longitude': float(prop.longitude),
-                        'main_image': prop.main_image.url if prop.main_image else None,
-                        'broker_name': prop.broker.display_name if prop.broker else None,
-                    })
+                # Validate coordinates are reasonable
+                lat = float(prop.latitude)
+                lng = float(prop.longitude)
+                
+                # Skip invalid coordinates (0,0)
+                if lat == 0 and lng == 0:
+                    continue
+                
+                # Skip coordinates outside valid ranges
+                if not (-90 <= lat <= 90) or not (-180 <= lng <= 180):
+                    continue
+                
+                # Build property data - MINIMAL PUBLIC DATA ONLY
+                prop_data = {
+                    'id': prop.id,
+                    'title': prop.title,
+                    'slug': prop.slug,
+                    'price': prop.price,
+                    'currency': prop.currency,
+                    'property_type': prop.property_type,
+                    'transaction_type': prop.transaction_type,
+                    'area': prop.area,
+                    'bedrooms': prop.bedrooms,
+                    'bathrooms': prop.bathrooms,
+                    'governorate': prop.governorate,
+                    'city': prop.city,
+                    'latitude': lat,
+                    'longitude': lng,
+                    'url': f'/property/{prop.slug}/' if prop.slug else '',
+                }
+                
+                # Add image safely
+                if prop.main_image:
+                    prop_data['image'] = f'/media/{prop.main_image.name}'
+                
+                # SECURITY: Only add broker data for authorized users
+                if user_type in ['admin', 'broker']:
+                    if prop.broker:
+                        prop_data['broker_name'] = prop.broker.display_name
+                
+                property_data.append(prop_data)
             except Exception:
                 pass
 
@@ -1500,7 +1682,7 @@ def map_api_search(request):
         logger.exception(f'Error searching map properties: {e}')
         return JsonResponse({
             'success': False,
-            'error': str(e),
+            'error': 'تعذر تحميل العقارات حالياً',
             'properties': [],
             'total': 0
         }, status=500)
@@ -2189,9 +2371,9 @@ def login_view(request):
                         logout(request)
                         return render(request, 'properties/login.html')
                     messages.success(request, 'مرحباً بك في لوحة الدلال')
-                    return redirect('dashboard')
-                else:
-                    messages.success(request, 'تم تسجيل الدخول بنجاح')
+                    return redirect('broker_panel')
+                else:  # user_type == 'user'
+                    messages.success(request, 'مرحباً بك')
                     return redirect('user_dashboard')
             else:
                 # Increment failed attempts
@@ -2260,6 +2442,10 @@ def register_view(request):
         elif User.objects.filter(email=email).exists():
             messages.error(request, 'البريد الإلكتروني مستخدم بالفعل')
         else:
+            # SECURITY: Ignore any frontend-provided role/permission fields
+            # We explicitly set is_staff=False and don't allow any role escalation
+            # All role-related fields from POST are ignored
+            
             # Check for duplicate phone in Broker profiles
             from .models import Broker, UserProfile
             if Broker.objects.filter(phone=phone).exists():
@@ -2268,14 +2454,16 @@ def register_view(request):
                 # Increment registration attempts
                 cache.set(rate_limit_key, attempts + 1, 900)
                 
-                # Create regular user (no broker profile)
+                # SECURITY: Create regular user ONLY - no broker profile allowed
+                # All frontend-provided role fields (is_staff, is_superuser, etc.) are ignored
                 user = User.objects.create_user(
                     username=username,
                     email=email,
                     first_name=first_name,
                     last_name=last_name,
                     password=password,
-                    is_staff=False,  # Regular users are not staff
+                    is_staff=False,  # Force False - never from frontend
+                    is_superuser=False,  # Force False - never from frontend
                     is_active=False  # Require email verification
                 )
                 
@@ -2291,6 +2479,7 @@ def register_view(request):
                 
                 # Create or update UserProfile with additional information
                 user_profile, created = UserProfile.objects.get_or_create(user=user)
+                user_profile.user_type = UserProfile.USER_TYPE_USER  # Force USER type
                 user_profile.phone = phone
                 if gender:
                     user_profile.gender = gender
@@ -2737,6 +2926,7 @@ def account_delete(request):
 
 
 @login_required
+@user_required
 def user_dashboard(request):
     """لوحة تحكم المستخدمين العاديين"""
     # Get user's saved properties
@@ -3367,11 +3557,13 @@ def dashboard(request):
 
 
 @login_required
+@broker_required
 def my_posts(request):
-    """صفحة منشوراتي - عرض جميع منشورات الدلال مع الوقت المتبقي"""
+    """صفحة منشوراتي - عرض جميع منشورات الدلال مع الوقت المتبقي ومعلومات الاشتراك"""
     try:
         from django.utils import timezone
         from .models import BrokerPlanSubscription
+        from .publication_services.subscription_validation_service import SubscriptionValidationService
     except ImportError:
         messages.error(request, 'مكونات النظام غير متوفرة')
         return redirect('dashboard')
@@ -3385,6 +3577,11 @@ def my_posts(request):
     if not broker:
         messages.error(request, 'يجب أن تكون دلال للوصول إلى هذه الصفحة')
         return redirect('dashboard')
+    
+    # Use SubscriptionValidationService to get subscription info
+    subscription_service = SubscriptionValidationService(request)
+    subscription = subscription_service.get_active_subscription(broker)
+    subscription_info = subscription_service.get_publication_info(subscription) if subscription else None
     
     # Get user's active subscriptions with error handling
     try:
@@ -3410,21 +3607,29 @@ def my_posts(request):
         has_featured = False
         subscription_end_date = None
     
-    # Get all user's properties with filters with error handling
+    # Get all user's properties with subscription information
     try:
-        properties = Property.objects.filter(owner=request.user)
+        properties = Property.objects.filter(owner=request.user).select_related('subscription', 'broker')
     except Exception:
         properties = []
     
-    # Simple version to avoid errors - return empty list
+    # Count properties by status
+    total_properties = properties.count()
+    featured_count = properties.filter(is_featured=True).count()
+    promoted_count = properties.filter(is_promoted=True).count()
+    active_count = properties.filter(status='published').count()
+    
+    # Simple version to avoid errors - return with subscription info
     return render(request, 'properties/my_posts.html', {
         'page_obj': None,
-        'has_featured': False,
-        'subscription_end_date': None,
-        'total_properties': 0,
-        'featured_count': 0,
-        'promoted_count': 0,
-        'active_count': 0,
+        'has_featured': has_featured,
+        'subscription_end_date': subscription_end_date,
+        'total_properties': total_properties,
+        'featured_count': featured_count,
+        'promoted_count': promoted_count,
+        'active_count': active_count,
+        'subscription_info': subscription_info,
+        'broker': broker,
     })
 
 
@@ -7224,7 +7429,6 @@ def delete_property_image(request, image_id):
     return redirect('edit_property', property_id=prop_id)
 
 
-@rate_limit('message', limit=5, period=300)
 @require_http_methods(['POST'])
 def send_message(request):
     form = MessageForm(request.POST)
@@ -10555,12 +10759,24 @@ def admin_panel_enhanced(request):
     except Exception:
         total_brokers = 0
     
-    # إحصائيات الاشتراكات
+    # إحصائيات الاشتراكات المحسنة
     try:
         from .models import BrokerPlanSubscription
         total_subscriptions = BrokerPlanSubscription.objects.filter(status='active').count()
+        active_subscriptions = BrokerPlanSubscription.objects.filter(status='active').count()
+        expired_subscriptions = BrokerPlanSubscription.objects.filter(status='expired').count()
+        pending_subscriptions = BrokerPlanSubscription.objects.filter(status='pending').count()
+        
+        # إحصائيات العقارات المرتبطة بالاشتراكات
+        properties_with_subscription = Property.objects.filter(subscription__isnull=False).count()
+        properties_without_subscription = Property.objects.filter(subscription__isnull=True).count()
     except Exception:
         total_subscriptions = 0
+        active_subscriptions = 0
+        expired_subscriptions = 0
+        pending_subscriptions = 0
+        properties_with_subscription = 0
+        properties_without_subscription = 0
     
     # إحصائيات الدلالين
     try:
@@ -10653,14 +10869,11 @@ def admin_panel_enhanced(request):
 
 
 @login_required
+@admin_required
 def admin_panel(request):
     """لوحة تحكم الإدارة الرئيسية - نسخة محسنة"""
     from .permissions import can_access_admin_panel
     import json
-
-    if not can_access_admin_panel(request.user):
-        messages.error(request, 'ليس لديك صلاحية للوصول إلى لوحة الإدارة')
-        return redirect('home')
 
     from django.contrib.auth.models import User
     from .models import (
@@ -10991,6 +11204,14 @@ def admin_panel(request):
         'approved_subscription_requests': approved_subscription_requests,
         'rejected_subscription_requests': rejected_subscription_requests,
         'recent_transactions': recent_transactions,
+        
+        # إحصائيات الاشتراكات المحسنة
+        'total_subscriptions': total_subscriptions,
+        'active_subscriptions': active_subscriptions,
+        'expired_subscriptions': expired_subscriptions,
+        'pending_subscriptions': pending_subscriptions,
+        'properties_with_subscription': properties_with_subscription,
+        'properties_without_subscription': properties_without_subscription,
         'total_transactions': total_transactions,
         
         # القوائم
@@ -14354,7 +14575,9 @@ def approve_property_payment(request, payment_id):
 # ==================== New Category Views ====================
 
 def properties_inside_iraq_view(request):
-    """View for properties inside Iraq with category selection"""
+    """View for properties inside Iraq with category selection - Using QuerySets"""
+    from .models import Country
+    
     # Get filters from query parameters
     property_type = request.GET.get('property_type', 'all')
     listing_type = request.GET.get('listing_type', 'all')
@@ -14365,36 +14588,45 @@ def properties_inside_iraq_view(request):
     area_min = request.GET.get('area_min', '')
     area_max = request.GET.get('area_max', '')
     
-    # Get properties inside Iraq
-    properties = get_public_properties()
-    properties = [p for p in properties if p.country and p.country.code == 'IQ']
+    # Get Iraq country
+    iraq = Country.objects.filter(code='IQ').first()
     
-    # Apply filters
+    # Build QuerySet for properties inside Iraq
+    properties = get_public_properties()
+    
+    # Filter by country using QuerySet
+    if iraq:
+        properties = properties.filter(country=iraq)
+    else:
+        # Fallback if Iraq country not found
+        properties = properties.filter(country__code='IQ')
+    
+    # Apply filters using QuerySet
     if property_type != 'all':
-        properties = [p for p in properties if p.type == property_type]
+        properties = properties.filter(type=property_type)
     
     if listing_type == 'sale':
-        properties = [p for p in properties if p.status in PUBLIC_STATUSES]
+        properties = properties.filter(status__in=PUBLIC_STATUSES)
     elif listing_type == 'rent':
-        properties = [p for p in properties if p.status == 'rent']
+        properties = properties.filter(status='rent')
     elif listing_type == 'collective_rent':
-        properties = [p for p in properties if p.status == 'collective_rent']
+        properties = properties.filter(status='collective_rent')
     
     if governorate:
-        properties = [p for p in properties if p.governorate == governorate]
+        properties = properties.filter(governorate=governorate)
     
     if city:
-        properties = [p for p in properties if p.city == city]
+        properties = properties.filter(city=city)
     
     if price_min:
-        properties = [p for p in properties if p.price >= int(price_min)]
+        properties = properties.filter(price__gte=int(price_min))
     if price_max:
-        properties = [p for p in properties if p.price <= int(price_max)]
+        properties = properties.filter(price__lte=int(price_max))
     
     if area_min:
-        properties = [p for p in properties if p.area >= int(area_min)]
+        properties = properties.filter(area__gte=int(area_min))
     if area_max:
-        properties = [p for p in properties if p.area <= int(area_max)]
+        properties = properties.filter(area__lte=int(area_max))
     
     # Get user's likes and saves if authenticated
     user_likes = set()
@@ -14417,7 +14649,7 @@ def properties_inside_iraq_view(request):
 
 
 def hotels_category_view(request):
-    """View for hotels category inside Iraq"""
+    """View for hotels category inside Iraq - Using QuerySets"""
     from properties.models import PropertyHotel
     from properties.constants import IRAQ_GOVERNORATES
     
@@ -14429,8 +14661,10 @@ def hotels_category_view(request):
     price_min = request.GET.get('price_min', '')
     price_max = request.GET.get('price_max', '')
     
+    # Build QuerySet for hotels inside Iraq
     hotels = PropertyHotel.objects.filter(property__country__code='IQ')
     
+    # Apply filters using QuerySet
     if star_rating:
         hotels = hotels.filter(star_rating=int(star_rating))
     
@@ -14443,10 +14677,11 @@ def hotels_category_view(request):
     if rent_type == 'collective':
         hotels = hotels.filter(supports_collective_rent=True)
     
+    # Use QuerySet for price filtering
     if price_min:
-        hotels = [h for h in hotels if h.price_per_night and h.price_per_night >= int(price_min)]
+        hotels = hotels.filter(price_per_night__gte=int(price_min))
     if price_max:
-        hotels = [h for h in hotels if h.price_per_night and h.price_per_night <= int(price_max)]
+        hotels = hotels.filter(price_per_night__lte=int(price_max))
     
     return render(request, 'properties/categories/hotels.html', {
         'hotels': hotels,
@@ -14464,7 +14699,7 @@ def hotels_category_view(request):
 
 
 def hotels_outside_category_view(request):
-    """View for hotels category outside Iraq"""
+    """View for hotels category outside Iraq - Using QuerySets"""
     from properties.models import PropertyHotel, Country
     
     # Get filters
@@ -14475,13 +14710,15 @@ def hotels_outside_category_view(request):
     price_min = request.GET.get('price_min', '')
     price_max = request.GET.get('price_max', '')
     
+    # Build QuerySet for hotels outside Iraq
     hotels = PropertyHotel.objects.exclude(property__country__code='IQ')
     
+    # Apply filters using QuerySet
     if star_rating:
         hotels = hotels.filter(star_rating=int(star_rating))
     
     if country_id:
-        hotels = hotels.filter(country_id=int(country_id))
+        hotels = hotels.filter(property__country_id=int(country_id))
     
     if district:
         hotels = hotels.filter(district__icontains=district)
@@ -14489,10 +14726,11 @@ def hotels_outside_category_view(request):
     if rent_type == 'collective':
         hotels = hotels.filter(supports_collective_rent=True)
     
+    # Use QuerySet for price filtering
     if price_min:
-        hotels = [h for h in hotels if h.price_per_night and h.price_per_night >= int(price_min)]
+        hotels = hotels.filter(price_per_night__gte=int(price_min))
     if price_max:
-        hotels = [h for h in hotels if h.price_per_night and h.price_per_night <= int(price_max)]
+        hotels = hotels.filter(price_per_night__lte=int(price_max))
     
     # Get all countries
     countries = Country.objects.all().order_by('name_ar')
@@ -14513,7 +14751,7 @@ def hotels_outside_category_view(request):
 
 
 def resorts_category_view(request):
-    """View for resorts category"""
+    """View for resorts category - Using QuerySets"""
     from properties.models import PropertyResort
     from properties.constants import IRAQ_GOVERNORATES
     
@@ -14522,15 +14760,18 @@ def resorts_category_view(request):
     price_min = request.GET.get('price_min', '')
     price_max = request.GET.get('price_max', '')
     
+    # Build QuerySet for resorts
     resorts = PropertyResort.objects.all()
     
+    # Apply filters using QuerySet
     if resort_type:
         resorts = resorts.filter(resort_type=resort_type)
     
+    # Use QuerySet for price filtering
     if price_min:
-        resorts = [r for r in resorts if r.price_per_night and r.price_per_night >= int(price_min)]
+        resorts = resorts.filter(price_per_night__gte=int(price_min))
     if price_max:
-        resorts = [r for r in resorts if r.price_per_night and r.price_per_night <= int(price_max)]
+        resorts = resorts.filter(price_per_night__lte=int(price_max))
     
     return render(request, 'properties/categories/resorts.html', {
         'resorts': resorts,
@@ -14544,7 +14785,7 @@ def resorts_category_view(request):
 
 
 def outside_iraq_category_view(request):
-    """View for properties outside Iraq category"""
+    """View for properties outside Iraq category - Using QuerySets"""
     from properties.models import Country, City, Area
     
     # Get filters
@@ -14555,29 +14796,33 @@ def outside_iraq_category_view(request):
     price_min = request.GET.get('price_min', '')
     price_max = request.GET.get('price_max', '')
     
+    # Build QuerySet for properties outside Iraq
     properties = get_public_properties()
-    properties = [p for p in properties if p.country and p.country.code != 'IQ']
     
+    # Filter by country excluding Iraq using QuerySet
+    properties = properties.exclude(country__code='IQ')
+    
+    # Apply filters using QuerySet
     if country_id:
-        properties = [p for p in properties if p.country_id == int(country_id)]
+        properties = properties.filter(country_id=int(country_id))
     
     if city_id:
-        properties = [p for p in properties if p.city_id == int(city_id)]
+        properties = properties.filter(city_id=int(city_id))
     
     if property_type != 'all':
-        properties = [p for p in properties if p.type == property_type]
+        properties = properties.filter(type=property_type)
     
     if status == 'sale':
-        properties = [p for p in properties if p.status in PUBLIC_STATUSES]
+        properties = properties.filter(status__in=PUBLIC_STATUSES)
     elif status == 'rent':
-        properties = [p for p in properties if p.status == 'rent']
+        properties = properties.filter(status='rent')
     elif status == 'collective_rent':
-        properties = [p for p in properties if p.status == 'collective_rent']
+        properties = properties.filter(status='collective_rent')
     
     if price_min:
-        properties = [p for p in properties if p.price >= int(price_min)]
+        properties = properties.filter(price__gte=int(price_min))
     if price_max:
-        properties = [p for p in properties if p.price <= int(price_max)]
+        properties = properties.filter(price__lte=int(price_max))
     
     # Get all countries
     countries = Country.objects.filter(is_active=True).order_by('name_ar')
@@ -14656,75 +14901,83 @@ def handle_media_uploads(request, property):
 
 @login_required
 def dynamic_add_property(request):
-    """View for dynamic property addition based on category - Simple version to avoid 500 errors"""
+    """View for dynamic property addition based on category - Using Publication Service with Subscription Validation"""
     if not request.user.is_authenticated:
         messages.error(request, 'يجب تسجيل الدخول لإضافة عقار')
         return redirect('login')
     
     try:
-        from .models import Broker, Property, SubscriptionRenewalRequest
+        from .models import Broker, Property, BrokerPlanSubscription
+        from .publication_services.publication_service import (
+            PublicationService,
+            CATEGORY_PROPERTY_IRAQ,
+            CATEGORY_PROPERTY_OUTSIDE,
+            CATEGORY_HOTEL,
+            CATEGORY_RESORT,
+        )
+        from .publication_services.subscription_validation_service import SubscriptionValidationService
     except ImportError:
         messages.error(request, 'مكونات النظام غير متوفرة')
         return redirect('home')
     
-    # Get broker with error handling
-    broker = None
-    try:
-        broker = Broker.objects.get(user=request.user)
-    except Broker.DoesNotExist:
-        pass
-    except Exception:
-        broker = None
+    # Use SubscriptionValidationService to check if user can publish
+    subscription_service = SubscriptionValidationService(request)
     
-    # Check subscription and get available counts
-    available_premium = 0
-    available_regular = 0
+    # Get broker for user - ONLY from authenticated user, not from POST data
+    broker = subscription_service.get_broker_for_user()
+    
+    # Check if user is a broker - regular users cannot publish
+    if not broker:
+        messages.error(request, 'يجب أن تكون دلال للنشر. المستخدمون العاديون لا يمكنهم نشر الإعلانات.')
+        return redirect('subscription_plans')
+    
+    # Get active subscription information for display
+    subscription = subscription_service.get_active_subscription(broker)
+    subscription_info = subscription_service.get_publication_info(subscription) if subscription else None
+    
+    # Calculate remaining posts based on subscription
+    remaining_premium = 0
+    remaining_regular = 0
     is_all_inclusive = False
-    latest_renewal = None
     
-    if broker:
-        # Get latest subscription renewal request to check limits
-        latest_renewal = SubscriptionRenewalRequest.objects.filter(
-            broker=broker,
-            status='approved'
-        ).order_by('-approved_at').first()
-        
-        if latest_renewal:
-            available_premium = latest_renewal.premium_count
-            available_regular = latest_renewal.regular_count
-            
-            # Check if this is an all-inclusive subscription
-            is_all_inclusive = (latest_renewal.subscription_type == 'all_inclusive' or 
-                              'all_inclusive' in latest_renewal.subscription_types)
+    if subscription_info:
+        if subscription_info.get('subscription_type') == 'all_inclusive':
+            is_all_inclusive = True
+            remaining_premium = 999
+            remaining_regular = 999
+        else:
+            # Get remaining counts from subscription info
+            if isinstance(subscription, BrokerPlanSubscription):
+                max_properties = subscription_info.get('max_properties', 0)
+                used_properties = subscription_info.get('used_properties', 0)
+                remaining_regular = max(0, max_properties - used_properties)
+                remaining_premium = remaining_regular  # Simplified for now
+            elif hasattr(subscription, 'regular_count'):
+                remaining_regular = subscription.regular_count
+                remaining_premium = subscription.premium_count
     else:
-        # If no broker, allow posting with default limits
-        available_premium = 1
-        available_regular = 10
-        is_all_inclusive = True
-    
-    # Count user's existing properties
-    existing_properties = Property.objects.filter(owner=request.user)
-    existing_premium = existing_properties.filter(is_featured=True).count()
-    existing_regular = existing_properties.filter(is_featured=False).count()
-    
-    # Calculate remaining posts
-    remaining_premium = max(0, available_premium - existing_premium)
-    remaining_regular = max(0, available_regular - existing_regular)
+        # No active subscription
+        remaining_premium = 0
+        remaining_regular = 0
+        is_all_inclusive = False
     
     # Handle POST request
     if request.method == 'POST':
-        category = request.POST.get('category', 'inside_iraq')
-        is_featured = request.POST.get('is_featured') == 'on'
+        # Get category and map to service constants
+        category_form = request.POST.get('category', 'property_iraq')
         
-        # Check if user can post based on subscription
-        if is_featured:
-            if remaining_premium <= 0 and not is_all_inclusive:
-                messages.error(request, 'ليس لديك عقارات مميزة متاحة. يمكنك نشر عقارات عادية أو ترقية اشتراكك.')
-                return redirect('subscription_plans')
-        else:
-            if remaining_regular <= 0 and not is_all_inclusive:
-                messages.error(request, 'ليس لديك عقارات عادية متاحة. يرجى ترقية اشتراكك.')
-                return redirect('subscription_plans')
+        # Map form category to service category
+        category_mapping = {
+            'property_iraq': CATEGORY_PROPERTY_IRAQ,
+            'property_outside': CATEGORY_PROPERTY_OUTSIDE,
+            'hotel': CATEGORY_HOTEL,
+            'resort': CATEGORY_RESORT,
+        }
+        category = category_mapping.get(category_form, CATEGORY_PROPERTY_IRAQ)
+        
+        is_featured = request.POST.get('is_featured') == 'on'
+        is_pinned = request.POST.get('is_pinned') == 'on'
+        publication_days = request.POST.get('publication_days', 30)
         
         # Validate required fields
         title = request.POST.get('title', '').strip()
@@ -14733,7 +14986,23 @@ def dynamic_add_property(request):
             return render(request, 'properties/dynamic_add_property.html', {
                 'category_form': None,
                 'property_form': None,
-                'category': category,
+                'category': category_form,
+                'broker': broker,
+                'governorates': IRAQ_GOVERNORATES,
+                'remaining_premium': remaining_premium,
+                'remaining_regular': remaining_regular,
+                'is_all_inclusive': is_all_inclusive,
+                'subscription_info': subscription_info,
+            })
+        
+        # Validate required fields
+        title = request.POST.get('title', '').strip()
+        if not title:
+            messages.error(request, 'يرجى إدخال عنوان الإعلان')
+            return render(request, 'properties/dynamic_add_property.html', {
+                'category_form': None,
+                'property_form': None,
+                'category': category_form,
                 'broker': broker,
                 'governorates': IRAQ_GOVERNORATES,
                 'remaining_premium': remaining_premium,
@@ -14741,48 +15010,130 @@ def dynamic_add_property(request):
                 'is_all_inclusive': is_all_inclusive,
             })
         
-        # Create property
+        # Prepare data for publication service
+        property_data = {
+            'title': title,
+            'type': request.POST.get('type', 'apartment'),
+            'price': request.POST.get('price', 0),
+            'description': request.POST.get('description', ''),
+            'governorate': request.POST.get('governorate', ''),
+            'city': request.POST.get('city', ''),
+            'district': request.POST.get('district', ''),
+            'location': request.POST.get('location', ''),
+            'area': request.POST.get('area', 0),
+            # Hotel-specific fields
+            'hotel_name': request.POST.get('hotel_name', ''),
+            'star_rating': request.POST.get('star_rating', 3),
+            'classification': request.POST.get('classification', ''),
+            'total_rooms': request.POST.get('total_rooms', 10),
+            'suites': request.POST.get('suites'),
+            'family_rooms': request.POST.get('family_rooms'),
+            'price_per_night': request.POST.get('price_per_night'),
+            'booking_url': request.POST.get('booking_url', ''),
+            'currency': request.POST.get('currency', 'USD'),
+            'country_code': request.POST.get('country_code', 'IQ'),
+            # Resort-specific fields
+            'resort_name': request.POST.get('resort_name', ''),
+            'resort_type': request.POST.get('resort_type', 'resort'),
+            'max_guests': request.POST.get('max_guests', 10),
+            'min_guests': request.POST.get('min_guests', 1),
+            'price_per_week': request.POST.get('price_per_week'),
+            'price_per_month': request.POST.get('price_per_month'),
+            # Outside Iraq specific fields
+            'country': request.POST.get('country'),
+            'city_outside': request.POST.get('city_outside'),
+            'area_outside': request.POST.get('area_outside'),
+            'state_province': request.POST.get('state_province', ''),
+            'county_region': request.POST.get('county_region', ''),
+            'postal_code': request.POST.get('postal_code', ''),
+            'local_currency': request.POST.get('local_currency', ''),
+            'street_address': request.POST.get('street_address', ''),
+            'apartment_number': request.POST.get('apartment_number', ''),
+            'building_number': request.POST.get('building_number', ''),
+            'neighborhood': request.POST.get('neighborhood', ''),
+            'address': request.POST.get('address', ''),
+        }
+        
+        # Use Publication Service with subscription validation
         try:
-            prop = Property.objects.create(
-                title=request.POST.get('title', ''),
-                type=request.POST.get('type', 'apartment'),
+            service = PublicationService(request)
+            property_obj, result_category, success, subscription_info_result = service.publish(
                 category=category,
-                owner=request.user,
-                broker=broker,
-                status='draft',
+                data=property_data,
                 is_featured=is_featured,
-                price=request.POST.get('price', 0),
-                governorate=request.POST.get('governorate', ''),
-                city=request.POST.get('city', ''),
-                district=request.POST.get('district', ''),
-                location=request.POST.get('location', ''),
-                # Add more fields as needed
+                is_pinned=is_pinned,
+                publication_days=publication_days
             )
             
-            # Update subscription counts
-            if broker and latest_renewal:
-                if is_featured:
-                    latest_renewal.premium_count = max(0, latest_renewal.premium_count - 1)
-                else:
-                    latest_renewal.regular_count = max(0, latest_renewal.regular_count - 1)
-                latest_renewal.save()
+            if not success:
+                # Display errors from service (includes subscription validation errors)
+                for error in service.errors:
+                    messages.error(request, error)
+                return render(request, 'properties/dynamic_add_property.html', {
+                    'category_form': None,
+                    'property_form': None,
+                    'category': category_form,
+                    'broker': broker,
+                    'governorates': IRAQ_GOVERNORATES,
+                    'remaining_premium': remaining_premium,
+                    'remaining_regular': remaining_regular,
+                    'is_all_inclusive': is_all_inclusive,
+                    'subscription_info': subscription_info,
+                })
             
-            messages.success(request, f'تم إنشاء العقار بنجاح! العقارات المتبقية: مميزة={remaining_premium - (1 if is_featured else 0)}, عادية={remaining_regular - (0 if is_featured else 1)}')
-            return redirect('property_detail', slug=prop.slug)
+            # Handle media uploads
+            handle_media_uploads(request, property_obj)
+            
+            # Get publication target info
+            target = service.get_publication_target(result_category)
+            
+            # Display success message with subscription information
+            success_message = service.get_success_message(property_obj, result_category, subscription_info_result)
+            messages.success(request, success_message)
+            
+            # Update remaining counts based on consumed quota
+            if subscription_info_result:
+                if isinstance(subscription_info_result, dict):
+                    new_remaining_premium = subscription_info_result.get('remaining_properties', remaining_premium)
+                    new_remaining_regular = new_remaining_premium  # Simplified
+                else:
+                    new_remaining_premium = max(0, remaining_premium - (1 if is_featured else 0))
+                    new_remaining_regular = max(0, remaining_regular - (0 if is_featured else 1))
+            else:
+                new_remaining_premium = max(0, remaining_premium - (1 if is_featured else 0))
+                new_remaining_regular = max(0, remaining_regular - (0 if is_featured else 1))
+            
+            # Render success page with navigation options and subscription info
+            return render(request, 'properties/dynamic_add_property.html', {
+                'category_form': None,
+                'property_form': None,
+                'category': category_form,
+                'broker': broker,
+                'governorates': IRAQ_GOVERNORATES,
+                'remaining_premium': new_remaining_premium,
+                'remaining_regular': new_remaining_regular,
+                'is_all_inclusive': is_all_inclusive,
+                'property': property_obj,
+                'publication_target': target,
+                'success': True,
+                'subscription_info': subscription_info_result,
+            })
+            
         except Exception as e:
             import traceback
             traceback.print_exc()
-            messages.error(request, f'حدث خطأ أثناء إنشاء العقار: {str(e)}')
+            messages.error(request, f'حدث خطأ أثناء إنشاء الإعلان: {str(e)}')
             # Re-render form with error
             return render(request, 'properties/dynamic_add_property.html', {
                 'category_form': None,
                 'property_form': None,
-                'category': category,
+                'category': category_form,
                 'broker': broker,
                 'governorates': IRAQ_GOVERNORATES,
                 'remaining_premium': remaining_premium,
                 'remaining_regular': remaining_regular,
                 'is_all_inclusive': is_all_inclusive,
+                'subscription_info': subscription_info,
             })
     
     from .constants import IRAQ_GOVERNORATES
@@ -14796,6 +15147,7 @@ def dynamic_add_property(request):
         'remaining_premium': remaining_premium,
         'remaining_regular': remaining_regular,
         'is_all_inclusive': is_all_inclusive,
+        'subscription_info': subscription_info,
     })
 
 

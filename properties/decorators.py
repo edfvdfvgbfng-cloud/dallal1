@@ -1,65 +1,100 @@
-import functools
-import time
+"""
+Decorators للحماية على الوصول حسب نوع المستخدم
+Access Control Decorators based on User Type
+"""
 
-from django.core.cache import cache
-from django.http import HttpResponseForbidden
+from django.contrib.auth.decorators import login_required
 from django.shortcuts import redirect
+from django.contrib import messages
+from functools import wraps
 
-from .permissions import can_access_dashboard, can_manage_brokers, can_access_admin_panel
+from .permissions import get_user_type, can_manage_brokers
 
 
-def rate_limit(key_prefix, limit=100, period=60):
-    """Simple IP-based rate limiter using Django cache."""
-
-    def decorator(view_func):
-        @functools.wraps(view_func)
-        def wrapper(request, *args, **kwargs):
-            ip = request.META.get('HTTP_X_FORWARDED_FOR', '').split(',')[0].strip()
-            if not ip:
-                ip = request.META.get('REMOTE_ADDR', 'unknown')
-            cache_key = f'ratelimit:{key_prefix}:{ip}'
-            data = cache.get(cache_key)
-            now = time.time()
-            if data is None:
-                cache.set(cache_key, {'count': 1, 'start': now}, period)
-            else:
-                if now - data['start'] > period:
-                    cache.set(cache_key, {'count': 1, 'start': now}, period)
-                elif data['count'] >= limit:
-                    return HttpResponseForbidden('تم تجاوز عدد المحاولات. حاول لاحقاً.')
-                else:
-                    data['count'] += 1
-                    cache.set(cache_key, data, period)
-            return view_func(request, *args, **kwargs)
-
-        return wrapper
-
-    return decorator
+def user_required(view_func):
+    """
+    Decorator للتحقق من أن المستخدم هو USER فقط
+    """
+    @wraps(view_func)
+    @login_required
+    def wrapped_view(request, *args, **kwargs):
+        user_type = get_user_type(request.user)
+        if user_type != 'user':
+            messages.error(request, 'هذه الصفحة متاحة للمستخدمين العاديين فقط')
+            return redirect('home')
+        return view_func(request, *args, **kwargs)
+    return wrapped_view
 
 
 def broker_required(view_func):
-    @functools.wraps(view_func)
-    def wrapper(request, *args, **kwargs):
-        if not can_access_dashboard(request.user):
-            return redirect('login')
+    """
+    Decorator للتحقق من أن المستخدم هو BROKER فقط
+    """
+    @wraps(view_func)
+    @login_required
+    def wrapped_view(request, *args, **kwargs):
+        user_type = get_user_type(request.user)
+        if user_type != 'broker':
+            messages.error(request, 'هذه الصفحة متاحة للدلالين فقط')
+            return redirect('home')
         return view_func(request, *args, **kwargs)
-    return wrapper
-
-
-def manage_brokers_required(view_func):
-    @functools.wraps(view_func)
-    def wrapper(request, *args, **kwargs):
-        if not can_manage_brokers(request.user):
-            return HttpResponseForbidden('ليس لديك صلاحية إدارة الدلالين')
-        return view_func(request, *args, **kwargs)
-    return wrapper
+    return wrapped_view
 
 
 def admin_required(view_func):
-    """Decorator to require admin panel access."""
-    @functools.wraps(view_func)
-    def wrapper(request, *args, **kwargs):
-        if not can_access_admin_panel(request.user):
-            return HttpResponseForbidden('ليس لديك صلاحية للوصول إلى لوحة الإدارة')
+    """
+    Decorator للتحقق من أن المستخدم هو ADMIN فقط
+    """
+    @wraps(view_func)
+    @login_required
+    def wrapped_view(request, *args, **kwargs):
+        user_type = get_user_type(request.user)
+        if user_type != 'admin':
+            messages.error(request, 'هذه الصفحة متاحة للإدارة فقط')
+            return redirect('home')
         return view_func(request, *args, **kwargs)
-    return wrapper
+    return wrapped_view
+
+
+def admin_or_broker_required(view_func):
+    """
+    Decorator للتحقق من أن المستخدم هو ADMIN أو BROKER
+    """
+    @wraps(view_func)
+    @login_required
+    def wrapped_view(request, *args, **kwargs):
+        user_type = get_user_type(request.user)
+        if user_type not in ['admin', 'broker']:
+            messages.error(request, 'هذه الصفحة متاحة للإدارة والدلالين فقط')
+            return redirect('home')
+        return view_func(request, *args, **kwargs)
+    return wrapped_view
+
+
+def broker_or_user_required(view_func):
+    """
+    Decorator للتحقق من أن المستخدم هو BROKER أو USER
+    """
+    @wraps(view_func)
+    @login_required
+    def wrapped_view(request, *args, **kwargs):
+        user_type = get_user_type(request.user)
+        if user_type not in ['broker', 'user']:
+            messages.error(request, 'هذه الصفحة متاحة للدلالين والمستخدمين فقط')
+            return redirect('home')
+        return view_func(request, *args, **kwargs)
+    return wrapped_view
+
+
+def manage_brokers_required(view_func):
+    """
+    Decorator للتحقق من أن المستخدم يملك صلاحية إدارة الدلالين
+    """
+    @wraps(view_func)
+    @login_required
+    def wrapped_view(request, *args, **kwargs):
+        if not can_manage_brokers(request.user):
+            messages.error(request, 'ليس لديك صلاحية إدارة الدلالين')
+            return redirect('home')
+        return view_func(request, *args, **kwargs)
+    return wrapped_view

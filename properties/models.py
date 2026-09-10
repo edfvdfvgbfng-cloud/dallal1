@@ -2989,6 +2989,10 @@ class Property(models.Model):
         'Office', on_delete=models.SET_NULL, null=True, blank=True,
         related_name='properties', verbose_name='المكتب العقاري'
     )
+    subscription = models.ForeignKey(
+        'BrokerPlanSubscription', on_delete=models.SET_NULL, null=True, blank=True,
+        related_name='properties', verbose_name='الاشتراك المستخدم'
+    )
 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -6722,8 +6726,24 @@ class SubscriptionPlan(models.Model):
 
 class UserProfile(models.Model):
     """نموذج المستخدم العادي"""
+    USER_TYPE_USER = 'user'
+    USER_TYPE_BROKER = 'broker'
+    USER_TYPE_ADMIN = 'admin'
+    
+    USER_TYPE_CHOICES = [
+        (USER_TYPE_USER, 'مستخدم عادي'),
+        (USER_TYPE_BROKER, 'دلال'),
+        (USER_TYPE_ADMIN, 'مدير'),
+    ]
+    
     user = models.OneToOneField(
         'auth.User', on_delete=models.CASCADE, related_name='user_profile'
+    )
+    user_type = models.CharField(
+        max_length=10,
+        choices=USER_TYPE_CHOICES,
+        default=USER_TYPE_USER,
+        verbose_name='نوع المستخدم'
     )
     phone = models.CharField(max_length=20, blank=True, verbose_name='الهاتف')
     governorate = models.CharField(max_length=100, blank=True, verbose_name='المحافظة')
@@ -8952,6 +8972,7 @@ class ActivityLog(models.Model):
         ('renew', 'تجديد'),
         ('message', 'رسالة'),
         ('notification', 'إشعار'),
+        ('published', 'نشر'),
     ]
     
     MODEL_CHOICES = [
@@ -16514,13 +16535,48 @@ class RealEstateContract(models.Model):
         return f'{self.contract_number} - {self.get_contract_type_display()}'
     
     def generate_contract_number(self):
-        """توليد رقم عقد تلقائي"""
+        """توليد رقم عقد تلقائي آمن مع منع التكرار"""
         from django.utils import timezone
+        from django.db import transaction
+        import secrets
+        
         year = timezone.now().year
-        count = RealEstateContract.objects.filter(
-            contract_number__startswith=f'CTR-RE-{year}'
-        ).count()
-        return f'CTR-RE-{year}-{count + 1:04d}'
+        prefix = f'CTR-RE-{year}'
+        
+        # استخدم transaction + select_for_update لمنع التكرار المتزامن
+        with transaction.atomic():
+            # الحصول على آخر رقم عقد في هذا العام مع قفل الصف
+            last_contract = RealEstateContract.objects.filter(
+                contract_number__startswith=prefix
+            ).select_for_update().order_by('-contract_number').first()
+            
+            if last_contract:
+                # استخراج الرقم التسلسلي من آخر عقد
+                try:
+                    last_number = int(last_contract.contract_number.split('-')[-1])
+                    new_number = last_number + 1
+                except (ValueError, IndexError):
+                    new_number = 1
+            else:
+                new_number = 1
+            
+            # محاولة عدة مرات في حالة وجود تعارض نادر
+            max_attempts = 3
+            for attempt in range(max_attempts):
+                new_contract_number = f'{prefix}-{new_number:04d}'
+                
+                # التحقق من عدم وجود الرقم
+                if not RealEstateContract.objects.filter(
+                    contract_number=new_contract_number
+                ).exists():
+                    return new_contract_number
+                
+                # إذا وجد، حاول رقم آخر
+                new_number += 1
+            
+            # إذا فشلت جميع المحاولات، استخدم عشوائي فريد
+            random_suffix = secrets.token_hex(4).upper()
+            return f'{prefix}-{random_suffix}'
     
     def save(self, *args, **kwargs):
         is_new = not self.pk
@@ -16753,17 +16809,29 @@ class ContractDocument(models.Model):
     
     DOCUMENT_TYPE_CHOICES = [
         ('contract', 'العقد الأصلي'),
+        ('contract_page', 'صفحة عقد'),
+        ('personal_photo', 'صورة شخصية'),
         ('addendum', 'مذكرة إضافة'),
         ('amendment', 'تعديل'),
         ('receipt', 'إيصال'),
         ('invoice', 'فاتورة'),
         ('id_copy', 'صورة الهوية'),
         ('property_docs', 'وثائق العقار'),
+        ('payment_proof', 'إثبات دفع'),
         ('other', 'وثيقة أخرى'),
+    ]
+    
+    PARTY_TYPE_CHOICES = [
+        ('buyer', 'المشتري'),
+        ('seller', 'البائع'),
+        ('broker', 'الدلال'),
+        ('witness', 'الشاهد'),
+        ('other', 'طرف آخر'),
     ]
     
     contract = models.ForeignKey(RealEstateContract, on_delete=models.CASCADE, related_name='documents', verbose_name='العقد')
     document_type = models.CharField(max_length=20, choices=DOCUMENT_TYPE_CHOICES, verbose_name='نوع الوثيقة')
+    party_type = models.CharField(max_length=20, choices=PARTY_TYPE_CHOICES, blank=True, verbose_name='الطرف', help_text='الطرف المرتبط بالوثيقة (للصور الشخصية)')
     title = models.CharField(max_length=200, verbose_name='عنوان الوثيقة')
     description = models.TextField(blank=True, verbose_name='الوصف')
     
@@ -16771,6 +16839,7 @@ class ContractDocument(models.Model):
     file_size = models.BigIntegerField(default=0, verbose_name='حجم الملف (بايت)')
     file_type = models.CharField(max_length=50, blank=True, verbose_name='نوع الملف')
     page_number = models.IntegerField(default=1, verbose_name='رقم الصفحة')
+    is_primary = models.BooleanField(default=False, verbose_name='أساسي', help_text='هل هذه الوثيقة هي الأساسية لنوعها؟')
     
     uploaded_by = models.ForeignKey('auth.User', on_delete=models.SET_NULL, null=True, verbose_name='رفع بواسطة')
     uploaded_at = models.DateTimeField(auto_now_add=True, verbose_name='تاريخ الرفع')

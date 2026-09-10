@@ -38,19 +38,26 @@ def get_user_profile(user):
 
 
 def get_user_type(user):
-    """Get user type: 'admin', 'broker', or 'user'."""
+    """Get user type: 'admin', 'broker', or 'user' - Single source of truth from UserProfile."""
     if not user or not user.is_authenticated:
         return None
 
-    # Check if superuser (admin)
+    # Check if superuser (admin) - override everything
     if user.is_superuser:
         return 'admin'
 
-    # Check if broker
+    # Get user type from UserProfile - this is the single source of truth
+    try:
+        from .models import UserProfile
+        user_profile = user.user_profile
+        if user_profile:
+            return user_profile.user_type
+    except (UserProfile.DoesNotExist, Exception):
+        pass
+
+    # Fallback: check if user has broker profile
     try:
         broker = get_broker(user)
-        if not Broker:
-            return 'user'
         if broker and broker.is_active:
             if broker.role == Broker.ROLE_ADMIN:
                 return 'admin'
@@ -58,14 +65,8 @@ def get_user_type(user):
     except Exception:
         pass
 
+    # Default to regular user
     return 'user'
-
-    # Regular users (those without broker profile)
-    # If user is authenticated and doesn't have a broker profile, they're a regular user
-    if user.is_active and not broker:
-        return 'user'
-
-    return None
 
 
 def get_user_roles(user):
@@ -318,20 +319,28 @@ def get_redirect_after_login(user):
     """Get redirect URL after login based on user type."""
     try:
         user_type = get_user_type(user)
-        if user_type in ('admin', 'broker'):
-            return 'dashboard'
-        return 'user_dashboard'
+        if user_type == 'admin':
+            return 'admin_panel'
+        elif user_type == 'broker':
+            return 'broker_panel'
+        else:
+            return 'user_dashboard'
     except Exception:
-        return 'dashboard'
+        return 'home'
 
 
 def can_manage_brokers(user):
+    """
+    Check if user can manage brokers.
+    SECURITY: Only ADMIN should be able to create/modify brokers.
+    """
     try:
         if has_permission(user, 'can_manage_brokers'):
             return True
     except Exception:
         pass
-    return is_platform_admin(user) or is_main_broker(user)
+    # SECURITY: Restrict to ADMIN only - remove main_broker from this function
+    return is_platform_admin(user)
 
 
 def can_manage_site_settings(user):

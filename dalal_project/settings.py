@@ -75,6 +75,11 @@ ALLOWED_HOSTS = _unique(ALLOWED_HOSTS + [
     'muqq.up.railway.app',
     'dallal1-production.up.railway.app',
     'dallal2-production.up.railway.app',
+    'dallal3-production.up.railway.app',
+    'dallal4-production.up.railway.app',
+    'dallal5-production.up.railway.app',
+    'dallal6-production.up.railway.app',
+    'dallal7-production.up.railway.app',
     'localhost',
     '127.0.0.1',
 ])
@@ -118,6 +123,11 @@ if DEBUG:
         'https://muqq.up.railway.app',
         'https://dallal1-production.up.railway.app',
         'https://dallal2-production.up.railway.app',
+        'https://dallal3-production.up.railway.app',
+        'https://dallal4-production.up.railway.app',
+        'https://dallal5-production.up.railway.app',
+        'https://dallal6-production.up.railway.app',
+        'https://dallal7-production.up.railway.app',
     ]
     # Filter out None values
     CSRF_TRUSTED_ORIGINS = [origin for origin in CSRF_TRUSTED_ORIGINS if origin]

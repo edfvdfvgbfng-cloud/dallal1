@@ -15,7 +15,7 @@ from django.views.decorators.http import require_http_methods, require_POST
 from .broker_forms import BrokerCreateForm, BrokerEditForm, BrokerJoinForm, MessageReplyForm, OfficeForm
 from .decorators import broker_required, manage_brokers_required
 from .forms import OfficePresenceForm, QuickStatusForm, PresenceNotificationForm, BrokerNotificationSettingsForm, HotelPageForm, HotelPostForm, HotelRoomForm, HotelOfferForm, HotelBookingForm, ServiceProviderPageForm, ServiceProviderWorkForm, ServiceProviderServiceForm, ServiceProviderGalleryForm, ServiceProviderVideoForm, ServiceProvider360Form, ServiceProviderRatingForm, ServiceProviderContactForm, ServiceProviderQuoteForm
-from .models import Broker, BrokerJoinRequest, Message, Office, Property, ActivityLog, Notification, OfficePresence, PresenceNotification, BrokerSubscription, BrokerNotificationSettings, BrokerSubscriptionStats, SubscriptionPlan, BrokerChannel, ChannelRating, ChannelReview, ChannelReviewReply, ChannelShare, ChannelFollow, ChannelSave, HotelPage, HotelPost, HotelRoom, HotelOffer, HotelFollower, HotelRating, ServiceProviderCategory, ServiceProviderPage, ServiceProviderWork, ServiceProviderService, ServiceProviderGallery, ServiceProviderVideo, ServiceProvider360, ServiceProviderFollower, ServiceProviderRating, ServiceProviderContact, ServiceProviderQuote, BrokerChannel
+from .models import Broker, BrokerJoinRequest, Message, Office, Property, ActivityLog, Notification, OfficePresence, PresenceNotification, BrokerSubscription, BrokerNotificationSettings, BrokerSubscriptionStats, SubscriptionPlan, BrokerChannel, ChannelRating, ChannelReview, ChannelReviewReply, ChannelShare, ChannelFollow, ChannelSave, HotelPage, HotelPost, HotelRoom, HotelOffer, HotelFollower, HotelRating, ServiceProviderCategory, ServiceProviderPage, ServiceProviderWork, ServiceProviderService, ServiceProviderGallery, ServiceProviderVideo, ServiceProvider360, ServiceProviderFollower, ServiceProviderRating, ServiceProviderContact, ServiceProviderQuote, BrokerChannel, UserProfile
 from .permissions import (
     can_manage_join_requests,
     get_accessible_messages,
@@ -886,7 +886,8 @@ def broker_create(request):
                     email=email,
                     first_name=form.cleaned_data['first_name'],
                     last_name=form.cleaned_data.get('last_name', ''),
-                    is_staff=True,
+                    is_staff=False,  # SECURITY: Brokers are not staff - only admin is staff
+                    is_superuser=False,  # SECURITY: Brokers are not superusers
                     is_active=True,
                 )
                 user.save()
@@ -910,6 +911,12 @@ def broker_create(request):
                     parent=parent,
                     is_active=True,
                 )
+                
+                # SECURITY: Set user_type to 'broker' in UserProfile
+                from .models import UserProfile
+                user_profile, created = UserProfile.objects.get_or_create(user=user)
+                user_profile.user_type = UserProfile.USER_TYPE_BROKER
+                user_profile.save()
 
                 # Log activity
                 ActivityLog.log(

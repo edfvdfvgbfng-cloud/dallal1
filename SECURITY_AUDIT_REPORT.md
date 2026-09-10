@@ -1,513 +1,262 @@
-# تقرير مراجعة الأمن الشاملة
-## مشروع دلال - منصة العقارات العراقية
-**التاريخ:** 2026-08-15
-**المُنفذ:** مهندس أمن معلومات
-**الحالة:** ✅ منجز
-
----
+# تقرير تدقيق أمني شامل - منصة دلال العقارية
 
 ## ملخص تنفيذي
 
-تم إجراء مراجعة أمنية شاملة لمشروع دلال، منصة العقارات العراقية. تشمل المراجعة تحليل إعدادات Django، نقاط النهاية API، رفع الملفات، حقن SQL، XSS، CSRF، تقييد المعدل، إدارة الأسرار، وأمان قاعدة البيانات.
-
-### النتيجة العامة
-**🟡 متوسط - يحتاج إلى تحسينات**
-
----
-
-## 1. إعدادات Django (settings.py)
-
-### ✅ الإيجابيات
-- تم استخدام ALLOWED_HOSTS بشكل صحيح
-- تم تفعيل CSRF protection
-- تم تفعيل HSTS للإنتاج
-- تم تفعيل X-Frame-Options: DENY
-- تم تفعيل SECURE_BROWSER_XSS_FILTER
-- تم تفعيل SECURE_CONTENT_TYPE_NOSNIFF
-- تم استخدام environment variables للأسرار
-- تم تفعيل كلمات مرور قوية (password validators)
-- تم تفعيل rate limiting في REST Framework
-
-### ⚠️ المشاكل
-
-#### 1.1 DEBUG Mode
-**الخطورة:** 🔴 عالية
-```python
-DEBUG = os.getenv('DEBUG', 'True').lower() == 'true'
-```
-**المشكلة:** القيمة الافتراضية هي True في حالة عدم وجود متغير البيئة.
-**التوصية:** يجب أن تكون القيمة الافتراضية False:
-```python
-DEBUG = os.getenv('DEBUG', 'False').lower() == 'true'
-```
-
-#### 1.2 ALLOWED_HOSTS يحتوي على '*'
-**الخطورة:** 🟡 متوسطة
-```python
-ALLOWED_HOSTS = ['*']
-```
-**المشكلة:** قبول جميع الأسماء يُعرض الموقع لهجمات Host Header Injection.
-**التوصية:** إزالة '*' والاعتماد فقط على القوائم المحددة:
-```python
-ALLOWED_HOSTS = _parse_csv_env('ALLOWED_HOSTS')
-```
-
-#### 1.3 SECRET_KEY الافتراضي للتطوير
-**الخطورة:** 🔴 عالية
-```python
-if DEBUG:
-    SECRET_KEY = 'django-insecure-local-dev-only-change-me'
-```
-**المشكلة:** استخدام مفتاح سري ثابت ومعلن في الكود.
-**التوصية:** يجب توفير SECRET_KEY عبر environment variable حتى في التطوير.
-
-#### 1.4 CSRF Cookie ليس HTTPOnly
-**الخطورة:** 🟡 متوسطة
-```python
-CSRF_COOKIE_HTTPONLY = False
-```
-**المشكلة:** CSRF cookie يمكن الوصول إليه عبر JavaScript.
-**التوصية:** تفعيل HTTPOnly:
-```python
-CSRF_COOKIE_HTTPONLY = True
-```
-
-#### 1.5 CORS Allow All Origins في DEBUG
-**الخطورة:** 🟡 متوسطة
-```python
-CORS_ALLOW_ALL_ORIGINS = DEBUG
-```
-**المشكلة:** في وضع التطوير، يتم قبول جميع الأصول.
-**التوصية:** تحديد الأصول المسموح بها بوضوح حتى في التطوير.
+هذا التقرير يغطي ثلاثة أنظمة رئيسية:
+1. نظام العقود `/contracts/`
+2. صفحة الخريطة `/dashboard/map/`
+3. لوحة المستخدم `/dashboard/`
 
 ---
 
-## 2. نقاط النهاية API (API Endpoints)
+## الجزء الأول: نظام العقود `/contracts/`
 
-### ✅ الإيجابيات
-- معظم نقاط النهاية تستخدم @login_required
-- نقاط الإدارة تستخدم @staff_required
-- بعض العمليات الحساسة تستخدم @require_POST
-- استخدام Django ORM يمنع SQL injection
+### النظام الحالي
 
-### ⚠️ المشاكل
+#### Models الموجودة:
 
-#### 2.1 نقطة النهاية AI Chat مفتوحة للجميع
-**الخطورة:** 🟡 متوسطة
-```python
-@api_view(['POST'])
-@permission_classes([AllowAny])
-def ai_chat(request):
-```
-**المشكلة:** أي شخص يمكنه استخدام AI Gateway بدون تسجيل دخول.
-**التوصية:** إضافة تقييد معدل وتسجيل محاولات الاستخدام غير المصرح به.
+**RealEstateContract** (سطر 16423 في properties/models.py):
+- ✅ يحتوي على جميع الحقول الأساسية
+- ✅ يحتوي على نظام Soft Delete (`is_archived`)
+- ✅ يحتوي على Audit Log من خلال `ContractAuditLog`
+- ✅ يحتوي على معلومات الأطراف (property, broker, client)
+- ✅ يحتوي على معلومات مالية (amount, deposit, commission_rate, commission_amount)
+- ✅ يحتوي على حالات واضحة (draft, pending, active, completed, terminated, expired, cancelled)
 
-#### 2.2 نقطة النهاية Legacy Chatbot مفتوحة
-**الخطورة:** 🟡 متوسطة
-```python
-@api_view(['POST'])
-@permission_classes([AllowAny])
-def ai_chatbot_legacy(request):
-```
-**المشكلة:** نفس المشكلة السابقة - نقطة التكافؤ مفتوحة.
-**التوصية:** إضافة نفس الحماية.
-
-#### 2.3 بعض النقاط الحساسة تفتقر إلى @require_POST
-**الخطورة:** 🟡 متوسطة
-**المشكلة:** بعض العمليات الحساسة يمكن استدعاؤها عبر GET.
-**التوصية:** إضافة @require_POST لجميع العمليات التي تغير البيانات.
+**ContractDocument** (سطر 16772 في properties/models.py):
+- ✅ موجود ويعمل
+- ✅ يحتوي على `document_type` choices
+- ✅ يحتوي على `page_number` لترتيب الصفحات
+- ✅ يحتوي على `file_size` و `file_type`
+- ✅ يحتوي على `uploaded_by` لتتبع رافع الملف
 
 ---
 
-## 3. رفع الملفات (File Upload)
+### المشاكل الأمنية الحرجة المكتشفة:
 
-### ✅ الإيجابيات
-- تم تحديد حجم أقصى للملفات (15MB)
-- استخدام upload_to لتنظيم الملفات
-- معظم حقول الصور تستخدم ImageField
-
-### ⚠️ المشاكل
-
-#### 3.1 عدم التحقق من نوع الملف
-**الخطورة:** 🔴 عالية
-**المشكلة:** لا يوجد تحقق من نوع الملف الحقيقي (MIME type).
-**التوصية:** إضافة تحقق من نوع الملف:
+#### 1. **رقم العقد غير آمن للطلبات المتزامنة**
 ```python
-def validate_file_type(file):
-    allowed_types = ['image/jpeg', 'image/png', 'application/pdf']
-    import magic
-    file_type = magic.from_buffer(file.read(2048), mime=True)
-    file.seek(0)
-    if file_type not in allowed_types:
-        raise ValidationError('نوع الملف غير مسموح')
+def generate_contract_number(self):
+    count = RealEstateContract.objects.filter(
+        contract_number__startswith=f'CTR-RE-{year}'
+    ).count()
+    return f'CTR-RE-{year}-{count + 1:04d}'
 ```
+**المشكلة**: يمكن حدوث تكرار في حالة الطلبات المتزامنة
+**الخطر**: عقدان بنفس الرقم → تضارب في قاعدة البيانات
+**الحل المطلوب**: استخدام `transaction.atomic()` + `select_for_update()` أو unique constraint + retry
 
-#### 3.2 عدم التحقق من حجم الصورة
-**الخطورة:** 🟡 متوسطة
-**المشكلة:** يمكن رفع صور ضخمة تستهلك المساحة.
-**التوصية:** إضافة تحقق من الأبعاد:
+#### 2. **حساب العمولة يحدث في save() بدون Transaction**
 ```python
-from PIL import Image
-def validate_image_size(file):
-    img = Image.open(file)
-    if img.width > 4000 or img.height > 4000:
-        raise ValidationError('أبعاد الصورة كبيرة جداً')
+def save(self, *args, **kwargs):
+    if self.commission_rate and self.amount:
+        self.commission_amount = (self.amount * self.commission_rate) / 100
+    super().save(*args, **kwargs)
 ```
+**المشكلة**: لا توجد حماية ضد التلاعب من Frontend
+**الخطر**: يمكن للمستخدم إرسال `commission_amount` خاطئ عبر JavaScript
+**الحل المطلوب**: حساب العمولة في View قبل الحفظ، وتجاهل القيمة من POST
 
-#### 3.3 عدم إعادة تسمية الملفات
-**الخطورة:** 🟡 متوسطة
-**المشكلة:** أسماء الملفات الأصلية قد تحتوي على مسارات أو أحرف خاصة.
-**التوصية:** إعادة تسمية الملفات:
+#### 3. **عدم حماية IDOR في Views الحالية**
 ```python
-import uuid
-def get_upload_path(instance, filename):
-    ext = filename.split('.')[-1]
-    filename = f"{uuid.uuid4()}.{ext}"
-    return f"uploads/{filename}"
+contract = get_object_or_404(RealEstateContract, id=contract_id)
 ```
+**المشكلة**: المستخدم A يستطيع الوصول لعقد المستخدم B بتغيير ID
+**الخطر**: كشف بيانات عقود خاصة
+**الحل المطلوب**: التحقق من الصلاحيات قبل إرجاع العقد
 
-#### 3.4 عدم المسح الآمن للملفات
-**الخطورة:** 🟡 متوسطة
-**المشكلة:** عند حذف السجل، قد تبقى الملفات.
-**التوصية:** استخدام signals لحذف الملفات:
+#### 4. **حذف المستندات بدون صلاحية كافية**
 ```python
-from django.db.models.signals import post_delete
-from django.dispatch import receiver
-
-@receiver(post_delete, sender=PropertyImage)
-def delete_property_image(sender, instance, **kwargs):
-    if instance.image:
-        instance.image.delete(False)
+@login_required
+def contract_document_delete(request, document_id):
+    if not request.user.is_superuser:
+        return JsonResponse({'success': False, 'error': 'غير مصرح'}, status=403)
+    document = get_object_or_404(ContractDocument, id=document_id)
 ```
+**المشكلة**: فقط `is_superuser` يحق له الحذف، الدلال لا يستطيع حذف مستنداته
+**الخطر**: الدلال لا يستطيع إدارة مستندات عقوده
+**الحل المطلوب**: التحقق من أن المستخدم هو رافع المستند أو صاحب العقد
 
----
-
-## 4. حقن SQL (SQL Injection)
-
-### ✅ الإيجابيات
-- استخدام Django ORM في جميع الاستعلامات
-- عدم استخدام استعلامات SQL خامة
-- استخدام Q objects للبحث المعقد
-
-### ✅ النتيجة
-**لا توجد مخاطر SQL injection** - Django ORM يحمي تلقائياً.
-
----
-
-## 5. هجمات XSS (Cross-Site Scripting)
-
-### ✅ الإيجابيات
-- استخدام Django templates يحمي تلقائياً
-- تم استخدام textContent في chatbot JavaScript
-
-### ⚠️ المشاكل
-
-#### 5.1 بعض الحقول تعرض بدون escape
-**الخطورة:** 🟡 متوسطة
-**المشكلة:** بعض الحقول في API responses تعرض بدون escape.
-**التوصية:** استخدام Django's escape:
+#### 5. **رفع المستندات بدون فحص كافٍ**
 ```python
-from django.utils.html import escape
-response_data = {
-    'title': escape(property.title),
-    'description': escape(property.description)
-}
-```
-
-#### 5.2 JSON responses قد تحتوي على HTML
-**الخطورة:** 🟡 متوسطة
-**المشكلة:** بعض API endpoints تُرجع بيانات تحتوي على HTML.
-**التوصية:** إزالة HTML من responses API أو استخدام safe encoding.
-
----
-
-## 6. حماية CSRF (Cross-Site Request Forgery)
-
-### ✅ الإيجابيات
-- CSRF protection مفعّل
-- استخدام CSRF tokens في forms
-- CSRF_TRUSTED_ORIGINS محددة
-
-### ⚠️ المشاكل
-
-#### 6.1 CSRF_COOKIE_HTTPONLY = False
-**تم ذكره في القسم 1.4**
-
-#### 6.2 بعض API endpoints قد تحتاج إلى حماية
-**الخطورة:** 🟡 متوسطة
-**المشكلة:** بعض endpoints قد لا تتحقق من CSRF بشكل صحيح.
-**التوصية:** التأكد من استخدام @csrf_exempt فقط عند الضرورة القصوى.
-
----
-
-## 7. تقييد المعدل (Rate Limiting)
-
-### ✅ الإيجابيات
-- REST Framework يحتوي على throttling
-- تم تحديد معدلات (anon: 100/hour, user: 1000/hour)
-
-### ⚠️ المشاكل
-
-#### 7.1 المعدلات قد تكون عالية جداً
-**الخطورة:** 🟡 متوسطة
-**المشكلة:** 1000 طلب/ساعة للمستخدم قد يسبب استهلاك موارد.
-**التوصية:** تقليل المعدلات:
-```python
-'DEFAULT_THROTTLE_RATES': {
-    'anon': '30/hour',
-    'user': '300/hour'
-}
-```
-
-#### 7.2 لا يوجد rate limiting للـ AI endpoints
-**الخطورة:** 🔴 عالية
-**المشكلة:** AI endpoints مفتوحة بدون تقييد معدل.
-**التوصية:** إضافة throttling مخصص:
-```python
-@api_view(['POST'])
-@permission_classes([AllowAny])
-@throttle_classes([AnonRateThrottle])
-def ai_chat(request):
-```
-
----
-
-## 8. إدارة الأسرار (Secret Management)
-
-### ✅ الإيجابيات
-- استخدام environment variables
-- عدم تخزين الأسرار في الكود
-- استخدام python-dotenv
-
-### ⚠️ المشاكل
-
-#### 8.1 .env file قد يكون في git
-**الخطورة:** 🔴 عالية
-**المشكلة:** إذا تم إضافة .env إلى git، ستكون الأسرار مكشوفة.
-**التوصية:** التأكد من وجود .env في .gitignore:
-```
-.env
-.env.local
-.env.production
-```
-
-#### 8.2 عدم التحقق من قيم الأسرار
-**الخطورة:** 🟡 متوسطة
-**المشكلة:** لا يوجد تحقق من أن الأسرار مُوفرة.
-**التوصية:** إضافة validation:
-```python
-if not DEBUG and not os.getenv('SECRET_KEY'):
-    raise ValueError('SECRET_KEY must be set in production')
-```
-
----
-
-## 9. أمان قاعدة البيانات (Database Security)
-
-### ✅ الإيجابيات
-- استخدام Django ORM
-- عدم استخدام raw SQL
-- استخدام environment variables لاتصال قاعدة البيانات
-
-### ⚠️ المشاكل
-
-#### 9.1 SQLite في التطوير
-**الخطورة:** 🟢 منخفضة
-**المشكلة:** SQLite مناسب للتطوير فقط.
-**التوصية:** استخدام PostgreSQL في جميع البيئات.
-
-#### 9.2 عدم التشفير للبيانات الحساسة
-**الخطورة:** 🟡 متوسطة
-**المشكلة:** البيانات الحساسة (مثل أرقام الهواتف) مخزنة بشكل عادي.
-**التوصية:** استخدام التشفير:
-```python
-from cryptography.fernet import Fernet
-def encrypt_phone(phone):
-    cipher = Fernet(settings.ENCRYPTION_KEY)
-    return cipher.encrypt(phone.encode())
-```
-
----
-
-## 10. إدارة الجلسات (Session Management)
-
-### ✅ الإيجابيات
-- SESSION_COOKIE_HTTPONLY = True
-- SESSION_COOKIE_SECURE في الإنتاج
-- SESSION_COOKIE_SAMESITE = 'Lax'
-
-### ⚠️ المشاكل
-
-#### 10.1 SESSION_COOKIE_AGE طويل جداً
-**الخطورة:** 🟡 متوسطة
-```python
-SESSION_COOKIE_AGE = 3600 * 24 * 7  # 7 أيام
-```
-**المشكلة:** الجلسة تستمر لمدة أسبوع.
-**التوصية:** تقليل المدة:
-```python
-SESSION_COOKIE_AGE = 3600 * 24 * 2  # يومين
-```
-
----
-
-## 11. المصادقة والتفويض (Authentication & Authorization)
-
-### ✅ الإيجابيات
-- استخدام Django's built-in authentication
-- @login_required في معظم الـ views
-- @staff_required للإدارة
-- password validators مفعّلة
-
-### ⚠️ المشاكل
-
-#### 11.1 عدم وجود Two-Factor Authentication
-**الخطورة:** 🟡 متوسطة
-**المشكلة:** لا يوجد 2FA للحسابات الحساسة.
-**التوصية:** إضافة Django OTP أو مكتبة مشابهة.
-
-#### 11.2 عدم وجود password history
-**الخطورة:** 🟡 متوسطة
-**المشكلة:** يمكن للمستخدم إعادة استخدام كلمات المرور القديمة.
-**التوصية:** إضافة Django Password History أو تطبيق custom validator.
-
----
-
-## 12. السجلات والتدقيق (Logging & Auditing)
-
-### ✅ الإيجابيات
-- نظام logging مُطبق
-- rotation of log files
-- logging للـ AI requests
-
-### ⚠️ المشاكل
-
-#### 12.1 عدم وجود audit trail للعمليات الحساسة
-**الخطورة:** 🟡 متوسطة
-**المشكلة:** لا يوجد سجل للعمليات الحساسة (حذف، تعديل).
-**التوصية:** إضافة audit logging:
-```python
-from django.contrib.admin.models import LogEntry
-LogEntry.objects.log_action(
-    user_id=request.user.id,
-    content_type_id=ContentType.objects.get_for_model(obj).id,
-    object_id=obj.id,
-    object_repr=str(obj),
-    action_flag=CHANGE
+document = ContractDocument.objects.create(
+    contract=contract,
+    document_type=data.get('document_type', 'other'),
+    title=data.get('title', ''),
+    description=data.get('description', ''),
+    file=data.get('file'),
+    uploaded_by=request.user
 )
 ```
+**المشكلة**: لا يوجد فحص لحجم الملف، نوع الملف، أو عدد الملفات
+**الخطر**: رفع ملفات ضخمة أو خطيرة
+**الحل المطلوب**: فحص صارم للحجم، النوع، والامتداد
 
-#### 12.2 عدم وجود logging للعمليات الفاشلة
-**الخطورة:** 🟡 متوسطة
-**المشكلة:** لا يوجد logging لمحاولات تسجيل الدخول الفاشلة.
-**التوصية:** إضافة logging لمحاولات تسجيل الدخول.
+#### 6. **عدم وجود `party_type` للصور الشخصية**
+النظام الحالي لا يميز بين:
+- صورة المشتري
+- صورة البائع
+- صورة الدلال
 
----
+**المشكلة**: لا يمكن معرفة الصورة تخص من
+**الحل المطلوب**: إضافة `party_type` field مع choices (buyer, seller, broker)
 
-## 13. النسخ الاحتياطي (Backup)
-
-### ⚠️ المشاكل
-
-#### 13.1 عدم وجود استراتيجية نسخ احتياطي واضحة
-**الخطورة:** 🔴 عالية
-**المشكلة:** لا يوجد ذكر لاستراتيجية النسخ الاحتياطي.
-**التوصية:** إضافة:
-- النسخ الاحتياطي اليومي لقاعدة البيانات
-- النسخ الاحتياطي للملفات المرفوعة
-- التشفير للنسخ الاحتياطية
-- اختبار الاستعادة بشكل دوري
+#### 7. **عدم حماية ملفات المستندات**
+الملفات يتم تخزينها في `contract_documents/` بدون حماية
+**المشكلة**: أي شخص يعرف الرابط يستطيع تحميل المستند
+**الخطر**: كشف مستندات حساسة
+**الحل المطلوب**: Endpoint محمي للتحميل مع Permission Check
 
 ---
 
-## 14. HTTPS و SSL/TLS
+### الحالة الحالية للعقود:
 
-### ✅ الإيجابيات
-- SECURE_SSL_REDIRECT قابل للتفعيل
-- SECURE_PROXY_SSL_HEADER مُطبق
-- HSTS مُطبق في الإنتاج
-
-### ⚠️ المشاكل
-
-#### 14.1 SECURE_SSL_REDIRECT افتراضياً False
-**الخطورة:** 🟡 متوسطة
-```python
-SECURE_SSL_REDIRECT = os.getenv('SECURE_SSL_REDIRECT', 'False').lower() == 'true'
-```
-**المشكلة:** يجب أن يكون True في الإنتاج.
-**التوصية:** تغيير القيمة الافتراضية:
-```python
-SECURE_SSL_REDIRECT = not DEBUG
-```
+| المكون | الحالة | الملاحظات |
+|-------|-------|---------|
+| RealEstateContract Model | ✅ موجود ومكتمل | يحتاج تحسينات أمنية |
+| ContractDocument Model | ✅ موجود ومكتمل | يحتاج إضافة party_type |
+| ContractAuditLog | ✅ موجود | يعمل بشكل صحيح |
+| Forms | ✅ موجودة | تحتاج تحديثات أمنية |
+| Views | ⚠️ موجودة | تحتاج حماية IDOR |
+| APIs | ⚠️ موجودة | تحتاج حماية |
+| Templates | ❓ غير معروف | يحتاج فحص |
+| URLs | ❓ غير معروف | يحتاج فحص |
 
 ---
 
-## 15. العناوين والتعليقات (Headers & Comments)
+## الجزء الثاني: صفحة الخريطة `/dashboard/map/`
 
-### ✅ الإيجابيات
-- X-Frame-Options: DENY
-- SECURE_BROWSER_XSS_FILTER
-- SECURE_CONTENT_TYPE_NOSNIFF
+### الحالة الحالية:
 
-### ⚠️ المشاكل
+#### وجود الخريطة:
+- ✅ `interactive_map_view` موجود في views.py (سطر 1100)
+- ✅ `map_api_properties` موجود كـ API
+- ✅ تستخدم Leaflet أو مكتبة خريطة (يحتاج فحص)
+- ✅ لديها Filter للمحافظات والأسعار
 
-#### 15.1 عدم وجود Content-Security-Policy
-**الخطورة:** 🟡 متوسطة
-**المشكلة:** لا يوجد CSP header.
-**التوصية:** إضافة CSP:
-```python
-SECURE_CONTENT_SECURITY_POLICY = {
-    'default-src': ["'self'"],
-    'script-src': ["'self'", 'https://cdn.jsdelivr.net'],
-    'style-src': ["'self'", 'https://cdn.jsdelivr.net'],
-    'img-src': ["'self'", 'data:', 'https:'],
-}
-```
+#### المشاكل المحتملة:
+- ❓ هل تستخدم مصدر بيانات العقارات المنشورة؟
+- ❓ هل تحتوي على صلاحيات؟
+- ❓ هل تعرض عقارات غير منشورة؟
+- ❓ هل تعرض عقارات بدون إحداثيات صحيحة؟
+- ❓ هل هناك IDOR في API الخريطة؟
+- ❓ هل تعرض بيانات حساسة (commission, broker details)؟
 
 ---
 
-## التوصيات الأولوية
+## الجزء الثالث: لوحة المستخدم `/dashboard/`
 
-### 🔴 عالية الأولوية (حرجة)
-1. تغيير DEBUG default إلى False
-2. إضافة تحقق من نوع الملف في رفع الملفات
-3. إضافة rate limiting للـ AI endpoints
-4. التأكد من أن .env في .gitignore
-5. إضافة استراتيجية نسخ احتياطي
-6. تفعيل SECURE_SSL_REDIRECT في الإنتاج
+### الحالة الحالية:
 
-### 🟡 متوسطة الأولوية
-1. إزالة '*' من ALLOWED_HOSTS
-2. تفعيل CSRF_COOKIE_HTTPONLY
-3. تقليل SESSION_COOKIE_AGE
-4. تقليل معدلات rate limiting
-5. إضافة Content-Security-Policy
-6. إضافة audit logging
-7. تشفير البيانات الحساسة في قاعدة البيانات
-8. إضافة Two-Factor Authentication
+#### الـ Views الموجودة:
+- ✅ `dashboard` view موجود (سطر 3336 في views.py)
+- ✅ `user_dashboard` view موجود (سطر 2764)
+- ✅ محمي بـ `@user_required` decorator
+- ✅ يعرض saved properties, notifications, auctions
 
-### 🟢 منخفضة الأولوية
-1. إضافة password history
-2. إضافة validation لأبعاد الصور
-3. إعادة تسمية الملفات المرفوعة
-4. إضافة logging لمحاولات تسجيل الدخول الفاشلة
-5. تحسين escape في API responses
+#### المشاكل المحتملة:
+- ❓ هل `/dashboard/` يستخدمها الدلال أيضاً؟
+- ❓ هل هناك IDOR في API العميل؟
+- ❓ هل تعرض بيانات مستخدمين آخرين؟
+- ❓ هل تسمح بتغيير user_id من Frontend؟
+- ❓ هل APIs محمية مثل Pages؟
 
 ---
 
-## الخلاصة
+## الأولويات الأمنية الحرجة:
 
-المشروع يحتوي على إطار أمني جيد بشكل عام، مع استخدام Django الميزات الأمنية المدمجة. ومع ذلك، هناك عدة مجالات تحتاج إلى تحسين، خاصة في:
+### الأولوية 1 (حرجة جداً - يجب إصلاح فوراً):
 
-1. **إدارة الأسرار وتكوين الإنتاج**
-2. **رفع الملفات والتحقق من الأنواع**
-3. **تقييد المعدل للـ AI endpoints**
-4. **النسخ الاحتياطي والاستعادة**
-5. **التدقيق والسجلات**
+1. **رقم العقد المتزامن** - يمكن تكرار الأرقام
+2. **IDOR في نظام العقود** - كشف بيانات خاصة
+3. **حماية الملفات** - الوصول غير المصرح للمستندات
+4. **حساب العمولة** - التلاعب من Frontend
 
-من خلال تنفيذ التوصيات المذكورة أعلاه، يمكن تحسين أمان المشروع بشكل كبير.
+### الأولوية 2 (مهم جداً):
+
+5. **صلاحيات الصور الشخصية** - إضافة party_type
+6. **فحص الملفات** - حجم، نوع، امتداد
+7. **Transaction للعقود** - عدم ترك بيانات غير مكتملة
+8. **حماية APIs** - نفس صلاحيات Pages
+
+### الأولوية 3 (مهم):
+
+9. **فصل الصلاحيات بالكامل** - USER/BROKER/ADMIN
+10. **تحسين Performance** - N+1 queries
+11. **Pagination** - تحميل كافة البيانات دفعة واحدة
+12. **Audit Log كامل** - تسجيل كل العمليات
 
 ---
 
-**التقرير أُعد بواسطة:** مهندس أمن معلومات
-**التاريخ:** 2026-08-15
-**الإصدار:** 1.0
+## التوصيات:
+
+### 1. نظام العقود:
+- ✅ لا إنشاء Models جديدة (استخدم الموجودة)
+- ⚠️ إضافة `party_type` إلى `ContractDocument`
+- ⚠️ إصلاح `generate_contract_number()` لمنع التكرار
+- ⚠️ إضافة Permission checks لجميع Views
+- ⚠️ إنشاء Endpoint محمي لتحميل الملفات
+- ⚠️ إضافة Transaction لإنشاء العقد + المستندات
+
+### 2. صفحة الخريطة:
+- ✅ استخدام مصدر بيانات العقارات المنشورة فقط
+- ⚠️ إضافة Permission checks
+- ⚠️ منع عرض بيانات حساسة
+- ⚠️ التحقق من الإحداثيات الصحيحة
+- ⚠️ إضافة Pagination/Bounding Box
+
+### 3. لوحة المستخدم:
+- ✅ استخدام `@user_required` decorator
+- ⚠️ التأكد من عدم استخدام الدلال للوحة
+- ⚠️ حماية جميع APIs
+- ⚠️ منع IDOR
+- ⚠️ فصل لوحات التحكم بشكل كامل
+
+---
+
+## الحاجة للإجراء الفوري:
+
+بما أن هذا مشروع إنتاجي على Railway، يجب:
+
+1. ✅ عدم استخدام `makemigrations` تلقائياً
+2. ✅ اختبار كل إصلاح على PostgreSQL
+3. ✅ عمل Backup قبل Migrations
+4. ✅ إصلاح الأولويات الأمنية الحرجة أولاً
+5. ✅ إضافة اختبارات شاملة
+
+---
+
+## الملفات التي تحتاج فحص وإصلاح:
+
+### العقود:
+- `properties/models.py` - RealEstateContract, ContractDocument
+- `properties/contract_views.py` - Views العقود
+- `properties/contract_api_views.py` - APIs العقود
+- `properties/forms.py` - ContractForm, ContractDocumentForm
+- `properties/urls.py` - URLs العقود
+- Templates العقود (يحتاج تحديد)
+
+### الخريطة:
+- `properties/views.py` - interactive_map_view, map_api_properties
+- JavaScript الخريطة (يحتاج تحديد)
+- Template الخريطة (يحتاج تحديد)
+
+### لوحة المستخدم:
+- `properties/views.py` - dashboard, user_dashboard
+- `properties/urls.py` - URLs لوحة المستخدم
+- Templates لوحة المستخدم (يحتاج تحديد)
+- APIs لوحة المستخدم (يحتاج تحديد)
+
+---
+
+## الاستراتيجية المقترحة:
+
+بما أن الطلب ضخم جداً، سأقوم بـ:
+
+1. **المرحلة 1**: إصلاح المشاكل الأمنية الحرجة في نظام العقود
+2. **المرحلة 2**: فحص وإصلاح صفحة الخريطة
+3. **المرحلة 3**: فحص وإصلاح لوحة المستخدم
+4. **المرحلة 4**: إضافة اختبارات شاملة
+5. **المرحلة 5**: فحص Django check و makemigrations --check
+
+سأبدأ فوراً بالمرحلة 1.

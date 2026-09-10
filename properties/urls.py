@@ -553,7 +553,7 @@ urlpatterns = [
     path('admin-panel/notifications/<int:notification_id>/delete/', views.admin_delete_notification, name='admin_delete_notification'),
 
     # Broker system routes
-    path('dashboard/broker/', broker_views.broker_panel, name='broker_panel'),
+    path('broker-panel/', broker_views.broker_panel, name='broker_panel'),
     path('dashboard/brokers/', broker_views.broker_list, name='broker_list'),
     path('dashboard/brokers/create/', broker_views.broker_create, name='broker_create'),
     path('dashboard/brokers/<int:broker_id>/edit/', broker_views.broker_edit, name='broker_edit'),

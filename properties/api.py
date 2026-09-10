@@ -16,6 +16,8 @@ from django.contrib.auth.decorators import login_required
 
 from .models import Property, PropertyImage, PropertyVideo, PropertyDocument, SiteSettings, HotelPage, Job
 from .utils import get_public_properties, filter_properties, sort_properties
+
+# Import SubscriptionService from the services.py file (not the services package)
 from .services import SubscriptionService
 
 

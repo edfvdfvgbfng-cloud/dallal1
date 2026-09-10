@@ -269,6 +269,7 @@
       <div class="stat-sub">
         <span>نشط: {{ active_properties }}</span>
         <span>مسودة: {{ draft_properties }}</span>
+        <span>مرتبطة باشتراك: {{ properties_with_subscription|default:0 }}</span>
       </div>
     </div>
 
@@ -289,6 +290,16 @@
       <div class="stat-sub">
         <span>نشط: {{ active_brokers }}</span>
         <span>موثق: {{ verified_brokers }}</span>
+      </div>
+    </div>
+
+    <div class="stat-card" style="background: linear-gradient(135deg, #a855f7 0%, #6366f1 100%);">
+      <div class="stat-icon">💳</div>
+      <div class="stat-value">{{ total_subscriptions|default:0 }}</div>
+      <div class="stat-label">الاشتراكات</div>
+      <div class="stat-sub">
+        <span>نشط: {{ active_subscriptions|default:0 }}</span>
+        <span>منتهي: {{ expired_subscriptions|default:0 }}</span>
       </div>
     </div>
 

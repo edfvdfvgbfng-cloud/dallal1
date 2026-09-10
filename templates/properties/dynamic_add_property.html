@@ -373,12 +373,62 @@
     <p>يرجى اختيار فئة العقار لعرض النموذج المناسب</p>
   </div>
 
+  <!-- Success Message -->
+  {% if success and property and publication_target %}
+  <div style="text-align: center; padding: 40px; background: rgba(34, 197, 94, 0.1); border: 2px solid rgba(34, 197, 94, 0.3); border-radius: 15px; margin-bottom: 30px;">
+    <div style="font-size: 4rem; margin-bottom: 20px;">✅</div>
+    <h2 style="color: white; font-size: 2rem; margin-bottom: 20px;">تم نشر الإعلان بنجاح</h2>
+    
+    <div style="background: rgba(255, 255, 255, 0.1); padding: 20px; border-radius: 10px; margin-bottom: 20px; text-align: right;">
+      <p style="color: rgba(255, 255, 255, 0.9); margin: 10px 0;">
+        <strong>نوع الإعلان:</strong> {{ publication_target.display_name }}
+      </p>
+      <p style="color: rgba(255, 255, 255, 0.9); margin: 10px 0;">
+        <strong>مكان الظهور:</strong> {{ publication_target.display_name }}
+      </p>
+      <p style="color: rgba(255, 255, 255, 0.9); margin: 10px 0;">
+        <strong>رقم الإعلان:</strong> {{ property.property_number|default:property.id }}
+      </p>
+      {% if subscription_info %}
+      <div style="margin-top: 15px; padding-top: 15px; border-top: 1px solid rgba(255, 255, 255, 0.2);">
+        <p style="color: rgba(255, 255, 255, 0.9); margin: 10px 0;">
+          <strong>تم ربط الإعلان باشتراكك الحالي:</strong>
+        </p>
+        <p style="color: rgba(255, 255, 255, 0.9); margin: 10px 0;">
+          <strong>الخطة:</strong> {{ subscription_info.plan_name|default:"غير محدد" }}
+        </p>
+        {% if subscription_info.remaining_properties is not none %}
+        <p style="color: rgba(255, 255, 255, 0.9); margin: 10px 0;">
+          <strong>العقارات المتبقية:</strong> {{ subscription_info.remaining_properties }}
+        </p>
+        {% endif %}
+      </div>
+      {% endif %}
+    </div>
+    
+    <div style="display: flex; gap: 15px; justify-content: center; flex-wrap: wrap;">
+      <a href="{% url 'property_detail' slug=property.slug %}" class="btn-submit" style="width: auto; background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);">
+        📄 عرض الإعلان
+      </a>
+      <a href="{{ publication_target.url_path }}" class="btn-submit" style="width: auto; background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);">
+        {{ publication_target.icon }} الذهاب إلى صفحة التصنيف
+      </a>
+      <a href="{% url 'my_posts' %}" class="btn-submit" style="width: auto; background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);">
+        📋 عرض إعلاناتي
+      </a>
+      <a href="{% url 'dashboard' %}" class="btn-submit" style="width: auto; background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);">
+        🏠 العودة إلى لوحة الدلال
+      </a>
+    </div>
+  </div>
+  {% endif %}
+
   <!-- Property Form -->
-  <form method="post" enctype="multipart/form-data" id="propertyForm" action="{% url 'dynamic_add_property' %}">
+  <form method="post" enctype="multipart/form-data" id="propertyForm" action="{% url 'dynamic_add_property' %}" {% if success %}style="display: none;"{% endif %}>
     {% csrf_token %}
     
     <!-- Hidden category field -->
-    <input type="hidden" name="category" id="hidden-category" value="{% if category %}{{ category }}{% else %}inside_iraq{% endif %}">
+    <input type="hidden" name="category" id="hidden-category" value="{% if category %}{{ category }}{% else %}property_iraq{% endif %}">
     
     {% if property_form.non_field_errors %}
     <div class="error-message">
@@ -389,7 +439,7 @@
     {% endif %}
     
     <!-- Inside Iraq Form -->
-    <div id="inside_iraq-form" class="form-section {% if category == 'inside_iraq' or not category %}active{% endif %}" style="{% if category == 'inside_iraq' or not category %}display: block;{% else %}display: none;{% endif %}">
+    <div id="property_iraq-form" class="form-section {% if category == 'property_iraq' or not category %}active{% endif %}" style="{% if category == 'property_iraq' or not category %}display: block;{% else %}display: none;{% endif %}">
       <h2 class="section-title">🏠 عقارات داخل العراق</h2>
       
       <h3 class="section-title" style="font-size: 1.2rem;">المعلومات الأساسية</h3>
@@ -879,7 +929,7 @@
     </div>
     
     <!-- Outside Iraq Form -->
-    <div id="outside_iraq-form" class="form-section {% if category == 'outside_iraq' %}active{% endif %}" style="{% if category == 'outside_iraq' %}display: block;{% else %}display: none;{% endif %}">
+    <div id="property_outside-form" class="form-section {% if category == 'property_outside' %}active{% endif %}" style="{% if category == 'property_outside' %}display: block;{% else %}display: none;{% endif %}">
       <h2 class="section-title">🌍 عقارات خارج العراق</h2>
 
       <h3 class="section-title" style="font-size: 1.2rem;">المعلومات الأساسية</h3>
@@ -1321,6 +1371,33 @@
 
       <!-- Submit Button for Outside Iraq -->
       <div class="form-actions">
+        <!-- Publication Options -->
+        <div style="background: rgba(255, 255, 255, 0.05); padding: 20px; border-radius: 10px; margin-bottom: 20px;">
+          <h3 style="color: white; margin-bottom: 15px;">⚙️ خيارات النشر</h3>
+          
+          <div class="checkbox-group">
+            <div class="checkbox-item">
+              <input type="checkbox" name="is_featured" id="is_featured_outside">
+              <label for="is_featured_outside">⭐ إعلان مميز</label>
+            </div>
+            <div class="checkbox-item">
+              <input type="checkbox" name="is_pinned" id="is_pinned_outside">
+              <label for="is_pinned_outside">📌 تثبيت الإعلان</label>
+            </div>
+          </div>
+          
+          <div class="form-group" style="margin-top: 15px;">
+            <label style="color: rgba(255, 255, 255, 0.9);">مدة النشر (أيام)</label>
+            <select name="publication_days" class="form-control">
+              <option value="1">يوم واحد</option>
+              <option value="3">3 أيام</option>
+              <option value="7">أسبوع واحد</option>
+              <option value="15">أسبوعين</option>
+              <option value="30" selected>شهر واحد</option>
+            </select>
+          </div>
+        </div>
+        
         <a href="{% url 'my_posts' %}?type=outside_iraq" class="category-btn" style="text-decoration: none; background: rgba(0, 100, 200, 0.1); border-color: rgba(0, 100, 200, 0.3); margin-bottom: 15px; display: inline-block;">
           <span class="btn-icon">📋</span>
           <span class="btn-text">إدارة منشورات عقارات خارج العراق</span>
@@ -1333,7 +1410,7 @@
     </div>
 
     <!-- Hotel Form -->
-    <div id="hotel-form" class="form-section {% if category == 'hotel' %}active{% endif %}">
+    <div id="hotel-form" class="form-section {% if category == 'hotel' %}active{% endif %}" style="{% if category == 'hotel' %}display: block;{% else %}display: none;{% endif %}">
       <h2 class="section-title">🏨 فنادق</h2>
       
       <h3 class="section-title" style="font-size: 1.2rem;">المعلومات الأساسية</h3>
@@ -2065,13 +2142,40 @@
     
     <!-- Submit Button -->
     <div class="form-actions">
+      <!-- Publication Options -->
+      <div style="background: rgba(255, 255, 255, 0.05); padding: 20px; border-radius: 10px; margin-bottom: 20px;">
+        <h3 style="color: white; margin-bottom: 15px;">⚙️ خيارات النشر</h3>
+        
+        <div class="checkbox-group">
+          <div class="checkbox-item">
+            <input type="checkbox" name="is_featured" id="is_featured">
+            <label for="is_featured">⭐ إعلان مميز</label>
+          </div>
+          <div class="checkbox-item">
+            <input type="checkbox" name="is_pinned" id="is_pinned">
+            <label for="is_pinned">📌 تثبيت الإعلان</label>
+          </div>
+        </div>
+        
+        <div class="form-group" style="margin-top: 15px;">
+          <label style="color: rgba(255, 255, 255, 0.9);">مدة النشر (أيام)</label>
+          <select name="publication_days" class="form-control">
+            <option value="1">يوم واحد</option>
+            <option value="3">3 أيام</option>
+            <option value="7">أسبوع واحد</option>
+            <option value="15">أسبوعين</option>
+            <option value="30" selected>شهر واحد</option>
+          </select>
+        </div>
+      </div>
+      
       <a href="{% url 'my_posts' %}" class="category-btn" style="text-decoration: none; background: rgba(255, 122, 0, 0.1); border-color: rgba(255, 122, 0, 0.3); margin-bottom: 15px; display: inline-block;">
         <span class="btn-icon">📋</span>
         <span class="btn-text">إدارة منشورات عقارات داخل العراق</span>
       </a>
       <button type="submit" class="btn-submit" id="submit-btn" {% if category == 'outside_iraq' %}style="display: none;"{% endif %}>
         <span class="btn-icon">📝</span>
-        <span class="btn-text" id="submit-text">إضافة العقار</span>
+        <span class="btn-text" id="submit-text">نشر الإعلان</span>
       </button>
     </div>
   </form>
