@@ -1,27 +1,5 @@
-# Railway configuration for Dalal Platform
-# Force rebuild - 2026-09-09-08-05 - Force PostgreSQL only (no SQLite fallback)
 [build]
-builder = "DOCKERFILE"
+builder = "NIXPACKS"
 
-[deploy]
-healthcheckPath = "/health/"
-healthcheckTimeout = 30
-restartPolicyType = "ON_FAILURE"
-restartPolicyMaxRetries = 10
-
-# PostgreSQL service "Postgres" exists in Railway project
-# CRITICAL: DISABLE SQLite fallback - force PostgreSQL only
-
-[variables]
-DEBUG = "false"
-PORT = "8080"
-PYTHONUNBUFFERED = "1"
-PYTHONPATH = "/app"
-DJANGO_SETTINGS_MODULE = "dalal_project.settings"
-ALLOW_SQLITE_FALLBACK = "false"
-ALLOWED_HOSTS = "muqq.up.railway.app"
-GUNICORN_WORKERS = "2"
-GUNICORN_THREADS = "4"
-GUNICORN_TIMEOUT = "300"
-# SECRET_KEY should be set in Railway Variables, not here
-# Remove from here to force Railway to use environment variable
+[build.env]
+NIXPACKS_BUILD_ARGS = "--rebuild"
