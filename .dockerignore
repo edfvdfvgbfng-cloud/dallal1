@@ -4,9 +4,20 @@ __pycache__/
 *$py.class
 *.so
 .Python
-*.egg-info/
-dist/
 build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
 *.egg
 
 # Django
@@ -14,13 +25,16 @@ build/
 local_settings.py
 db.sqlite3
 db.sqlite3-journal
-/media
+media/static
 
-# Virtual Environment
-venv/
-env/
-ENV/
+# Environment
+.env
 .venv
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
 
 # IDE
 .vscode/
@@ -33,36 +47,12 @@ ENV/
 .DS_Store
 Thumbs.db
 
-# Git
-.git/
-.gitignore
-.github/
-
-# Documentation
-*.md
-docs/
-
-# Environment
-.env
-.env.local
-.env.*.local
-
-# Logs
-logs/
-*.log
-
-# Backups
-backups/
-*.backup
-
-# Testing
+# Cache
 .pytest_cache/
 .coverage
 htmlcov/
 .tox/
 
-# Railway
-railway.json
-
-# Force rebuild marker
-# Force Railway Docker rebuild - 2026-09-06-05-30
+# Railway cache
+.railway/
+.railway-cache/
