@@ -26624,34 +26624,105 @@ def broker_appointment_detail(request, appointment_id):
 
 @login_required
 def appointments_management(request):
-    """نظام إدارة المواعيد الشامل - Simple version to avoid errors"""
+    """نظام إدارة المواعيد الشامل - Full functional version"""
+    from django.utils import timezone
+    from datetime import timedelta
+    
     try:
         from .models import Appointment, BrokerAppointment
     except ImportError:
         Appointment = BrokerAppointment = None
-
-    # Return minimal version if tables don't exist
-    return render(request, 'properties/appointments_management.html', {
-        'broker_appointments': [],
-        'user_appointments': [],
-        'upcoming_broker': 0,
-        'upcoming_user': 0,
-        'completed_broker': 0,
-        'completed_user': 0,
-    })
+        return render(request, 'properties/appointments_management.html', {
+            'broker_appointments': [],
+            'user_appointments': [],
+            'upcoming_broker': 0,
+            'upcoming_user': 0,
+            'completed_broker': 0,
+            'completed_user': 0,
+        })
+    
+    # Check if tables exist
+    try:
+        # Get broker appointments
+        broker_appointments = []
+        upcoming_broker = 0
+        completed_broker = 0
+        
+        if hasattr(request.user, 'broker_profile'):
+            broker = request.user.broker_profile
+            # Get BrokerAppointments where this broker is the target
+            broker_appointments = BrokerAppointment.objects.filter(
+                broker=broker
+            ).order_by('-appointment_date', '-appointment_time')
+            
+            # Calculate stats
+            today = timezone.now().date()
+            upcoming_broker = broker_appointments.filter(
+                appointment_date__gte=today,
+                status='pending'
+            ).count()
+            completed_broker = broker_appointments.filter(
+                status='completed'
+            ).count()
+        
+        # Get user appointments
+        user_appointments = []
+        upcoming_user = 0
+        completed_user = 0
+        
+        # Get Appointment objects where user is the requester
+        user_appointments = Appointment.objects.filter(
+            user=request.user
+        ).order_by('-appointment_date', '-appointment_time')
+        
+        # Calculate user stats
+        upcoming_user = user_appointments.filter(
+            appointment_date__gte=today,
+            status='pending'
+        ).count()
+        completed_user = user_appointments.filter(
+            status='completed'
+        ).count()
+        
+        return render(request, 'properties/appointments_management.html', {
+            'broker_appointments': broker_appointments,
+            'user_appointments': user_appointments,
+            'upcoming_broker': upcoming_broker,
+            'upcoming_user': upcoming_user,
+            'completed_broker': completed_broker,
+            'completed_user': completed_user,
+        })
+        
+    except Exception as e:
+        # Return minimal version on error
+        return render(request, 'properties/appointments_management.html', {
+            'broker_appointments': [],
+            'user_appointments': [],
+            'upcoming_broker': 0,
+            'upcoming_user': 0,
+            'completed_broker': 0,
+            'completed_user': 0,
+        })
 
 
 @login_required
 def appointment_calendar(request):
-    """تقويم المواعيد - Simple version to avoid errors"""
+    """تقويم المواعيد - Full functional version"""
+    from django.utils import timezone
+    from datetime import timedelta, date
+    import calendar
+
     try:
         from .models import Appointment, BrokerAppointment
     except ImportError:
         Appointment = BrokerAppointment = None
-
-    # Return minimal version if tables don't exist
-    from django.utils import timezone
-    import calendar
+        return render(request, 'properties/appointment_calendar.html', {
+            'month_days': [],
+            'year': timezone.now().year,
+            'month': timezone.now().month,
+            'month_name': 'الشهر الحالي',
+            'appointments_by_date': {},
+        })
 
     year = int(request.GET.get('year', timezone.now().year))
     month = int(request.GET.get('month', timezone.now().month))
@@ -26666,12 +26737,66 @@ def appointment_calendar(request):
     }
     month_name = arabic_months.get(month, calendar.month_name[month])
 
+    # Get appointments for the current month
+    appointments_by_date = {}
+    
+    try:
+        month_start = date(year, month, 1)
+        if month == 12:
+            month_end = date(year + 1, 1, 1) - timedelta(days=1)
+        else:
+            month_end = date(year, month + 1, 1) - timedelta(days=1)
+        
+        # Get user appointments
+        user_appointments = Appointment.objects.filter(
+            user=request.user,
+            appointment_date__range=[month_start, month_end]
+        )
+        
+        # Get broker appointments if user is a broker
+        if hasattr(request.user, 'broker_profile'):
+            broker_appointments = BrokerAppointment.objects.filter(
+                broker=request.user.broker_profile,
+                appointment_date__range=[month_start, month_end]
+            )
+        else:
+            broker_appointments = []
+        
+        # Group appointments by date
+        for appointment in user_appointments:
+            date_str = appointment.appointment_date.strftime('%Y-%m-%d')
+            if date_str not in appointments_by_date:
+                appointments_by_date[date_str] = []
+            appointments_by_date[date_str].append({
+                'id': appointment.id,
+                'type': appointment.get_appointment_type_display(),
+                'time': appointment.appointment_time.strftime('%H:%M'),
+                'status': appointment.get_status_display(),
+                'source': 'user'
+            })
+        
+        for appointment in broker_appointments:
+            date_str = appointment.appointment_date.strftime('%Y-%m-%d')
+            if date_str not in appointments_by_date:
+                appointments_by_date[date_str] = []
+            appointments_by_date[date_str].append({
+                'id': appointment.id,
+                'type': appointment.get_appointment_type_display(),
+                'time': appointment.appointment_time.strftime('%H:%M'),
+                'status': appointment.get_status_display(),
+                'source': 'broker'
+            })
+            
+    except Exception as e:
+        # Return empty calendar on error
+        appointments_by_date = {}
+
     return render(request, 'properties/appointment_calendar.html', {
         'month_days': month_days,
         'year': year,
         'month': month,
         'month_name': month_name,
-        'appointments_by_date': {},
+        'appointments_by_date': appointments_by_date,
     })
 
 @login_required

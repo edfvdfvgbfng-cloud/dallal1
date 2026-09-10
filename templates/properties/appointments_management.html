@@ -827,7 +827,7 @@ document.getElementById('statusFilter')?.addEventListener('change', function() {
 
 function confirmAppointment(appointmentId) {
   if (confirm('هل تريد تأكيد هذا الموعد؟')) {
-    fetch(`/api/appointments/${appointmentId}/confirm/`, {
+    fetch('{% url "api_appointment_confirm" 0 %}'.replace('0', appointmentId), {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -852,7 +852,7 @@ function confirmAppointment(appointmentId) {
 
 function cancelAppointment(appointmentId) {
   if (confirm('هل تريد إلغاء هذا الموعد؟')) {
-    fetch(`/api/appointments/${appointmentId}/cancel/`, {
+    fetch('{% url "api_appointment_cancel" 0 %}'.replace('0', appointmentId), {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -880,15 +880,15 @@ function rescheduleAppointment(appointmentId) {
   const newTime = prompt('أدخل الوقت الجديد (HH:MM):');
   
   if (newDate && newTime) {
-    fetch(`/api/appointments/${appointmentId}/reschedule/`, {
+    fetch('{% url "api_appointment_reschedule" 0 %}'.replace('0', appointmentId), {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
       },
       body: JSON.stringify({
-        new_date: newDate,
-        new_time: newTime
+        appointment_date: newDate,
+        appointment_time: newTime
       })
     })
     .then(response => response.json())
