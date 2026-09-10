@@ -27,6 +27,14 @@ def drop_conflicting_tables(apps, schema_editor):
                     ALTER TABLE properties_property DROP COLUMN IF EXISTS {column} CASCADE
                 """)
             print(f"Dropped conflicting columns from properties_property: {', '.join(conflicting_columns)}")
+            
+            # Drop conflicting columns from properties_broker if they exist
+            broker_columns = ['suspension_reason']
+            for column in broker_columns:
+                cursor.execute(f"""
+                    ALTER TABLE properties_broker DROP COLUMN IF EXISTS {column} CASCADE
+                """)
+            print(f"Dropped conflicting columns from properties_broker: {', '.join(broker_columns)}")
     except Exception as e:
         print(f"Error dropping conflicting tables/columns: {e}")
 
