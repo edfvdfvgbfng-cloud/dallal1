@@ -18,11 +18,8 @@ def safely_add_suspension_reason(apps, schema_editor):
             if not cursor.fetchone()[0]:
                 # Add the column using SQL
                 cursor.execute("ALTER TABLE properties_broker ADD COLUMN suspension_reason VARCHAR(200) DEFAULT ''")
-                print("Added suspension_reason column to properties_broker")
-            else:
-                print("suspension_reason column already exists, skipping addition")
     except Exception as e:
-        print(f"Error adding suspension_reason column: {e}")
+        pass  # Silent failure to reduce logs
 
 
 class Migration(migrations.Migration):

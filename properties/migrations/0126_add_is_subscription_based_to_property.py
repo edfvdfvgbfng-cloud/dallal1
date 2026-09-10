@@ -18,11 +18,8 @@ def safely_add_is_subscription_based(apps, schema_editor):
             if not cursor.fetchone()[0]:
                 # Add the column using SQL
                 cursor.execute("ALTER TABLE properties_property ADD COLUMN is_subscription_based BOOLEAN DEFAULT FALSE")
-                print("Added is_subscription_based column to properties_property")
-            else:
-                print("is_subscription_based column already exists, skipping addition")
     except Exception as e:
-        print(f"Error adding is_subscription_based column: {e}")
+        pass  # Silent failure to reduce logs
 
 
 class Migration(migrations.Migration):

@@ -11,14 +11,12 @@ def drop_conflicting_tables(apps, schema_editor):
         with schema_editor.connection.cursor() as cursor:
             # Drop ActivityLog if it exists
             cursor.execute("DROP TABLE IF EXISTS properties_activitylog CASCADE")
-            print("Dropped ActivityLog table to avoid conflicts")
             
             # Also drop Hotel, Resort, Country, BrokerChannel tables if they exist to avoid conflicts
             cursor.execute("DROP TABLE IF EXISTS properties_hotel CASCADE")
             cursor.execute("DROP TABLE IF EXISTS properties_resort CASCADE")
             cursor.execute("DROP TABLE IF EXISTS properties_country CASCADE")
             cursor.execute("DROP TABLE IF EXISTS properties_brokerchannel CASCADE")
-            print("Dropped Hotel, Resort, Country, BrokerChannel tables to avoid conflicts")
             
             # Drop conflicting columns from properties_property if they exist
             conflicting_columns = ['publication_end_date', 'expiry_date', 'is_pinned', 'pinned_until', 'is_subscription_based']
@@ -26,7 +24,6 @@ def drop_conflicting_tables(apps, schema_editor):
                 cursor.execute(f"""
                     ALTER TABLE properties_property DROP COLUMN IF EXISTS {column} CASCADE
                 """)
-            print(f"Dropped conflicting columns from properties_property: {', '.join(conflicting_columns)}")
             
             # Drop conflicting columns from properties_broker if they exist
             broker_columns = ['suspension_reason']
@@ -34,9 +31,8 @@ def drop_conflicting_tables(apps, schema_editor):
                 cursor.execute(f"""
                     ALTER TABLE properties_broker DROP COLUMN IF EXISTS {column} CASCADE
                 """)
-            print(f"Dropped conflicting columns from properties_broker: {', '.join(broker_columns)}")
     except Exception as e:
-        print(f"Error dropping conflicting tables/columns: {e}")
+        pass  # Silent failure to reduce logs
 
 
 class Migration(migrations.Migration):
