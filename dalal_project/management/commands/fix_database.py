@@ -45,6 +45,24 @@ class Command(BaseCommand):
         except Exception as e:
             self.stdout.write(f"  Error checking/dropping conflicting columns: {e}")
         
+        # 1.6. Ensure properties_broker table doesn't have conflicting columns from previous migrations
+        self.stdout.write("Step 1.6: Checking for conflicting columns in properties_broker...")
+        try:
+            cursor.execute("""
+                SELECT EXISTS (
+                    SELECT FROM information_schema.tables 
+                    WHERE table_name = 'properties_broker'
+                );
+            """)
+            if cursor.fetchone()[0]:
+                # Drop conflicting columns if they exist
+                broker_columns = ['suspension_reason']
+                for column in broker_columns:
+                    cursor.execute(f"ALTER TABLE properties_broker DROP COLUMN IF EXISTS {column} CASCADE")
+                self.stdout.write(f"  Dropped conflicting columns from properties_broker: {', '.join(broker_columns)}")
+        except Exception as e:
+            self.stdout.write(f"  Error checking/dropping conflicting columns: {e}")
+        
         # 1.5. Also specifically drop ActivityLog and BrokerChannel tables if they exist
         self.stdout.write("Step 1.5: Dropping ActivityLog and BrokerChannel tables if they exist...")
         try:
