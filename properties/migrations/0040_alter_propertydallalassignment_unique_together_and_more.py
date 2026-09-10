@@ -9,10 +9,9 @@ def drop_conflicting_tables(apps, schema_editor):
     """Drop tables that might cause conflicts in later migrations"""
     try:
         with schema_editor.connection.cursor() as cursor:
-            # Drop ActivityLog if it exists
-            cursor.execute("DROP TABLE IF EXISTS properties_activitylog CASCADE")
+            # DO NOT drop ActivityLog - it's used for logging
             
-            # Also drop Hotel, Resort, Country, BrokerChannel tables if they exist to avoid conflicts
+            # Drop Hotel, Resort, Country, BrokerChannel tables if they exist to avoid conflicts
             cursor.execute("DROP TABLE IF EXISTS properties_hotel CASCADE")
             cursor.execute("DROP TABLE IF EXISTS properties_resort CASCADE")
             cursor.execute("DROP TABLE IF EXISTS properties_country CASCADE")

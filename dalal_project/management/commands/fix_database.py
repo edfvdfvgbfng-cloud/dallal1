@@ -8,10 +8,11 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         cursor = connection.cursor()
         
-        # Drop all properties tables completely to ensure clean state
+        # Drop all properties tables EXCEPT ActivityLog (used for logging)
         cursor.execute("""
             SELECT tablename FROM pg_tables 
             WHERE schemaname = 'public' AND tablename LIKE 'properties_%'
+            AND tablename != 'properties_activitylog'
         """)
         tables = [row[0] for row in cursor.fetchall()]
         
