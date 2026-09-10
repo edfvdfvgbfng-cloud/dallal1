@@ -1,5 +1,5 @@
 # Stage 1: Build
-# Force rebuild - 2026-09-10-01-55 - Apply is_subscription_based column conflict fixes
+# Force rebuild - 2026-09-10-05-50 - Apply AI tables migration fixes
 FROM python:3.11-slim AS builder
 
 WORKDIR /app
