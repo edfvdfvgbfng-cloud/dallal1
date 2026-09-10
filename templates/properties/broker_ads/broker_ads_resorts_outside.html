@@ -75,6 +75,12 @@
         <span>💰 {{ resort.price_per_night }}$ / ليلة</span>
       </div>
       <a href="{% url 'resort_outside_detail' resort.id %}" class="btn btn-primary">عرض التفاصيل</a>
+      <form method="post" onsubmit="return confirm('هل أنت متأكد من حذف هذا الإعلان؟')" style="margin-top: 12px;">
+        {% csrf_token %}
+        <input type="hidden" name="delete_resort" value="1">
+        <input type="hidden" name="resort_id" value="{{ resort.id }}">
+        <button type="submit" class="btn-delete">🗑️ حذف الإعلان</button>
+      </form>
     </div>
   </div>
   {% endfor %}
@@ -87,3 +93,23 @@
 </div>
 {% endif %}
 {% endblock %}
+
+<style>
+.btn-delete {
+  background: linear-gradient(135deg, #EF4444 0%, #DC2626 100%);
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: var(--radius-sm);
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  width: 100%;
+}
+
+.btn-delete:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(239, 68, 68, 0.4);
+}
+</style>

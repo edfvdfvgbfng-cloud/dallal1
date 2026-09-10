@@ -28300,6 +28300,21 @@ def broker_ads_hotels_outside(request):
     """View for broker ads - hotels outside Iraq"""
     from properties.models import PropertyHotel, Country
 
+    # Handle deletion
+    if request.method == 'POST' and 'delete_hotel' in request.POST:
+        hotel_id = request.POST.get('hotel_id')
+        try:
+            hotel = PropertyHotel.objects.get(id=hotel_id)
+            # Check if user has permission to delete
+            if request.user == hotel.property.owner or request.user.is_superuser or request.user.is_staff:
+                hotel.property.delete()
+                messages.success(request, 'تم حذف الإعلان بنجاح')
+            else:
+                messages.error(request, 'ليس لديك صلاحية حذف هذا الإعلان')
+        except PropertyHotel.DoesNotExist:
+            messages.error(request, 'الإعلان غير موجود')
+        return redirect('broker_ads_hotels_outside')
+
     # Get filters
     star_rating = request.GET.get('star_rating', '')
     country_id = request.GET.get('country', '')
@@ -28349,6 +28364,21 @@ def broker_ads_resorts_inside(request):
     from properties.models import PropertyResort
     from properties.constants import IRAQ_GOVERNORATES
 
+    # Handle deletion
+    if request.method == 'POST' and 'delete_resort' in request.POST:
+        resort_id = request.POST.get('resort_id')
+        try:
+            resort = PropertyResort.objects.get(id=resort_id)
+            # Check if user has permission to delete
+            if request.user == resort.property.owner or request.user.is_superuser or request.user.is_staff:
+                resort.property.delete()
+                messages.success(request, 'تم حذف الإعلان بنجاح')
+            else:
+                messages.error(request, 'ليس لديك صلاحية حذف هذا الإعلان')
+        except PropertyResort.DoesNotExist:
+            messages.error(request, 'الإعلان غير موجود')
+        return redirect('broker_ads_resorts_inside')
+
     # Get filters
     governorate = request.GET.get('governorate', '')
     district = request.GET.get('district', '')
@@ -28389,6 +28419,21 @@ def broker_ads_resorts_inside(request):
 def broker_ads_resorts_outside(request):
     """View for broker ads - resorts outside Iraq"""
     from properties.models import PropertyResort, Country
+
+    # Handle deletion
+    if request.method == 'POST' and 'delete_resort' in request.POST:
+        resort_id = request.POST.get('resort_id')
+        try:
+            resort = PropertyResort.objects.get(id=resort_id)
+            # Check if user has permission to delete
+            if request.user == resort.property.owner or request.user.is_superuser or request.user.is_staff:
+                resort.property.delete()
+                messages.success(request, 'تم حذف الإعلان بنجاح')
+            else:
+                messages.error(request, 'ليس لديك صلاحية حذف هذا الإعلان')
+        except PropertyResort.DoesNotExist:
+            messages.error(request, 'الإعلان غير موجود')
+        return redirect('broker_ads_resorts_outside')
 
     # Get filters
     country_id = request.GET.get('country', '')
@@ -28433,6 +28478,21 @@ def broker_ads_travel_companies(request):
     """View for broker ads - travel companies"""
     from properties.models import TravelCompany
 
+    # Handle deletion
+    if request.method == 'POST' and 'delete_company' in request.POST:
+        company_id = request.POST.get('company_id')
+        try:
+            company = TravelCompany.objects.get(id=company_id)
+            # Check if user has permission to delete
+            if request.user == company.user or request.user.is_superuser or request.user.is_staff:
+                company.delete()
+                messages.success(request, 'تم حذف الإعلان بنجاح')
+            else:
+                messages.error(request, 'ليس لديك صلاحية حذف هذا الإعلان')
+        except TravelCompany.DoesNotExist:
+            messages.error(request, 'الإعلان غير موجود')
+        return redirect('broker_ads_travel_companies')
+
     companies = TravelCompany.objects.all()
 
     return render(request, 'properties/broker_ads/broker_ads_travel_companies.html', {
@@ -28446,6 +28506,21 @@ def broker_ads_travel_companies(request):
 def broker_ads_jobs(request):
     """View for broker ads - jobs"""
     from properties.models import Job
+
+    # Handle deletion
+    if request.method == 'POST' and 'delete_job' in request.POST:
+        job_id = request.POST.get('job_id')
+        try:
+            job = Job.objects.get(id=job_id)
+            # Check if user has permission to delete
+            if request.user == job.user or request.user.is_superuser or request.user.is_staff:
+                job.delete()
+                messages.success(request, 'تم حذف الإعلان بنجاح')
+            else:
+                messages.error(request, 'ليس لديك صلاحية حذف هذا الإعلان')
+        except Job.DoesNotExist:
+            messages.error(request, 'الإعلان غير موجود')
+        return redirect('broker_ads_jobs')
 
     # Get filters
     job_type = request.GET.get('job_type', '')
@@ -28483,6 +28558,21 @@ def broker_ads_services(request):
     """View for broker ads - services"""
     from properties.models import ServiceAdvertisement
 
+    # Handle deletion
+    if request.method == 'POST' and 'delete_service' in request.POST:
+        service_id = request.POST.get('service_id')
+        try:
+            service = ServiceAdvertisement.objects.get(id=service_id)
+            # Check if user has permission to delete
+            if request.user == service.user or request.user.is_superuser or request.user.is_staff:
+                service.delete()
+                messages.success(request, 'تم حذف الإعلان بنجاح')
+            else:
+                messages.error(request, 'ليس لديك صلاحية حذف هذا الإعلان')
+        except ServiceAdvertisement.DoesNotExist:
+            messages.error(request, 'الإعلان غير موجود')
+        return redirect('broker_ads_services')
+
     # Get filters
     service_type = request.GET.get('service_type', '')
     location = request.GET.get('location', '')
@@ -28518,6 +28608,21 @@ def broker_ads_services(request):
 def broker_ads_auctions(request):
     """View for broker ads - auctions"""
     from properties.models import Auction
+
+    # Handle deletion
+    if request.method == 'POST' and 'delete_auction' in request.POST:
+        auction_id = request.POST.get('auction_id')
+        try:
+            auction = Auction.objects.get(id=auction_id)
+            # Check if user has permission to delete
+            if request.user == auction.user or request.user.is_superuser or request.user.is_staff:
+                auction.delete()
+                messages.success(request, 'تم حذف الإعلان بنجاح')
+            else:
+                messages.error(request, 'ليس لديك صلاحية حذف هذا الإعلان')
+        except Auction.DoesNotExist:
+            messages.error(request, 'الإعلان غير موجود')
+        return redirect('broker_ads_auctions')
 
     # Get filters
     status = request.GET.get('status', '')
