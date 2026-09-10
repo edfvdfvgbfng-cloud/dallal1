@@ -99,14 +99,6 @@ python manage.py fix_database
 echo "Running migrations from scratch..."
 python manage.py migrate --noinput
 
-# If migration 0040 fails due to ActivityLog conflict, fake it
-if [ $? -ne 0 ]; then
-    echo "Migration failed. Attempting to fake migration 0040..."
-    python manage.py migrate properties 0040 --fake
-    # Then continue with remaining migrations
-    python manage.py migrate --noinput
-fi
-
 # If migrations fail, report error and exit
 if [ $? -ne 0 ]; then
     echo "ERROR: Migrations failed! Database schema not created properly."

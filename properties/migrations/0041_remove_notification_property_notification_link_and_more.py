@@ -5,6 +5,28 @@ from django.conf import settings
 from django.db import migrations, models
 
 
+def safely_remove_property_field(apps, schema_editor):
+    """Safely remove property field if it exists"""
+    try:
+        with schema_editor.connection.cursor() as cursor:
+            # Check if property_id column exists
+            cursor.execute("""
+                SELECT EXISTS (
+                    SELECT FROM information_schema.columns 
+                    WHERE table_name = 'properties_notification' 
+                    AND column_name = 'property_id'
+                );
+            """)
+            if cursor.fetchone()[0]:
+                # Remove the field using SQL
+                cursor.execute("ALTER TABLE properties_notification DROP COLUMN property_id CASCADE")
+                print("Removed property_id column from properties_notification")
+            else:
+                print("property_id column does not exist, skipping removal")
+    except Exception as e:
+        print(f"Error removing property field: {e}")
+
+
 class Migration(migrations.Migration):
 
     dependencies = [
@@ -13,10 +35,7 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        migrations.RemoveField(
-            model_name='notification',
-            name='property',
-        ),
+        migrations.RunPython(safely_remove_property_field, migrations.RunPython.noop),
         migrations.AddField(
             model_name='notification',
             name='link',

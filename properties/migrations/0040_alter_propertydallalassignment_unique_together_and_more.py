@@ -5,14 +5,21 @@ from django.conf import settings
 from django.db import migrations, models
 
 
-def drop_activitylog_if_exists(apps, schema_editor):
-    """Drop ActivityLog table if it exists to avoid conflicts"""
+def drop_conflicting_tables(apps, schema_editor):
+    """Drop tables that might cause conflicts in later migrations"""
     try:
         with schema_editor.connection.cursor() as cursor:
+            # Drop ActivityLog if it exists
             cursor.execute("DROP TABLE IF EXISTS properties_activitylog CASCADE")
             print("Dropped ActivityLog table to avoid conflicts")
+            
+            # Also drop Hotel, Resort, Country tables if they exist to avoid conflicts
+            cursor.execute("DROP TABLE IF EXISTS properties_hotel CASCADE")
+            cursor.execute("DROP TABLE IF EXISTS properties_resort CASCADE")
+            cursor.execute("DROP TABLE IF EXISTS properties_country CASCADE")
+            print("Dropped Hotel, Resort, Country tables to avoid conflicts")
     except Exception as e:
-        print(f"Error dropping ActivityLog (may not exist): {e}")
+        print(f"Error dropping conflicting tables: {e}")
 
 
 class Migration(migrations.Migration):
@@ -23,7 +30,7 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        migrations.RunPython(drop_activitylog_if_exists, migrations.RunPython.noop),
+        migrations.RunPython(drop_conflicting_tables, migrations.RunPython.noop),
         migrations.AlterUniqueTogether(
             name='propertydallalassignment',
             unique_together=set(),
