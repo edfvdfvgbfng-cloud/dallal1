@@ -954,7 +954,7 @@ def broker_create(request):
                 BrokerIndividualStats.objects.get_or_create(broker=broker)
 
                 messages.success(request, f'تم إنشاء حساب الدلال: {broker.display_name}. كلمة المرور: {password}')
-                return redirect('admin_panel')
+                return redirect('broker_list')
             messages.error(request, 'يرجى تصحيح الأخطاء')
         else:
             form = BrokerCreateForm(creator=request.user)
