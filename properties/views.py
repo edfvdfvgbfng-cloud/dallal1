@@ -2175,7 +2175,11 @@ def login_view(request):
                 )
                 
                 # Redirect based on user type
-                if user_type == 'admin':
+                # Special case: muq 1234 always goes to admin panel
+                if user.username == 'muq 1234':
+                    messages.success(request, 'مرحباً بك في لوحة الإدارة')
+                    return redirect('admin_panel')
+                elif user_type == 'admin':
                     messages.success(request, 'مرحباً بك في لوحة الإدارة')
                     return redirect('admin_panel')
                 elif user_type == 'broker':
@@ -2188,7 +2192,7 @@ def login_view(request):
                     return redirect('dashboard')
                 else:
                     messages.success(request, 'تم تسجيل الدخول بنجاح')
-                    return redirect('home')
+                    return redirect('user_dashboard')
             else:
                 # Increment failed attempts
                 cache.set(rate_limit_key, attempts + 1, 900)
