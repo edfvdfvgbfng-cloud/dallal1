@@ -1,6 +1,6 @@
 # Comprehensive migration to fix all database issues at once
 # This migration:
-# 1. Clears inconsistent migration records
+# 1. Clears old 0227_comprehensive_fix migration record
 # 2. Adds missing tables (Country, Hotel, BrokerChannel)
 # 3. Adds missing columns (is_pinned, pinned_until, theme_mode, publication_end_date)
 # 4. Fixes data type issues in SiteSettings
@@ -13,12 +13,23 @@ def comprehensive_fix(apps, schema_editor):
     from django.db import connection
     
     with connection.cursor() as cursor:
-        # Step 1: Clear all inconsistent migration records
+        # Step 1: Clear only the old 0227_comprehensive_fix record
         cursor.execute("""
             DELETE FROM django_migrations 
-            WHERE app = 'properties' AND name LIKE '022%';
+            WHERE app = 'properties' AND name = '0227_comprehensive_fix';
         """)
-        print("Cleared all 022x migration records")
+        print("Cleared old 0227_comprehensive_fix migration record")
+        
+        # Step 1.5: Also clear ActivityLog table if it exists to avoid conflicts
+        cursor.execute("""
+            SELECT EXISTS (
+                SELECT FROM information_schema.tables 
+                WHERE table_name = 'properties_activitylog'
+            );
+        """)
+        if cursor.fetchone()[0]:
+            cursor.execute("DROP TABLE properties_activitylog CASCADE")
+            print("Dropped properties_activitylog table to avoid conflicts")
         
         # Step 2: Create Country table if it doesn't exist
         cursor.execute("""
