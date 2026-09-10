@@ -14663,6 +14663,7 @@ def dynamic_add_property(request):
     available_premium = 0
     available_regular = 0
     is_all_inclusive = False
+    latest_renewal = None
     
     if broker:
         # Get latest subscription renewal request to check limits
@@ -14678,6 +14679,11 @@ def dynamic_add_property(request):
             # Check if this is an all-inclusive subscription
             is_all_inclusive = (latest_renewal.subscription_type == 'all_inclusive' or 
                               'all_inclusive' in latest_renewal.subscription_types)
+    else:
+        # If no broker, allow posting with default limits
+        available_premium = 1
+        available_regular = 10
+        is_all_inclusive = True
     
     # Count user's existing properties
     existing_properties = Property.objects.filter(owner=request.user)
@@ -14702,6 +14708,21 @@ def dynamic_add_property(request):
             if remaining_regular <= 0 and not is_all_inclusive:
                 messages.error(request, 'ليس لديك عقارات عادية متاحة. يرجى ترقية اشتراكك.')
                 return redirect('subscription_plans')
+        
+        # Validate required fields
+        title = request.POST.get('title', '').strip()
+        if not title:
+            messages.error(request, 'يرجى إدخال عنوان الإعلان')
+            return render(request, 'properties/dynamic_add_property.html', {
+                'category_form': None,
+                'property_form': None,
+                'category': category,
+                'broker': broker,
+                'governorates': IRAQ_GOVERNORATES,
+                'remaining_premium': remaining_premium,
+                'remaining_regular': remaining_regular,
+                'is_all_inclusive': is_all_inclusive,
+            })
         
         # Create property
         try:
@@ -14732,7 +14753,20 @@ def dynamic_add_property(request):
             messages.success(request, f'تم إنشاء العقار بنجاح! العقارات المتبقية: مميزة={remaining_premium - (1 if is_featured else 0)}, عادية={remaining_regular - (0 if is_featured else 1)}')
             return redirect('property_detail', slug=prop.slug)
         except Exception as e:
+            import traceback
+            traceback.print_exc()
             messages.error(request, f'حدث خطأ أثناء إنشاء العقار: {str(e)}')
+            # Re-render form with error
+            return render(request, 'properties/dynamic_add_property.html', {
+                'category_form': None,
+                'property_form': None,
+                'category': category,
+                'broker': broker,
+                'governorates': IRAQ_GOVERNORATES,
+                'remaining_premium': remaining_premium,
+                'remaining_regular': remaining_regular,
+                'is_all_inclusive': is_all_inclusive,
+            })
     
     from .constants import IRAQ_GOVERNORATES
     

@@ -2531,6 +2531,14 @@ document.addEventListener('DOMContentLoaded', function() {
       if (submitBtn && submitText) {
         submitBtn.disabled = true;
         submitText.textContent = 'جاري النشر...';
+        
+        // Auto-re-enable button after 30 seconds if redirect doesn't happen
+        setTimeout(function() {
+          if (submitBtn && submitText) {
+            submitBtn.disabled = false;
+            submitText.textContent = category === 'outside_iraq' ? 'نشر عقار خارج العراق' : 'إضافة العقار';
+          }
+        }, 30000);
       }
 
       // Set category before submit
