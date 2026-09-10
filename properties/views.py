@@ -13473,9 +13473,22 @@ def admin_delete_user(request, user_id):
         return redirect('admin_users_list')
 
     if request.method == 'POST':
-        user.delete()
-        messages.success(request, 'تم حذف المستخدم بنجاح')
-        return redirect('admin_users_list')
+        try:
+            # Delete broker profile if exists
+            if hasattr(user, 'broker_profile'):
+                user.broker_profile.delete()
+            
+            # Delete user profile if exists
+            if hasattr(user, 'user_profile'):
+                user.user_profile.delete()
+            
+            # Delete the user
+            user.delete()
+            messages.success(request, 'تم حذف المستخدم بنجاح')
+            return redirect('admin_users_list')
+        except Exception as e:
+            messages.error(request, f'حدث خطأ أثناء حذف المستخدم: {str(e)}')
+            return redirect('admin_users_list')
 
     context = {
         'user': user,

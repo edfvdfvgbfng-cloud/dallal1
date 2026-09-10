@@ -1,16 +1,60 @@
-{% extends 'properties/dashboard_base.html' %}
+{% extends 'properties/base.html' %}
 
 {% block title %}حذف المستخدم{% endblock %}
-{% block dashboard_title %}حذف <span>المستخدم</span>{% endblock %}
-{% block dashboard_subtitle %}
-<p style="margin:0;color:var(--text-muted);font-size:0.9rem;">{{ user.get_full_name|default:user.username }} — @{{ user.username }}</p>
-{% endblock %}
 
-{% block dashboard_actions %}
-<a href="{% url 'admin_users_list' %}" class="btn btn-outline">← المستخدمين</a>
-{% endblock %}
+{% block content %}
+<div class="container" style="max-width: 600px; margin: 40px auto; padding: 20px;">
+  <div class="card" style="background: var(--card-bg); border: 2px solid var(--border); border-radius: var(--radius-lg); padding: 30px; box-shadow: var(--shadow-lg);">
+    <div style="text-align: center; margin-bottom: 30px;">
+      <h1 style="color: var(--danger); margin-bottom: 10px;">⚠️ حذف المستخدم</h1>
+      <p style="color: var(--text-muted); margin: 0;">{{ user.get_full_name|default:user.username }} — @{{ user.username }}</p>
+    </div>
 
-{% block dashboard_content %}
+    <div class="delete-warning" style="background: rgba(220, 53, 69, 0.1); border: 2px solid var(--danger); border-radius: var(--radius-sm); padding: 20px; margin-bottom: 30px; text-align: center;">
+      <div style="font-size: 3rem; margin-bottom: 10px;">⚠️</div>
+      <h2 style="color: var(--danger); margin: 0 0 10px 0;">تحذير: هذا الإجراء لا يمكن التراجع عنه</h2>
+      <p style="margin: 0; color: var(--text);">أنت على وشك حذف المستخدم <strong>{{ user.get_full_name|default:user.username }}</strong></p>
+    </div>
+
+    <div class="user-info-card" style="background: var(--bg-alt); border-radius: var(--radius-sm); padding: 20px; margin-bottom: 30px;">
+      <h3 style="margin-top: 0; color: var(--text);">معلومات المستخدم</h3>
+      <div style="display: grid; gap: 10px;">
+        <div style="display: flex; justify-content: space-between; padding: 10px; background: var(--card-bg); border-radius: var(--radius-sm);">
+          <span style="color: var(--text-muted);">الاسم:</span>
+          <span style="color: var(--text); font-weight: 600;">{{ user.get_full_name|default:'غير محدد' }}</span>
+        </div>
+        <div style="display: flex; justify-content: space-between; padding: 10px; background: var(--card-bg); border-radius: var(--radius-sm);">
+          <span style="color: var(--text-muted);">اسم المستخدم:</span>
+          <span style="color: var(--text); font-weight: 600;">@{{ user.username }}</span>
+        </div>
+        <div style="display: flex; justify-content: space-between; padding: 10px; background: var(--card-bg); border-radius: var(--radius-sm);">
+          <span style="color: var(--text-muted);">البريد الإلكتروني:</span>
+          <span style="color: var(--text); font-weight: 600;">{{ user.email }}</span>
+        </div>
+        <div style="display: flex; justify-content: space-between; padding: 10px; background: var(--card-bg); border-radius: var(--radius-sm);">
+          <span style="color: var(--text-muted);">تاريخ الإنشاء:</span>
+          <span style="color: var(--text); font-weight: 600;">{{ user.date_joined|date:"Y/m/d H:i" }}</span>
+        </div>
+        <div style="display: flex; justify-content: space-between; padding: 10px; background: var(--card-bg); border-radius: var(--radius-sm);">
+          <span style="color: var(--text-muted);">نوع الحساب:</span>
+          <span style="color: var(--text); font-weight: 600;">
+            {% if user.is_superuser %}👑 مدير النظام
+            {% elif user.broker_profile %}👔 دلال
+            {% elif user.user_profile %}👤 مستخدم عادي
+            {% else %}❓ غير معروف{% endif %}
+          </span>
+        </div>
+      </div>
+    </div>
+
+    <form method="post" style="display: flex; gap: 10px; justify-content: center;">
+      {% csrf_token %}
+      <button type="submit" style="background: var(--danger); color: white; border: none; padding: 15px 30px; border-radius: var(--radius-sm); font-size: 1rem; font-weight: 600; cursor: pointer; transition: all 0.3s ease;">🗑️ تأكيد الحذف</button>
+      <a href="{% url 'admin_users_list' %}" style="background: transparent; color: var(--text); border: 2px solid var(--border); padding: 15px 30px; border-radius: var(--radius-sm); text-decoration: none; font-weight: 600; transition: all 0.3s ease;">إلغاء</a>
+    </form>
+  </div>
+</div>
+{% endblock %}
 <div class="delete-warning">
   <div class="warning-icon">⚠️</div>
   <h2>تحذير: هذا الإجراء لا يمكن التراجع عنه</h2>
