@@ -3,6 +3,28 @@
 from django.db import migrations, models
 
 
+def safely_add_is_subscription_based(apps, schema_editor):
+    """Safely add is_subscription_based column if it doesn't exist"""
+    try:
+        with schema_editor.connection.cursor() as cursor:
+            # Check if column exists
+            cursor.execute("""
+                SELECT EXISTS (
+                    SELECT FROM information_schema.columns 
+                    WHERE table_name = 'properties_property' 
+                    AND column_name = 'is_subscription_based'
+                );
+            """)
+            if not cursor.fetchone()[0]:
+                # Add the column using SQL
+                cursor.execute("ALTER TABLE properties_property ADD COLUMN is_subscription_based BOOLEAN DEFAULT FALSE")
+                print("Added is_subscription_based column to properties_property")
+            else:
+                print("is_subscription_based column already exists, skipping addition")
+    except Exception as e:
+        print(f"Error adding is_subscription_based column: {e}")
+
+
 class Migration(migrations.Migration):
 
     dependencies = [
@@ -10,9 +32,5 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        migrations.AddField(
-            model_name='property',
-            name='is_subscription_based',
-            field=models.BooleanField(default=False, verbose_name='مبني على الاشتراك'),
-        ),
+        migrations.RunPython(safely_add_is_subscription_based, migrations.RunPython.noop),
     ]

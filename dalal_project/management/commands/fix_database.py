@@ -28,6 +28,24 @@ class Command(BaseCommand):
         except Exception as e:
             self.stdout.write(f"  Error checking/dropping conflicting columns: {e}")
         
+        # 0.1. Also ensure properties_property doesn't have conflicting columns before dropping tables
+        self.stdout.write("Step 0.1: Ensuring properties_property doesn't have conflicting columns...")
+        try:
+            cursor.execute("""
+                SELECT EXISTS (
+                    SELECT FROM information_schema.tables 
+                    WHERE table_name = 'properties_property'
+                );
+            """)
+            if cursor.fetchone()[0]:
+                # Drop conflicting columns if they exist
+                property_columns = ['is_subscription_based']
+                for column in property_columns:
+                    cursor.execute(f"ALTER TABLE properties_property DROP COLUMN IF EXISTS {column} CASCADE")
+                self.stdout.write(f"  Dropped conflicting columns from properties_property: {', '.join(property_columns)}")
+        except Exception as e:
+            self.stdout.write(f"  Error checking/dropping conflicting columns: {e}")
+        
         # 1. Drop all properties tables completely to ensure clean state
         self.stdout.write("Step 1: Dropping ALL properties tables for clean state...")
         cursor.execute("""

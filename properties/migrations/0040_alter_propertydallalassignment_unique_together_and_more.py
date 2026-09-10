@@ -21,7 +21,7 @@ def drop_conflicting_tables(apps, schema_editor):
             print("Dropped Hotel, Resort, Country, BrokerChannel tables to avoid conflicts")
             
             # Drop conflicting columns from properties_property if they exist
-            conflicting_columns = ['publication_end_date', 'expiry_date', 'is_pinned', 'pinned_until']
+            conflicting_columns = ['publication_end_date', 'expiry_date', 'is_pinned', 'pinned_until', 'is_subscription_based']
             for column in conflicting_columns:
                 cursor.execute(f"""
                     ALTER TABLE properties_property DROP COLUMN IF EXISTS {column} CASCADE
