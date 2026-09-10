@@ -63,6 +63,14 @@ class Command(BaseCommand):
         except Exception as e:
             self.stdout.write(f"  Error resetting migrations: {e}")
         
+        # Also specifically clear 022x and 023x migrations to avoid dependency issues
+        try:
+            cursor.execute("DELETE FROM django_migrations WHERE app = 'properties' AND name LIKE '022%'")
+            cursor.execute("DELETE FROM django_migrations WHERE app = 'properties' AND name LIKE '023%'")
+            self.stdout.write("  Cleared 022x and 023x migration records")
+        except Exception as e:
+            self.stdout.write(f"  Error clearing 022x/023x migrations: {e}")
+        
         # 4. Also reset django_contenttypes to avoid foreign key issues
         self.stdout.write("Step 4: Resetting content types...")
         try:
