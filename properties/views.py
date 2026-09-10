@@ -6391,12 +6391,54 @@ def add_property(request):
 
 def enhanced_add_property(request):
     """نموذج إضافة عقار محسّن مع جميع الحقول الجديدة"""
+    # Check subscription and get available counts
+    from .models import SubscriptionRenewalRequest, Property
+    from .permissions import get_broker
+    
+    broker = get_broker(request.user)
+    available_premium = 0
+    available_regular = 0
+    is_all_inclusive = False
+    
+    if broker:
+        latest_renewal = SubscriptionRenewalRequest.objects.filter(
+            broker=broker,
+            status='approved'
+        ).order_by('-approved_at').first()
+        
+        if latest_renewal:
+            available_premium = latest_renewal.premium_count
+            available_regular = latest_renewal.regular_count
+            is_all_inclusive = (latest_renewal.subscription_type == 'all_inclusive' or 
+                              'all_inclusive' in latest_renewal.subscription_types)
+    
+    # Count user's existing properties
+    existing_properties = Property.objects.filter(owner=request.user)
+    existing_premium = existing_properties.filter(is_featured=True).count()
+    existing_regular = existing_properties.filter(is_featured=False).count()
+    
+    # Calculate remaining posts
+    remaining_premium = max(0, available_premium - existing_premium)
+    remaining_regular = max(0, available_regular - existing_regular)
+    
     if request.method == 'POST':
+        is_featured = request.POST.get('is_featured') == 'on'
+        
+        # Check if user can post based on subscription
+        if is_featured:
+            if remaining_premium <= 0 and not is_all_inclusive:
+                messages.error(request, 'ليس لديك عقارات مميزة متاحة. يمكنك نشر عقارات عادية أو ترقية اشتراكك.')
+                return redirect('subscription_plans')
+        else:
+            if remaining_regular <= 0 and not is_all_inclusive:
+                messages.error(request, 'ليس لديك عقارات عادية متاحة. يرجى ترقية اشتراكك.')
+                return redirect('subscription_plans')
+        
         form = EnhancedPropertyForm(request.POST, request.FILES)
         if form.is_valid():
             prop = form.save(commit=False)
             prop.owner = request.user
-            broker = get_broker(request.user)
+            prop.is_featured = is_featured
             if broker:
                 prop.broker = broker
                 if broker.office_id:
@@ -6409,6 +6451,14 @@ def enhanced_add_property(request):
             else:
                 prop.status = 'draft'
             prop.save()
+            
+            # Update subscription counts
+            if broker and latest_renewal:
+                if is_featured:
+                    latest_renewal.premium_count = max(0, latest_renewal.premium_count - 1)
+                else:
+                    latest_renewal.regular_count = max(0, latest_renewal.regular_count - 1)
+                latest_renewal.save()
             
             # Handle 360° image checkboxes
             is_360_list = request.POST.getlist('is_360')
@@ -6445,19 +6495,66 @@ def enhanced_add_property(request):
                 metadata={'property_id': prop.id, 'property_title': prop.title}
             )
             
-            messages.success(request, f'تم إضافة العقار بنجاح: {prop.title}')
+            messages.success(request, f'تم إضافة العقار بنجاح: {prop.title}. العقارات المتبقية: مميزة={remaining_premium - (1 if is_featured else 0)}, عادية={remaining_regular - (0 if is_featured else 1)}')
             return redirect('dashboard')
     else:
         form = EnhancedPropertyForm()
     
-    return render(request, 'properties/enhanced_property_form.html', {'form': form})
+    return render(request, 'properties/enhanced_property_form.html', {
+        'form': form,
+        'remaining_premium': remaining_premium,
+        'remaining_regular': remaining_regular,
+        'is_all_inclusive': is_all_inclusive,
+    })
 
 
 @login_required
 @staff_required
 def enhanced_add_outside_property(request):
     """نموذج إضافة عقار خارج العراق محسّن مع جميع الحقول الجديدة"""
+    # Check subscription and get available counts
+    from .models import SubscriptionRenewalRequest, Property
+    from .permissions import get_broker
+    
+    broker = get_broker(request.user)
+    available_premium = 0
+    available_regular = 0
+    is_all_inclusive = False
+    
+    if broker:
+        latest_renewal = SubscriptionRenewalRequest.objects.filter(
+            broker=broker,
+            status='approved'
+        ).order_by('-approved_at').first()
+        
+        if latest_renewal:
+            available_premium = latest_renewal.premium_count
+            available_regular = latest_renewal.regular_count
+            is_all_inclusive = (latest_renewal.subscription_type == 'all_inclusive' or 
+                              'all_inclusive' in latest_renewal.subscription_types)
+    
+    # Count user's existing properties
+    existing_properties = Property.objects.filter(owner=request.user)
+    existing_premium = existing_properties.filter(is_featured=True).count()
+    existing_regular = existing_properties.filter(is_featured=False).count()
+    
+    # Calculate remaining posts
+    remaining_premium = max(0, available_premium - existing_premium)
+    remaining_regular = max(0, available_regular - existing_regular)
+    
     if request.method == 'POST':
+        is_featured = request.POST.get('is_featured') == 'on'
+        
+        # Check if user can post based on subscription
+        if is_featured:
+            if remaining_premium <= 0 and not is_all_inclusive:
+                messages.error(request, 'ليس لديك عقارات مميزة متاحة. يمكنك نشر عقارات عادية أو ترقية اشتراكك.')
+                return redirect('subscription_plans')
+        else:
+            if remaining_regular <= 0 and not is_all_inclusive:
+                messages.error(request, 'ليس لديك عقارات عادية متاحة. يرجى ترقية اشتراكك.')
+                return redirect('subscription_plans')
+        
         property_form = PropertyForm(request.POST, request.FILES)
         outside_form = EnhancedOutsidePropertyForm(request.POST)
         
@@ -6465,7 +6562,7 @@ def enhanced_add_outside_property(request):
             prop = property_form.save(commit=False)
             prop.owner = request.user
             prop.category = 'property_outside'
-            broker = get_broker(request.user)
+            prop.is_featured = is_featured
             if broker:
                 prop.broker = broker
                 if broker.office_id:
@@ -6477,6 +6574,14 @@ def enhanced_add_outside_property(request):
             else:
                 prop.status = 'draft'
             prop.save()
+            
+            # Update subscription counts
+            if broker and latest_renewal:
+                if is_featured:
+                    latest_renewal.premium_count = max(0, latest_renewal.premium_count - 1)
+                else:
+                    latest_renewal.regular_count = max(0, latest_renewal.regular_count - 1)
+                latest_renewal.save()
             
             # Save outside property details
             outside = outside_form.save(commit=False)
@@ -6517,7 +6622,7 @@ def enhanced_add_outside_property(request):
                 metadata={'property_id': prop.id, 'property_title': prop.title}
             )
             
-            messages.success(request, f'تم إضافة العقار الخارجي بنجاح: {prop.title}')
+            messages.success(request, f'تم إضافة العقار الخارجي بنجاح: {prop.title}. العقارات المتبقية: مميزة={remaining_premium - (1 if is_featured else 0)}, عادية={remaining_regular - (0 if is_featured else 1)}')
             return redirect('dashboard')
     else:
         property_form = PropertyForm()
@@ -6525,7 +6630,10 @@ def enhanced_add_outside_property(request):
     
     return render(request, 'properties/enhanced_outside_property_form.html', {
         'form': outside_form,
-        'property_form': property_form
+        'property_form': property_form,
+        'remaining_premium': remaining_premium,
+        'remaining_regular': remaining_regular,
+        'is_all_inclusive': is_all_inclusive,
     })
 
 
@@ -12401,7 +12509,30 @@ def api_delete_property(request, property_id):
         return JsonResponse({'error': 'Permission denied'}, status=403)
     
     try:
+        from .models import SubscriptionRenewalRequest
+        from .permissions import get_broker
+        
         property = get_object_or_404(Property, id=property_id)
+        
+        # Restore subscription count if all-inclusive
+        broker = get_broker(property.owner)
+        if broker:
+            latest_renewal = SubscriptionRenewalRequest.objects.filter(
+                broker=broker,
+                status='approved'
+            ).order_by('-approved_at').first()
+            
+            if latest_renewal:
+                is_all_inclusive = (latest_renewal.subscription_type == 'all_inclusive' or 
+                                  'all_inclusive' in latest_renewal.subscription_types)
+                
+                if is_all_inclusive:
+                    if property.is_featured:
+                        latest_renewal.premium_count += 1
+                    else:
+                        latest_renewal.regular_count += 1
+                    latest_renewal.save()
+        
         property.delete()
         
         return JsonResponse({'success': True})
@@ -14509,8 +14640,12 @@ def handle_media_uploads(request, property):
 @login_required
 def dynamic_add_property(request):
     """View for dynamic property addition based on category - Simple version to avoid 500 errors"""
+    if not request.user.is_authenticated:
+        messages.error(request, 'يجب تسجيل الدخول لإضافة عقار')
+        return redirect('login')
+    
     try:
-        from .models import Broker
+        from .models import Broker, Property, SubscriptionRenewalRequest
     except ImportError:
         messages.error(request, 'مكونات النظام غير متوفرة')
         return redirect('home')
@@ -14524,6 +14659,81 @@ def dynamic_add_property(request):
     except Exception:
         broker = None
     
+    # Check subscription and get available counts
+    available_premium = 0
+    available_regular = 0
+    is_all_inclusive = False
+    
+    if broker:
+        # Get latest subscription renewal request to check limits
+        latest_renewal = SubscriptionRenewalRequest.objects.filter(
+            broker=broker,
+            status='approved'
+        ).order_by('-approved_at').first()
+        
+        if latest_renewal:
+            available_premium = latest_renewal.premium_count
+            available_regular = latest_renewal.regular_count
+            
+            # Check if this is an all-inclusive subscription
+            is_all_inclusive = (latest_renewal.subscription_type == 'all_inclusive' or 
+                              'all_inclusive' in latest_renewal.subscription_types)
+    
+    # Count user's existing properties
+    existing_properties = Property.objects.filter(owner=request.user)
+    existing_premium = existing_properties.filter(is_featured=True).count()
+    existing_regular = existing_properties.filter(is_featured=False).count()
+    
+    # Calculate remaining posts
+    remaining_premium = max(0, available_premium - existing_premium)
+    remaining_regular = max(0, available_regular - existing_regular)
+    
+    # Handle POST request
+    if request.method == 'POST':
+        category = request.POST.get('category', 'inside_iraq')
+        is_featured = request.POST.get('is_featured') == 'on'
+        
+        # Check if user can post based on subscription
+        if is_featured:
+            if remaining_premium <= 0 and not is_all_inclusive:
+                messages.error(request, 'ليس لديك عقارات مميزة متاحة. يمكنك نشر عقارات عادية أو ترقية اشتراكك.')
+                return redirect('subscription_plans')
+        else:
+            if remaining_regular <= 0 and not is_all_inclusive:
+                messages.error(request, 'ليس لديك عقارات عادية متاحة. يرجى ترقية اشتراكك.')
+                return redirect('subscription_plans')
+        
+        # Create property
+        try:
+            prop = Property.objects.create(
+                title=request.POST.get('title', ''),
+                type=request.POST.get('type', 'apartment'),
+                category=category,
+                owner=request.user,
+                broker=broker,
+                status='draft',
+                is_featured=is_featured,
+                price=request.POST.get('price', 0),
+                governorate=request.POST.get('governorate', ''),
+                city=request.POST.get('city', ''),
+                district=request.POST.get('district', ''),
+                location=request.POST.get('location', ''),
+                # Add more fields as needed
+            )
+            
+            # Update subscription counts
+            if broker and latest_renewal:
+                if is_featured:
+                    latest_renewal.premium_count = max(0, latest_renewal.premium_count - 1)
+                else:
+                    latest_renewal.regular_count = max(0, latest_renewal.regular_count - 1)
+                latest_renewal.save()
+            
+            messages.success(request, f'تم إنشاء العقار بنجاح! العقارات المتبقية: مميزة={remaining_premium - (1 if is_featured else 0)}, عادية={remaining_regular - (0 if is_featured else 1)}')
+            return redirect('property_detail', slug=prop.slug)
+        except Exception as e:
+            messages.error(request, f'حدث خطأ أثناء إنشاء العقار: {str(e)}')
+    
     from .constants import IRAQ_GOVERNORATES
     
     return render(request, 'properties/dynamic_add_property.html', {
@@ -14532,6 +14742,9 @@ def dynamic_add_property(request):
         'category': None,
         'broker': broker,
         'governorates': IRAQ_GOVERNORATES,
+        'remaining_premium': remaining_premium,
+        'remaining_regular': remaining_regular,
+        'is_all_inclusive': is_all_inclusive,
     })
 
 
