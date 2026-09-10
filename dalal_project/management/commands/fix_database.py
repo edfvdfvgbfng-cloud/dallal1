@@ -58,7 +58,8 @@ class Command(BaseCommand):
         # Also drop AI training tables if they exist
         ai_tables = ['ai_training_examples', 'ai_user_feedback', 'ai_unknown_queries', 
                      'ai_model_versions', 'ai_model_evaluations', 'ai_search_analytics',
-                     'ai_conversation_logs', 'ai_knowledge_base', 'ai_tool_usage_log']
+                     'ai_conversation_logs', 'ai_knowledge_base', 'ai_tool_usage_log',
+                     'ai_voice_interaction_log']
         for table in ai_tables:
             try:
                 cursor.execute(f"DROP TABLE IF EXISTS {table} CASCADE")

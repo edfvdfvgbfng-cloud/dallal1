@@ -5,6 +5,15 @@ from django.conf import settings
 from django.db import migrations, models
 
 
+def drop_voice_interaction_log_if_exists(apps, schema_editor):
+    """Drop ai_voice_interaction_log table if it exists to avoid conflicts"""
+    try:
+        with schema_editor.connection.cursor() as cursor:
+            cursor.execute("DROP TABLE IF EXISTS ai_voice_interaction_log CASCADE")
+    except Exception as e:
+        pass  # Silent failure
+
+
 class Migration(migrations.Migration):
 
     dependencies = [
@@ -13,6 +22,7 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
+        migrations.RunPython(drop_voice_interaction_log_if_exists, migrations.RunPython.noop),
         migrations.CreateModel(
             name='VoiceInteractionLog',
             fields=[
