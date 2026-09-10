@@ -27,13 +27,14 @@ class Command(BaseCommand):
         
         self.stdout.write(f"Dropped {len(tables)} properties tables")
         
-        # 1.5. Also specifically drop ActivityLog table if it exists
-        self.stdout.write("Step 1.5: Dropping ActivityLog table if it exists...")
+        # 1.5. Also specifically drop ActivityLog and BrokerChannel tables if they exist
+        self.stdout.write("Step 1.5: Dropping ActivityLog and BrokerChannel tables if they exist...")
         try:
             cursor.execute("DROP TABLE IF EXISTS properties_activitylog CASCADE")
-            self.stdout.write("  Dropped ActivityLog table")
+            cursor.execute("DROP TABLE IF EXISTS properties_brokerchannel CASCADE")
+            self.stdout.write("  Dropped ActivityLog and BrokerChannel tables")
         except Exception as e:
-            self.stdout.write(f"  Error dropping ActivityLog: {e}")
+            self.stdout.write(f"  Error dropping tables: {e}")
         
         # 2. Drop all properties indexes
         self.stdout.write("Step 2: Dropping all properties indexes...")

@@ -13,11 +13,12 @@ def drop_conflicting_tables(apps, schema_editor):
             cursor.execute("DROP TABLE IF EXISTS properties_activitylog CASCADE")
             print("Dropped ActivityLog table to avoid conflicts")
             
-            # Also drop Hotel, Resort, Country tables if they exist to avoid conflicts
+            # Also drop Hotel, Resort, Country, BrokerChannel tables if they exist to avoid conflicts
             cursor.execute("DROP TABLE IF EXISTS properties_hotel CASCADE")
             cursor.execute("DROP TABLE IF EXISTS properties_resort CASCADE")
             cursor.execute("DROP TABLE IF EXISTS properties_country CASCADE")
-            print("Dropped Hotel, Resort, Country tables to avoid conflicts")
+            cursor.execute("DROP TABLE IF EXISTS properties_brokerchannel CASCADE")
+            print("Dropped Hotel, Resort, Country, BrokerChannel tables to avoid conflicts")
     except Exception as e:
         print(f"Error dropping conflicting tables: {e}")
 
