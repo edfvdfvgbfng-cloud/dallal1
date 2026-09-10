@@ -5,19 +5,11 @@ from django.conf import settings
 from django.db import migrations, models
 
 
-def drop_all_ai_tables_if_exist(apps, schema_editor):
-    """Drop all AI tables if they exist to avoid conflicts"""
+def drop_voice_interaction_log_if_exists(apps, schema_editor):
+    """Drop ai_voice_interaction_log table if it exists to avoid conflicts"""
     try:
         with schema_editor.connection.cursor() as cursor:
-            # Drop all tables starting with 'ai_'
-            cursor.execute("""
-                SELECT tablename FROM pg_tables 
-                WHERE schemaname = 'public' AND tablename LIKE 'ai_%'
-            """)
-            ai_tables = [row[0] for row in cursor.fetchall()]
-            
-            for table in ai_tables:
-                cursor.execute(f"DROP TABLE IF EXISTS {table} CASCADE")
+            cursor.execute("DROP TABLE IF EXISTS ai_voice_interaction_log CASCADE")
     except Exception as e:
         pass  # Silent failure
 
@@ -30,7 +22,7 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        migrations.RunPython(drop_all_ai_tables_if_exist, migrations.RunPython.noop),
+        migrations.RunPython(drop_voice_interaction_log_if_exists, migrations.RunPython.noop),
         migrations.CreateModel(
             name='VoiceInteractionLog',
             fields=[
@@ -52,171 +44,11 @@ class Migration(migrations.Migration):
                 ('corrected_text', models.TextField(blank=True)),
                 ('conversation_id', models.CharField(blank=True, max_length=100)),
                 ('created_at', models.DateTimeField(auto_now_add=True)),
+                ('user', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, to=settings.AUTH_USER_MODEL)),
             ],
             options={
                 'db_table': 'ai_voice_interaction_log',
                 'ordering': ['-created_at'],
             },
-        ),
-        migrations.AlterModelOptions(
-            name='conversationlog',
-            options={'ordering': ['-started_at']},
-        ),
-        migrations.AlterModelOptions(
-            name='knowledgebaseentry',
-            options={'ordering': ['-priority', '-last_updated']},
-        ),
-        migrations.AlterModelOptions(
-            name='modelevaluation',
-            options={'ordering': ['-evaluation_date']},
-        ),
-        migrations.AlterModelOptions(
-            name='modelversion',
-            options={'ordering': ['-training_date']},
-        ),
-        migrations.AlterModelOptions(
-            name='searchanalytics',
-            options={'ordering': ['-created_at']},
-        ),
-        migrations.AlterModelOptions(
-            name='toolusagelog',
-            options={'ordering': ['-created_at']},
-        ),
-        migrations.AddIndex(
-            model_name='conversationlog',
-            index=models.Index(fields=['user'], name='ai_conversa_user_id_c803b1_idx'),
-        ),
-        migrations.AddIndex(
-            model_name='conversationlog',
-            index=models.Index(fields=['started_at'], name='ai_conversa_started_083f85_idx'),
-        ),
-        migrations.AddIndex(
-            model_name='conversationlog',
-            index=models.Index(fields=['resolved'], name='ai_conversa_resolve_3ed495_idx'),
-        ),
-        migrations.AddIndex(
-            model_name='knowledgebaseentry',
-            index=models.Index(fields=['category'], name='ai_knowledg_categor_dde742_idx'),
-        ),
-        migrations.AddIndex(
-            model_name='knowledgebaseentry',
-            index=models.Index(fields=['status'], name='ai_knowledg_status_debcb5_idx'),
-        ),
-        migrations.AddIndex(
-            model_name='knowledgebaseentry',
-            index=models.Index(fields=['language'], name='ai_knowledg_languag_fc98c4_idx'),
-        ),
-        migrations.AddIndex(
-            model_name='knowledgebaseentry',
-            index=models.Index(fields=['priority'], name='ai_knowledg_priorit_db0930_idx'),
-        ),
-        migrations.AddIndex(
-            model_name='modelevaluation',
-            index=models.Index(fields=['model_version'], name='ai_model_ev_model_v_1f202f_idx'),
-        ),
-        migrations.AddIndex(
-            model_name='modelevaluation',
-            index=models.Index(fields=['test_type'], name='ai_model_ev_test_ty_0e49ab_idx'),
-        ),
-        migrations.AddIndex(
-            model_name='modelevaluation',
-            index=models.Index(fields=['evaluation_date'], name='ai_model_ev_evaluat_5223a1_idx'),
-        ),
-        migrations.AddIndex(
-            model_name='modelversion',
-            index=models.Index(fields=['model_type'], name='ai_model_ve_model_t_ff53fc_idx'),
-        ),
-        migrations.AddIndex(
-            model_name='modelversion',
-            index=models.Index(fields=['status'], name='ai_model_ve_status_f638e3_idx'),
-        ),
-        migrations.AddIndex(
-            model_name='modelversion',
-            index=models.Index(fields=['version'], name='ai_model_ve_version_64e9da_idx'),
-        ),
-        migrations.AddIndex(
-            model_name='searchanalytics',
-            index=models.Index(fields=['detected_intent'], name='ai_search_a_detecte_df95bc_idx'),
-        ),
-        migrations.AddIndex(
-            model_name='searchanalytics',
-            index=models.Index(fields=['created_at'], name='ai_search_a_created_16a4a4_idx'),
-        ),
-        migrations.AddIndex(
-            model_name='searchanalytics',
-            index=models.Index(fields=['user'], name='ai_search_a_user_id_2cee79_idx'),
-        ),
-        migrations.AddIndex(
-            model_name='toolusagelog',
-            index=models.Index(fields=['tool_name'], name='ai_tool_usa_tool_na_336d40_idx'),
-        ),
-        migrations.AddIndex(
-            model_name='toolusagelog',
-            index=models.Index(fields=['success'], name='ai_tool_usa_success_94ca67_idx'),
-        ),
-        migrations.AddIndex(
-            model_name='toolusagelog',
-            index=models.Index(fields=['created_at'], name='ai_tool_usa_created_77d3e3_idx'),
-        ),
-        migrations.AddIndex(
-            model_name='trainingexample',
-            index=models.Index(fields=['intent'], name='ai_training_intent_131c86_idx'),
-        ),
-        migrations.AddIndex(
-            model_name='trainingexample',
-            index=models.Index(fields=['status'], name='ai_training_status_90af9b_idx'),
-        ),
-        migrations.AddIndex(
-            model_name='trainingexample',
-            index=models.Index(fields=['dataset_type'], name='ai_training_dataset_db73f7_idx'),
-        ),
-        migrations.AddIndex(
-            model_name='trainingexample',
-            index=models.Index(fields=['is_test'], name='ai_training_is_test_d5b40c_idx'),
-        ),
-        migrations.AddIndex(
-            model_name='unknownquery',
-            index=models.Index(fields=['resolved'], name='ai_unknown__resolve_9488f7_idx'),
-        ),
-        migrations.AddIndex(
-            model_name='unknownquery',
-            index=models.Index(fields=['priority'], name='ai_unknown__priorit_da7e02_idx'),
-        ),
-        migrations.AddIndex(
-            model_name='unknownquery',
-            index=models.Index(fields=['occurrence_count'], name='ai_unknown__occurre_75cec5_idx'),
-        ),
-        migrations.AddIndex(
-            model_name='userfeedback',
-            index=models.Index(fields=['feedback_type'], name='ai_user_fee_feedbac_f204d8_idx'),
-        ),
-        migrations.AddIndex(
-            model_name='userfeedback',
-            index=models.Index(fields=['feedback_context'], name='ai_user_fee_feedbac_ff766f_idx'),
-        ),
-        migrations.AddIndex(
-            model_name='userfeedback',
-            index=models.Index(fields=['created_at'], name='ai_user_fee_created_4eddd9_idx'),
-        ),
-        migrations.AddField(
-            model_name='voiceinteractionlog',
-            name='user',
-            field=models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, to=settings.AUTH_USER_MODEL),
-        ),
-        migrations.AddIndex(
-            model_name='voiceinteractionlog',
-            index=models.Index(fields=['stt_success'], name='ai_voice_in_stt_suc_7e5dcf_idx'),
-        ),
-        migrations.AddIndex(
-            model_name='voiceinteractionlog',
-            index=models.Index(fields=['tts_used'], name='ai_voice_in_tts_use_6f5f98_idx'),
-        ),
-        migrations.AddIndex(
-            model_name='voiceinteractionlog',
-            index=models.Index(fields=['created_at'], name='ai_voice_in_created_b25990_idx'),
-        ),
-        migrations.AddIndex(
-            model_name='voiceinteractionlog',
-            index=models.Index(fields=['conversation_id'], name='ai_voice_in_convers_cd9842_idx'),
         ),
     ]
