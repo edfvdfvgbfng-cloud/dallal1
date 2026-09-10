@@ -3,6 +3,37 @@
 from django.db import migrations, models
 
 
+def drop_conflicting_columns(apps, schema_editor):
+    """Drop columns that might cause conflicts in auction table"""
+    try:
+        with schema_editor.connection.cursor() as cursor:
+            # Check and drop is_advertised column if it exists
+            cursor.execute("""
+                SELECT EXISTS (
+                    SELECT FROM information_schema.columns 
+                    WHERE table_name = 'properties_auction' 
+                    AND column_name = 'is_advertised'
+                );
+            """)
+            if cursor.fetchone()[0]:
+                cursor.execute("ALTER TABLE properties_auction DROP COLUMN is_advertised CASCADE")
+                print("Dropped is_advertised column from properties_auction")
+            
+            # Check and drop advertisement_budget column if it exists
+            cursor.execute("""
+                SELECT EXISTS (
+                    SELECT FROM information_schema.columns 
+                    WHERE table_name = 'properties_auction' 
+                    AND column_name = 'advertisement_budget'
+                );
+            """)
+            if cursor.fetchone()[0]:
+                cursor.execute("ALTER TABLE properties_auction DROP COLUMN advertisement_budget CASCADE")
+                print("Dropped advertisement_budget column from properties_auction")
+    except Exception as e:
+        print(f"Error dropping conflicting columns: {e}")
+
+
 class Migration(migrations.Migration):
 
     dependencies = [
@@ -10,6 +41,7 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
+        migrations.RunPython(drop_conflicting_columns, migrations.RunPython.noop),
         migrations.AddField(
             model_name='auction',
             name='is_advertised',

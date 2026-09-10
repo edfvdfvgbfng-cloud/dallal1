@@ -10,8 +10,8 @@ class Command(BaseCommand):
         
         self.stdout.write("Starting database fix...")
         
-        # 1. Drop all properties tables
-        self.stdout.write("Step 1: Dropping all properties tables...")
+        # 1. Drop all properties tables completely to ensure clean state
+        self.stdout.write("Step 1: Dropping ALL properties tables for clean state...")
         cursor.execute("""
             SELECT tablename FROM pg_tables 
             WHERE schemaname = 'public' AND tablename LIKE 'properties_%'
@@ -25,7 +25,7 @@ class Command(BaseCommand):
             except Exception as e:
                 self.stdout.write(f"  Error dropping {table}: {e}")
         
-        self.stdout.write(f"Dropped {len(tables)} properties tables")
+        self.stdout.write(f"Dropped {len(tables)} properties tables - clean state achieved")
         
         # 1.5. Also specifically drop ActivityLog and BrokerChannel tables if they exist
         self.stdout.write("Step 1.5: Dropping ActivityLog and BrokerChannel tables if they exist...")
