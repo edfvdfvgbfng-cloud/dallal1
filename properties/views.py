@@ -19031,6 +19031,39 @@ def job_post_view(request):
         if not broker.subscription_plan or not broker.subscription_end_date:
             messages.error(request, 'ليس لديك اشتراك حالياً. يرجى الاشتراك لاستخدام هذه الخدمة.')
             return redirect('subscription_plans')
+    
+    # Check subscription status and post limits
+    from django.utils import timezone
+    from .models import Job, SubscriptionRenewalRequest
+    
+    available_premium = 0
+    available_regular = 0
+    is_all_inclusive = False
+    
+    if broker and broker.subscription_plan:
+        # Get latest subscription renewal request to check limits
+        latest_renewal = SubscriptionRenewalRequest.objects.filter(
+            broker=broker,
+            status='approved'
+        ).order_by('-approved_at').first()
+        
+        if latest_renewal:
+            available_premium = latest_renewal.premium_count
+            available_regular = latest_renewal.regular_count
+            
+            # Check if this is an all-inclusive subscription
+            is_all_inclusive = (latest_renewal.subscription_type == 'all_inclusive' or 
+                              'all_inclusive' in latest_renewal.subscription_types)
+    
+    # Count user's existing jobs
+    existing_jobs = Job.objects.filter(posted_by=request.user)
+    existing_premium = existing_jobs.filter(is_featured=True).count()
+    existing_regular = existing_jobs.filter(is_featured=False).count()
+    
+    # Calculate remaining posts
+    remaining_premium = max(0, available_premium - existing_premium)
+    remaining_regular = max(0, available_regular - existing_regular)
+    
     available_days = 30  # Default for regular users
     
     if broker and broker.subscription_plan:
@@ -19044,6 +19077,19 @@ def job_post_view(request):
             'unlimited': 3650,
         }
         available_days = SUBSCRIPTION_PERIODS_DAYS.get(period, 30)
+    
+    if request.method == 'POST':
+        # Check if user can post based on subscription
+        is_featured_post = request.POST.get('is_featured') == 'on'
+        
+        if is_featured_post:
+            if remaining_premium <= 0 and not is_all_inclusive:
+                messages.error(request, 'ليس لديك منشورات مميزة متاحة. يمكنك نشر وظائف عادية أو ترقية اشتراكك.')
+                return redirect('subscription_plans')
+        else:
+            if remaining_regular <= 0 and not is_all_inclusive:
+                messages.error(request, 'ليس لديك منشورات عادية متاحة. يرجى ترقية اشتراكك.')
+                return redirect('subscription_plans')
     
     if request.method == 'POST':
         title = request.POST.get('title')
@@ -19199,7 +19245,15 @@ def job_post_view(request):
         job.calculate_expiry_date(request.user)
         job.save()
         
-        messages.success(request, 'تم إنشاء الوظيفة بنجاح! يمكنك نشرها من لوحة التحكم')
+        # Update subscription counts
+        if broker and latest_renewal:
+            if is_featured_post:
+                latest_renewal.premium_count = max(0, latest_renewal.premium_count - 1)
+            else:
+                latest_renewal.regular_count = max(0, latest_renewal.regular_count - 1)
+            latest_renewal.save()
+        
+        messages.success(request, f'تم إنشاء الوظيفة بنجاح! المنشورات المتبقية: مميزة={remaining_premium - (1 if is_featured_post else 0)}, عادية={remaining_regular - (0 if is_featured_post else 1)}')
         return redirect('job_detail', slug=job.slug)
     
     categories = JobCategory.objects.filter(is_active=True)
@@ -19210,6 +19264,9 @@ def job_post_view(request):
         'governorates': IRAQ_GOVERNORATES,
         'available_days': available_days,
         'broker': broker,
+        'remaining_premium': remaining_premium,
+        'remaining_regular': remaining_regular,
+        'is_all_inclusive': is_all_inclusive,
     }
     
     return render(request, 'properties/job_post.html', context)
@@ -21069,6 +21126,8 @@ def job_delete(request, pk):
     """حذف فرصة عمل"""
     from properties.models import Job
     from django.contrib import messages
+    from .permissions import get_broker
+    from .models import SubscriptionRenewalRequest
     
     if not request.user.is_authenticated:
         return redirect('login')
@@ -21076,6 +21135,26 @@ def job_delete(request, pk):
     job = get_object_or_404(Job, pk=pk, user=request.user)
     
     if request.method == 'POST':
+        # Check if user has all-inclusive subscription to restore post count
+        broker = get_broker(request.user)
+        if broker:
+            latest_renewal = SubscriptionRenewalRequest.objects.filter(
+                broker=broker,
+                status='approved'
+            ).order_by('-approved_at').first()
+            
+            if latest_renewal:
+                is_all_inclusive = (latest_renewal.subscription_type == 'all_inclusive' or 
+                                  'all_inclusive' in latest_renewal.subscription_types)
+                
+                if is_all_inclusive:
+                    # Restore the post count when deleting
+                    if job.is_featured:
+                        latest_renewal.premium_count += 1
+                    else:
+                        latest_renewal.regular_count += 1
+                    latest_renewal.save()
+        
         job.delete()
         messages.success(request, 'تم حذف فرصة العمل بنجاح')
         return redirect('my_jobs')
