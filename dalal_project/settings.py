@@ -452,6 +452,18 @@ else:
             'handlers': ['null'],
             'level': 'CRITICAL',
         },
+        'loggers': {
+            'django.db.backends': {
+                'handlers': ['null'],
+                'level': 'CRITICAL',
+                'propagate': False,
+            },
+            'django': {
+                'handlers': ['null'],
+                'level': 'CRITICAL',
+                'propagate': False,
+            },
+        },
     }
 
 # --- Messages ---
