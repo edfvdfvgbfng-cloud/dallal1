@@ -74,6 +74,7 @@ ALLOWED_HOSTS = _unique(ALLOWED_HOSTS + [
     'muq.up.railway.app',
     'muqq.up.railway.app',
     'dallal1-production.up.railway.app',
+    'dallal2-production.up.railway.app',
     'localhost',
     '127.0.0.1',
 ])
@@ -115,6 +116,8 @@ if DEBUG:
         'https://mup.up.railway.app',
         'https://muq.up.railway.app',
         'https://muqq.up.railway.app',
+        'https://dallal1-production.up.railway.app',
+        'https://dallal2-production.up.railway.app',
     ]
     # Filter out None values
     CSRF_TRUSTED_ORIGINS = [origin for origin in CSRF_TRUSTED_ORIGINS if origin]
@@ -130,6 +133,8 @@ else:
         'https://mup.up.railway.app',
         'https://muq.up.railway.app',
         'https://muqq.up.railway.app',
+        'https://dallal1-production.up.railway.app',
+        'https://dallal2-production.up.railway.app',
     ] + _parse_csv_env('CSRF_TRUSTED_ORIGINS'))
 
 if railway_public_domain:
@@ -562,6 +567,8 @@ if not DEBUG:
     cors_origins = _unique(cors_origins + [
         'https://muq.up.railway.app',
         'https://muqq.up.railway.app',
+        'https://dallal1-production.up.railway.app',
+        'https://dallal2-production.up.railway.app',
     ])
     if railway_public_domain:
         cors_origins = _unique(cors_origins + [f'https://{railway_public_domain}'])
