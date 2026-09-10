@@ -10,43 +10,8 @@ class Command(BaseCommand):
         
         self.stdout.write("Starting database fix...")
         
-        # 1. Drop all properties tables completely to ensure clean state
-        self.stdout.write("Step 1: Dropping ALL properties tables for clean state...")
-        cursor.execute("""
-            SELECT tablename FROM pg_tables 
-            WHERE schemaname = 'public' AND tablename LIKE 'properties_%'
-        """)
-        tables = [row[0] for row in cursor.fetchall()]
-        
-        for table in tables:
-            try:
-                cursor.execute(f"DROP TABLE IF EXISTS {table} CASCADE")
-                self.stdout.write(f"  Dropped: {table}")
-            except Exception as e:
-                self.stdout.write(f"  Error dropping {table}: {e}")
-        
-        self.stdout.write(f"Dropped {len(tables)} properties tables - clean state achieved")
-        
-        # 1.5. Ensure properties_property table doesn't have conflicting columns from previous migrations
-        self.stdout.write("Step 1.5: Checking for conflicting columns in properties_property...")
-        try:
-            cursor.execute("""
-                SELECT EXISTS (
-                    SELECT FROM information_schema.tables 
-                    WHERE table_name = 'properties_property'
-                );
-            """)
-            if cursor.fetchone()[0]:
-                # Drop conflicting columns if they exist
-                conflicting_columns = ['publication_end_date', 'expiry_date', 'is_pinned', 'pinned_until']
-                for column in conflicting_columns:
-                    cursor.execute(f"ALTER TABLE properties_property DROP COLUMN IF EXISTS {column} CASCADE")
-                self.stdout.write(f"  Dropped conflicting columns: {', '.join(conflicting_columns)}")
-        except Exception as e:
-            self.stdout.write(f"  Error checking/dropping conflicting columns: {e}")
-        
-        # 1.6. Ensure properties_broker table doesn't have conflicting columns from previous migrations
-        self.stdout.write("Step 1.6: Checking for conflicting columns in properties_broker...")
+        # 0. First, ensure properties_broker doesn't have conflicting columns before dropping tables
+        self.stdout.write("Step 0: Ensuring properties_broker doesn't have conflicting columns...")
         try:
             cursor.execute("""
                 SELECT EXISTS (
@@ -63,14 +28,22 @@ class Command(BaseCommand):
         except Exception as e:
             self.stdout.write(f"  Error checking/dropping conflicting columns: {e}")
         
-        # 1.5. Also specifically drop ActivityLog and BrokerChannel tables if they exist
-        self.stdout.write("Step 1.5: Dropping ActivityLog and BrokerChannel tables if they exist...")
-        try:
-            cursor.execute("DROP TABLE IF EXISTS properties_activitylog CASCADE")
-            cursor.execute("DROP TABLE IF EXISTS properties_brokerchannel CASCADE")
-            self.stdout.write("  Dropped ActivityLog and BrokerChannel tables")
-        except Exception as e:
-            self.stdout.write(f"  Error dropping tables: {e}")
+        # 1. Drop all properties tables completely to ensure clean state
+        self.stdout.write("Step 1: Dropping ALL properties tables for clean state...")
+        cursor.execute("""
+            SELECT tablename FROM pg_tables 
+            WHERE schemaname = 'public' AND tablename LIKE 'properties_%'
+        """)
+        tables = [row[0] for row in cursor.fetchall()]
+        
+        for table in tables:
+            try:
+                cursor.execute(f"DROP TABLE IF EXISTS {table} CASCADE")
+                self.stdout.write(f"  Dropped: {table}")
+            except Exception as e:
+                self.stdout.write(f"  Error dropping {table}: {e}")
+        
+        self.stdout.write(f"Dropped {len(tables)} properties tables - clean state achieved")
         
         # 2. Drop all properties indexes
         self.stdout.write("Step 2: Dropping all properties indexes...")
