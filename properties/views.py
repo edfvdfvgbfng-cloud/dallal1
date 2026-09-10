@@ -28112,6 +28112,21 @@ def broker_ads_iraq_inside(request):
     from properties.models import Property
     from properties.constants import IRAQ_GOVERNORATES
 
+    # Handle deletion
+    if request.method == 'POST' and 'delete_property' in request.POST:
+        property_id = request.POST.get('property_id')
+        try:
+            property = Property.objects.get(id=property_id)
+            # Check if user has permission to delete
+            if request.user == property.owner or request.user.is_superuser or request.user.is_staff:
+                property.delete()
+                messages.success(request, 'تم حذف الإعلان بنجاح')
+            else:
+                messages.error(request, 'ليس لديك صلاحية حذف هذا الإعلان')
+        except Property.DoesNotExist:
+            messages.error(request, 'الإعلان غير موجود')
+        return redirect('broker_ads_iraq_inside')
+
     # Get filters
     governorate = request.GET.get('governorate', '')
     district = request.GET.get('district', '')
