@@ -44,10 +44,6 @@ COPY . .
 COPY entrypoint.sh /app/entrypoint.sh
 RUN chmod +x /app/entrypoint.sh
 
-# Copy healthcheck script
-COPY healthcheck.sh /healthcheck.sh
-RUN chmod +x /healthcheck.sh
-
 # Create static files directory
 RUN mkdir -p staticfiles media static
 
