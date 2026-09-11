@@ -257,6 +257,14 @@ import logging
 import urllib.parse
 logger = logging.getLogger(__name__)
 
+# Use PyMySQL as MySQLdb (pure Python MySQL client)
+try:
+    import pymysql
+    pymysql.install_as_MySQLdb()
+    logger.info("PyMySQL installed as MySQLdb")
+except ImportError:
+    logger.warning("PyMySQL not available, will try mysqlclient")
+
 database_url = os.getenv('DATABASE_URL')
 logger.info(f"DATABASE_URL from env: {'SET' if database_url else 'NOT SET'}")
 
