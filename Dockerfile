@@ -1,5 +1,5 @@
 # Stage 1: Build
-# Force rebuild - 2026-09-11 - Revert to PostgreSQL configuration
+# Force rebuild - 2026-09-11 - Fix file copying to ensure all project files are included
 FROM python:3.11-slim AS builder
 
 WORKDIR /app
@@ -38,10 +38,16 @@ COPY --from=builder /usr/local/bin /usr/local/bin
 RUN pip install gunicorn
 
 # Copy application code
-COPY . .
+COPY manage.py .
+COPY requirements.txt .
+COPY dalal_project/ ./dalal_project/
+COPY properties/ ./properties/
+COPY templates/ ./templates/
+COPY static/ ./static/
+COPY locale/ ./locale/
+COPY entrypoint.sh .
 
 # Copy entrypoint script
-COPY entrypoint.sh /app/entrypoint.sh
 RUN chmod +x /app/entrypoint.sh
 
 # Create static files directory
