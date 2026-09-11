@@ -35,11 +35,8 @@ fi
 # Run migrations first (for fresh database)
 python manage.py migrate --noinput
 
-# Merge conflicting migrations if any
-python manage.py makemigrations --merge --noinput 2>/dev/null || true
-
-# Fix database state (skip if database is fresh)
-python manage.py fix_database 2>/dev/null || true
+# Skip fix_database for fresh database to avoid migration conflicts
+# python manage.py fix_database 2>/dev/null || true
 
 # Exit if migrations fail
 if [ $? -ne 0 ]; then
