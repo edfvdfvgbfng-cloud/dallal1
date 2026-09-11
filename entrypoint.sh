@@ -51,14 +51,21 @@ python create_admin_user.py 2>/dev/null || true
 python manage.py collectstatic --noinput --clear 2>/dev/null || true
 
 # Start application
-if command -v gunicorn &> /dev/null; then
-    exec gunicorn dalal_project.wsgi:application \
-        --bind 0.0.0.0:${PORT:-8000} \
-        --workers ${GUNICORN_WORKERS:-2} \
-        --threads ${GUNICORN_THREADS:-4} \
-        --timeout ${GUNICORN_TIMEOUT:-300} \
-        --log-level critical \
-        --worker-class gthread
+if [ -f "/app/manage.py" ]; then
+    if command -v gunicorn &> /dev/null; then
+        exec gunicorn dalal_project.wsgi:application \
+            --bind 0.0.0.0:${PORT:-8000} \
+            --workers ${GUNICORN_WORKERS:-2} \
+            --threads ${GUNICORN_THREADS:-4} \
+            --timeout ${GUNICORN_TIMEOUT:-300} \
+            --log-level critical \
+            --worker-class gthread
+    else
+        exec python manage.py runserver 0.0.0.0:${PORT:-8080}
+    fi
 else
-    exec python manage.py runserver 0.0.0.0:${PORT:-8080}
+    echo "ERROR: manage.py not found in /app"
+    echo "Current directory contents:"
+    ls -la /app
+    exit 1
 fi

@@ -38,14 +38,7 @@ COPY --from=builder /usr/local/bin /usr/local/bin
 RUN pip install gunicorn
 
 # Copy application code
-COPY manage.py .
-COPY requirements.txt .
-COPY dalal_project/ ./dalal_project/
-COPY properties/ ./properties/
-COPY templates/ ./templates/
-COPY static/ ./static/
-COPY locale/ ./locale/
-COPY entrypoint.sh .
+COPY . .
 
 # Copy entrypoint script
 RUN chmod +x /app/entrypoint.sh
