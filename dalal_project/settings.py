@@ -254,7 +254,6 @@ if USE_WEBSOCKETS:
 # --- Database Configuration ---
 import dj_database_url
 import logging
-import urllib.parse
 logger = logging.getLogger(__name__)
 
 database_url = os.getenv('DATABASE_URL')
@@ -262,18 +261,18 @@ logger.info(f"DATABASE_URL from env: {'SET' if database_url else 'NOT SET'}")
 
 # Try Railway's automatic DATABASE_URL first
 if not database_url:
-    database_url = os.getenv('RAILWAY_MYSQL_DATABASE_URL')
-    logger.info(f"RAILWAY_MYSQL_DATABASE_URL: {'SET' if database_url else 'NOT SET'}")
+    database_url = os.getenv('RAILWAY_POSTGRES_DATABASE_URL')
+    logger.info(f"RAILWAY_POSTGRES_DATABASE_URL: {'SET' if database_url else 'NOT SET'}")
 
 if not database_url:
-    db_name = os.getenv('DB_NAME') or os.getenv('MYSQL_DATABASE')
-    db_user = os.getenv('DB_USER') or os.getenv('MYSQL_USER')
-    db_password = os.getenv('DB_PASSWORD') or os.getenv('MYSQL_PASSWORD')
-    db_host = os.getenv('DB_HOST') or os.getenv('MYSQL_HOST')
-    db_port = os.getenv('DB_PORT') or os.getenv('MYSQL_PORT', '3306')
+    db_name = os.getenv('DB_NAME') or os.getenv('POSTGRES_DB')
+    db_user = os.getenv('DB_USER') or os.getenv('POSTGRES_USER')
+    db_password = os.getenv('DB_PASSWORD') or os.getenv('POSTGRES_PASSWORD')
+    db_host = os.getenv('DB_HOST') or os.getenv('POSTGRES_HOST')
+    db_port = os.getenv('DB_PORT') or os.getenv('POSTGRES_PORT', '5432')
 
     if db_name and db_user and db_password and db_host:
-        database_url = f'mysql://{db_user}:{db_password}@{db_host}:{db_port}/{db_name}'
+        database_url = f'postgres://{db_user}:{db_password}@{db_host}:{db_port}/{db_name}'
         logger.info(f"DATABASE_URL constructed from env vars")
 
 # Log the final DATABASE_URL value (first 50 chars for security)
@@ -286,11 +285,6 @@ if database_url:
         database_url = None
 
 if database_url:
-    # Convert mysql:// to mysql2:// for dj-database-url compatibility
-    if database_url.startswith('mysql://'):
-        database_url = database_url.replace('mysql://', 'mysql2://', 1)
-        logger.info("Converted mysql:// to mysql2:// for dj-database-url")
-    
     DATABASES = {
         'default': dj_database_url.config(
             default=database_url,
@@ -298,7 +292,7 @@ if database_url:
             conn_health_checks=True,
         )
     }
-    logger.info("Using MySQL database")
+    logger.info("Using PostgreSQL database")
 elif DEBUG:
     # SQLite only allowed in development
     DATABASES = {
@@ -318,12 +312,12 @@ elif os.getenv('ALLOW_SQLITE_FALLBACK', 'False').lower() == 'true':
         }
     }
     logger.warning("ALLOW_SQLITE_FALLBACK is true - using SQLite in production")
-    logger.warning("This is NOT recommended! Please configure MySQL for production")
+    logger.warning("This is NOT recommended! Please configure PostgreSQL for production")
 else:
     # Production without DATABASE_URL and without SQLite fallback - FAIL
     raise ValueError(
         'DATABASE_URL environment variable is required in production. '
-        'Set DATABASE_URL in Railway Variables from MySQL service. '
+        'Set DATABASE_URL in Railway Variables from PostgreSQL service. '
         'Application cannot start without DATABASE_URL.'
     )
 

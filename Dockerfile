@@ -1,5 +1,5 @@
 # Stage 1: Build
-# Force rebuild - 2026-09-11 - Add MySQL support with PyMySQL
+# Force rebuild - 2026-09-11 - Revert to PostgreSQL configuration
 FROM python:3.11-slim AS builder
 
 WORKDIR /app
@@ -10,8 +10,6 @@ RUN apt-get update && apt-get install -y \
     postgresql-client \
     python3-dev \
     libpq-dev \
-    default-libmysqlclient-dev \
-    libmysqlclient-dev \
     && rm -rf /var/lib/apt/lists/*
 
 # Copy requirements and install Python dependencies
@@ -30,7 +28,6 @@ RUN apt-get update && apt-get install -y \
     postgresql-client \
     libpq5 \
     curl \
-    libmysqlclient21 \
     && rm -rf /var/lib/apt/lists/*
 
 # Copy Python dependencies from builder
