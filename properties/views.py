@@ -7998,14 +7998,13 @@ def hotels_list(request):
 
 
 @login_required
-@login_required
 def hotel_create_inside_iraq(request):
     """View for creating a hotel inside Iraq"""
     from .forms import PropertyForm, PropertyHotelForm
     
-    # Check subscription status
+    # Check subscription status - administrators can bypass
     broker = get_broker(request.user)
-    if broker:
+    if broker and not (request.user.is_superuser or request.user.is_staff):
         broker.check_subscription_status()
         # Check if user has any active subscription
         from .models import BrokerPlanSubscription
@@ -8041,13 +8040,14 @@ def hotel_create_inside_iraq(request):
                     f'يمكنك حذف بعض الفنادق القديمة أو طلب تطوير خطة الاشتراك لنشر المزيد.'
                 )
             return redirect('dashboard')
-    elif not can_add_property(request.user):
-        messages.error(
-            request, 
-            'وصلت للحد الأقصى من الفنادق حسب باقة اشتراكك. '
-            'يمكنك حذف بعض الفنادق القديمة أو طلب تطوير خطة الاشتراك.'
-        )
-        return redirect('dashboard')
+    elif not broker and not (request.user.is_superuser or request.user.is_staff):
+        if not can_add_property(request.user):
+            messages.error(
+                request, 
+                'وصلت للحد الأقصى من الفنادق حسب باقة اشتراكك. '
+                'يمكنك حذف بعض الفنادق القديمة أو طلب تطوير خطة الاشتراك.'
+            )
+            return redirect('dashboard')
     
     if request.method == 'POST':
         # First create the base property
@@ -8083,9 +8083,9 @@ def hotel_create_outside_iraq(request):
     """View for creating a hotel outside Iraq"""
     from .forms import PropertyForm, PropertyHotelForm
     
-    # Check subscription status
+    # Check subscription status - administrators can bypass
     broker = get_broker(request.user)
-    if broker:
+    if broker and not (request.user.is_superuser or request.user.is_staff):
         broker.check_subscription_status()
         # Check if user has any active subscription
         from .models import BrokerPlanSubscription
@@ -8121,13 +8121,14 @@ def hotel_create_outside_iraq(request):
                     f'يمكنك حذف بعض الفنادق القديمة أو طلب تطوير خطة الاشتراك لنشر المزيد.'
                 )
             return redirect('dashboard')
-    elif not can_add_property(request.user):
-        messages.error(
-            request, 
-            'وصلت للحد الأقصى من الفنادق حسب باقة اشتراكك. '
-            'يمكنك حذف بعض الفنادق القديمة أو طلب تطوير خطة الاشتراك.'
-        )
-        return redirect('dashboard')
+    elif not broker and not (request.user.is_superuser or request.user.is_staff):
+        if not can_add_property(request.user):
+            messages.error(
+                request, 
+                'وصلت للحد الأقصى من الفنادق حسب باقة اشتراكك. '
+                'يمكنك حذف بعض الفنادق القديمة أو طلب تطوير خطة الاشتراك.'
+            )
+            return redirect('dashboard')
     
     if request.method == 'POST':
         # First create the base property
