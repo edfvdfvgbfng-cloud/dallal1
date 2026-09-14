@@ -42,15 +42,9 @@ urlpatterns = [
     path('navigation-error/', views.navigation_error_view, name='navigation_error'),
     # Channel pages
     path('channels/', channel_views.ChannelListView.as_view(), name='channel_list'),
-    path('channel/brokers/', views.channel_brokers_view, name='channel_brokers'),
-    path('channel/users/', views.channel_users_view, name='channel_users'),
-    path('channel/admin/', views.channel_admin_view, name='channel_admin'),
-    path('channel/broker/<int:channel_id>/', views.broker_channel_detail, name='broker_channel_detail'),
     # Broker Channels
-    path('broker-channels/', views.channels_list_view, name='channels_list'),
-    path('broker-channel/<slug:slug>/', views.channel_detail_view, name='channel_detail'),
-    path('broker-channel/<int:channel_id>/follow/', views.follow_channel_view, name='follow_channel'),
-    path('broker-channel/<int:channel_id>/save/', views.save_channel_view, name='save_channel'),
+    path('broker-channels/', views.ChannelListView.as_view(), name='channels_list'),
+    path('broker-channel/<slug:slug>/', views.ChannelDetailView.as_view(), name='channel_detail'),
     # New Channel Features
     path('broker-channel/<int:channel_id>/detail/', broker_views.channel_detail, name='broker_channel_detail'),
     path('broker-channel/<int:channel_id>/follow-new/', broker_views.channel_follow, name='channel_follow'),
