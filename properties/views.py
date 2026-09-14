@@ -6571,14 +6571,16 @@ def enhanced_add_property(request):
         is_featured = request.POST.get('is_featured') == 'on'
         
         # Check if user can post based on subscription
-        if is_featured:
-            if remaining_premium <= 0 and not is_all_inclusive:
-                messages.error(request, 'ليس لديك عقارات مميزة متاحة. يمكنك نشر عقارات عادية أو ترقية اشتراكك.')
-                return redirect('subscription_plans')
-        else:
-            if remaining_regular <= 0 and not is_all_inclusive:
-                messages.error(request, 'ليس لديك عقارات عادية متاحة. يرجى ترقية اشتراكك.')
-                return redirect('subscription_plans')
+        # Administrators can publish without subscription restrictions
+        if not (request.user.is_superuser or request.user.is_staff):
+            if is_featured:
+                if remaining_premium <= 0 and not is_all_inclusive:
+                    messages.error(request, 'ليس لديك عقارات مميزة متاحة. يمكنك نشر عقارات عادية أو ترقية اشتراكك.')
+                    return redirect('subscription_plans')
+            else:
+                if remaining_regular <= 0 and not is_all_inclusive:
+                    messages.error(request, 'ليس لديك عقارات عادية متاحة. يرجى ترقية اشتراكك.')
+                    return redirect('subscription_plans')
         
         form = EnhancedPropertyForm(request.POST, request.FILES)
         if form.is_valid():
@@ -6589,13 +6591,17 @@ def enhanced_add_property(request):
                 prop.broker = broker
                 if broker.office_id:
                     prop.office = broker.office
-                # Set status to 'ready' automatically if broker has active subscription
-                if broker.is_subscription_active():
+                # Set status to 'ready' automatically if broker has active subscription or user is admin
+                if broker.is_subscription_active() or (request.user.is_superuser or request.user.is_staff):
                     prop.status = 'ready'
                 else:
                     prop.status = 'draft'
             else:
-                prop.status = 'draft'
+                # Administrators without broker profile get ready status
+                if request.user.is_superuser or request.user.is_staff:
+                    prop.status = 'ready'
+                else:
+                    prop.status = 'draft'
             prop.save()
             
             # Update subscription counts
@@ -6692,14 +6698,16 @@ def enhanced_add_outside_property(request):
         is_featured = request.POST.get('is_featured') == 'on'
         
         # Check if user can post based on subscription
-        if is_featured:
-            if remaining_premium <= 0 and not is_all_inclusive:
-                messages.error(request, 'ليس لديك عقارات مميزة متاحة. يمكنك نشر عقارات عادية أو ترقية اشتراكك.')
-                return redirect('subscription_plans')
-        else:
-            if remaining_regular <= 0 and not is_all_inclusive:
-                messages.error(request, 'ليس لديك عقارات عادية متاحة. يرجى ترقية اشتراكك.')
-                return redirect('subscription_plans')
+        # Administrators can publish without subscription restrictions
+        if not (request.user.is_superuser or request.user.is_staff):
+            if is_featured:
+                if remaining_premium <= 0 and not is_all_inclusive:
+                    messages.error(request, 'ليس لديك عقارات مميزة متاحة. يمكنك نشر عقارات عادية أو ترقية اشتراكك.')
+                    return redirect('subscription_plans')
+            else:
+                if remaining_regular <= 0 and not is_all_inclusive:
+                    messages.error(request, 'ليس لديك عقارات عادية متاحة. يرجى ترقية اشتراكك.')
+                    return redirect('subscription_plans')
         
         property_form = PropertyForm(request.POST, request.FILES)
         outside_form = EnhancedOutsidePropertyForm(request.POST)
@@ -6713,12 +6721,17 @@ def enhanced_add_outside_property(request):
                 prop.broker = broker
                 if broker.office_id:
                     prop.office = broker.office
-                if broker.is_subscription_active():
+                # Set status to 'ready' automatically if broker has active subscription or user is admin
+                if broker.is_subscription_active() or (request.user.is_superuser or request.user.is_staff):
                     prop.status = 'ready'
                 else:
                     prop.status = 'draft'
             else:
-                prop.status = 'draft'
+                # Administrators without broker profile get ready status
+                if request.user.is_superuser or request.user.is_staff:
+                    prop.status = 'ready'
+                else:
+                    prop.status = 'draft'
             prop.save()
             
             # Update subscription counts
@@ -6800,8 +6813,9 @@ def add_property(request):
             return redirect('dashboard')
     
     # Check subscription status before adding property
+    # Administrators can publish without subscription restrictions
     broker = get_broker(request.user)
-    if broker:
+    if broker and not (request.user.is_superuser or request.user.is_staff):
         broker.check_subscription_status()
         # Check if user has any active subscription
         from .models import BrokerPlanSubscription
@@ -6815,10 +6829,10 @@ def add_property(request):
                 has_active_subscription = True
                 break
 
-        if not has_active_subscription:
+        if not has_active_subscription and not (request.user.is_superuser or request.user.is_staff):
             messages.error(request, 'ليس لديك اشتراك نشط حالياً. يرجى الاشتراك لاستخدام هذه الخدمة.')
             return redirect('subscription_plans')
-        if not broker.can_publish_property():
+        if not broker.can_publish_property() and not (request.user.is_superuser or request.user.is_staff):
             if broker.is_suspended:
                 messages.error(request, 'تم تعطيل حسابك مؤقتاً بسبب انتهاء الاشتراك. يرجى تجديد الاشتراك للاستمرار.')
                 return redirect('subscription_plans')
@@ -6837,13 +6851,14 @@ def add_property(request):
                     f'يمكنك حذف بعض العقارات القديمة أو طلب تطوير خطة الاشتراك لنشر المزيد.'
                 )
             return redirect('dashboard')
-    elif not can_add_property(request.user):
-        messages.error(
-            request, 
-            'وصلت للحد الأقصى من العقارات حسب باقة اشتراكك. '
-            'يمكنك حذف بعض العقارات القديمة أو طلب تطوير خطة الاشتراك.'
-        )
-        return redirect('dashboard')
+    elif not broker and not (request.user.is_superuser or request.user.is_staff):
+        if not can_add_property(request.user):
+            messages.error(
+                request, 
+                'وصلت للحد الأقصى من العقارات حسب باقة اشتراكك. '
+                'يمكنك حذف بعض العقارات القديمة أو طلب تطوير خطة الاشتراك.'
+            )
+            return redirect('dashboard')
     
     form = PropertyForm(request.POST, request.FILES)
     if form.is_valid():
@@ -6854,13 +6869,17 @@ def add_property(request):
             prop.broker = broker
             if broker.office_id:
                 prop.office = broker.office
-            # Set status to 'ready' automatically if broker has active subscription
-            if broker.is_subscription_active():
+            # Set status to 'ready' automatically if broker has active subscription or user is admin
+            if broker.is_subscription_active() or (request.user.is_superuser or request.user.is_staff):
                 prop.status = 'ready'
             else:
                 prop.status = 'draft'
         else:
-            prop.status = 'draft'
+            # Administrators without broker profile get ready status
+            if request.user.is_superuser or request.user.is_staff:
+                prop.status = 'ready'
+            else:
+                prop.status = 'draft'
         prop.save()
         
         # Handle 360° image checkboxes
@@ -14399,7 +14418,8 @@ def property_payment(request, slug):
         return redirect('property_publication', slug=slug)
     
     broker = get_broker(request.user)
-    if not broker:
+    # Administrators can publish without being a broker
+    if not broker and not (request.user.is_superuser or request.user.is_staff):
         messages.error(request, 'يجب أن تكون دلالاً لنشر العقارات')
         return redirect('dashboard')
     
@@ -14864,7 +14884,8 @@ def dynamic_add_property(request):
     broker = subscription_service.get_broker_for_user()
     
     # Check if user is a broker - regular users cannot publish
-    if not broker:
+    # Administrators can publish without subscription restrictions
+    if not broker and not (request.user.is_superuser or request.user.is_staff):
         messages.error(request, 'يجب أن تكون دلال للنشر. المستخدمون العاديون لا يمكنهم نشر الإعلانات.')
         return redirect('subscription_plans')
     
