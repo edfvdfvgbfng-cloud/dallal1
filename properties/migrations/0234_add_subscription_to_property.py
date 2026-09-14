@@ -305,10 +305,10 @@ class Migration(migrations.Migration):
                 # Create indexes using IF NOT EXISTS with table existence checks
                 migrations.RunSQL(
                     sql=[
-                        # activitylog indexes
-                        "CREATE INDEX IF NOT EXISTS properties__user_id_18dbe8_idx ON properties_activitylog (user_id, created_at DESC)",
-                        "CREATE INDEX IF NOT EXISTS properties__action_5fd640_idx ON properties_activitylog (action, created_at DESC)",
-                        "CREATE INDEX IF NOT EXISTS properties__model_t_d83417_idx ON properties_activitylog (model_type, object_id)",
+                        # activitylog indexes - with table existence check
+                        "DO $$ BEGIN IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'properties_activitylog') THEN CREATE INDEX IF NOT EXISTS properties__user_id_18dbe8_idx ON properties_activitylog (user_id, created_at DESC); END IF; END $$",
+                        "DO $$ BEGIN IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'properties_activitylog') THEN CREATE INDEX IF NOT EXISTS properties__action_5fd640_idx ON properties_activitylog (action, created_at DESC); END IF; END $$",
+                        "DO $$ BEGIN IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'properties_activitylog') THEN CREATE INDEX IF NOT EXISTS properties__model_t_d83417_idx ON properties_activitylog (model_type, object_id); END IF; END $$",
                         # conversationlog indexes - with table existence check
                         "DO $$ BEGIN IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'properties_conversationlog') THEN CREATE INDEX IF NOT EXISTS ai_conversa_user_id_c803b1_idx ON properties_conversationlog (user_id); END IF; END $$",
                         "DO $$ BEGIN IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'properties_conversationlog') THEN CREATE INDEX IF NOT EXISTS ai_conversa_started_083f85_idx ON properties_conversationlog (started_at); END IF; END $$",
