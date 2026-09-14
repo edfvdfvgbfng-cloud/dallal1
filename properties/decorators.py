@@ -14,10 +14,15 @@ from .permissions import get_user_type, can_manage_brokers
 def user_required(view_func):
     """
     Decorator للتحقق من أن المستخدم هو USER فقط
+    الإدارة (staff/superuser) يمكنها الوصول أيضاً
     """
     @wraps(view_func)
     @login_required
     def wrapped_view(request, *args, **kwargs):
+        # السماح للإدارة بالوصول
+        if request.user.is_superuser or request.user.is_staff:
+            return view_func(request, *args, **kwargs)
+        
         user_type = get_user_type(request.user)
         if user_type != 'user':
             messages.error(request, 'هذه الصفحة متاحة للمستخدمين العاديين فقط')
@@ -29,10 +34,15 @@ def user_required(view_func):
 def broker_required(view_func):
     """
     Decorator للتحقق من أن المستخدم هو BROKER فقط
+    الإدارة (staff/superuser) يمكنها الوصول أيضاً
     """
     @wraps(view_func)
     @login_required
     def wrapped_view(request, *args, **kwargs):
+        # السماح للإدارة بالوصول
+        if request.user.is_superuser or request.user.is_staff:
+            return view_func(request, *args, **kwargs)
+        
         user_type = get_user_type(request.user)
         if user_type != 'broker':
             messages.error(request, 'هذه الصفحة متاحة للدلالين فقط')
@@ -44,10 +54,15 @@ def broker_required(view_func):
 def admin_required(view_func):
     """
     Decorator للتحقق من أن المستخدم هو ADMIN فقط
+    أو staff/superuser
     """
     @wraps(view_func)
     @login_required
     def wrapped_view(request, *args, **kwargs):
+        # السماح للإدارة بالوصول
+        if request.user.is_superuser or request.user.is_staff:
+            return view_func(request, *args, **kwargs)
+        
         user_type = get_user_type(request.user)
         if user_type != 'admin':
             messages.error(request, 'هذه الصفحة متاحة للإدارة فقط')
