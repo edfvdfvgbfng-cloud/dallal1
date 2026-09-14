@@ -6535,69 +6535,6 @@ def delete_tour_point(request, point_id):
     return redirect('property_detail', property_slug)
 
 
-@login_required
-@staff_required
-@require_POST
-def add_property(request):
-    # Check if adding or replacing
-    replace_property_id = request.POST.get('replace_property_id')
-    if replace_property_id:
-        # Replacement mode - delete old property first
-        try:
-            old_prop = Property.objects.get(id=replace_property_id, owner=request.user)
-            old_prop.delete()
-            messages.info(request, 'تم استبدال العقار القديم')
-        except Property.DoesNotExist:
-            messages.error(request, 'العقار المطلوب استبداله غير موجود')
-            return redirect('dashboard')
-    
-    # Check subscription status before adding property
-    broker = get_broker(request.user)
-    if broker:
-        broker.check_subscription_status()
-        # Check if user has any active subscription
-        from .models import BrokerPlanSubscription
-        active_subscriptions = BrokerPlanSubscription.objects.filter(
-            broker=broker,
-            status='active'
-        )
-        has_active_subscription = False
-        for sub in active_subscriptions:
-            if sub.is_active():
-                has_active_subscription = True
-                break
-
-        if not has_active_subscription:
-            messages.error(request, 'ليس لديك اشتراك نشط حالياً. يرجى الاشتراك لاستخدام هذه الخدمة.')
-            return redirect('subscription_plans')
-        if not broker.can_publish_property():
-            if broker.is_suspended:
-                messages.error(request, 'تم تعطيل حسابك مؤقتاً بسبب انتهاء الاشتراك. يرجى تجديد الاشتراك للاستمرار.')
-                return redirect('subscription_plans')
-            elif not broker.is_subscription_active():
-                messages.error(request, 'انتهى اشتراكك. يرجى تجديد الاشتراك لنشر العقارات.')
-                return redirect('subscription_plans')
-            elif not broker.can_add_properties:
-                messages.error(request, 'ليس لديك صلاحية إضافة عقارات.')
-            else:
-                remaining = broker.get_remaining_properties()
-                published = broker.get_published_properties_count()
-                limit = broker.get_property_limit()
-                messages.error(
-                    request, 
-                    f'وصلت للحد الأقصى من العقارات ({published}/{limit}). '
-                    f'يمكنك حذف بعض العقارات القديمة أو طلب تطوير خطة الاشتراك لنشر المزيد.'
-                )
-            return redirect('dashboard')
-    elif not can_add_property(request.user):
-        messages.error(
-            request, 
-            'وصلت للحد الأقصى من العقارات حسب باقة اشتراكك. '
-            'يمكنك حذف بعض العقارات القديمة أو طلب تطوير خطة الاشتراك.'
-        )
-        return redirect('dashboard')
-
-
 def enhanced_add_property(request):
     """نموذج إضافة عقار محسّن مع جميع الحقول الجديدة"""
     # Check subscription and get available counts
