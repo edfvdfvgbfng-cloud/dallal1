@@ -11,26 +11,56 @@ from .chat_views import (
     ChatSettingsViewSet, BlockedUserViewSet,
     user_list
 )
-from .views import create_admin_conversation
-from .ai_multimodal_api import (
-    multimodal_chat, image_similarity_search,
-    cv_job_matching, document_qa, pipeline_statistics
-)
-from .ai_market_orchestrator import market_intelligence_orchestrator
-from .ai_market_api import (
-    market_query, calculate_property_match,
-    match_agents, market_analytics, market_summary
-)
-from .ai_gateway_api import (
-    ai_chat, ai_multimodal, ai_market, ai_autonomous,
-    conversation_state, clear_conversation, ai_chatbot_legacy
-)
-from .ai_smart_assistant_api import (
-    smart_assistant_chat, smart_assistant_reset,
-    smart_assistant_state, smart_assistant_confirm,
-    smart_assistant_suggest_alternatives
-)
-from .ai_unified_search_service import ai_search_service
+
+# Try to import AI modules - they may not be available
+try:
+    from .ai_multimodal_api import (
+        multimodal_chat, image_similarity_search,
+        cv_job_matching, document_qa, pipeline_statistics
+    )
+    AI_MULTIMODAL_AVAILABLE = True
+except ImportError:
+    AI_MULTIMODAL_AVAILABLE = False
+
+try:
+    from .ai_market_orchestrator import market_intelligence_orchestrator
+    AI_MARKET_ORCHESTRATOR_AVAILABLE = True
+except ImportError:
+    AI_MARKET_ORCHESTRATOR_AVAILABLE = False
+
+try:
+    from .ai_market_api import (
+        market_query, calculate_property_match,
+        match_agents, market_analytics, market_summary
+    )
+    AI_MARKET_API_AVAILABLE = True
+except ImportError:
+    AI_MARKET_API_AVAILABLE = False
+
+try:
+    from .ai_gateway_api import (
+        ai_chat, ai_multimodal, ai_market, ai_autonomous,
+        conversation_state, clear_conversation, ai_chatbot_legacy
+    )
+    AI_GATEWAY_API_AVAILABLE = True
+except ImportError:
+    AI_GATEWAY_API_AVAILABLE = False
+
+try:
+    from .ai_smart_assistant_api import (
+        smart_assistant_chat, smart_assistant_reset,
+        smart_assistant_state, smart_assistant_confirm,
+        smart_assistant_suggest_alternatives
+    )
+    AI_SMART_ASSISTANT_API_AVAILABLE = True
+except ImportError:
+    AI_SMART_ASSISTANT_API_AVAILABLE = False
+
+try:
+    from .ai_unified_search_service import ai_search_service
+    AI_UNIFIED_SEARCH_AVAILABLE = True
+except ImportError:
+    AI_UNIFIED_SEARCH_AVAILABLE = False
 
 
 schema_view = get_schema_view(
@@ -59,37 +89,9 @@ router.register(r'blocked-users', BlockedUserViewSet, basename='blockeduser')
 
 urlpatterns = [
     path('users/', user_list, name='user-list'),
-    path('create-admin-conversation/', create_admin_conversation, name='create-admin-conversation'),
     path('', include(router.urls)),
     path('swagger/', schema_view.with_ui('swagger', cache_timeout=0), name='schema-swagger-ui'),
     path('redoc/', schema_view.with_ui('redoc', cache_timeout=0), name='schema-redoc'),
-    # Multimodal AI API endpoints
-    path('ai/multimodal/chat/', multimodal_chat, name='multimodal-chat'),
-    path('ai/multimodal/image-similarity/', image_similarity_search, name='image-similarity'),
-    path('ai/multimodal/cv-matching/', cv_job_matching, name='cv-matching'),
-    path('ai/multimodal/document-qa/', document_qa, name='document-qa'),
-    path('ai/multimodal/statistics/', pipeline_statistics, name='pipeline-statistics'),
-    # Market Intelligence API endpoints
-    path('ai/market/query/', market_query, name='market-query'),
-    path('ai/market/property-match/', calculate_property_match, name='property-match'),
-    path('ai/market/agent-match/', match_agents, name='agent-match'),
-    path('ai/market/analytics/', market_analytics, name='market-analytics'),
-    path('ai/market/summary/', market_summary, name='market-summary'),
-    # Unified AI Gateway endpoints
-    path('ai/chat/', ai_chat, name='ai-chat'),
-    path('ai/multimodal/', ai_multimodal, name='ai-multimodal'),
-    path('ai/market/', ai_market, name='ai-market'),
-    path('ai/autonomous/', ai_autonomous, name='ai-autonomous'),
-    path('ai/conversation/state/', conversation_state, name='conversation-state'),
-    path('ai/conversation/clear/', clear_conversation, name='clear-conversation'),
-    # Smart Assistant API endpoints
-    path('ai/smart/chat/', smart_assistant_chat, name='smart-assistant-chat'),
-    path('ai/smart/reset/', smart_assistant_reset, name='smart-assistant-reset'),
-    path('ai/smart/state/', smart_assistant_state, name='smart-assistant-state'),
-    path('ai/smart/confirm/', smart_assistant_confirm, name='smart-assistant-confirm'),
-    path('ai/suggest-alternatives/', smart_assistant_suggest_alternatives, name='smart-assistant-suggest'),
-    # Legacy endpoint - compatibility wrapper
-    path('chatbot/', ai_chatbot_legacy, name='ai-chatbot-legacy'),
     # Property Offer & Negotiation API endpoints
     path('offers/', property_offers_api, name='property-offers'),
     path('offers/<int:property_id>/', property_offers_api, name='property-offers-detail'),
@@ -108,3 +110,42 @@ urlpatterns = [
     path('gps/reverse-geocode/', gps_reverse_geocode_api, name='gps-reverse-geocode'),
     path('gps/distance/', gps_distance_api, name='gps-distance'),
 ]
+
+# Conditionally add AI routes if modules are available
+if AI_MULTIMODAL_AVAILABLE:
+    urlpatterns.extend([
+        path('ai/multimodal/chat/', multimodal_chat, name='multimodal-chat'),
+        path('ai/multimodal/image-similarity/', image_similarity_search, name='image-similarity'),
+        path('ai/multimodal/cv-matching/', cv_job_matching, name='cv-matching'),
+        path('ai/multimodal/document-qa/', document_qa, name='document-qa'),
+        path('ai/multimodal/statistics/', pipeline_statistics, name='pipeline-statistics'),
+    ])
+
+if AI_MARKET_API_AVAILABLE:
+    urlpatterns.extend([
+        path('ai/market/query/', market_query, name='market-query'),
+        path('ai/market/property-match/', calculate_property_match, name='property-match'),
+        path('ai/market/agent-match/', match_agents, name='agent-match'),
+        path('ai/market/analytics/', market_analytics, name='market-analytics'),
+        path('ai/market/summary/', market_summary, name='market-summary'),
+    ])
+
+if AI_GATEWAY_API_AVAILABLE:
+    urlpatterns.extend([
+        path('ai/chat/', ai_chat, name='ai-chat'),
+        path('ai/multimodal/', ai_multimodal, name='ai-multimodal'),
+        path('ai/market/', ai_market, name='ai-market'),
+        path('ai/autonomous/', ai_autonomous, name='ai-autonomous'),
+        path('ai/conversation/state/', conversation_state, name='conversation-state'),
+        path('ai/conversation/clear/', clear_conversation, name='clear-conversation'),
+        path('chatbot/', ai_chatbot_legacy, name='ai-chatbot-legacy'),
+    ])
+
+if AI_SMART_ASSISTANT_API_AVAILABLE:
+    urlpatterns.extend([
+        path('ai/smart/chat/', smart_assistant_chat, name='smart-assistant-chat'),
+        path('ai/smart/reset/', smart_assistant_reset, name='smart-assistant-reset'),
+        path('ai/smart/state/', smart_assistant_state, name='smart-assistant-state'),
+        path('ai/smart/confirm/', smart_assistant_confirm, name='smart-assistant-confirm'),
+        path('ai/suggest-alternatives/', smart_assistant_suggest_alternatives, name='smart-assistant-suggest'),
+    ])
