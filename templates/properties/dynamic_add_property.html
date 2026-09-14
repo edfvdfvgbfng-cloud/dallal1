@@ -3059,15 +3059,8 @@ function selectCategory(category) {
     selectedForm.scrollIntoView({ behavior: 'smooth', block: 'start' });
   } else {
     console.error('Form section not found for category:', category);
-    // Fallback: if form not found, try to redirect to the appropriate page
-    if (category === 'property_iraq') {
-      window.location.href = '/dashboard/add/enhanced/';
-    } else if (category === 'property_outside') {
-      window.location.href = '/dashboard/add/outside/enhanced/';
-    } else {
-      // Fallback to enhanced form
-      window.location.href = '/dashboard/add/enhanced/';
-    }
+    // Fallback: if form not found, redirect to basic add property
+    window.location.href = '/dashboard/add/';
     return;
   }
 

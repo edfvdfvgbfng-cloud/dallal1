@@ -312,8 +312,6 @@ urlpatterns = [
     path('dashboard/settings/maintenance/', views.settings_maintenance, name='settings_maintenance'),
     path('dashboard/settings/oauth-diagnostics/', views.social_auth_diagnostics, name='social_auth_diagnostics'),
     path('dashboard/add/', views.add_property, name='add_property'),
-    path('dashboard/add/enhanced/', views.enhanced_add_property, name='enhanced_add_property'),
-    path('dashboard/add/outside/enhanced/', views.enhanced_add_outside_property, name='enhanced_add_outside_property'),
     path('dashboard/edit/<int:property_id>/', views.edit_property, name='edit_property'),
     path('dashboard/delete/<int:property_id>/', views.delete_property, name='delete_property'),
     path('dashboard/statistics/', views.property_statistics, name='property_statistics'),
@@ -369,8 +367,6 @@ urlpatterns = [
     # Tourism section
     path('hotels/', views.hotels_list, name='hotels_list'),
     path('hotels/create/', views.hotel_create, name='hotel_create'),
-    path('hotels/create/inside-iraq/', views.hotel_create_inside_iraq, name='hotel_create_inside_iraq'),
-    path('hotels/create/outside-iraq/', views.hotel_create_outside_iraq, name='hotel_create_outside_iraq'),
     path('hotels/<int:hotel_id>/update/', views.hotel_update, name='hotel_update'),
     path('hotels/<int:hotel_id>/delete/', views.hotel_delete, name='hotel_delete'),
     path('resorts/', views.resorts_list, name='resorts_list'),
