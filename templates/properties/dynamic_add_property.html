@@ -320,11 +320,11 @@
   <div class="category-selection">
     <label class="category-label">🏠 اختر فئة العقار <span class="required">*</span></label>
     <div class="category-buttons">
-      <button type="button" class="category-btn {% if category == 'inside_iraq' or not category %}active{% endif %}" onclick="console.log('Inside Iraq clicked'); selectCategory('inside_iraq')" id="btn-inside_iraq">
+      <button type="button" class="category-btn {% if category == 'property_iraq' or not category %}active{% endif %}" onclick="console.log('Inside Iraq clicked'); selectCategory('property_iraq')" id="btn-property_iraq">
         <span class="btn-icon">🏠</span>
         <span class="btn-text">عقارات داخل العراق</span>
       </button>
-      <button type="button" class="category-btn {% if category == 'outside_iraq' %}active{% endif %}" onclick="console.log('Outside Iraq clicked'); selectCategory('outside_iraq')" id="btn-outside_iraq">
+      <button type="button" class="category-btn {% if category == 'property_outside' %}active{% endif %}" onclick="console.log('Outside Iraq clicked'); selectCategory('property_outside')" id="btn-property_outside">
         <span class="btn-icon">🌍</span>
         <span class="btn-text">عقارات خارج العراق</span>
       </button>
@@ -3058,8 +3058,17 @@ function selectCategory(category) {
     // Scroll to form
     selectedForm.scrollIntoView({ behavior: 'smooth', block: 'start' });
   } else {
-    console.error('Form section not found!');
-    alert('نموذج هذه الفئة غير متوفر حالياً');
+    console.error('Form section not found for category:', category);
+    // Fallback: if form not found, try to redirect to the appropriate page
+    if (category === 'property_iraq') {
+      window.location.href = '/dashboard/add/enhanced/';
+    } else if (category === 'property_outside') {
+      window.location.href = '/dashboard/add/outside/enhanced/';
+    } else {
+      alert('نموذج هذه الفئة غير متوفر حالياً. سيتم توجيهك إلى الصفحة المناسبة.');
+      // Fallback to enhanced form
+      window.location.href = '/dashboard/add/enhanced/';
+    }
     return;
   }
 
