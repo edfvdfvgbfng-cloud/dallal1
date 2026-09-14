@@ -6535,3 +6535,55 @@ def delete_tour_point(request, point_id):
     return redirect('property_detail', property_slug)
 
 
+@login_required
+def jobs_list(request):
+    """List all jobs."""
+    jobs = Job.objects.filter(status='active').order_by('-created_at')
+    return render(request, 'properties/jobs_list.html', {'jobs': jobs})
+
+
+@login_required
+def job_create(request):
+    """Create a new job."""
+    if request.method == 'POST':
+        # Simple redirect to add property for now
+        messages.info(request, 'وظائف - يرجى استخدام نموذج إضافة العقار')
+        return redirect('add_property')
+    return render(request, 'properties/job_create.html')
+
+
+@login_required
+def my_jobs(request):
+    """List user's jobs."""
+    jobs = Job.objects.filter(employer=request.user).order_by('-created_at')
+    return render(request, 'properties/my_jobs.html', {'jobs': jobs})
+
+
+@login_required
+def job_edit(request, pk):
+    """Edit a job."""
+    job = get_object_or_404(Job, pk=pk)
+    if request.method == 'POST':
+        messages.info(request, 'تعديل الوظيفة - تحت قيد التطوير')
+        return redirect('job_detail', pk=pk)
+    return render(request, 'properties/job_edit.html', {'job': job})
+
+
+@login_required
+def job_delete(request, pk):
+    """Delete a job."""
+    job = get_object_or_404(Job, pk=pk)
+    if request.method == 'POST':
+        job.delete()
+        messages.success(request, 'تم حذف الوظيفة بنجاح')
+        return redirect('my_jobs')
+    return render(request, 'properties/job_delete.html', {'job': job})
+
+
+@login_required
+def job_detail(request, pk):
+    """View job details."""
+    job = get_object_or_404(Job, pk=pk)
+    return render(request, 'properties/job_detail.html', {'job': job})
+
+

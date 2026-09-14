@@ -40,12 +40,6 @@ urlpatterns = [
     path('search/', views.unified_search_view, name='unified_search'),
     path('services-categories/', views.service_categories_view, name='service_categories'),
     path('navigation-error/', views.navigation_error_view, name='navigation_error'),
-    # Job opportunities
-    path('jobs/', views.jobs_view, name='jobs'),
-    path('jobs/post/', views.job_create, name='job_post'),
-    path('jobs/create/', RedirectView.as_view(url='/jobs/post/', permanent=False)),
-    path('jobs/<str:slug>/', views.job_detail_view, name='job_detail'),
-    path('jobs/<str:slug>/apply/', views.job_apply_view, name='job_apply'),
     # Channel pages
     path('channels/', channel_views.ChannelListView.as_view(), name='channel_list'),
     path('channel/brokers/', views.channel_brokers_view, name='channel_brokers'),
@@ -433,6 +427,7 @@ urlpatterns = [
 
     
     # Jobs / Employment
+    # Jobs routes
     path('jobs/', views.jobs_list, name='jobs_list'),
     path('jobs/create/', views.job_create, name='job_create'),
     path('jobs/my/', views.my_jobs, name='my_jobs'),
