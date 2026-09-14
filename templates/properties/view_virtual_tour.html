@@ -1,0 +1,339 @@
+{% extends 'properties/base.html' %}
+
+{% block title %}{{ tour.title }} - جولة افتراضية 360°{% endblock %}
+
+{% block extra_css %}
+<style>
+.virtual-tour-container {
+    width: 100%;
+    height: 100vh;
+    position: relative;
+    background: #000;
+    overflow: hidden;
+}
+
+#tour-viewer {
+    width: 100%;
+    height: 100%;
+}
+
+.tour-info {
+    position: absolute;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(0, 0, 0, 0.8);
+    color: white;
+    padding: 20px 30px;
+    border-radius: 10px;
+    text-align: center;
+    z-index: 1000;
+    max-width: 90%;
+}
+
+.tour-info h2 {
+    margin: 0 0 10px 0;
+    font-size: 1.5rem;
+}
+
+.tour-info p {
+    margin: 0;
+    opacity: 0.8;
+}
+
+.tour-info .stats {
+    display: flex;
+    gap: 20px;
+    justify-content: center;
+    margin-top: 10px;
+    font-size: 0.9rem;
+}
+
+.tour-info .stats span {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.tour-actions {
+    position: absolute;
+    top: 20px;
+    left: 20px;
+    display: flex;
+    gap: 10px;
+    z-index: 1000;
+}
+
+.tour-actions .btn {
+    background: rgba(0, 0, 0, 0.8);
+    color: white;
+    border: none;
+    padding: 10px 15px;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.tour-actions .btn:hover {
+    background: rgba(255, 122, 0, 0.8);
+}
+
+/* Loading styles */
+.vt-loader {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    text-align: center;
+    color: white;
+    z-index: 2000;
+}
+
+.vt-spinner {
+    width: 50px;
+    height: 50px;
+    border: 4px solid rgba(255, 255, 255, 0.3);
+    border-top: 4px solid var(--primary);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin: 0 auto 15px;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+.vt-loading-text {
+    font-size: 1.1rem;
+}
+
+/* Hotspot styles */
+.vt-hotspot {
+    position: absolute;
+    cursor: pointer;
+    z-index: 1000;
+    pointer-events: auto;
+    transition: transform 0.3s ease;
+}
+
+.vt-hotspot:hover {
+    transform: scale(1.2);
+}
+
+.vt-hotspot-icon {
+    font-size: 32px;
+    filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.5));
+}
+
+.vt-hotspot-label {
+    background: rgba(0, 0, 0, 0.8);
+    color: white;
+    padding: 5px 10px;
+    border-radius: 5px;
+    font-size: 0.85rem;
+    margin-top: 5px;
+    white-space: nowrap;
+}
+
+/* Compass styles */
+.vt-compass {
+    position: absolute;
+    bottom: 20px;
+    right: 20px;
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.vt-compass-needle {
+    width: 40px;
+    height: 40px;
+    background: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><polygon points="50,10 40,90 50,80 60,90" fill="%23ff0000"/><polygon points="50,90 40,10 50,20 60,10" fill="%23ffffff"/></svg>') center/contain no-repeat;
+    transition: transform 0.1s ease;
+}
+
+.vt-compass-label {
+    position: absolute;
+    top: 5px;
+    left: 50%;
+    transform: translateX(-50%);
+    color: white;
+    font-weight: bold;
+    font-size: 12px;
+}
+
+/* Minimap styles */
+.vt-minimap {
+    position: absolute;
+    bottom: 90px;
+    left: 20px;
+    width: 100px;
+    height: 100px;
+    background: rgba(0, 0, 0, 0.5);
+    border-radius: 10px;
+    z-index: 1000;
+    overflow: hidden;
+}
+
+.vt-minimap-indicator {
+    position: absolute;
+    width: 20px;
+    height: 20px;
+    background: var(--primary);
+    border-radius: 50%;
+    transform: translate(-50%, -50%);
+    transition: all 0.1s ease;
+}
+
+/* Error styles */
+.vt-error {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    text-align: center;
+    color: white;
+    z-index: 2000;
+    background: rgba(255, 0, 0, 0.5);
+    padding: 20px;
+    border-radius: 10px;
+}
+
+.vt-error-icon {
+    font-size: 48px;
+    margin-bottom: 10px;
+}
+
+.vt-error-message {
+    font-size: 1.1rem;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .tour-info {
+        bottom: 10px;
+        padding: 15px 20px;
+    }
+    
+    .tour-info h2 {
+        font-size: 1.2rem;
+    }
+    
+    .tour-info .stats {
+        flex-direction: column;
+        gap: 5px;
+    }
+    
+    .tour-actions {
+        flex-direction: column;
+    }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="virtual-tour-container">
+    <div id="tour-viewer"></div>
+    
+    <div class="tour-actions">
+        <a href="{% url 'property_detail' property.slug %}" class="btn">
+            ← العودة للعقار
+        </a>
+        {% if user == property.owner or user.is_staff %}
+        <a href="{% url 'edit_virtual_tour' tour.id %}" class="btn">
+            ✏️ تعديل الجولة
+        </a>
+        {% endif %}
+    </div>
+    
+    <div class="tour-info">
+        <h2>{{ tour.title }}</h2>
+        <p>{{ tour.description|truncatewords:20 }}</p>
+        <div class="stats">
+            <span>👁️ {{ tour.view_count }} مشاهدة</span>
+            <span>🎯 {{ tour.interaction_count }} تفاعل</span>
+            <span>⏱️ {{ tour.get_tour_duration }} دقيقة</span>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="{% static 'js/virtual-tour-360.js' %}"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const tourData = {{ tour_data|safe }};
+    
+    if (tourData.tour_type === 'external' && tourData.external_url) {
+        // Redirect to external tour
+        window.location.href = tourData.external_url;
+        return;
+    }
+    
+    if (!tourData.image_url) {
+        alert('لا توجد صورة متاحة لهذه الجولة');
+        window.location.href = "{% url 'property_detail' property.slug %}";
+        return;
+    }
+    
+    // Initialize the virtual tour viewer
+    const viewer = new VirtualTour360('#tour-viewer', {
+        imageUrl: tourData.image_url,
+        autoRotate: tourData.auto_rotate,
+        autoRotateSpeed: tourData.auto_rotate_speed,
+        enableZoom: tourData.enable_zoom,
+        minZoom: tourData.min_zoom,
+        maxZoom: tourData.max_zoom,
+        enableFullscreen: tourData.enable_fullscreen,
+        enableVR: tourData.enable_vr,
+        initialPitch: tourData.initial_pitch,
+        initialYaw: tourData.initial_yaw,
+        startInAutoplay: tourData.start_in_autoplay,
+        autoplayDuration: tourData.autoplay_duration,
+        enableHotspots: tourData.enable_hotspots,
+        enableAudio: tourData.enable_audio,
+        audioUrl: tourData.audio_url,
+        enableCompass: tourData.enable_compass,
+        enableMinimap: tourData.enable_minimap,
+        loadingAnimation: tourData.loading_animation,
+        backgroundMusic: tourData.background_music,
+        transitionEffect: tourData.transition_effect,
+        onInteraction: function(type, data) {
+            // Track interactions via AJAX
+            fetch('{% url "track_tour_interaction" tour.id %}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': getCookie('csrftoken')
+                },
+                body: JSON.stringify({
+                    interaction_type: type,
+                    data: data
+                })
+            }).catch(err => console.error('Error tracking interaction:', err));
+        }
+    });
+    
+    // Get CSRF token
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+});
+</script>
+{% endblock %}

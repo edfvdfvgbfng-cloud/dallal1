@@ -1,0 +1,41 @@
+{% extends 'properties/base.html' %}
+
+{% block title %}حذف فرصة عمل - دلال{% endblock %}
+
+{% block content %}
+<div class="container" style="padding: 40px 20px;">
+    <div class="page-header" style="text-align: center; margin-bottom: 40px;">
+        <h1 style="font-size: 32px; margin-bottom: 10px;">🗑️ حذف فرصة العمل</h1>
+        <p style="color: rgba(255,255,255,0.7);">تأكيد حذف فرصة العمل</p>
+    </div>
+
+    <div class="delete-container" style="background: rgba(255,255,255,0.05); padding: 40px; border-radius: 12px; max-width: 600px; margin: 0 auto; text-align: center;">
+        <div style="font-size: 64px; margin-bottom: 20px;">⚠️</div>
+        
+        <h2 style="margin-bottom: 15px;">هل أنت متأكد من حذف هذه فرصة العمل؟</h2>
+        
+        <div style="background: rgba(255,255,255,0.05); padding: 20px; border-radius: 8px; margin-bottom: 30px; text-align: right;">
+            <h3 style="margin-bottom: 10px;">💼 {{ job.job_title }}</h3>
+            <p style="color: rgba(255,255,255,0.7); margin-bottom: 5px;">🏢 {{ job.company_name }}</p>
+            <p style="color: rgba(255,255,255,0.7); margin-bottom: 5px;">📍 {% if job.location_type == 'inside_iraq' %}{{ job.governorate }}{% else %}{% if job.country %}{{ job.country.name_ar }}{% else %}{{ job.city }}{% endif %}{% endif %}</p>
+            <p style="color: rgba(255,255,255,0.7);">💰 {{ job.get_salary_range_display }}</p>
+        </div>
+        
+        <p style="color: rgba(239, 68, 68, 0.8); margin-bottom: 30px;">
+            ⚠️ هذا الإجراء لا يمكن التراجع عنه. سيتم حذف جميع البيانات والوسائط المرتبطة بهذه فرصة العمل.
+        </p>
+        
+        <form method="POST" style="display: flex; gap: 15px; justify-content: center; flex-wrap: wrap;">
+            {% csrf_token %}
+            <button type="submit" 
+                    style="padding: 15px 30px; background: linear-gradient(135deg, #EF4444 0%, #DC2626 100%); border: none; border-radius: 8px; color: white; cursor: pointer; font-size: 16px; min-width: 150px;">
+                🗑️ نعم، احذف
+            </button>
+            <a href="{% url 'my_jobs' %}" 
+               style="padding: 15px 30px; background: rgba(255,255,255,0.1); border: none; border-radius: 8px; color: white; text-decoration: none; text-align: center;">
+                إلغاء
+            </a>
+        </form>
+    </div>
+</div>
+{% endblock %}

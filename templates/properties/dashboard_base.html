@@ -1,0 +1,27 @@
+{% extends 'properties/base.html' %}
+
+{% block body_class %}dashboard-page{% endblock %}
+
+{% block content %}
+<div class="dashboard-shell">
+  {% include 'properties/partials/dashboard_sidebar.html' %}
+  <div class="dashboard-main">
+    <div class="dashboard-header-bar">
+      <div>
+        <h1>{% block dashboard_title %}لوحة التحكم{% endblock %}</h1>
+        {% block dashboard_subtitle %}{% endblock %}
+      </div>
+      <div class="dashboard-quick-actions">
+        {% block dashboard_actions %}{% endblock %}
+      </div>
+    </div>
+    {% block dashboard_content %}{% endblock %}
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+{% endblock %}
+
+{% block dashboard_js %}
+{% endblock %}

@@ -1,0 +1,238 @@
+{% extends 'properties/base.html' %}
+{% load static %}
+
+{% block title %}منتجعات حول العالم 🏝️🌍{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/listing-pages.css' %}">
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'js/listing-pages.js' %}" defer></script>
+{% endblock %}
+
+{% block content %}
+<div class="listing-page">
+    <!-- Skip to content for accessibility -->
+    <a href="#listings-container" class="skip-to-content">انتقل إلى المحتوى الرئيسي</a>
+
+    <!-- Hero Section -->
+    <section class="listing-hero">
+        <div class="listing-hero-content">
+            <span class="listing-hero-icon">🏝️🌍</span>
+            <h1 class="listing-hero-title">منتجعات حول العالم</h1>
+            <p class="listing-hero-subtitle">اكتشف أجمل المنتجعات والشواطئ والأماكن السياحية في مختلف دول العالم</p>
+        </div>
+    </section>
+
+    <!-- Search & Filters Toolbar -->
+    <div class="listing-toolbar">
+        <div class="listing-toolbar-content">
+            <!-- Search Box -->
+            <div class="listing-search-box">
+                <input type="text" 
+                       class="listing-search-input" 
+                       placeholder="ابحث عن منتجعك..." 
+                       name="search"
+                       value="{{ request.GET.search|default:'' }}">
+                <span class="listing-search-icon">🔍</span>
+            </div>
+
+            <!-- Actions -->
+            <div class="listing-actions">
+                <!-- View Toggle -->
+                <div class="listing-view-toggle">
+                    <button class="listing-view-btn active" data-view="grid" aria-label="عرض شبكي">
+                        ▦
+                    </button>
+                    <button class="listing-view-btn" data-view="list" aria-label="عرض قائمة">
+                        ☰
+                    </button>
+                </div>
+
+                <!-- Filter Button (Mobile) -->
+                <button class="listing-filter-btn" aria-label="الفلاتر">
+                    <span>🔍</span>
+                    <span>الفلاتر</span>
+                </button>
+
+                <!-- Sort -->
+                <select class="listing-sort-select" name="sort">
+                    <option value="newest" {% if request.GET.sort == 'newest' %}selected{% endif %}>الأحدث</option>
+                    <option value="price_low" {% if request.GET.sort == 'price_low' %}selected{% endif %}>الأقل سعرًا</option>
+                    <option value="price_high" {% if request.GET.sort == 'price_high' %}selected{% endif %}>الأعلى سعرًا</option>
+                    <option value="rating" {% if request.GET.sort == 'rating' %}selected{% endif %}>الأعلى تقييمًا</option>
+                    <option value="featured" {% if request.GET.sort == 'featured' %}selected{% endif %}>المميز أولًا</option>
+                </select>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Layout -->
+    <div class="listing-layout" id="listings-container">
+        <!-- Filters Sidebar -->
+        <aside class="listing-filters">
+            <div class="listing-filters-header">
+                <h2 class="listing-filters-title">الفلاتر</h2>
+                <button class="listing-filters-clear" type="button">مسح الكل</button>
+            </div>
+
+            <form class="listing-filters-form" method="get" action="{% url 'resorts_outside_iraq' %}">
+                <!-- Country -->
+                <div class="listing-filter-group">
+                    <label class="listing-filter-label">الدولة</label>
+                    <select name="country" class="listing-filter-select" id="country-select">
+                        <option value="">كل الدول</option>
+                        {% for country in countries %}
+                        <option value="{{ country.id }}" {% if country_id|add:0 == country.id %}selected{% endif %}>{{ country.name_ar }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <!-- City -->
+                <div class="listing-filter-group">
+                    <label class="listing-filter-label">المدينة</label>
+                    <select name="city" class="listing-filter-select" id="city-select">
+                        <option value="">كل المدن</option>
+                        {% for city in cities %}
+                        <option value="{{ city.id }}" {% if city_id|add:0 == city.id %}selected{% endif %}>{{ city.name_ar }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <!-- Resort Type -->
+                <div class="listing-filter-group">
+                    <label class="listing-filter-label">نوع المنتجع</label>
+                    <select name="resort_type" class="listing-filter-select">
+                        <option value="">الكل</option>
+                        {% for type_code, type_name in resort_types %}
+                        <option value="{{ type_code }}" {% if request.GET.resort_type == type_code %}selected{% endif %}>{{ type_name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <!-- Currency -->
+                <div class="listing-filter-group">
+                    <label class="listing-filter-label">العملة</label>
+                    <select name="currency" class="listing-filter-select">
+                        <option value="">كل العملات</option>
+                        {% for currency_code, currency_name in currencies %}
+                        <option value="{{ currency_code }}" {% if request.GET.currency == currency_code %}selected{% endif %}>{{ currency_name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <!-- Price Range -->
+                <div class="listing-filter-group">
+                    <label class="listing-filter-label">السعر</label>
+                    <div class="listing-filter-range">
+                        <input type="number" 
+                               name="price_min" 
+                               class="listing-filter-input" 
+                               placeholder="من"
+                               value="{{ request.GET.price_min|default:'' }}">
+                        <span class="listing-filter-range-separator">—</span>
+                        <input type="number" 
+                               name="price_max" 
+                               class="listing-filter-input" 
+                               placeholder="إلى"
+                               value="{{ request.GET.price_max|default:'' }}">
+                    </div>
+                </div>
+
+                <!-- Apply Button -->
+                <button type="submit" class="listing-filter-apply">
+                    <span>🔍</span>
+                    <span>تصفية النتائج</span>
+                </button>
+            </form>
+        </aside>
+
+        <!-- Listings Container -->
+        <div class="listings-container">
+            <!-- Header -->
+            <div class="listings-header">
+                <span class="listings-count">
+                    {% if resorts %}
+                    {{ resorts|length }} منتجع
+                    {% else %}
+                    لا توجد نتائج
+                    {% endif %}
+                </span>
+            </div>
+
+            <!-- Resorts Grid -->
+            {% if resorts %}
+            <div class="listings-grid">
+                {% for resort in resorts %}
+                {% include 'properties/_resort_card.html' with resort=resort %}
+                {% endfor %}
+            </div>
+
+            <!-- Pagination -->
+            {% if is_paginated %}
+            <div class="listing-pagination">
+                {% if page_obj.has_previous %}
+                <a href="?page={{ page_obj.previous_page_number }}" class="listing-pagination-btn">→</a>
+                {% endif %}
+
+                {% for num in page_obj.paginator.page_range %}
+                {% if page_obj.number == num %}
+                <span class="listing-pagination-btn active">{{ num }}</span>
+                {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                <a href="?page={{ num }}" class="listing-pagination-btn">{{ num }}</a>
+                {% endif %}
+                {% endfor %}
+
+                {% if page_obj.has_next %}
+                <a href="?page={{ page_obj.next_page_number }}" class="listing-pagination-btn">←</a>
+                {% endif %}
+            </div>
+            {% endif %}
+
+            {% else %}
+            <!-- Empty State -->
+            <div class="listing-empty-state">
+                <div class="listing-empty-icon">🏝️</div>
+                <h3 class="listing-empty-title">لا توجد منتجعات مطابقة</h3>
+                <p class="listing-empty-text">جرّب تغيير الفلاتر أو البحث عن موقع مختلف</p>
+                <button class="listing-empty-action" onclick="window.location.href='{% url 'resorts_outside_iraq' %}'">
+                    <span>🔄</span>
+                    <span>مسح الفلاتر</span>
+                </button>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- Mobile Filters Overlay -->
+<div class="listing-filters-overlay"></div>
+
+<!-- Dynamic City Loading Script -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const countrySelect = document.getElementById('country-select');
+    const citySelect = document.getElementById('city-select');
+
+    if (countrySelect) {
+        countrySelect.addEventListener('change', function() {
+            const countryId = this.value;
+            if (countryId) {
+                // Load cities for selected country
+                fetch(`/api/cities/?country=${countryId}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        citySelect.innerHTML = '<option value="">كل المدن</option>';
+                        data.cities.forEach(city => {
+                            citySelect.innerHTML += `<option value="${city.id}">${city.name_ar}</option>`;
+                        });
+                    });
+            } else {
+                citySelect.innerHTML = '<option value="">كل المدن</option>';
+            }
+        });
+    }
+});
+</script>
+{% endblock %}

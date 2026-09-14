@@ -1,0 +1,358 @@
+{% extends 'properties/dashboard_base.html' %}
+{% load static %}
+{% load humanize %}
+
+{% block title %}لوحة التقارير{% endblock %}
+{% block dashboard_title %}لوحة <span>التقارير</span>{% endblock %}
+
+{% block dashboard_actions %}
+<a href="{% url 'admin_panel' %}" class="btn btn-outline">عودة للوحة الإدارة</a>
+<a href="{% url 'admin_analytics_panel' %}" class="btn btn-primary">📊 التحليلات</a>
+<a href="/admin/" target="_blank" class="btn btn-dark">🔧 Django Admin</a>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+.reports-dashboard {
+  background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+  min-height: 100vh;
+  padding: 2rem;
+}
+
+.reports-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 2rem;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.report-selector {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.report-btn {
+  padding: 0.75rem 1.5rem;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  background: rgba(255, 255, 255, 0.1);
+  color: #fff;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.report-btn:hover,
+.report-btn.active {
+  background: rgba(255, 255, 255, 0.2);
+  border-color: rgba(255, 255, 255, 0.4);
+}
+
+.report-content {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 16px;
+  padding: 2rem;
+  backdrop-filter: blur(10px);
+}
+
+.report-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 2rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.report-title {
+  font-size: 1.5rem;
+  color: #fff;
+  font-weight: bold;
+}
+
+.export-btn {
+  padding: 0.5rem 1rem;
+  background: #4ecdc4;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background 0.3s ease;
+}
+
+.export-btn:hover {
+  background: #3db8b0;
+}
+
+.stats-summary {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1rem;
+  margin-bottom: 2rem;
+}
+
+.summary-card {
+  background: rgba(0, 0, 0, 0.2);
+  padding: 1.5rem;
+  border-radius: 10px;
+  text-align: center;
+}
+
+.summary-value {
+  font-size: 2rem;
+  font-weight: bold;
+  color: #4ecdc4;
+  margin-bottom: 0.5rem;
+}
+
+.summary-label {
+  color: #a0a0a0;
+  font-size: 0.9rem;
+}
+
+.data-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 1rem;
+}
+
+.data-table th,
+.data-table td {
+  padding: 12px;
+  text-align: left;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  color: #fff;
+}
+
+.data-table th {
+  background: rgba(255, 255, 255, 0.1);
+  font-weight: 600;
+}
+
+.data-table tr:hover {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.status-badge {
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.status-active {
+  background: #22c55e;
+  color: white;
+}
+
+.status-inactive {
+  background: #666;
+  color: white;
+}
+
+.status-sold {
+  background: #ff9500;
+  color: white;
+}
+</style>
+{% endblock %}
+
+{% block dashboard_content %}
+<div class="reports-dashboard">
+  <div class="reports-header">
+    <h2 style="color: #fff;">📈 نظام التقارير</h2>
+    <div class="report-selector">
+      <button class="report-btn {% if report_type == 'overview' %}active{% endif %}" onclick="location.href='?report_type=overview'">نظرة عامة</button>
+      <button class="report-btn {% if report_type == 'properties' %}active{% endif %}" onclick="location.href='?report_type=properties'">العقارات</button>
+      <button class="report-btn {% if report_type == 'users' %}active{% endif %}" onclick="location.href='?report_type=users'">المستخدمين</button>
+      <button class="report-btn {% if report_type == 'subscriptions' %}active{% endif %}" onclick="location.href='?report_type=subscriptions'">الاشتراكات</button>
+    </div>
+  </div>
+  
+  <div class="report-content">
+    <div class="report-header">
+      <h3 class="report-title">{{ report_data.title }}</h3>
+      <button class="export-btn" onclick="exportReport()">📥 تصدير التقرير</button>
+    </div>
+    
+    {% if report_type == 'overview' %}
+    <div class="stats-summary">
+      <div class="summary-card">
+        <div class="summary-value">{{ report_data.properties_count|intcomma }}</div>
+        <div class="summary-label">العقارات</div>
+      </div>
+      <div class="summary-card">
+        <div class="summary-value">{{ report_data.users_count|intcomma }}</div>
+        <div class="summary-label">المستخدمين</div>
+      </div>
+      <div class="summary-card">
+        <div class="summary-value">{{ report_data.brokers_count|intcomma }}</div>
+        <div class="summary-label">الدلالين</div>
+      </div>
+      <div class="summary-card">
+        <div class="summary-value">{{ report_data.subscriptions_count|intcomma }}</div>
+        <div class="summary-label">الاشتراكات</div>
+      </div>
+    </div>
+    
+    {% elif report_type == 'properties' %}
+    <div class="stats-summary">
+      <div class="summary-card">
+        <div class="summary-value">{{ report_data.total|intcomma }}</div>
+        <div class="summary-label">إجمالي العقارات</div>
+      </div>
+      <div class="summary-card">
+        <div class="summary-value">{{ report_data.active|intcomma }}</div>
+        <div class="summary-label">نشط</div>
+      </div>
+      <div class="summary-card">
+        <div class="summary-value">{{ report_data.sold|intcomma }}</div>
+        <div class="summary-label">تم بيعه</div>
+      </div>
+    </div>
+    
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>العنوان</th>
+          <th>السعر</th>
+          <th>المحافظة</th>
+          <th>الحالة</th>
+          <th>تاريخ الإضافة</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for property in report_data.properties %}
+        <tr>
+          <td>{{ property.title|truncatechars:40 }}</td>
+          <td>{{ property.price|intcomma }}</td>
+          <td>{{ property.governorate }}</td>
+          <td>
+            <span class="status-badge {% if property.status == 'active' %}status-active{% elif property.status == 'sold' %}status-sold{% else %}status-inactive{% endif %}">
+              {{ property.get_status_display }}
+            </span>
+          </td>
+          <td>{{ property.created_at|date:"Y-m-d" }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    
+    {% elif report_type == 'users' %}
+    <div class="stats-summary">
+      <div class="summary-card">
+        <div class="summary-value">{{ report_data.total|intcomma }}</div>
+        <div class="summary-label">إجمالي المستخدمين</div>
+      </div>
+      <div class="summary-card">
+        <div class="summary-value">{{ report_data.active|intcomma }}</div>
+        <div class="summary-label">نشط</div>
+      </div>
+      <div class="summary-card">
+        <div class="summary-value">{{ report_data.brokers|intcomma }}</div>
+        <div class="summary-label">دلال</div>
+      </div>
+    </div>
+    
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>الاسم</th>
+          <th>البريد الإلكتروني</th>
+          <th>الحالة</th>
+          <th>تاريخ التسجيل</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for user in report_data.users %}
+        <tr>
+          <td>{{ user.get_full_name|default:user.username }}</td>
+          <td>{{ user.email }}</td>
+          <td>
+            <span class="status-badge {% if user.is_active %}status-active{% else %}status-inactive{% endif %}">
+              {% if user.is_active %}نشط{% else %}غير نشط{% endif %}
+            </span>
+          </td>
+          <td>{{ user.date_joined|date:"Y-m-d" }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    
+    {% elif report_type == 'subscriptions' %}
+    <div class="stats-summary">
+      <div class="summary-card">
+        <div class="summary-value">{{ report_data.total|intcomma }}</div>
+        <div class="summary-label">إجمالي الاشتراكات</div>
+      </div>
+      <div class="summary-card">
+        <div class="summary-value">{{ report_data.active|intcomma }}</div>
+        <div class="summary-label">نشط</div>
+      </div>
+      <div class="summary-card">
+        <div class="summary-value">{{ report_data.expired|intcomma }}</div>
+        <div class="summary-label">منتهي</div>
+      </div>
+    </div>
+    
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>المستخدم</th>
+          <th>نوع الاشتراك</th>
+          <th>الحالة</th>
+          <th>تاريخ البدء</th>
+          <th>تاريخ الانتهاء</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for subscription in report_data.subscriptions %}
+        <tr>
+          <td>{{ subscription.user.get_full_name|default:subscription.user.username }}</td>
+          <td>{{ subscription.get_subscription_type_display }}</td>
+          <td>
+            <span class="status-badge {% if subscription.is_active %}status-active{% else %}status-inactive{% endif %}">
+              {% if subscription.is_active %}نشط{% else %}منتهي{% endif %}
+            </span>
+          </td>
+          <td>{{ subscription.start_date|date:"Y-m-d" }}</td>
+          <td>{{ subscription.end_date|date:"Y-m-d" }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% endif %}
+  </div>
+</div>
+
+<script>
+function exportReport() {
+  const reportType = '{{ report_type }}';
+  const reportTitle = '{{ report_data.title }}';
+  
+  // Create CSV content
+  let csvContent = 'data:text/csv;charset=utf-8,';
+  csvContent += `تقرير: ${reportTitle}\n\n`;
+  
+  // Add summary data
+  {% if report_type == 'overview' %}
+  csvContent += 'التصنيف,العدد\n';
+  csvContent += `العقارات,{{ report_data.properties_count }}\n`;
+  csvContent += `المستخدمين,{{ report_data.users_count }}\n`;
+  csvContent += `الدلالين,{{ report_data.brokers_count }}\n`;
+  csvContent += `الاشتراكات,{{ report_data.subscriptions_count }}\n`;
+  {% endif %}
+  
+  // Download file
+  const encodedUri = encodeURI(csvContent);
+  const link = document.createElement('a');
+  link.setAttribute('href', encodedUri);
+  link.setAttribute('download', `${reportType}_report_${new Date().toISOString().split('T')[0]}.csv`);
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+}
+</script>
+{% endblock %}

@@ -1,0 +1,362 @@
+{% extends 'properties/base.html' %}
+
+{% block title %}تحقق من العقار: {{ property.display_title }}{% endblock %}
+
+{% block content %}
+<div class="dashboard-container">
+  <div class="dashboard-header">
+    <div class="header-info">
+      <h1>🔐 تحقق من العقار</h1>
+      <p>{{ property.display_title }}</p>
+    </div>
+    <div class="dashboard-quick-links">
+      <a href="{% url 'property_verification_admin' %}" class="btn btn-outline">← لوحة التحقق</a>
+      <a href="{% url 'property_detail' property.slug %}" class="btn btn-outline">عرض العقار</a>
+    </div>
+  </div>
+
+  <!-- Property Info -->
+  <div class="property-info-card">
+    <h3>معلومات العقار</h3>
+    <div class="property-details">
+      <div class="detail-item">
+        <span class="detail-label">العنوان:</span>
+        <span class="detail-value">{{ property.title|default:property.display_title }}</span>
+      </div>
+      <div class="detail-item">
+        <span class="detail-label">النوع:</span>
+        <span class="detail-value">{{ property.get_type_display }}</span>
+      </div>
+      <div class="detail-item">
+        <span class="detail-label">المحافظة:</span>
+        <span class="detail-value">{{ property.governorate|default:"-" }}</span>
+      </div>
+      <div class="detail-item">
+        <span class="detail-label">المدينة:</span>
+        <span class="detail-value">{{ property.city|default:"-" }}</span>
+      </div>
+      <div class="detail-item">
+        <span class="detail-label">الحي:</span>
+        <span class="detail-value">{{ property.district }}</span>
+      </div>
+      <div class="detail-item">
+        <span class="detail-label">السعر:</span>
+        <span class="detail-value">{{ property.price|floatformat:0 }} د.ع</span>
+      </div>
+      <div class="detail-item">
+        <span class="detail-label">المساحة:</span>
+        <span class="detail-value">{{ property.area }} م²</span>
+      </div>
+      <div class="detail-item">
+        <span class="detail-label">المالك:</span>
+        <span class="detail-value">{{ property.owner.username|default:"-" }}</span>
+      </div>
+      <div class="detail-item">
+        <span class="detail-label">الدلال:</span>
+        <span class="detail-value">{{ property.broker.display_name|default:"-" }}</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Verification Form -->
+  <div class="verification-form-card">
+    <h3>🔍 نموذج التحقق</h3>
+    <form method="post" enctype="multipart/form-data" class="verification-form">
+      {% csrf_token %}
+      
+      <div class="form-section">
+        <h4>حالة التحقق</h4>
+        <div class="form-group">
+          <label for="{{ form.verification_status.id_for_label }}">حالة التحقق:</label>
+          {{ form.verification_status }}
+        </div>
+      </div>
+
+      <div class="form-section">
+        <h4>عناصر التحقق</h4>
+        <div class="verification-checks">
+          <div class="checkbox-group">
+            <label>
+              {{ form.identity_verified }}
+              تم التحقق من هوية المعلن
+            </label>
+          </div>
+          <div class="checkbox-group">
+            <label>
+              {{ form.ownership_verified }}
+              تم التحقق من الملكية
+            </label>
+          </div>
+          <div class="checkbox-group">
+            <label>
+              {{ form.location_verified }}
+              تم التحقق من الموقع
+            </label>
+          </div>
+          <div class="checkbox-group">
+            <label>
+              {{ form.images_verified }}
+              تم التحقق من الصور
+            </label>
+          </div>
+          <div class="checkbox-group">
+            <label>
+              {{ form.price_verified }}
+              تم التحقق من السعر
+            </label>
+          </div>
+        </div>
+      </div>
+
+      <div class="form-section">
+        <h4>ملاحظات التحقق</h4>
+        <div class="form-group">
+          <label for="{{ form.verification_notes.id_for_label }}">ملاحظات التحقق:</label>
+          {{ form.verification_notes }}
+          <small class="form-text">أي ملاحظات إضافية حول عملية التحقق</small>
+        </div>
+      </div>
+
+      <div class="form-section">
+        <h4>سبب الرفض (إذا كان مرفوضاً)</h4>
+        <div class="form-group">
+          <label for="{{ form.rejection_reason.id_for_label }}">سبب الرفض:</label>
+          {{ form.rejection_reason }}
+          <small class="form-text">سبب رفض العقار أو عدم الموافقة عليه</small>
+        </div>
+      </div>
+
+      <div class="form-section">
+        <h4>الوثائق الداعمة</h4>
+        <div class="form-group">
+          <label for="{{ form.identity_document.id_for_label }}">وثيقة الهوية:</label>
+          {{ form.identity_document }}
+          <small class="form-text">صورة بطاقة الهوية أو جواز السفر</small>
+        </div>
+        <div class="form-group">
+          <label for="{{ form.ownership_document.id_for_label }}">وثيقة الملكية:</label>
+          {{ form.ownership_document }}
+          <small class="form-text">صورة سند الملكية أو الطابو</small>
+        </div>
+      </div>
+
+      <div class="form-actions">
+        <button type="submit" class="btn btn-primary">💾 حفظ التحقق</button>
+        <a href="{% url 'property_verification_admin' %}" class="btn btn-outline">إلغاء</a>
+      </div>
+    </form>
+  </div>
+
+  <!-- Verification History -->
+  {% if verification_history %}
+  <div class="verification-history-card">
+    <h3>📜 سجل التحقق</h3>
+    <div class="history-list">
+      {% for record in verification_history %}
+      <div class="history-item">
+        <div class="history-header">
+          <span class="history-status">{{ record.get_verification_status_display }}</span>
+          <span class="history-date">{{ record.verification_date|date:"Y-m-d H:i"|default:"-" }}</span>
+        </div>
+        <div class="history-details">
+          <div class="history-detail">
+            <span>التحقق من:</span>
+            <strong>{{ record.verified_by.username|default:"-" }}</strong>
+          </div>
+          {% if record.verification_notes %}
+          <div class="history-notes">
+            <span>ملاحظات:</span>
+            {{ record.verification_notes }}
+          </div>
+          {% endif %}
+          {% if record.rejection_reason %}
+          <div class="history-rejection">
+            <span>سبب الرفض:</span>
+            {{ record.rejection_reason }}
+          </div>
+          {% endif %}
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+  {% endif %}
+</div>
+
+<style>
+.property-info-card,
+.verification-form-card,
+.verification-history-card {
+  background: var(--card-bg);
+  padding: 1.5rem;
+  border-radius: var(--radius-sm);
+  box-shadow: var(--shadow);
+  border: 1px solid var(--border);
+  margin-bottom: 2rem;
+}
+
+.property-info-card h3,
+.verification-form-card h3,
+.verification-history-card h3 {
+  margin: 0 0 1rem 0;
+  font-size: 1.2rem;
+  color: var(--text);
+  border-bottom: 2px solid var(--border);
+  padding-bottom: 0.5rem;
+}
+
+.property-details {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 1rem;
+}
+
+.detail-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.75rem;
+  background: var(--bg-alt);
+  border-radius: var(--radius-sm);
+}
+
+.detail-label {
+  color: var(--text);
+  font-weight: 500;
+}
+
+.detail-value {
+  color: var(--primary);
+  font-weight: 600;
+}
+
+.verification-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.form-section {
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 1.5rem;
+}
+
+.form-section h4 {
+  margin: 0 0 1rem 0;
+  color: var(--text);
+  font-size: 1rem;
+}
+
+.form-group {
+  margin-bottom: 1rem;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 0.5rem;
+  color: var(--text);
+  font-weight: 500;
+}
+
+.form-group input,
+.form-group select,
+.form-group textarea {
+  width: 100%;
+  padding: 0.75rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--bg);
+  color: var(--text);
+}
+
+.form-text {
+  display: block;
+  margin-top: 0.25rem;
+  color: var(--text-light);
+  font-size: 0.85rem;
+}
+
+.verification-checks {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1rem;
+}
+
+.checkbox-group {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem;
+  background: var(--bg-alt);
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+}
+
+.checkbox-group input[type="checkbox"] {
+  width: auto;
+}
+
+.form-actions {
+  display: flex;
+  gap: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--border);
+}
+
+.history-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.history-item {
+  background: var(--bg-alt);
+  padding: 1rem;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+}
+
+.history-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.75rem;
+}
+
+.history-status {
+  font-weight: 600;
+  color: var(--primary);
+}
+
+.history-date {
+  color: var(--text-light);
+  font-size: 0.9rem;
+}
+
+.history-details {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.history-detail {
+  font-size: 0.9rem;
+  color: var(--text);
+}
+
+.history-detail strong {
+  color: var(--primary);
+}
+
+.history-notes,
+.history-rejection {
+  font-size: 0.9rem;
+  color: var(--text);
+  padding: 0.5rem;
+  background: var(--bg);
+  border-radius: var(--radius-sm);
+  margin-top: 0.25rem;
+}
+</style>
+{% endblock %}

@@ -1,0 +1,116 @@
+{% load static %}
+<article class="listing-card listing-card-resort" data-resort-id="{{ resort.id }}" data-resort-url="{{ resort.get_absolute_url }}" data-resort-title="{{ resort.title }}">
+    <!-- Card Media -->
+    <div class="listing-card-media">
+        <!-- Actions -->
+        <div class="listing-card-actions">
+            <button type="button" class="listing-card-action-btn btn-favorite" 
+                    aria-label="مفضلة" 
+                    data-resort-id="{{ resort.id }}">
+                <span class="fav-icon">🤍</span>
+            </button>
+            <button type="button" class="listing-card-action-btn" 
+                    aria-label="مشاركة" 
+                    data-action="share"
+                    data-resort-url="{{ resort.get_absolute_url }}"
+                    data-resort-title="{{ resort.title }}">
+                <span>📤</span>
+            </button>
+        </div>
+
+        <!-- Badges -->
+        <div class="listing-card-badges">
+            {% if resort.is_featured %}
+            <span class="listing-card-badge listing-card-badge-featured">⭐ مميز</span>
+            {% endif %}
+            {% if resort.star_rating %}
+            <span class="listing-card-badge listing-card-badge-verified">
+                {% for i in resort.star_rating|range %}⭐{% endfor %}
+            </span>
+            {% endif %}
+        </div>
+
+        <!-- Image -->
+        <a href="{{ resort.get_absolute_url }}" class="listing-card-image-link">
+            {% if resort.cover_image %}
+            <img src="{{ resort.cover_image.url }}" 
+                 alt="{{ resort.title }}" 
+                 loading="lazy"
+                 class="listing-card-image"
+                 data-src="{{ resort.cover_image.url }}">
+            {% else %}
+            <div class="listing-card-placeholder">
+                <span class="listing-card-placeholder-icon">🏝️</span>
+                <span class="listing-card-placeholder-text">لا توجد صور</span>
+            </div>
+            {% endif %}
+        </a>
+
+        <!-- Gallery Count -->
+        {% if resort.images_count > 1 %}
+        <div class="listing-card-gallery-count">
+            {{ resort.images_count }}
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Card Body -->
+    <div class="listing-card-body">
+        <!-- Type & Rating -->
+        <div class="listing-card-type">
+            <span class="listing-card-type-icon">🏝️</span>
+            <span>
+                {{ resort.get_page_type_display }}
+                {% if resort.rating %} • {{ resort.rating }}/5{% endif %}
+            </span>
+        </div>
+
+        <!-- Title -->
+        <a href="{{ resort.get_absolute_url }}">
+            <h3 class="listing-card-title">{{ resort.title }}</h3>
+        </a>
+
+        <!-- Location -->
+        <div class="listing-card-location">
+            <span class="listing-card-location-icon">📍</span>
+            <span>
+                {{ resort.governorate }}
+                {% if resort.city %} — {{ resort.city }}{% endif %}
+                {% if resort.district %} — {{ resort.district }}{% endif %}
+            </span>
+        </div>
+
+        <!-- Description (truncated) -->
+        {% if resort.description %}
+        <p class="listing-card-description">
+            {{ resort.description|truncatewords:12 }}
+        </p>
+        {% endif %}
+
+        <!-- Amenities -->
+        {% if resort.amenities %}
+        <div class="listing-card-amenities">
+            {% for amenity in resort.amenities|slice:":4" %}
+            <span class="listing-card-amenity">{{ amenity }}</span>
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        <!-- Price -->
+        <div class="listing-card-price">
+            <span class="listing-card-price-value">
+                {% if resort.price_start %}{{ resort.price_start }}{% else %}--{% endif %}
+            </span>
+            <span class="listing-card-price-currency">
+                {% if resort.currency %}{{ resort.currency }}{% else %}د.ع{% endif %}
+            </span>
+            <span class="listing-card-price-unit">/ ليلة</span>
+        </div>
+
+        <!-- Action Button -->
+        <a href="{{ resort.get_absolute_url }}" class="listing-card-btn listing-card-btn-primary">
+            <span>عرض المنتجع</span>
+            <span>←</span>
+        </a>
+    </div>
+</article>

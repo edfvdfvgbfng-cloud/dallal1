@@ -1,0 +1,189 @@
+{% extends 'properties/broker_ads/broker_ads_base.html' %}
+{% load static %}
+
+{% block filter_fields %}
+<div class="form-group">
+  <label>
+    <span class="label-icon">🌍</span>
+    الدولة
+  </label>
+  <select name="country" class="form-control">
+    <option value="">كل الدول</option>
+    {% for country in countries %}
+    <option value="{{ country.id }}" {% if country_id == country.id|stringformat:"s" %}selected{% endif %}>{{ country.name_ar }}</option>
+    {% endfor %}
+  </select>
+</div>
+<div class="form-group">
+  <label>
+    <span class="label-icon">📍</span>
+    المنطقة
+  </label>
+  <input type="text" name="district" class="form-control" placeholder="اكتب اسم المنطقة..." value="{{ district }}">
+</div>
+<div class="form-group">
+  <label>
+    <span class="label-icon">💰</span>
+    الحالة
+  </label>
+  <select name="status" class="form-control">
+    <option value="">كل الحالات</option>
+    <option value="sale" {% if status == 'sale' %}selected{% endif %}>بيع</option>
+    <option value="rent" {% if status == 'rent' %}selected{% endif %}>إيجار</option>
+    <option value="investment" {% if status == 'investment' %}selected{% endif %}>استثمار</option>
+  </select>
+</div>
+<div class="form-group">
+  <label>
+    <span class="label-icon">🏢</span>
+    نوع العقار
+  </label>
+  <select name="type" class="form-control">
+    <option value="">كل الأنواع</option>
+    <option value="apartment" {% if type == 'apartment' %}selected{% endif %}>شقة</option>
+    <option value="house" {% if type == 'house' %}selected{% endif %}>منزل</option>
+    <option value="villa" {% if type == 'villa' %}selected{% endif %}>فيلا</option>
+    <option value="land" {% if type == 'land' %}selected{% endif %}>أرض</option>
+    <option value="building" {% if type == 'building' %}selected{% endif %}>بناية</option>
+    <option value="store" {% if type == 'store' %}selected{% endif %}>محل تجاري</option>
+    <option value="office" {% if type == 'office' %}selected{% endif %}>مكتب</option>
+  </select>
+</div>
+<div class="form-group">
+  <label>
+    <span class="label-icon">💵</span>
+    السعر من
+  </label>
+  <input type="number" name="price_min" class="form-control" placeholder="السعر الأدنى" value="{{ price_min }}">
+</div>
+<div class="form-group">
+  <label>
+    <span class="label-icon">💰</span>
+    السعر إلى
+  </label>
+  <input type="number" name="price_max" class="form-control" placeholder="السعر الأعلى" value="{{ price_max }}">
+</div>
+{% endblock %}
+
+{% block content_grid %}
+<div class="view-toolbar">
+  <div>
+    <h2 class="section-title">عقارات خارج العراق</h2>
+    <p class="section-subtitle">{{ properties|length }} نتيجة</p>
+  </div>
+</div>
+
+{% if properties %}
+<div class="properties-grid">
+  {% for property in properties %}
+    <article class="property-card" data-property-id="{{ property.id }}" data-property-url="{{ property.get_absolute_url }}" data-property-title="{{ property.display_title }}">
+      <div class="property-card-image">
+        <div class="property-card-actions">
+          <button type="button" class="btn-favorite" aria-label="مفضلة" data-fav-id="{{ property.id }}" data-fav-url="{{ property.get_absolute_url }}" data-fav-title="{{ property.display_title }}">
+            <span class="fav-icon">❤️</span>
+          </button>
+          <button type="button" class="btn-compare-add" aria-label="مقارنة"
+            data-compare-id="{{ property.id }}"
+            data-compare-url="{{ property.get_absolute_url }}"
+            data-compare-title="{{ property.display_title }}"
+            data-compare-price="{{ property.price_formatted }}"
+            data-compare-area="{{ property.area }}"
+            data-compare-city="{{ property.city }}"
+            data-compare-type="{{ property.get_type_display }}">
+            <span class="compare-icon">⚖️</span>
+          </button>
+        </div>
+        <a href="{{ property.get_absolute_url }}" class="property-card-image-link">
+          {% if property.get_main_image %}
+          <img src="{{ property.get_main_image }}" alt="{{ property.display_title }}" loading="lazy">
+          {% else %}
+          <div class="property-card-placeholder">
+            <span class="placeholder-icon">🏠</span>
+            <span class="placeholder-text">لا توجد صور</span>
+          </div>
+          {% endif %}
+        </a>
+        <div class="property-card-badges">
+          {% if property.is_featured %}<span class="badge badge-featured">⭐ مميز</span>{% endif %}
+          {% if property.is_promoted %}<span class="badge badge-promoted">📢 خاص</span>{% endif %}
+          <span class="badge badge-status">{{ property.get_status_display }}</span>
+        </div>
+      </div>
+      <a href="{{ property.get_absolute_url }}" class="property-card-body">
+        <div class="property-card-type">
+          <span class="type-icon">{% if property.type == 'apartment' %}🏢{% elif property.type == 'house' %}🏡{% elif property.type == 'land' %}🌳{% elif property.type == 'building' %}🏗{% elif property.type == 'residential_building' %}🏢{% elif property.type == 'commercial_building' %}🏢{% elif property.type == 'industrial_building' %}🏭{% elif property.type == 'mixed_use_building' %}🏢{% elif property.type == 'under_construction' %}🏗{% elif property.type == 'building_project' %}🏗{% else %}🏠{% endif %}</span>
+          <span>{{ property.get_type_display }}</span>
+        </div>
+        <h3 class="property-card-title">{{ property.display_title }}</h3>
+        <p class="property-card-location">
+          <span class="location-icon">📍</span>
+          <span>{{ property.governorate }}{% if property.city %} — {{ property.city }}{% endif %}{% if property.district %} — {{ property.district }}{% endif %}</span>
+        </p>
+        <div class="property-card-meta">
+          <div class="meta-item">
+            <span class="meta-icon">📐</span>
+            <span>{{ property.area }} م²</span>
+          </div>
+          {% if property.bedrooms %}
+          <div class="meta-item">
+            <span class="meta-icon">🛏</span>
+            <span>{{ property.bedrooms }}</span>
+          </div>
+          {% endif %}
+          {% if property.bathrooms %}
+          <div class="meta-item">
+            <span class="meta-icon">🚿</span>
+            <span>{{ property.bathrooms }}</span>
+          </div>
+          {% endif %}
+        </div>
+        <div class="property-card-price">
+          <span class="price-value">{{ property.price_formatted }}</span>
+          <span class="price-currency">د.ع</span>
+        </div>
+      </a>
+      <div class="property-card-delete">
+        <form method="post" onsubmit="return confirm('هل أنت متأكد من حذف هذا الإعلان؟')">
+          {% csrf_token %}
+          <input type="hidden" name="delete_property" value="1">
+          <input type="hidden" name="property_id" value="{{ property.id }}">
+          <button type="submit" class="btn-delete">🗑️ حذف الإعلان</button>
+        </form>
+      </div>
+    </article>
+  {% endfor %}
+</div>
+{% else %}
+<div class="empty-state">
+  <div class="icon">🌍</div>
+  <h3>لا توجد إعلانات</h3>
+  <p>لا توجد عقارات خارج العراق حالياً</p>
+</div>
+{% endif %}
+{% endblock %}
+
+<style>
+.property-card-delete {
+  padding: 12px;
+  border-top: 1px solid var(--border);
+  text-align: center;
+}
+
+.btn-delete {
+  background: linear-gradient(135deg, #EF4444 0%, #DC2626 100%);
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: var(--radius-sm);
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  width: 100%;
+}
+
+.btn-delete:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(239, 68, 68, 0.4);
+}
+</style>

@@ -1,0 +1,1086 @@
+{% extends 'properties/base.html' %}
+{% load static %}
+
+{% block title %}🌍 إضافة عقار خارج العراق{% endblock %}
+
+{% block content %}
+<div class="container" style="max-width: 800px; margin: 40px auto; padding: 30px; background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 20px;">
+    <div class="text-center mb-4">
+        <h1 style="color: white; margin-bottom: 10px;">إضافة عقار خارج العراق</h1>
+        <p style="color: rgba(255, 255, 255, 0.7);">يرجى استخدام النموذج الديناميكي لإضافة العقارات</p>
+    </div>
+    
+    <div class="alert alert-info" style="background: rgba(23, 162, 184, 0.1); border: 1px solid rgba(23, 162, 184, 0.3); color: #17a2b8; padding: 20px; border-radius: 10px; margin-bottom: 20px;">
+        <h4 style="margin-bottom: 15px;">📋 للإضافة بشكل أسرع وأسهل:</h4>
+        <p>يرجى استخدام <a href="{% url 'dynamic_add_property' %}" style="color: #17a2b8; text-decoration: underline; font-weight: bold;">النموذج الديناميكي</a> لإضافة العقارات خارج العراق</p>
+    </div>
+    
+    <div style="text-align: center; margin-top: 30px;">
+        <a href="{% url 'dynamic_add_property' %}" class="btn btn-primary" style="background: linear-gradient(135deg, #FF7A00 0%, #FF9500 100%); border: none; padding: 15px 30px; border-radius: 12px; color: white; text-decoration: none; font-size: 1.1rem;">
+            الانتقال للنموذج الديناميكي
+        </a>
+        <a href="{% url 'dashboard' %}" class="btn btn-secondary" style="background: #333; border: 1px solid #555; padding: 15px 30px; border-radius: 12px; color: white; text-decoration: none; font-size: 1.1rem; margin-right: 10px;">
+            العودة للوحة التحكم
+        </a>
+    </div>
+</div>
+{% endblock %}
+
+.progress-step {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+    opacity: 0.5;
+    transition: all 0.3s ease;
+    flex: 1;
+    min-width: 120px;
+}
+
+.progress-step.active {
+    opacity: 1;
+}
+
+.step-number {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: rgba(255, 122, 0, 0.3);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    color: white;
+    border: 2px solid rgba(255, 122, 0, 0.5);
+    transition: all 0.3s ease;
+}
+
+.progress-step.active .step-number {
+    background: #FF7A00;
+    color: white;
+    border-color: #FF7A00;
+    box-shadow: 0 0 15px rgba(255, 122, 0, 0.5);
+}
+
+.step-label {
+    font-size: 0.85rem;
+    color: rgba(255, 255, 255, 0.9);
+    text-align: center;
+}
+
+.form-section {
+    padding: 30px;
+    border-bottom: 1px solid #333;
+    display: none;
+}
+
+.form-section.active {
+    display: block;
+}
+
+.section-title {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #fff;
+    margin: 0 0 20px 0;
+}
+
+.section-icon {
+    color: #FF7A00;
+    font-size: 1.75rem;
+}
+
+.form-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 20px;
+}
+
+.form-group {
+    margin-bottom: 20px;
+}
+
+.form-group.full-width {
+    grid-column: 1 / -1;
+}
+
+.form-label {
+    display: block;
+    font-weight: 600;
+    color: #e0e0e0;
+    margin-bottom: 8px;
+    font-size: 0.95rem;
+}
+
+.form-label .required {
+    color: #dc3545;
+}
+
+.form-control {
+    width: 100%;
+    padding: 12px 16px;
+    border: 2px solid #333;
+    border-radius: 10px;
+    font-size: 1rem;
+    transition: all 0.3s ease;
+    background: #2d2d2d;
+    color: #fff;
+}
+
+.form-control:focus {
+    border-color: #FF7A00;
+    background: #1a1a1a;
+    box-shadow: 0 0 0 3px rgba(255, 122, 0, 0.1);
+    outline: none;
+}
+
+.form-control::placeholder {
+    color: #888;
+}
+
+.btn {
+    padding: 12px 24px;
+    border-radius: 10px;
+    font-weight: 600;
+    text-decoration: none;
+    transition: all 0.3s ease;
+    border: none;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.btn-primary {
+    background: linear-gradient(135deg, #FF7A00 0%, #FF9F1C 100%);
+    color: white;
+}
+
+.btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 20px rgba(255, 122, 0, 0.3);
+}
+
+.btn-secondary {
+    background: #444;
+    color: white;
+    border: 1px solid #555;
+}
+
+.btn-secondary:hover {
+    background: #555;
+    border-color: #666;
+}
+
+.form-actions {
+    display: flex;
+    gap: 15px;
+    justify-content: center;
+    padding: 30px;
+    background: #1a1a1a;
+    border-top: 1px solid #333;
+}
+
+.checkbox-group {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 10px;
+    padding: 15px;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 10px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.checkbox-group label {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    color: #e0e0e0;
+    font-size: 0.9rem;
+    cursor: pointer;
+    padding: 8px;
+    border-radius: 5px;
+    transition: background 0.3s ease;
+}
+
+.checkbox-group label:hover {
+    background: rgba(255, 122, 0, 0.1);
+}
+
+.checkbox-group input[type="checkbox"] {
+    width: 18px;
+    height: 18px;
+    accent-color: #FF7A00;
+    cursor: pointer;
+}
+
+small {
+    color: #888;
+    font-size: 0.85rem;
+}
+
+@media (max-width: 768px) {
+    .form-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .progress-indicator {
+        gap: 0.5rem;
+    }
+    
+    .step-label {
+        font-size: 0.75rem;
+    }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="enhanced-outside-form-container">
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-12">
+                <div class="form-card">
+                    <div class="form-header">
+                        <h1 class="form-title">🌍 إضافة عقار خارج العراق</h1>
+                        <p class="form-subtitle">أكمل جميع المعلومات المطلوبة للإعلان عن عقار خارج العراق</p>
+                        
+                        <div class="progress-indicator">
+                            <div class="progress-step active" data-step="1">
+                                <span class="step-number">1</span>
+                                <span class="step-label">معلومات العقار</span>
+                            </div>
+                            <div class="progress-step" data-step="2">
+                                <span class="step-number">2</span>
+                                <span class="step-label">الملكية والقانون</span>
+                            </div>
+                            <div class="progress-step" data-step="3">
+                                <span class="step-number">3</span>
+                                <span class="step-label">التكاليف والضرائب</span>
+                            </div>
+                            <div class="progress-step" data-step="4">
+                                <span class="step-number">4</span>
+                                <span class="step-label">الموقع والخدمات</span>
+                            </div>
+                            <div class="progress-step" data-step="5">
+                                <span class="step-number">5</span>
+                                <span class="step-label">تفاصيل السكن</span>
+                            </div>
+                            <div class="progress-step" data-step="6">
+                                <span class="step-number">6</span>
+                                <span class="step-label">الإقامة للأجانب</span>
+                            </div>
+                            <div class="progress-step" data-step="7">
+                                <span class="step-number">7</span>
+                                <span class="step-label">الاستثمار</span>
+                            </div>
+                            <div class="progress-step" data-step="8">
+                                <span class="step-number">8</span>
+                                <span class="step-label">الوسائط</span>
+                            </div>
+                            <div class="progress-step" data-step="9">
+                                <span class="step-number">9</span>
+                                <span class="step-label">التواصل</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <form method="post" enctype="multipart/form-data" class="enhanced-outside-form">
+                        {% csrf_token %}
+                        
+                        <!-- Step 1: معلومات العقار -->
+                        <div class="form-section active" data-section="1">
+                            <h3 class="section-title">
+                                <i class="fas fa-building section-icon"></i>
+                                معلومات العقار
+                            </h3>
+                            
+                            <div class="form-grid">
+                                <div class="form-group full-width">
+                                    <label class="form-label">صورة الغلاف <span class="required">*</span></label>
+                                    <input type="file" name="cover_image" accept="image/*" class="form-control" required>
+                                </div>
+                                
+                                <div class="form-group full-width">
+                                    <label class="form-label">عنوان الإعلان <span class="required">*</span></label>
+                                    <input type="text" name="title" class="form-control" required placeholder="مثال: شقة فاخرة في إسطنبول">
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label class="form-label">نوع العقار <span class="required">*</span></label>
+                                    <select name="property_type" class="form-control" required>
+                                        <option value="">اختر نوع العقار</option>
+                                        <option value="apartment">شقة</option>
+                                        <option value="villa">فيلا</option>
+                                        <option value="palace">قصر</option>
+                                        <option value="house">منزل</option>
+                                        <option value="land">أرض</option>
+                                        <option value="commercial">عقار تجاري</option>
+                                        <option value="office">مكتب</option>
+                                        <option value="shop">محل تجاري</option>
+                                        <option value="warehouse">مستودع</option>
+                                    </select>
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label class="form-label">الغرض <span class="required">*</span></label>
+                                    <select name="purpose" class="form-control" required>
+                                        <option value="">اختر الغرض</option>
+                                        <option value="sale">بيع</option>
+                                        <option value="rent">إيجار</option>
+                                        <option value="investment">استثمار</option>
+                                    </select>
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label class="form-label">اسم المشروع / المجمع</label>
+                                    <input type="text" name="project_name" class="form-control" placeholder="اسم المشروع">
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label class="form-label">اسم البرج</label>
+                                    <input type="text" name="tower_name" class="form-control" placeholder="اسم البرج">
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label class="form-label">رقم الوحدة</label>
+                                    <input type="text" name="unit_number" class="form-control" placeholder="رقم الوحدة">
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label class="form-label">اسم المطور العقاري</label>
+                                    <input type="text" name="developer_name" class="form-control" placeholder="اسم المطور">
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label class="form-label">نوع المشروع</label>
+                                    <select name="project_type" class="form-control">
+                                        <option value="">اختر نوع المشروع</option>
+                                        <option value="residential">سكني</option>
+                                        <option value="commercial">تجاري</option>
+                                        <option value="tourism">سياحي</option>
+                                        <option value="mixed">متعدد الاستخدام</option>
+                                    </select>
+                                </div>
+                                
+                                <div class="form-group full-width">
+                                    <label class="form-label">هل العقار داخل مجمع؟</label>
+                                    <select name="in_complex" class="form-control">
+                                        <option value="">اختر</option>
+                                        <option value="yes">نعم</option>
+                                        <option value="no">لا</option>
+                                    </select>
+                                </div>
+                                
+                                <div class="form-group full-width">
+                                    <label class="form-label">اسم المجمع</label>
+                                    <input type="text" name="complex_name" class="form-control" placeholder="اسم المجمع">
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label class="form-label">بوابة / مدخل المجمع</label>
+                                    <input type="text" name="complex_gate" class="form-control" placeholder="بوابة المجمع">
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label class="form-label">حالة التسليم</label>
+                                    <select name="delivery_status" class="form-control">
+                                        <option value="">اختر الحالة</option>
+                                        <option value="ready">جاهز للسكن</option>
+                                        <option value="under_construction">قيد الإنشاء</option>
+                                        <option value="future">سيتم التسليم لاحقاً</option>
+                                    </select>
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label class="form-label">تاريخ التسليم المتوقع</label>
+                                    <input type="date" name="expected_delivery_date" class="form-control">
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Step 2: الملكية والقانون -->
+                        <div class="form-section" data-section="2">
+                            <h3 class="section-title">
+                                <i class="fas fa-file-contract section-icon"></i>
+                                الملكية والقانون
+                            </h3>
+                            
+                            <div class="form-grid">
+                                <div class="form-group">
+                                    <label class="form-label">نوع سند الملكية</label>
+                                    <select name="deed_type" class="form-control">
+                                        <option value="">اختر نوع السند</option>
+                                        <option value="title_deed">طابو</option>
+                                        <option value="freehold">ملكية حرة Freehold</option>
+                                        <option value="leasehold">إيجار طويل Leasehold</option>
+                                        <option value="usufruct">حق انتفاع</option>
+                                        <option value="other">أخرى</option>
+                                    </select>
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label class="form-label">رقم سند الملكية</label>
+                                    <input type="text" name="deed_number" class="form-control" placeholder="رقم السند">
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label class="form-label">تاريخ إصدار السند</label>
+                                    <input type="date" name="deed_issue_date" class="form-control">
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label class="form-label">مدة الملكية (سنوات)</label>
+                                    <input type="number" name="ownership_duration" class="form-control" placeholder="مدة الملكية">
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label class="form-label">هل يسمح للأجانب بالتملك؟</label>
+                                    <select name="foreign_ownership_allowed" class="form-control">
+                                        <option value="">اختر</option>
+                                        <option value="yes">نعم</option>
+                                        <option value="no">لا</option>
+                                        <option value="restricted">مقيد</option>
+                                    </select>
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label class="form-label">نسبة التملك المسموحة للأجانب</label>
+                                    <input type="number" name="foreign_ownership_percentage" class="form-control" placeholder="نسبة التملك">
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label class="form-label">هل يحتاج موافقة حكومية؟</label>
+                                    <select name="government_approval_required" class="form-control">
+                                        <option value="">اختر</option>
+                                        <option value="yes">نعم</option>
+                                        <option value="no">لا</option>
+                                    </select>
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label class="form-label">الجهة المسؤولة عن الموافقة</label>
+                                    <input type="text" name="approval_authority" class="form-control" placeholder="الجهة المسؤولة">
+                                </div>
+                                
+                                <div class="form-group full-width">
+                                    <label class="form-label">حالة الوثائق القانونية</label>
+                                    <select name="legal_document_status" class="form-control">
+                                        <option value="">اختر الحالة</option>
+                                        <option value="complete">مكتملة</option>
+                                        <option value="pending">قيد المراجعة</option>
+                                        <option value="incomplete">غير مكتملة</option>
+                                    </select>
+                                </div>
+                                
+                                <div class="form-group full-width">
+                                    <label class="form-label">ملاحظات قانونية</label>
+                                    <textarea name="legal_notes" class="form-control" rows="3" placeholder="ملاحظات قانونية إضافية"></textarea>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Step 3: التكاليف والضرائب -->
+                        <div class="form-section" data-section="3">
+                            <h3 class="section-title">
+                                <i class="fas fa-calculator section-icon"></i>
+                                التكاليف والضرائب
+                            </h3>
+                            
+                            <div class="form-grid">
+                                <div class="form-group">
+                                    <label class="form-label">السعر <span class="required">*</span></label>
+                                    <input type="number" name="price" class="form-control" required placeholder="السعر">
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label class="form-label">العملة</label>
+                                    <select name="currency" class="form-control">
+                                        <option value="USD">دولار أمريكي</option>
+                                        <option value="EUR">يورو</option>
+                                        <option value="GBP">جنيه إسترليني</option>
+                                        <option value="TRY">ليرة تركية</option>
+                                        <option value="AED">درهم إماراتي</option>
+                                        <option value="SAR">ريال سعودي</option>
+                                    </select>
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label class="form-label">السعر بالدينار العراقي</label>
+                                    <input type="number" name="price_iqd" class="form-control" placeholder="سعر الصرف المستخدم">
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label class="form-label">سعر الصرف المستخدم</label>
+                                    <input type="number" name="exchange_rate" class="form-control" placeholder="سعر الصرف">
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label class="form-label">ضريبة العقار</label>
+                                    <input type="number" name="property_tax" class="form-control" placeholder="ضريبة العقار">
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label class="form-label">نسبة ضريبة العقار %</label>
+                                    <input type="number" name="property_tax_percentage" class="form-control" placeholder="نسبة الضريبة">
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label class="form-label">ضريبة الشراء</label>
+                                    <input type="number" name="purchase_tax" class="form-control" placeholder="ضريبة الشراء">
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label class="form-label">رسوم نقل الملكية</label>
+                                    <input type="number" name="transfer_fees" class="form-control" placeholder="رسوم النقل">
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label class="form-label">رسوم التسجيل</label>
+                                    <input type="number" name="registration_fees" class="form-control" placeholder="رسوم التسجيل">
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label class="form-label">رسوم المحامي</label>
+                                    <input type="number" name="lawyer_fees" class="form-control" placeholder="رسوم المحامي">
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label class="form-label">رسوم الوسيط</label>
+                                    <input type="number" name="broker_fees" class="form-control" placeholder="رسوم الوسيط">
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label class="form-label">رسوم المجمع</label>
+                                    <input type="number" name="complex_fees" class="form-control" placeholder="رسوم المجمع">
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label class="form-label">رسوم الخدمات</label>
+                                    <input type="number" name="service_fees" class="form-control" placeholder="رسوم الخدمات">
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label class="form-label">التكلفة الشهرية</label>
+                                    <input type="number" name="monthly_cost" class="form-control" placeholder="التكلفة الشهرية">
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label class="form-label">التكلفة السنوية</label>
+                                    <input type="number" name="annual_cost" class="form-control" placeholder="التكلفة السنوية">
+                                </div>
+                                
+                                <div class="form-group full-width">
+                                    <label class="form-label">إجمالي السعر مع الرسوم</label>
+                                    <input type="number" name="total_price_with_fees" class="form-control" placeholder="الإجمالي">
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label class="form-label">هل توجد ديون على العقار؟</label>
+                                    <select name="has_debts" class="form-control">
+                                        <option value="">اختر</option>
+                                        <option value="yes">نعم</option>
+                                        <option value="no">لا</option>
+                                    </select>
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label class="form-label">قيمة الديون إن وجدت</label>
+                                    <input type="number" name="debts_value" class="form-control" placeholder="قيمة الديون">
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Step 4: الموقع والخدمات -->
+                        <div class="form-section" data-section="4">
+                            <h3 class="section-title">
+                                <i class="fas fa-map-marker-alt section-icon"></i>
+                                الموقع والخدمات
+                            </h3>
+                            
+                            <div class="form-grid">
+                                <div class="form-group">
+                                    <label class="form-label">الدولة <span class="required">*</span></label>
+                                    <input type="text" name="country" class="form-control" required placeholder="الدولة">
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label class="form-label">المدينة</label>
+                                    <input type="text" name="city" class="form-control" placeholder="المدينة">
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label class="form-label">المنطقة</label>
+                                    <input type="text" name="area" class="form-control" placeholder="المنطقة">
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label class="form-label">الحي</label>
+                                    <input type="text" name="neighborhood" class="form-control" placeholder="الحي">
+                                </div>
+                                
+                                <div class="form-group full-width">
+                                    <label class="form-label">العنوان التفصيلي</label>
+                                    <input type="text" name="address" class="form-control" placeholder="العنوان التفصيلي">
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label class="form-label">المطار الأقرب</label>
+                                    <input type="text" name="nearest_airport" class="form-control" placeholder="المطار الأقرب">
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label class="form-label">المسافة إلى المطار (كم)</label>
+                                    <input type="number" name="distance_to_airport" class="form-control" placeholder="المسافة">
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label class="form-label">الوقت إلى المطار (دقيقة)</label>
+                                    <input type="number" name="time_to_airport" class="form-control" placeholder="الوقت">
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label class="form-label">وسط المدينة</label>
+                                    <select name="city_center" class="form-control">
+                                        <option value="">اختر</option>
+                                        <option value="yes">نعم</option>
+                                        <option value="no">لا</option>
+                                    </select>
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label class="form-label">أقرب مستشفى</label>
+                                    <input type="text" name="nearest_hospital" class="form-control" placeholder="أقرب مستشفى">
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label class="form-label">أقرب مدرسة</label>
+                                    <input type="text" name="nearest_school" class="form-control" placeholder="أقرب مدرسة">
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label class="form-label">أقرب جامعة</label>
+                                    <input type="text" name="nearest_university" class="form-control" placeholder="أقرب جامعة">
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label class="form-label">أقرب مركز تجاري</label>
+                                    <input type="text" name="nearest_mall" class="form-control" placeholder="أقرب مركز تجاري">
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label class="form-label">أقرب شاطئ</label>
+                                    <input type="text" name="nearest_beach" class="form-control" placeholder="أقرب شاطئ">
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label class="form-label">أقرب منطقة سياحية</label>
+                                    <input type="text" name="nearest_tourist_area" class="form-control" placeholder="أقرب منطقة سياحية">
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Step 5: تفاصيل السكن -->
+                        <div class="form-section" data-section="5">
+                            <h3 class="section-title">
+                                <i class="fas fa-home section-icon"></i>
+                                تفاصيل السكن
+                            </h3>
+                            
+                            <div class="form-grid">
+                                <div class="form-group">
+                                    <label class="form-label">نوع الإطلالة</label>
+                                    <select name="view_type" class="form-control">
+                                        <option value="">اختر نوع الإطلالة</option>
+                                        <option value="sea">بحر</option>
+                                        <option value="city">مدينة</option>
+                                        <option value="garden">حديقة</option>
+                                        <option value="mountain">جبل</option>
+                                        <option value="pool">مسبح</option>
+                                        <option value="street">شارع</option>
+                                        <option value="other">أخرى</option>
+                                    </select>
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label class="form-label">مفروش / غير مفروش</label>
+                                    <select name="furnished" class="form-control">
+                                        <option value="">اختر</option>
+                                        <option value="furnished">مفروش</option>
+                                        <option value="unfurnished">غير مفروش</option>
+                                        <option value="semi_furnished">نصف مفروش</option>
+                                    </select>
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label class="form-label">نوع الأثاث</label>
+                                    <input type="text" name="furniture_type" class="form-control" placeholder="نوع الأثاث">
+                                </div>
+                                
+                                <div class="form-group full-width">
+                                    <label class="form-label">المكيفات</label>
+                                    <div class="checkbox-group">
+                                        <label><input type="checkbox" name="has_ac"> تكييف</label>
+                                        <label><input type="checkbox" name="has_heating"> تدفئة</label>
+                                        <label><input type="checkbox" name="has_hot_water"> مياه ساخنة</label>
+                                    </div>
+                                </div>
+                                
+                                <div class="form-group full-width">
+                                    <label class="form-label">المرافق</label>
+                                    <div class="checkbox-group">
+                                        <label><input type="checkbox" name="has_generator"> مولد / طاقة احتياطية</label>
+                                        <label><input type="checkbox" name="has_elevator"> مصعد</label>
+                                        <label><input type="checkbox" name="has_parking"> موقف سيارات</label>
+                                        <label><input type="checkbox" name="has_storage"> مخزن</label>
+                                        <label><input type="checkbox" name="has_maid_room"> غرفة خادمة</label>
+                                        <label><input type="checkbox" name="has_laundry"> غرفة غسيل</label>
+                                        <label><input type="checkbox" name="has_balcony"> بلكونة / تراس</label>
+                                        <label><input type="checkbox" name="has_garden"> حديقة خاصة</label>
+                                        <label><input type="checkbox" name="has_pool"> مسبح خاص</label>
+                                    </div>
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label class="form-label">عدد مواقف السيارات</label>
+                                    <input type="number" name="parking_spaces" class="form-control" placeholder="عدد المواقف">
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Step 6: الإقامة للأجانب -->
+                        <div class="form-section" data-section="6">
+                            <h3 class="section-title">
+                                <i class="fas fa-passport section-icon"></i>
+                                الإقامة والتملك للأجانب
+                            </h3>
+                            
+                            <div class="form-grid">
+                                <div class="form-group">
+                                    <label class="form-label">هل شراء العقار يمنح إقامة؟</label>
+                                    <select name="grants_residency" class="form-control">
+                                        <option value="">اختر</option>
+                                        <option value="yes">نعم</option>
+                                        <option value="no">لا</option>
+                                        <option value="conditional">مشروط معينة</option>
+                                    </select>
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label class="form-label">نوع الإقامة</label>
+                                    <input type="text" name="residency_type" class="form-control" placeholder="نوع الإقامة">
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label class="form-label">مدة الإقامة</label>
+                                    <input type="text" name="residency_duration" class="form-control" placeholder="مدة الإقامة">
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label class="form-label">هل تشمل العائلة؟</label>
+                                    <select name="residency_includes_family" class="control">
+                                        <option value="">اختر</option>
+                                        <option value="yes">نعم</option>
+                                        <option value="no">لا</option>
+                                    </select>
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label class="form-label">الحد الأدنى لقيمة العقار للحصول على الإقامة</label>
+                                    <input type="number" name="min_property_value_for_residency" class="form-control" placeholder="الحد الأدنى">
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label class="form-label">هل العقار مؤهل للحصول على الجنسية؟</label>
+                                    <select name="eligible_for_citizenship" class="form-control">
+                                        <option value="">اختر</option>
+                                        <option value="yes">نعم</option>
+                                        <option value="no">لا</option>
+                                        <option value="after_years">بعد فترة معينة</option>
+                                    </select>
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label class="form-label">شروط الحصول على الجنسية</label>
+                                    <textarea name="citizenship_requirements" class="form-control" rows="3" placeholder="شروط الجنسية"></textarea>
+                                </div>
+                                
+                                <div class="form-group full-width">
+                                    <label class="form-label">ملاحظات إضافية</label>
+                                    <textarea name="residency_notes" class="form-control" rows="3" placeholder="ملاحظات إضافية"></textarea>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Step 7: الاستثمار -->
+                        <div class="form-section" data-section="7">
+                            <h3 class="section-title">
+                                <i class="fas fa-chart-line section-icon"></i>
+                                الاستثمار والعائد
+                            </h3>
+                            
+                            <div class="form-grid">
+                                <div class="form-group">
+                                    <label class="form-label">العائد السنوي المتوقع %</label>
+                                    <input type="number" name="annual_roi" class="form-control" placeholder="نسبة العائد">
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label class="form-label">الدخل الإيجاري الشهري المتوقع</label>
+                                    <input type="number" name="monthly_rental_income" class="form-control" placeholder="الدخل الشهري">
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label class="form-label">الدخل الإيجاري السنوي المتوقع</label>
+                                    <input type="number" name="annual_rental_income" class="form-control" placeholder="الدخل السنوي">
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label class="form-label">نسبة الإشغال المتوقعة %</label>
+                                    <input type="number" name="occupancy_rate" class="form-control" placeholder="نسبة الإشغال">
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label class="form-label">هل يسمح بالتأجير السياحي؟</label>
+                                    <select name="allows_tourist_rental" class="form-control">
+                                        <option value="">اختر</option>
+                                        <option value="yes">نعم</option>
+                                        <option value="no">لا</option>
+                                    </select>
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label class="form-label">هل يسمح بـ Airbnb؟</label>
+                                    <select name="allows_airbnb" class="form-control">
+                                        <option value="">اختر</option>
+                                        <option value="yes">نعم</option>
+                                        <option value="no">لا</option>
+                                    </select>
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label class="form-label">الحد الأدنى لمدة الإيجار</label>
+                                <input type="text" name="min_rental_duration" class="form-control" placeholder="الحد الأدنى">
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label class="form-label">إدارة العقار متوفرة؟</label>
+                                    <select name="property_management_available" class="form-control">
+                                        <option value="">اختر</option>
+                                        <option value="yes">نعم</option>
+                                        <option value="no">لا</option>
+                                    </select>
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label class="form-label">شركة إدارة العقار</label>
+                                    <input type="text" name="property_management_company" class="form-control" placeholder="اسم الشركة">
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label class="form-label">رسوم إدارة العقار</label>
+                                    <input type="number" name="management_fees" class="form-control" placeholder="رسوم الإدارة">
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Step 8: الوسائط -->
+                        <div class="form-section" data-section="8">
+                            <h3 class="section-title">
+                                <i class="fas fa-images section-icon"></i>
+                                الوسائط
+                            </h3>
+                            
+                            <div class="form-grid">
+                                <div class="form-group full-width">
+                                    <label class="form-label">صور إضافية</label>
+                                    <input type="file" name="additional_images" accept="image/*" multiple class="form-control">
+                                </div>
+                                
+                                <div class="form-group full-width">
+                                    <label class="form-label">فيديو العقار</label>
+                                    <input type="file" name="property_video" accept="video/*" class="form-control">
+                                </div>
+                                
+                                <div class="form-group full-width">
+                                    <label class="form-label">صور 360°</label>
+                                    <input type="file" name="360_images" accept="image/*" multiple class="form-control">
+                                </div>
+                                
+                                <div class="form-group full-width">
+                                    <label class="form-label">صور المخطط الهندسي</label>
+                                    <input type="file" name="blueprint_images" accept="image/*" multiple class="form-control">
+                                </div>
+                                
+                                <div class="form-group full-width">
+                                    <label class="form-label">مخطط الطابق</label>
+                                    <input type="file" name="floor_plan" accept="image/*" class="form-control">
+                                </div>
+                                
+                                <div class="form-group full-width">
+                                    <label class="form-label">صور الوثائق</label>
+                                    <input type="file" name="document_images" accept="image/*" multiple class="form-control">
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Step 9: التواصل -->
+                        <div class="form-section" data-section="9">
+                            <h3 class="form-section-title">
+                                <i class="fas fa-phone section-icon"></i>
+                                التواصل
+                            </h3>
+                            
+                            <div class="form-grid">
+                                <div class="form-group">
+                                    <label class="form-label">رقم الهاتف <span class="required">*</span></label>
+                                    <input type="tel" name="phone" class="form-control" required placeholder="رقم الهاتف">
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label class="form-label">رقم واتساب</label>
+                                    <input type="tel" name="whatsapp" class="form-control" placeholder="رقم واتساب">
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label class="form-label">البريد الإلكتروني</label>
+                                    <input type="email" name="email" class="form-control" placeholder="البريد الإلكتروني">
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label class="form-label">اسم جهة الاتصال</label>
+                                    <input type="text" name="contact_person" class="form-control" placeholder="اسم جهة الاتصال">
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label class="form-label">صفة جهة الاتصال</label>
+                                    <select name="contact_role" class="form-control">
+                                        <option value="">اختر الصفة</option>
+                                        <option value="owner">المالك</option>
+                                        <option value="agent">وكيل</option>
+                                        <option value="company">شركة عقارية</option>
+                                        <option value="developer">مطور</option>
+                                        <option value="broker">وسيط</option>
+                                    </select>
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label class="form-label">لغة التواصل</label>
+                                    <select name="contact_language" class="form-control">
+                                        <option value="">اختر اللغة</option>
+                                        <option value="arabic">عربي</option>
+                                        <option value="english">إنجليزي</option>
+                                        <option value="turkish">تركي</option>
+                                        <option value="kurdish">كردي</option>
+                                        <option value="other">أخرى</option>
+                                    </select>
+                                </div>
+                                
+                                <div class="form-group full-width">
+                                    <label class="form-label">هل يقبل الدفع بالدينار العراقي؟</label>
+                                    <select name="accepts_iqd" class="form-control">
+                                        <option value="">اختر</option>
+                                        <option value="yes">نعم</option>
+                                        <option value="no">لا</option>
+                                    </select>
+                                </div>
+                                
+                                <div class="form-group full-width">
+                                    <label class="form-label">هل يقبل التحويل البنكي من العراق؟</label>
+                                    <select name="accepts_bank_transfer" class="form-control">
+                                        <option value="">اختر</option>
+                                        <option value="yes">نهم</option>
+                                        <option value="no">لا</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Navigation Buttons -->
+                        <div class="form-actions">
+                            <button type="button" class="btn btn-secondary" id="prevBtn" onclick="prevStep()" style="display: none;">
+                                <i class="fas fa-arrow-right"></i> السابق
+                            </button>
+                            <button type="button" class="btn btn-primary" id="nextBtn" onclick="nextStep()">
+                                التالي <i class="fas fa-arrow-left"></i>
+                            </button>
+                            <button type="submit" class="btn btn-primary" id="submitBtn" style="display: none;">
+                                <i class="fas fa-check"></i> نشر العقار
+                            </button>
+                            <a href="/properties/" class="btn btn-secondary">
+                                <i class="fas fa-times"></i> إلغاء
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+let currentStep = 1;
+const totalSteps = 9;
+
+function showStep(step) {
+    // Hide all sections
+    document.querySelectorAll('.form-section').forEach(section => {
+        section.classList.remove('active');
+    });
+
+    // Show current section
+    const currentSection = document.querySelector(`.form-section[data-section="${step}"]`);
+    if (currentSection) {
+        currentSection.classList.add('active');
+    }
+
+    // Update progress indicator
+    document.querySelectorAll('.progress-step').forEach((progressStep, index) => {
+        if (index + 1 === step) {
+            progressStep.classList.add('active');
+        } else {
+            progressStep.classList.remove('active');
+        }
+    });
+
+    // Update button visibility
+    const prevBtn = document.getElementById('prevBtn');
+    const nextBtn = document.getElementById('nextBtn');
+    const submitBtn = document.getElementById('submitBtn');
+
+    if (prevBtn) {
+        prevBtn.style.display = step > 1 ? 'inline-flex' : 'none';
+    }
+
+    if (nextBtn) {
+        nextBtn.style.display = step < totalSteps ? 'inline-flex' : 'none';
+    }
+
+    if (submitBtn) {
+        submitBtn.style.display = step === totalSteps ? 'inline-flex' : 'none';
+    }
+
+    currentStep = step;
+}
+
+function nextStep() {
+    if (currentStep < totalSteps) {
+        showStep(currentStep + 1);
+    }
+}
+
+function prevStep() {
+    if (currentStep > 1) {
+        showStep(currentStep - 1);
+    }
+}
+
+// Initialize
+document.addEventListener('DOMContentLoaded', function() {
+    showStep(1);
+});
+</script>
+{% endblock %}

@@ -1,0 +1,47 @@
+{
+  "name": "دلال - منصة العقارات",
+  "short_name": "دلال",
+  "description": "منصة عقارات عراقية للبيع والإيجار والفنادق والمنتجعات",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#0B0B0B",
+  "theme_color": "#0d9488",
+  "lang": "ar",
+  "dir": "rtl",
+  "icons": [
+    {
+      "src": "/static/images/pwa-icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/static/images/pwa-icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/static/images/pwa-icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ],
+  "categories": ["business", "lifestyle"],
+  "shortcuts": [
+    {
+      "name": "بحث متقدم",
+      "short_name": "بحث",
+      "url": "/search/",
+      "description": "البحث في العقارات"
+    },
+    {
+      "name": "إضافة عقار",
+      "short_name": "إضافة",
+      "url": "/add/dynamic/"
+    }
+  ]
+}

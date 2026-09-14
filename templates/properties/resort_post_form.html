@@ -1,0 +1,226 @@
+{% extends 'properties/dashboard_base.html' %}
+
+{% block title %}إنشاء منشور منتجع{% endblock %}
+
+{% block dashboard_title %}📝 إنشاء منشور داخل صفحة المنتجع{% endblock %}
+
+{% block dashboard_subtitle %}
+<p style="margin:4px 0 0;color:var(--text-muted);font-size:0.9rem;">
+  {{ resort.name }} - أنشئ منشور جديد
+</p>
+{% endblock %}
+
+{% block dashboard_actions %}
+<a href="{% url 'broker_resorts' %}" class="btn btn-outline btn-sm">اختر منتجع آخر</a>
+<a href="{% url 'hotel_page_detail' resort.id %}" class="btn btn-outline btn-sm">عرض صفحة المنتجع</a>
+<a href="{% url 'dashboard' %}" class="btn btn-outline btn-sm">رجوع للوحة التحكم</a>
+{% endblock %}
+
+{% block dashboard_content %}
+<div class="card" style="padding: 28px;">
+  <form method="post" enctype="multipart/form-data">
+    {% csrf_token %}
+    
+    <h3 style="color: var(--text); margin-bottom: 20px;">📝 معلومات المنشور</h3>
+    
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; margin-bottom: 30px;">
+      <div style="grid-column: 1 / -1;">
+        <label style="display: block; color: var(--text); font-weight: 600; margin-bottom: 8px;">نوع المنشور <span style="color: #dc3545;">*</span></label>
+        <select name="post_type" class="form-control" required style="width: 100%; padding: 12px; border: 2px solid var(--border); border-radius: 10px; background: var(--bg-alt); color: var(--text);">
+          <option value="">اختر نوع المنشور</option>
+          <option value="chalet_offer">🏡 عرض شاليه</option>
+          <option value="cabin_offer">🏠 عرض كوخ</option>
+          <option value="offer">🎁 عرض خاص</option>
+          <option value="discount">💰 خصم</option>
+          <option value="family_package">👨‍👩‍👧 باقة عائلية</option>
+          <option value="honeymoon">💑 باقة شهر عسل</option>
+          <option value="night_offer">🌙 عرض ليلة</option>
+          <option value="week_offer">📅 عرض أسبوع</option>
+          <option value="pool_offer">🏊 عرض مسبح</option>
+          <option value="bbq_offer">🍖 عرض شواء</option>
+          <option value="hall">🏢 عرض قاعة</option>
+          <option value="conference">💼 مؤتمر / اجتماع</option>
+          <option value="event">🎉 مناسبة</option>
+          <option value="camping_offer">🏕️ عرض تخييم</option>
+          <option value="activity">🚤 نشاط ترفيهي</option>
+          <option value="beach_offer">🏖️ عرض شاطئ</option>
+          <option value="announcement">📢 إعلان المنتجع</option>
+          <option value="info">ℹ️ معلومات</option>
+          <option value="new_service">🆕 خدمة جديدة</option>
+        </select>
+      </div>
+      
+      <div style="grid-column: 1 / -1;">
+        <label style="display: block; color: var(--text); font-weight: 600; margin-bottom: 8px;">عنوان العرض <span style="color: #dc3545;">*</span></label>
+        <input type="text" name="title" class="form-control" placeholder="عنوان العرض" required style="width: 100%; padding: 12px; border: 2px solid var(--border); border-radius: 10px; background: var(--bg-alt); color: var(--text);">
+      </div>
+      
+      <div style="grid-column: 1 / -1;">
+        <label style="display: block; color: var(--text); font-weight: 600; margin-bottom: 8px;">وصف العرض <span style="color: #dc3545;">*</span></label>
+        <textarea name="content" class="form-control" placeholder="وصف العرض" required rows="4" style="width: 100%; padding: 12px; border: 2px solid var(--border); border-radius: 10px; background: var(--bg-alt); color: var(--text);"></textarea>
+      </div>
+      
+      <div style="grid-column: 1 / -1;">
+        <label style="display: block; color: var(--text); font-weight: 600; margin-bottom: 8px;">صور العرض</label>
+        <input type="file" name="images" accept="image/*" multiple class="form-control" style="width: 100%; padding: 12px; border: 2px solid var(--border); border-radius: 10px; background: var(--bg-alt); color: var(--text);">
+      </div>
+      
+      <div style="grid-column: 1 / -1;">
+        <label style="display: block; color: var(--text); font-weight: 600; margin-bottom: 8px;">رابط الحجز</label>
+        <input type="url" name="booking_url" class="form-control" placeholder="رابط الحجز" style="width: 100%; padding: 12px; border: 2px solid var(--border); border-radius: 10px; background: var(--bg-alt); color: var(--text);">
+      </div>
+    </div>
+    
+    <!-- حقول خاصة حسب نوع المنشور -->
+    <div id="chalet-offer-fields" style="display: none; margin-bottom: 30px;">
+      <h3 style="color: var(--text); margin-bottom: 20px;">🏡 تفاصيل عرض الشاليه</h3>
+      
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px;">
+        <div>
+          <label style="display: block; color: var(--text); font-weight: 600; margin-bottom: 8px;">نوع الوحدة</label>
+          <select name="unit_type" class="form-control" style="width: 100%; padding: 12px; border: 2px solid var(--border); border-radius: 10px; background: var(--bg-alt); color: var(--text);">
+            <option value="">اختر نوع الوحدة</option>
+            <option value="chalet">شاليه</option>
+            <option value="cabin">كوخ</option>
+            <option value="villa">فيلا</option>
+            <option value="apartment">شقة</option>
+          </select>
+        </div>
+        
+        <div>
+          <label style="display: block; color: var(--text); font-weight: 600; margin-bottom: 8px;">اسم / رقم الوحدة</label>
+          <input type="text" name="unit_name" class="form-control" placeholder="اسم الوحدة" style="width: 100%; padding: 12px; border: 2px solid var(--border); border-radius: 10px; background: var(--bg-alt); color: var(--text);">
+        </div>
+        
+        <div>
+          <label style="display: block; color: var(--text); font-weight: 600; margin-bottom: 8px;">السعة</label>
+          <input type="number" name="capacity" class="form-control" placeholder="عدد الأشخاص" style="width: 100%; padding: 12px; border: 2px solid var(--border); border-radius: 10px; background: var(--bg-alt); color: var(--text);">
+        </div>
+        
+        <div>
+          <label style="display: block; color: var(--text); font-weight: 600; margin-bottom: 8px;">عدد غرف النوم</label>
+          <input type="number" name="rooms" class="form-control" placeholder="عدد الغرف" style="width: 100%; padding: 12px; border: 2px solid var(--border); border-radius: 10px; background: var(--bg-alt); color: var(--text);">
+        </div>
+        
+        <div>
+          <label style="display: block; color: var(--text); font-weight: 600; margin-bottom: 8px;">عدد الحمامات</label>
+          <input type="number" name="bathrooms" class="form-control" placeholder="عدد الحمامات" style="width: 100%; padding: 12px; border: 2px solid var(--border); border-radius: 10px; background: var(--bg-alt); color: var(--text);">
+        </div>
+        
+        <div>
+          <label style="display: block; color: var(--text); font-weight: 600; margin-bottom: 8px;">السعر لليلة</label>
+          <input type="number" name="price_per_night" class="form-control" placeholder="السعر لليلة" style="width: 100%; padding: 12px; border: 2px solid var(--border); border-radius: 10px; background: var(--bg-alt); color: var(--text);">
+        </div>
+        
+        <div>
+          <label style="display: block; color: var(--text); font-weight: 600; margin-bottom: 8px;">السعر للأسبوع</label>
+          <input type="number" name="price_per_week" class="form-control" placeholder="السعر للأسبوع" style="width: 100%; padding: 12px; border: 2px solid var(--border); border-radius: 10px; background: var(--bg-alt); color: var(--text);">
+        </div>
+        
+        <div>
+          <label style="display: block; color: var(--text); font-weight: 600; margin-bottom: 8px;">السعر قبل الخصم</label>
+          <input type="number" name="original_price" class="form-control" placeholder="السعر قبل الخصم" style="width: 100%; padding: 12px; border: 2px solid var(--border); border-radius: 10px; background: var(--bg-alt); color: var(--text);">
+        </div>
+        
+        <div>
+          <label style="display: block; color: var(--text); font-weight: 600; margin-bottom: 8px;">نسبة الخصم</label>
+          <input type="number" name="discount_percentage" class="form-control" placeholder="نسبة الخصم" style="width: 100%; padding: 12px; border: 2px solid var(--border); border-radius: 10px; background: var(--bg-alt); color: var(--text);">
+        </div>
+        
+        <div>
+          <label style="display: block; color: var(--text); font-weight: 600; margin-bottom: 8px;">تاريخ بداية العرض</label>
+          <input type="date" name="valid_from" class="form-control" style="width: 100%; padding: 12px; border: 2px solid var(--border); border-radius: 10px; background: var(--bg-alt); color: var(--text);">
+        </div>
+        
+        <div>
+          <label style="display: block; color: var(--text); font-weight: 600; margin-bottom: 8px;">تاريخ نهاية العرض</label>
+          <input type="date" name="valid_until" class="form-control" style="width: 100%; padding: 12px; border: 2px solid var(--border); border-radius: 10px; background: var(--bg-alt); color: var(--text);">
+        </div>
+        
+        <div>
+          <label style="display: block; color: var(--text); font-weight: 600; margin-bottom: 8px;">الأيام المتاحة</label>
+          <input type="text" name="available_days" class="form-control" placeholder="الأيام المتاحة" style="width: 100%; padding: 12px; border: 2px solid var(--border); border-radius: 10px; background: var(--bg-alt); color: var(--text);">
+        </div>
+        
+        <div>
+          <label style="display: block; color: var(--text); font-weight: 600; margin-bottom: 8px;">عدد الوحدات المتوفرة</label>
+          <input type="number" name="available_units" class="form-control" placeholder="عدد الوحدات" style="width: 100%; padding: 12px; border: 2px solid var(--border); border-radius: 10px; background: var(--bg-alt); color: var(--text);">
+        </div>
+        
+        <div style="grid-column: 1 / -1;">
+          <label style="display: block; color: var(--text); font-weight: 600; margin-bottom: 8px;">المرافق</label>
+          <textarea name="facilities" class="form-control" placeholder="المرافق المتوفرة" rows="3" style="width: 100%; padding: 12px; border: 2px solid var(--border); border-radius: 10px; background: var(--bg-alt); color: var(--text);"></textarea>
+        </div>
+        
+        <div style="grid-column: 1 / -1;">
+          <label style="display: block; color: var(--text); font-weight: 600; margin-bottom: 8px;">شروط العرض</label>
+          <textarea name="terms" class="form-control" placeholder="شروط العرض" rows="3" style="width: 100%; padding: 12px; border: 2px solid var(--border); border-radius: 10px; background: var(--bg-alt); color: var(--text);"></textarea>
+        </div>
+      </div>
+    </div>
+    
+    <div id="discount-fields" style="display: none; margin-bottom: 30px;">
+      <h3 style="color: var(--text); margin-bottom: 20px;">💰 تفاصيل الخصم</h3>
+      
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px;">
+        <div>
+          <label style="display: block; color: var(--text); font-weight: 600; margin-bottom: 8px;">نسبة الخصم</label>
+          <input type="number" name="discount_percentage" class="form-control" placeholder="نسبة الخصم" style="width: 100%; padding: 12px; border: 2px solid var(--border); border-radius: 10px; background: var(--bg-alt); color: var(--text);">
+        </div>
+        
+        <div>
+          <label style="display: block; color: var(--text); font-weight: 600; margin-bottom: 8px;">السعر قبل الخصم</label>
+          <input type="number" name="original_price" class="form-control" placeholder="السعر قبل الخصم" style="width: 100%; padding: 12px; border: 2px solid var(--border); border-radius: 10px; background: var(--bg-alt); color: var(--text);">
+        </div>
+        
+        <div>
+          <label style="display: block; color: var(--text); font-weight: 600; margin-bottom: 8px;">السعر بعد الخصم</label>
+          <input type="number" name="discounted_price" class="form-control" placeholder="السعر بعد الخصم" style="width: 100%; padding: 12px; border: 2px solid var(--border); border-radius: 10px; background: var(--bg-alt); color: var(--text);">
+        </div>
+        
+        <div>
+          <label style="display: block; color: var(--text); font-weight: 600; margin-bottom: 8px;">تاريخ بداية العرض</label>
+          <input type="date" name="valid_from" class="form-control" style="width: 100%; padding: 12px; border: 2px solid var(--border); border-radius: 10px; background: var(--bg-alt); color: var(--text);">
+        </div>
+        
+        <div>
+          <label style="display: block; color: var(--text); font-weight: 600; margin-bottom: 8px;">تاريخ انتهاء العرض</label>
+          <input type="date" name="valid_until" class="form-control" style="width: 100%; padding: 12px; border: 2px solid var(--border); border-radius: 10px; background: var(--bg-alt); color: var(--text);">
+        </div>
+        
+        <div style="grid-column: 1 / -1;">
+          <label style="display: block; color: var(--text); font-weight: 600; margin-bottom: 8px;">الشروط</label>
+          <textarea name="terms" class="form-control" placeholder="شروط العرض" rows="3" style="width: 100%; padding: 12px; border: 2px solid var(--border); border-radius: 10px; background: var(--bg-alt); color: var(--text);"></textarea>
+        </div>
+      </div>
+    </div>
+    
+    <div style="display: flex; gap: 15px; margin-top: 30px;">
+      <button type="submit" class="btn btn-primary" style="background: linear-gradient(135deg, #FF5722 0%, #FF9800 100%); border: none; padding: 12px 24px;">
+        🚀 نشر المنشور
+      </button>
+      <a href="{% url 'broker_resorts' %}" class="btn btn-outline" style="border: 2px solid var(--border); padding: 12px 24px;">
+        إلغاء
+      </a>
+    </div>
+  </form>
+</div>
+
+<script>
+// إظهار الحقول الخاصة حسب نوع المنشور
+document.querySelector('select[name="post_type"]').addEventListener('change', function() {
+  const postType = this.value;
+  
+  // إخفاء جميع الحقول الخاصة
+  document.getElementById('chalet-offer-fields').style.display = 'none';
+  document.getElementById('discount-fields').style.display = 'none';
+  
+  // إظهار الحقول المناسبة
+  if (postType === 'chalet_offer' || postType === 'cabin_offer' || postType === 'night_offer' || postType === 'week_offer') {
+    document.getElementById('chalet-offer-fields').style.display = 'block';
+  } else if (postType === 'discount') {
+    document.getElementById('discount-fields').style.display = 'block';
+  }
+});
+</script>
+{% endblock %}

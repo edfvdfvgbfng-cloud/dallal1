@@ -1,0 +1,236 @@
+{% extends 'properties/base.html' %}
+{% load static %}
+{% load custom_filters %}
+
+{% block title %}جدول زمني العقد - {{ contract.contract_number }}{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <div>
+                        <h2 class="mb-0">📅 جدول زمني العقد</h2>
+                        <p class="text-muted mb-0">{{ contract.contract_number }} - {{ contract.get_contract_type_display }}</p>
+                    </div>
+                    <a href="{% url 'contract_detail' contract.id %}" class="btn btn-secondary">
+                        العودة للتفاصيل
+                    </a>
+                </div>
+                <div class="card-body">
+                    <div class="timeline">
+                        {% for event in timeline_events %}
+                        <div class="timeline-item">
+                            <div class="timeline-marker">
+                                <span class="timeline-icon">{{ event.icon }}</span>
+                            </div>
+                            <div class="timeline-content">
+                                <div class="timeline-date">{{ event.date|date:"Y-m-d H:i" }}</div>
+                                <div class="timeline-title">{{ event.title }}</div>
+                                <div class="timeline-description">{{ event.description }}</div>
+                                <div class="timeline-user">
+                                    <small class="text-muted">بواسطة: {{ event.user }}</small>
+                                </div>
+                                <div class="timeline-type">
+                                    <span class="badge badge-{{ event.type }}">
+                                        {% if event.type == 'audit' %}تدقيق{% elif event.type == 'payment' %}دفعة{% elif event.type == 'contract' %}عقد{% endif %}
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                        {% empty %}
+                        <div class="alert alert-info text-center">
+                            <div class="empty-icon">📭</div>
+                            <h4>لا توجد أحداث</h4>
+                            <p>لم يتم تسجيل أي أحداث لهذا العقد بعد</p>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.card {
+    background: #0A0A0A;
+    border: 1px solid #333;
+    border-radius: 10px;
+    margin-bottom: 20px;
+}
+
+.card-header {
+    background: #0A0A0A;
+    border-bottom: 1px solid #333;
+    padding: 20px;
+    border-radius: 10px 10px 0 0;
+}
+
+.card-header h2 {
+    color: #e67e22;
+    margin: 0;
+}
+
+.card-header p {
+    color: #888;
+    margin: 5px 0 0 0;
+}
+
+.card-body {
+    padding: 20px;
+    color: #fff;
+}
+
+.timeline {
+    position: relative;
+    padding: 20px 0;
+}
+
+.timeline::before {
+    content: '';
+    position: absolute;
+    left: 50px;
+    top: 0;
+    bottom: 0;
+    width: 2px;
+    background: #333;
+}
+
+.timeline-item {
+    position: relative;
+    margin-bottom: 30px;
+    padding-left: 100px;
+}
+
+.timeline-marker {
+    position: absolute;
+    left: 40px;
+    top: 0;
+    width: 20px;
+    height: 20px;
+    background: #e67e22;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1;
+}
+
+.timeline-icon {
+    font-size: 12px;
+}
+
+.timeline-content {
+    background: #1a1a1a;
+    border: 1px solid #333;
+    border-radius: 8px;
+    padding: 15px;
+    transition: all 0.3s ease;
+}
+
+.timeline-content:hover {
+    background: #2a2a2a;
+    border-color: #e67e22;
+}
+
+.timeline-date {
+    color: #e67e22;
+    font-size: 0.85rem;
+    margin-bottom: 5px;
+}
+
+.timeline-title {
+    font-weight: 600;
+    font-size: 1.1rem;
+    margin-bottom: 5px;
+}
+
+.timeline-description {
+    color: #ccc;
+    margin-bottom: 10px;
+}
+
+.timeline-user {
+    margin-bottom: 8px;
+}
+
+.timeline-type {
+    margin-top: 10px;
+}
+
+.badge {
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 0.75rem;
+}
+
+.badge-audit {
+    background: #0a2a3a;
+    color: #17a2b8;
+}
+
+.badge-payment {
+    background: #0a3a0a;
+    color: #28a745;
+}
+
+.badge-contract {
+    background: #3a0a3a;
+    color: #6f42c1;
+}
+
+.alert {
+    background: #1a1a1a;
+    border: 1px solid #333;
+    color: #fff;
+    border-radius: 8px;
+    padding: 15px;
+    margin-bottom: 20px;
+}
+
+.alert-info {
+    background: #0a2a3a;
+    border-color: #17a2b8;
+}
+
+.empty-icon {
+    font-size: 4rem;
+    margin-bottom: 20px;
+    opacity: 0.5;
+}
+
+.btn {
+    padding: 8px 16px;
+    border-radius: 6px;
+    border: none;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    text-decoration: none;
+    color: #fff;
+}
+
+.btn-secondary {
+    background: #6c757d;
+}
+
+.btn-secondary:hover {
+    background: #5a6268;
+}
+
+@media (max-width: 768px) {
+    .timeline::before {
+        left: 30px;
+    }
+    
+    .timeline-item {
+        padding-left: 70px;
+    }
+    
+    .timeline-marker {
+        left: 20px;
+    }
+}
+</style>
+{% endblock %}

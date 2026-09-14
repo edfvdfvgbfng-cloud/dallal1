@@ -1,0 +1,355 @@
+{% extends 'properties/dashboard_base.html' %}
+
+{% block title %}إنشاء صفحة منتجع داخل العراق{% endblock %}
+
+{% block dashboard_title %}🏝️ إنشاء صفحة منتجع داخل العراق{% endblock %}
+
+{% block dashboard_subtitle %}
+<p style="margin:4px 0 0;color:var(--text-muted);font-size:0.9rem;">
+  أنشئ صفحة منتجع جديد لنشر عروضك وخدماتك
+</p>
+{% endblock %}
+
+{% block dashboard_actions %}
+<a href="{% url 'broker_manage_resorts' %}" class="btn btn-outline btn-sm">🟪 إدارة المنتجعات</a>
+<a href="{% url 'dashboard' %}" class="btn btn-outline btn-sm">رجوع للوحة التحكم</a>
+{% endblock %}
+
+{% block dashboard_content %}
+<div class="card" style="padding: 28px;">
+  <form method="post" enctype="multipart/form-data">
+    {% csrf_token %}
+    
+    <h3 style="color: var(--text); margin-bottom: 20px;">🏝️ المعلومات الأساسية</h3>
+    
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; margin-bottom: 30px;">
+      <div style="grid-column: 1 / -1;">
+        <label style="display: block; color: var(--text); font-weight: 600; margin-bottom: 8px;">اسم المنتجع <span style="color: #dc3545;">*</span></label>
+        <input type="text" name="name" class="form-control" placeholder="اسم المنتجع" required style="width: 100%; padding: 12px; border: 2px solid var(--border); border-radius: 10px; background: var(--bg-alt); color: var(--text);">
+      </div>
+      
+      <div style="grid-column: 1 / -1;">
+        <label style="display: block; color: var(--text); font-weight: 600; margin-bottom: 8px;">وصف المنتجع <span style="color: #dc3545;">*</span></label>
+        <textarea name="description" class="form-control" placeholder="نبذة عن المنتجع" required rows="4" style="width: 100%; padding: 12px; border: 2px solid var(--border); border-radius: 10px; background: var(--bg-alt); color: var(--text);"></textarea>
+      </div>
+      
+      <div>
+        <label style="display: block; color: var(--text); font-weight: 600; margin-bottom: 8px;">نوع المنتجع <span style="color: #dc3545;">*</span></label>
+        <select name="page_type" class="form-control" required style="width: 100%; padding: 12px; border: 2px solid var(--border); border-radius: 10px; background: var(--bg-alt); color: var(--text;">
+          <option value="">اختر نوع المنتجع</option>
+          <option value="resort">منتجع</option>
+          <option value="chalet">شاليه</option>
+          <option value="cabin">كوخ</option>
+          <option value="tourism_farm">مزرعة سياحية</option>
+          <option value="rest_house">استراحة</option>
+          <option value="camp">مخيم</option>
+          <option value="beach">شاطئ</option>
+          <option value="tourism_city">مدينة سياحية</option>
+          <option value="tourism_village">قرية سياحية</option>
+        </select>
+      </div>
+      
+      <div>
+        <label style="display: block; color: var(--text); font-weight: 600; margin-bottom: 8px;">سنة التأسيس</label>
+        <input type="number" name="establishment_year" class="form-control" placeholder="سنة التأسيس" style="width: 100%; padding: 12px; border: 2px solid var(--border); border-radius: 10px; background: var(--bg-alt); color: var(--text);">
+      </div>
+      
+      <div>
+        <label style="display: block; color: var(--text); font-weight: 600; margin-bottom: 8px;">اسم المالك</label>
+        <input type="text" name="owner_name" class="form-control" placeholder="اسم المالك" style="width: 100%; padding: 12px; border: 2px solid var(--border); border-radius: 10px; background: var(--bg-alt); color: var(--text);">
+      </div>
+      
+      <div>
+        <label style="display: block; color: var(--text); font-weight: 600; margin-bottom: 8px;">اسم المدير / المسؤول</label>
+        <input type="text" name="manager_name" class="form-control" placeholder="اسم المدير" style="width: 100%; padding: 12px; border: 2px solid var(--border); border-radius: 10px; background: var(--bg-alt); color: var(--text);">
+      </div>
+      
+      <div>
+        <label style="display: block; color: var(--text); font-weight: 600; margin-bottom: 8px;">رقم الترخيص السياحي</label>
+        <input type="text" name="license_number" class="form-control" placeholder="رقم الترخيص" style="width: 100%; padding: 12px; border: 2px solid var(--border); border-radius: 10px; background: var(--bg-alt); color: var(--text);">
+      </div>
+      
+      <div>
+        <label style="display: block; color: var(--text); font-weight: 600; margin-bottom: 8px;">جهة الترخيص</label>
+        <input type="text" name="licensing_authority" class="form-control" placeholder="جهة الترخيص" style="width: 100%; padding: 12px; border: 2px solid var(--border); border-radius: 10px; background: var(--bg-alt); color: var(--text);">
+      </div>
+    </div>
+    
+    <h3 style="color: var(--text); margin-bottom: 20px;">📍 الموقع</h3>
+    
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; margin-bottom: 30px;">
+      <div>
+        <label style="display: block; color: var(--text); font-weight: 600; margin-bottom: 8px;">المحافظة <span style="color: #dc3545;">*</span></label>
+        <select name="governorate" class="form-control" required style="width: 100%; padding: 12px; border: 2px solid var(--border); border-radius: 10px; background: var(--bg-alt); color: var(--text);">
+          <option value="">اختر المحافظة</option>
+          <option value="BAG">بغداد</option>
+          <option value="BAS">البصرة</option>
+          <option value="NIN">نينوى</option>
+          <option value="ERB">أربيل</option>
+          <option value="NAJ">النجف</option>
+          <option value="KAR">كربلاء</option>
+          <option value="BAB">بابل</option>
+          <option value="DHI">ذي قار</option>
+          <option value="DIA">ديالى</option>
+          <option value="KIR">كركوك</option>
+          <option value="ANB">الأنبار</option>
+          <option value="WAS">واسط</option>
+          <option value="MUT">ميسان</option>
+          <option value="MUTH">المثنى</option>
+          <option value="QAD">القادسية</option>
+          <option value="SAL">صلاح الدين</option>
+          <option value="DUH">دهوك</option>
+          <option value="SUL">السليمانية</option>
+          <option value="HAL">حلبجة</option>
+        </select>
+      </div>
+      
+      <div>
+        <label style="display: block; color: var(--text); font-weight: 600; margin-bottom: 8px;">المدينة <span style="color: #dc3545;">*</span></label>
+        <input type="text" name="city" class="form-control" placeholder="المدينة" required style="width: 100%; padding: 12px; border: 2px solid var(--border); border-radius: 10px; background: var(--bg-alt); color: var(--text);">
+      </div>
+      
+      <div>
+        <label style="display: block; color: var(--text); font-weight: 600; margin-bottom: 8px;">القضاء</label>
+        <input type="text" name="district" class="form-control" placeholder="القضاء" style="width: 100%; padding: 12px; border: 2px solid var(--border); border-radius: 10px; background: var(--bg-alt); color: var(--text);">
+      </div>
+      
+      <div>
+        <label style="display: block; color: var(--text); font-weight: 600; margin-bottom: 8px;">الناحية</label>
+        <input type="text" name="subdistrict" class="form-control" placeholder="الناحية" style="width: 100%; padding: 12px; border: 2px solid var(--border); border-radius: 10px; background: var(--bg-alt); color: var(--text);">
+      </div>
+      
+      <div>
+        <label style="display: block; color: var(--text); font-weight: 600; margin-bottom: 8px;">المنطقة</label>
+        <input type="text" name="area" class="form-control" placeholder="المنطقة" style="width: 100%; padding: 12px; border: 2px solid var(--border); border-radius: 10px; background: var(--bg-alt); color: var(--text);">
+      </div>
+      
+      <div>
+        <label style="display: block; color: var(--text); font-weight: 600; margin-bottom: 8px;">الحي</label>
+        <input type="text" name="neighborhood" class="form-control" placeholder="الحي" style="width: 100%; padding: 12px; border: 2px solid var(--border); border-radius: 10px; background: var(--bg-alt); color: var(--text);">
+      </div>
+      
+      <div style="grid-column: 1 / -1;">
+        <label style="display: block; color: var(--text); font-weight: 600; margin-bottom: 8px;">العنوان التفصيلي <span style="color: #dc3545;">*</span></label>
+        <input type="text" name="address" class="form-control" placeholder="العنوان التفصيلي" required style="width: 100%; padding: 12px; border: 2px solid var(--border); border-radius: 10px; background: var(--bg-alt); color: var(--text);">
+      </div>
+      
+      <div>
+        <label style="display: block; color: var(--text); font-weight: 600; margin-bottom: 8px;">اسم المنطقة السياحية</label>
+        <input type="text" name="tourist_area" class="form-control" placeholder="اسم المنطقة السياحية" style="width: 100%; padding: 12px; border: 2px solid var(--border); border-radius: 10px; background: var(--bg-alt); color: var(--text);">
+      </div>
+      
+      <div>
+        <label style="display: block; color: var(--text); font-weight: 600; margin-bottom: 8px;">أقرب مدينة سياحية</label>
+        <input type="text" name="nearest_city" class="form-control" placeholder="أقرب مدينة سياحية" style="width: 100%; padding: 12px; border: 2px solid var(--border); border-radius: 10px; background: var(--bg-alt); color: var(--text);">
+      </div>
+      
+      <div>
+        <label style="display: block; color: var(--text); font-weight: 600; margin-bottom: 8px;">المسافة من مركز المدينة</label>
+        <input type="text" name="distance_from_city_center" class="form-control" placeholder="المسافة" style="width: 100%; padding: 12px; border: 2px solid var(--border); border-radius: 10px; background: var(--bg-alt); color: var(--text);">
+      </div>
+      
+      <div>
+        <label style="display: block; color: var(--text); font-weight: 600; margin-bottom: 8px;">المسافة من أقبر طريق رئيسي</label>
+        <input type="text" name="distance_from_main_road" class="form-control" placeholder="المسافة" style="width: 100%; padding: 12px; border: 2px solid var(--border); border-radius: 10px; background: var(--bg-alt); color: var(--text);">
+      </div>
+      
+      <div>
+        <label style="display: block; color: var(--text); font-weight: 600; margin-bottom: 8px;">خط العرض</label>
+        <input type="number" step="any" name="latitude" class="form-control" placeholder="خط العرض" style="width: 100%; padding: 12px; border: 2px solid var(--border); border-radius: 10px; background: var(--bg-alt); color: var(--text);">
+      </div>
+      
+      <div>
+        <label style="display: block; color: var(--text); font-weight: 600; margin-bottom: 8px;">خط الطول</label>
+        <input type="number" step="any" name="longitude" class="form-control" placeholder="خط الطول" style="width: 100%; padding: 12px; border: 2px solid var(--border); border-radius: 10px; background: var(--bg-alt); color: var(--text);">
+      </div>
+      
+      <div style="grid-column: 1 / -1;">
+        <label style="display: block; color: var(--text); font-weight: 600; margin-bottom: 8px; align-items: center; gap: 10px; cursor: pointer;">
+          <input type="checkbox" name="enable_gps" style="width: 20px; height: 20px;">
+          <span>📍 نشر GPS على خريطة المنصة</span>
+        </label>
+      </div>
+    </div>
+    
+    <h3 style="color: var(--text); margin-bottom: 20px;">👨‍👩‍👧 معلومات السعة</h3>
+    
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; margin-bottom: 30px;">
+      <div>
+        <label style="display: block; color: var(--text); font-weight: 600; margin-bottom: 8px;">الحد الأدنى للأشخاص</label>
+        <input type="number" name="min_capacity" class="form-control" placeholder="الحد الأدنى" style="width: 100%; padding: 12px; border: 2px solid var(--border); border-radius: 10px; background: var(--bg-alt); color: var(--text);">
+      </div>
+      
+      <div>
+        <label style="display: block; color: var(--text); font-weight: 600; margin-bottom: 8px;">الحد الأقصى للأشخاص <span style="color: #dc3545;">*</span></label>
+        <input type="number" name="max_capacity" class="form-control" placeholder="الحد الأقصى" required style="width: 100%; padding: 12px; border: 2px solid var(--border); border-radius: 10px; background: var(--bg-alt); color: var(--text);">
+      </div>
+      
+      <div>
+        <label style="display: block; color: var(--text); font-weight: 600; margin-bottom: 8px;">عدد الوحدات</label>
+        <input type="number" name="total_units" class="form-control" placeholder="عدد الوحدات" style="width: 100%; padding: 12px; border: 2px solid var(--border); border-radius: 10px; background: var(--bg-alt); color: var(--text);">
+      </div>
+      
+      <div>
+        <label style="display: block; color: var(--text); font-weight: 600; margin-bottom: 8px;">عدد الشاليهات</label>
+        <input type="number" name="chalets_count" class="form-control" placeholder="عدد الشاليهات" style="width: 100%; padding: 12px; border: 2px solid var(--border); border-radius: 10px; background: var(--bg-alt); color: var(--text);">
+      </div>
+      
+      <div>
+        <label style="display: block; color: var(--text); font-weight: 600; margin-bottom: 8px;">عدد الأكواخ</label>
+        <input type="number" name="cabins_count" class="form-control" placeholder="عدد الأكواخ" style="width: 100%; padding: 12px; border: 2px solid var(--border); border-radius: 10px; background: var(--bg-alt); color: var(--text);">
+      </div>
+      
+      <div>
+        <label style="display: block; color: var(--text); font-weight: 600; margin-bottom: 8px;">عدد الأسرة</label>
+        <input type="number" name="beds_count" class="form-control" placeholder="عدد الأسرة" style="width: 100%; padding: 12px; border: 2px solid var(--border); border-radius: 10px; background: var(--bg-alt); color: var(--text);">
+      </div>
+      
+      <div>
+        <label style="display: block; color: var(--text); font-weight: 600; margin-bottom: 8px;">عدد الأسرة الإضافية</label>
+        <input type="number" name="extra_beds_count" class="form-control" placeholder="عدد الأسرة الإضافية" style="width: 100%; padding: 12px; border: 2px solid var(--border); border-radius: 10px; background: var(--bg-alt); color: var(--text);">
+      </div>
+      
+      <div>
+        <label style="display: block; color: var(--text); font-weight: 600; margin-bottom: 8px;">عدد مواقف السيارات</label>
+        <input type="number" name="parking_spaces" class="form-control" placeholder="عدد مواقف السيارات" style="width: 100%; padding: 12px; border: 2px solid var(--border); border-radius: 10px; background: var(--bg-alt); color: var(--text);">
+      </div>
+    </div>
+    
+    <h3 style="color: var(--text); margin-bottom: 20px;">💰 الأسعار</h3>
+    
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; margin-bottom: 30px;">
+      <div>
+        <label style="display: block; color: var(--text); font-weight: 600; margin-bottom: 8px;">السعر يبدأ من <span style="color: #dc3545;">*</span></label>
+        <input type="number" name="price_start" class="form-control" placeholder="السعر يبدأ من" required style="width: 100%; padding: 12px; border: 2px solid var(--border); border-radius: 10px; background: var(--bg-alt); color: var(--text);">
+      </div>
+      
+      <div>
+        <label style="display: block; color: var(--text); font-weight: 600; margin-bottom: 8px;">العملة <span style="color: #dc3545;">*</span></label>
+        <select name="currency" class="form-control" required style="width: 100%; padding: 12px; border: 2px solid var(--border); border-radius: 10px; background: var(--bg-alt); color: var(--text);">
+          <option value="IQD">دينار عراقي</option>
+          <option value="USD">دولار أمريكي</option>
+        </select>
+      </div>
+      
+      <div>
+        <label style="display: block; color: var(--text); font-weight: 600; margin-bottom: 8px;">سعر الوحدة</label>
+        <input type="number" name="unit_price" class="form-control" placeholder="سعر الوحدة" style="width: 100%; padding: 12px; border: 2px solid var(--border); border-radius: 10px; background: var(--bg-alt); color: var(--text);">
+      </div>
+      
+      <div>
+        <label style="display: block; color: var(--text); font-weight: 600; margin-bottom: 8px;">سعر الشخص</label>
+        <input type="number" name="person_price" class="form-control" placeholder="سعر الشخص" style="width: 100%; padding: 12px; border: 2px solid var(--border); border-radius: 10px; background: var(--bg-alt); color: var(--text);">
+      </div>
+      
+      <div>
+        <label style="display: block; color: var(--text); font-weight: 600; margin-bottom: 8px;">سعر نهاية الأسبوع</label>
+        <input type="number" name="weekend_price" class="form-control" placeholder="سعر نهاية الأسبوع" style="width: 100%; padding: 12px; border: 2px solid var(--border); border-radius: 10px; background: var(--bg-alt); color: var(--text);">
+      </div>
+      
+      <div>
+        <label style="display: block; color: var(--text); font-weight: 600; margin-bottom: 8px;">سعر أيام العطل</label>
+        <input type="number" name="holiday_price" class="form-control" placeholder="سعر أيام العطل" style="width: 100%; padding: 12px; border: 2px solid var(--border); border-radius: 10px; background: var(--bg-alt); color: var(--text);">
+      </div>
+      
+      <div>
+        <label style="display: block; color: var(--text); font-weight: 600; margin-bottom: 8px;">هل السعر قابل للتفاوض؟</label>
+        <select name="price_negotiable" class="form-control" style="width: 100%; padding: 12px; border: 2px solid var(--border); border-radius: 10px; background: var(--bg-alt); color: var(--text);">
+          <option value="yes">نعم</option>
+          <option value="no">لا</option>
+        </select>
+      </div>
+      
+      <div>
+        <label style="display: block; color: var(--text); font-weight: 600; margin-bottom: 8px;">هل السعر يشمل الخدمات؟</label>
+        <select name="price_includes_services" class="form-control" style="width: 100%; padding: 12px; border: 2px solid var(--border); border-radius: 10px; background: var(--bg-alt); color: var(--text);">
+          <option value="yes">نعم</option>
+          <option value="no">لا</option>
+        </select>
+      </div>
+    </div>
+    
+    <h3 style="color: var(--text); margin-bottom: 20px;">📞 معلومات التواصل</h3>
+    
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; margin-bottom: 30px;">
+      <div>
+        <label style="display: block; color: var(--text); font-weight: 600; margin-bottom: 8px;">رقم الهاتف الرئيسي <span style="color: #dc3545;">*</span></label>
+        <input type="tel" name="phone" class="form-control" placeholder="رقم الهاتف" required style="width: 100%; padding: 12px; border: 2px solid var(--border); border-radius: 10px; background: var(--bg-alt); color: var(--text);">
+      </div>
+      
+      <div>
+        <label style="display: block; color: var(--text); font-weight: 600; margin-bottom: 8px;">واتساب</label>
+        <input type="tel" name="whatsapp" class="form-control" placeholder="واتساب" style="width: 100%; padding: 12px; border: 2px solid var(--border); border-radius: 10px; background: var(--bg-alt); color: var(--text);">
+      </div>
+      
+      <div>
+        <label style="display: block; color: var(--text); font-weight: 600; margin-bottom: 8px;">البريد الإلكتروني <span style="color: #dc3545;">*</span></label>
+        <input type="email" name="email" class="form-control" placeholder="البريد الإلكتروني" required style="width: 100%; padding: 12px; border: 2px solid var(--border); border-radius: 10px; background: var(--bg-alt); color: var(--text);">
+      </div>
+      
+      <div>
+        <label style="display: block; color: var(--text); font-weight: 600; margin-bottom: 8px;">رابط الحجز</label>
+        <input type="url" name="booking_url" class="form-control" placeholder="رابط الحجز" style="width: 100%; padding: 12px; border: 2px solid var(--border); border-radius: 10px; background: var(--bg-alt); color: var(--text);">
+      </div>
+      
+      <div>
+        <label style="display: block; color: var(--text); font-weight: 600; margin-bottom: 8px;">فيسبوك</label>
+        <input type="url" name="facebook" class="form-control" placeholder="فيسبوك" style="width: 100%; padding: 12px; border: 2px solid var(--border); border-radius: 10px; background: var(--bg-alt); color: var(--text);">
+      </div>
+      
+      <div>
+        <label style="display: block; color: var(--text); font-weight: 600; margin-bottom: 8px;">إنستغرام</label>
+        <input type="url" name="instagram" class="form-control" placeholder="إنستغرام" style="width: 100%; padding: 12px; border: 2px solid var(--border); border-radius: 10px; background: var(--bg-alt); color: var(--text);">
+      </div>
+      
+      <div>
+        <label style="display: block; color: var(--text); font-weight: 600; margin-bottom: 8px;">تيك توك</label>
+        <input type="url" name="tiktok" class="form-control" placeholder="تيك توك" style="width: 100%; padding: 12px; border: 2px solid var(--border); border-radius: 10px; background: var(--bg-alt); color: var(--text);">
+      </div>
+      
+      <div>
+        <label style="display: block; color: var(--text); font-weight: 600; margin-bottom: 8px;">تليغرام</label>
+        <input type="text" name="telegram" class="form-control" placeholder="تليغرام" style="width: 100%; padding: 12px; border: 2px solid var(--border); border-radius: 10px; background: var(--bg-alt); color: var(--text);">
+      </div>
+    </div>
+    
+    <h3 style="color: var(--text); margin-bottom: 20px;">📸 الوسائط</h3>
+    
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; margin-bottom: 30px;">
+      <div style="grid-column: 1 / -1;">
+        <label style="display: block; color: var(--text); font-weight: 600; margin-bottom: 8px;">شعار المنتجع</label>
+        <input type="file" name="logo" accept="image/*" class="form-control" style="width: 100%; padding: 12px; border: 2px solid var(--border); border-radius: 10px; background: var(--bg-alt); color: var(--text);">
+      </div>
+      
+      <div style="grid-column: 1 / -1;">
+        <label style="display: block; color: var(--text); font-weight: 600; margin-bottom: 8px;">صورة الغلاف <span style="color: #dc3545;">*</span></label>
+        <input type="file" name="cover_image" accept="image/*" class="form-control" required style="width: 100%; padding: 12px; border: 2px solid var(--border); border-radius: 10px; background: var(--bg-alt); color: var(--text);">
+      </div>
+      
+      <div style="grid-column: 1 / -1;">
+        <label style="display: block; color: var(--text); font-weight: 600; margin-bottom: 8px;">صور المنتجع</label>
+        <input type="file" name="resort_images" accept="image/*" multiple class="form-control" style="width: 100%; padding: 12px; border: 2px solid var(--border); border-radius: 10px; background: var(--bg-alt); color: var(--text);">
+      </div>
+      
+      <div style="grid-column: 1 / -1;">
+        <label style="display: block; color: var(--text); font-weight: 600; margin-bottom: 8px;">صور الشاليهات</label>
+        <input type="file" name="chalet_images" accept="image/*" multiple class="form-control" style="width: 100%; padding: 12px; border: 2px solid var(--border); border-radius: 10px; background: var(--bg-alt); color: var(--text);">
+      </div>
+      
+      <div style="grid-column: 1 / -1;">
+        <label style="display: block; color: var(--text); font-weight: 600; margin-bottom: 8px;">فيديو المنتجع</label>
+        <input type="file" name="resort_video" accept="video/*" class="form-control" style="width: 100%; padding: 12px; border: 2px solid var(--border); border-radius: 10px; background: var(--bg-alt); color: var(--text);">
+      </div>
+    </div>
+    
+    <div style="display: flex; gap: 15px; margin-top: 30px;">
+      <button type="submit" class="btn btn-primary" style="background: linear-gradient(135deg, #FF5722 0%, #FF9800 100%); border: none; padding: 12px 24px;">
+        🏝️ إنشاء صفحة المنتجع
+      </button>
+      <a href="{% url 'dashboard' %}" class="btn btn-outline" style="border: 2px solid var(--border); padding: 12px 24px;">
+        إلغاء
+      </a>
+    </div>
+  </form>
+</div>
+{% endblock %}

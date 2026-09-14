@@ -1,0 +1,30 @@
+{% extends 'properties/dashboard_base.html' %}
+{% load static %}
+{% block title %}نشر منتجع داخل العراق{% endblock %}
+
+{% block dashboard_title %}نشر منتجع <span>داخل العراق</span>{% endblock %}
+
+{% block dashboard_actions %}
+<div class="resort-actions" style="display: flex; flex-direction: column; gap: 10px; margin-bottom: 15px; padding: 15px; background: rgba(255, 87, 34, 0.1); border: 2px solid rgba(255, 87, 34, 0.3); border-radius: 12px;">
+  <h4 style="margin: 0 0 10px 0; color: #FF5722; font-size: 1rem;">🏝️ صفحات المنتجعات داخل العراق</h4>
+  <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+    <a href="{% url 'dallal_resort_create' %}" class="btn btn-primary btn-sm" style="background: linear-gradient(135deg, #FF5722 0%, #FF9800 100%); border: none;">
+      🟩 إنشاء صفحة منتجع جديدة
+    </a>
+    <a href="{% url 'broker_resorts' %}" class="btn btn-secondary btn-sm" style="background: #E64A19; border: 1px solid #F57C00;">
+      🟦 إنشاء منشور داخل منتجع
+    </a>
+    <a href="{% url 'broker_manage_resorts' %}" class="btn btn-secondary btn-sm" style="background: #E64A19; border: 1px solid #F57C00;">
+      🟪 إدارة صفحات المنتجعات
+    </a>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<!-- No extra CSS needed for simplified page -->
+{% endblock %}
+
+{% block dashboard_content %}
+<!-- Form content removed - only showing quick actions header -->
+{% endblock %}

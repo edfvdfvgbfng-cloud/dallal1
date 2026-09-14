@@ -1,0 +1,131 @@
+{% load static %}
+<article class="listing-card listing-card-job" data-job-id="{{ job.id }}" data-job-url="{{ job.get_absolute_url }}" data-job-title="{{ job.title }}">
+    <!-- Card Media -->
+    <div class="listing-card-media listing-card-media-job">
+        <!-- Actions -->
+        <div class="listing-card-actions">
+            <button type="button" class="listing-card-action-btn btn-favorite" 
+                    aria-label="مفضلة" 
+                    data-job-id="{{ job.id }}">
+                <span class="fav-icon">🤍</span>
+            </button>
+            <button type="button" class="listing-card-action-btn" 
+                    aria-label="مشاركة" 
+                    data-action="share"
+                    data-job-url="{{ job.get_absolute_url }}"
+                    data-job-title="{{ job.title }}">
+                <span>📤</span>
+            </button>
+        </div>
+
+        <!-- Badges -->
+        <div class="listing-card-badges">
+            {% if job.is_featured %}
+            <span class="listing-card-badge listing-card-badge-featured">⭐ مميز</span>
+            {% endif %}
+            {% if job.is_urgent %}
+            <span class="listing-card-badge listing-card-badge-status">🔥 عاجل</span>
+            {% endif %}
+            <span class="listing-card-badge listing-card-badge-{{ job.job_type }}">
+                {% if job.job_type == 'full_time' %}دوام كامل{% elif job.job_type == 'part_time' %}دوام جزئي{% elif job.job_type == 'contract' %}عقد{% elif job.job_type == 'freelance' %}عمل حر{% elif job.job_type == 'internship' %}تدريب{% else %}{{ job.get_job_type_display }}{% endif %}
+            </span>
+        </div>
+
+        <!-- Company Logo -->
+        <a href="{{ job.get_absolute_url }}" class="listing-card-image-link">
+            {% if job.company_logo %}
+            <img src="{{ job.company_logo.url }}" 
+                 alt="{{ job.company_name }}" 
+                 loading="lazy"
+                 class="listing-card-image listing-card-company-logo"
+                 data-src="{{ job.company_logo.url }}">
+            {% else %}
+            <div class="listing-card-placeholder listing-card-placeholder-job">
+                <span class="listing-card-placeholder-icon">🏢</span>
+                <span class="listing-card-placeholder-text">{{ job.company_name|truncatewords:2 }}</span>
+            </div>
+            {% endif %}
+        </a>
+    </div>
+
+    <!-- Card Body -->
+    <div class="listing-card-body">
+        <!-- Job Title -->
+        <a href="{{ job.get_absolute_url }}">
+            <h3 class="listing-card-title">{{ job.title }}</h3>
+        </a>
+
+        <!-- Company Name -->
+        <div class="listing-card-type">
+            <span class="listing-card-type-icon">🏢</span>
+            <span>{{ job.company_name }}</span>
+        </div>
+
+        <!-- Location -->
+        <div class="listing-card-location">
+            <span class="listing-card-location-icon">📍</span>
+            <span>
+                {% if job.location_type == 'inside_iraq' %}
+                العراق
+                {% if job.governorate %} — {{ job.governorate }}{% endif %}
+                {% else %}
+                {{ job.get_country_display }}
+                {% if job.city %} — {{ job.city }}{% endif %}
+                {% endif %}
+            </span>
+        </div>
+
+        <!-- Job Meta -->
+        <div class="listing-card-meta">
+            <div class="listing-card-meta-item">
+                <span class="listing-card-meta-icon">💼</span>
+                <span>{{ job.get_job_type_display }}</span>
+            </div>
+            {% if job.experience_level %}
+            <div class="listing-card-meta-item">
+                <span class="listing-card-meta-icon">📊</span>
+                <span>{{ job.get_experience_level_display }}</span>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Salary -->
+        <div class="listing-card-price">
+            <span class="listing-card-price-value">
+                {% if job.salary_min %}{{ job.salary_min }}{% else %}--{% endif %}
+                {% if job.salary_max %} - {{ job.salary_max }}{% endif %}
+            </span>
+            <span class="listing-card-price-currency">
+                {% if job.currency %}{{ job.currency }}{% else %}د.ع{% endif %}
+            </span>
+            <span class="listing-card-price-unit">/ شهر</span>
+        </div>
+
+        <!-- Skills -->
+        {% if job.skills %}
+        <div class="listing-card-amenities">
+            {% for skill in job.skills|slice:":3" %}
+            <span class="listing-card-amenity">{{ skill }}</span>
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        <!-- Posted Time -->
+        <div class="listing-card-meta-bottom">
+            <div class="listing-card-time">
+                <span>🕒</span>
+                <span>{{ job.created_at|timesince }}</span>
+            </div>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="listing-card-actions-footer">
+            <a href="{{ job.get_absolute_url }}" class="listing-card-btn">
+                <span>التفاصيل</span>
+            </a>
+            <a href="{% url 'job_apply' job.slug %}" class="listing-card-btn listing-card-btn-primary">
+                <span>التقديم</span>
+            </a>
+        </div>
+    </div>
+</article>

@@ -1,0 +1,269 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}حجز فندق | دلال{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/hotel-booking.css' %}">
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'js/hotel-booking.js' %}" defer></script>
+{% endblock %}
+
+{% block content %}
+<div class="hotel-booking-page">
+    <!-- Booking Header -->
+    <header class="booking-header">
+        <div class="header-content">
+            <a href="{{ hotel.get_absolute_url }}" class="back-link">
+                <span class="back-icon">→</span>
+                العودة للفندق
+            </a>
+            <h1>حجز {{ hotel.name }}</h1>
+            <p class="hotel-location">📍 {{ hotel.city }}, {{ hotel.country.name if hotel.country else '' }}</p>
+        </div>
+    </header>
+
+    <div class="booking-container">
+        <!-- Hotel Info Card -->
+        <div class="hotel-info-card">
+            <img src="{{ hotel.main_image.url if hotel.main_image else '/static/img/placeholder-hotel.svg' }}" 
+                 alt="{{ hotel.name }}" class="hotel-image">
+            <div class="hotel-details">
+                <h2>{{ hotel.name }}</h2>
+                <div class="hotel-rating">
+                    <span class="stars">⭐⭐⭐⭐⭐</span>
+                    <span class="rating-count">(125 تقييم)</span>
+                </div>
+                <div class="hotel-amenities">
+                    <span class="amenity">🏊 مسبح</span>
+                    <span class="amenity">🍽️ مطعم</span>
+                    <span class="amenity">📶 واي فاي</span>
+                    <span class="amenity">🅿️ مركز رياضي</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Booking Form -->
+        <div class="booking-form-card">
+            <h2>تفاصيل الحجز</h2>
+            <form id="bookingForm" method="POST" action="{% url 'create_hotel_booking' %}">
+                {% csrf_token %}
+                <input type="hidden" name="hotel_id" value="{{ hotel.id }}">
+                
+                <!-- Dates -->
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>تاريخ الدخول</label>
+                        <input type="date" name="check_in" id="checkIn" required 
+                               value="{{ check_in|default:'' }}">
+                    </div>
+                    <div class="form-group">
+                        <label>تاريخ الخروج</label>
+                        <input type="date" name="check_out" id="checkOut" required 
+                               value="{{ check_out|default:'' }}">
+                    </div>
+                </div>
+
+                <!-- Guests and Rooms -->
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>عدد الضيوف</label>
+                        <select name="guests" id="guests" required>
+                            <option value="1" {% if guests == '1' %}selected{% endif %}>1 ضيف</option>
+                            <option value="2" {% if guests == '2' %}selected{% endif %}>2 ضيوف</option>
+                            <option value="3" {% if guests == '3' %}selected{% endif %}>3 ضيوف</option>
+                            <option value="4" {% if guests == '4' %}selected{% endif %}>4 ضيوف</option>
+                            <option value="5+">5+ ضيوف</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>عدد الغرف</label>
+                        <select name="rooms_count" id="roomsCount" required>
+                            <option value="1" {% if rooms == '1' %}selected{% endif %}>1 غرفة</option>
+                            <option value="2" {% if rooms == '2' %}selected{% endif %}>2 غرفة</option>
+                            <option value="3" {% if rooms == '3' %}selected{% endif %}>3 غرف</option>
+                            <option value="4+">4+ غرف</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Room Type -->
+                <div class="form-group">
+                    <label>نوع الغرفة</label>
+                    <select name="room_type" id="roomType" required>
+                        <option value="standard">غرفة قياسية</option>
+                        <option value="deluxe">غرفة ديلوكس</option>
+                        <option value="suite">جناح</option>
+                        <option value="presidential">جناح رئاسي</option>
+                    </select>
+                </div>
+
+                <!-- Guest Information -->
+                <div class="form-section">
+                    <h3>معلومات الضيف</h3>
+                    <div class="form-group">
+                        <label>الاسم الكامل</label>
+                        <input type="text" name="guest_name" required placeholder="أدخل اسمك الكامل">
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>البريد الإلكتروني</label>
+                            <input type="email" name="guest_email" required placeholder="example@email.com">
+                        </div>
+                        <div class="form-group">
+                            <label>رقم الهاتف</label>
+                            <input type="tel" name="guest_phone" required placeholder="+964 XXX XXX XXXX">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Special Requests -->
+                <div class="form-group">
+                    <label>طلبات خاصة (اختياري)</label>
+                    <textarea name="special_requests" rows="3" 
+                              placeholder="أي طلبات خاصة مثل غرفة غير مدخنة، طابق علوي، إلخ"></textarea>
+                </div>
+
+                <!-- Car Rental Option -->
+                <div class="form-section car-rental-section">
+                    <label class="checkbox-label">
+                        <input type="checkbox" id="addCarRental" name="add_car_rental">
+                        <span>إضافة تأجير سيارة</span>
+                    </label>
+                    
+                    <div id="carRentalOptions" class="car-rental-options" style="display: none;">
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>نوع السيارة</label>
+                                <select name="car_type">
+                                    <option value="economy">اقتصادية</option>
+                                    <option value="compact">صغيرة</option>
+                                    <option value="midsize">متوسطة</option>
+                                    <option value="luxury">فاخرة</option>
+                                    <option value="suv">دفع رباعي</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>موقع الاستلام</label>
+                                <input type="text" name="pickup_location" placeholder="المطار / الفندق">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Price Summary -->
+                <div class="price-summary">
+                    <h3>ملخص السعر</h3>
+                    <div class="price-row">
+                        <span>السعر الأساسي</span>
+                        <span id="basePrice">0 د.ع</span>
+                    </div>
+                    <div class="price-row">
+                        <span>الضرائب</span>
+                        <span id="taxes">0 د.ع</span>
+                    </div>
+                    <div class="price-row">
+                        <span>الرسوم</span>
+                        <span id="fees">0 د.ع</span>
+                    </div>
+                    <div class="price-row discount">
+                        <span>الخصم</span>
+                        <span id="discount">-0 د.ع</span>
+                    </div>
+                    <div class="price-row total">
+                        <span>الإجمالي</span>
+                        <span id="totalPrice">0 د.ع</span>
+                    </div>
+                    <div class="price-rows" id="nightsInfo">
+                        <span>عدد الليالي: 0</span>
+                    </div>
+                </div>
+
+                <!-- Submit Button -->
+                <button type="submit" class="btn btn-primary btn-large">
+                    تأكيد الحجز
+                </button>
+
+                <!-- Trust Badges -->
+                <div class="trust-badges">
+                    <div class="trust-badge">
+                        <span class="badge-icon">🔒</span>
+                        <span class="badge-text">دفع آمن</span>
+                    </div>
+                    <div class="trust-badge">
+                        <span class="badge-icon">✓</span>
+                        <span class="badge-text">إلغاء مجاني</span>
+                    </div>
+                    <div class="trust-badge">
+                        <span class="badge-icon">💬</span>
+                        <span class="badge-text">دعم 24/7</span>
+                    </div>
+                </div>
+            </form>
+        </div>
+
+        <!-- Similar Hotels -->
+        <div class="similar-hotels-card">
+            <h3>فنادق مشابهة</h3>
+            <div class="similar-hotels-list">
+                <!-- Similar hotels will be loaded here -->
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Car rental toggle
+    const addCarRental = document.getElementById('addCarRental');
+    const carRentalOptions = document.getElementById('carRentalOptions');
+    
+    if (addCarRental && carRentalOptions) {
+        addCarRental.addEventListener('change', function() {
+            carRentalOptions.style.display = this.checked ? 'block' : 'none';
+        });
+    }
+    
+    // Date calculation
+    const checkIn = document.getElementById('checkIn');
+    const checkOut = document.getElementById('checkOut');
+    const nightsInfo = document.getElementById('nightsInfo');
+    
+    function calculateNights() {
+        if (checkIn.value && checkOut.value) {
+            const startDate = new Date(checkIn.value);
+            const endDate = new Date(checkOut.value);
+            const nights = Math.ceil((endDate - startDate) / (1000 * 60 * 60 * 24));
+            
+            if (nights > 0) {
+                nightsInfo.textContent = `عدد الليالي: ${nights}`;
+                updatePriceEstimate(nights);
+            } else {
+                nightsInfo.textContent = 'تاريخ الخروج يجب أن يكون بعد تاريخ الدخول';
+            }
+        }
+    }
+    
+    checkIn.addEventListener('change', calculateNights);
+    checkOut.addEventListener('change', calculateNights);
+    
+    function updatePriceEstimate(nights) {
+        const hotelPrice = {{ hotel.price_per_night|default:0 }};
+        const basePrice = hotelPrice * nights;
+        const taxes = basePrice * 0.15; // 15% taxes
+        const fees = basePrice * 0.05; // 5% fees
+        const total = basePrice + taxes + fees;
+        
+        document.getElementById('basePrice').textContent = formatPrice(basePrice);
+        document.getElementById('taxes').textContent = formatPrice(taxes);
+        document.getElementById('fees').textContent = formatPrice(fees);
+        document.getElementById('totalPrice').textContent = formatPrice(total);
+    }
+    
+    function formatPrice(price) {
+        return new Intl.NumberFormat('ar-IQ').format(price) + ' د.ع';
+    }
+});
+</script>

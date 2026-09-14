@@ -1,0 +1,421 @@
+{% extends 'properties/dashboard_base.html' %}
+
+{% block title %}تفاصيل جهة الاتصال{% endblock %}
+
+{% block dashboard_title %}👥 تفاصيل جهة الاتصال{% endblock %}
+
+{% block dashboard_subtitle %}
+<p>{{ contact.name }} - {{ contact.get_stage_display }}
+{% endblock %}
+
+{% block dashboard_actions %}
+<a href="{% url 'crm_dashboard' %}" class="btn btn-outline">← لوحة CRM</a>
+<a href="{% url 'dashboard' %}" class="btn btn-outline">لوحة التحكم</a>
+{% endblock %}
+
+{% block content %}
+<div class="dashboard-content">
+  <!-- Contact Info Card -->
+  <div class="contact-info-card">
+    <h3>معلومات جهة الاتصال</h3>
+    <div class="info-grid">
+      <div class="info-item">
+        <span class="info-label">الاسم:</span>
+        <span class="info-value">{{ contact.name }}</span>
+      </div>
+      <div class="info-item">
+        <span class="info-label">البريد الإلكتروني:</span>
+        <span class="info-value">{{ contact.email }}</span>
+      </div>
+      <div class="info-item">
+        <span class="info-label">الهاتف:</span>
+        <span class="info-value">{{ contact.phone|default:"-" }}</span>
+      </div>
+      <div class="info-item">
+        <span class="info-label">هاتف ثانوي:</span>
+        <span class="info-value">{{ contact.secondary_phone|default:"-" }}</span>
+      </div>
+      <div class="info-item">
+        <span class="info-label">الشركة:</span>
+        <span class="info-value">{{ contact.company|default:"-" }}</span>
+      </div>
+      <div class="info-item">
+        <span class="info-label">المسمى الوظيفي:</span>
+        <span class="info-value">{{ contact.position|default:"-" }}</span>
+      </div>
+      <div class="info-item">
+        <span class="info-label">المحافظة:</span>
+        <span class="info-value">{{ contact.governorate|default:"-" }}</span>
+      </div>
+      <div class="info-item">
+        <span class="info-label">المدينة:</span>
+        <span class="info-value">{{ contact.city|default:"-" }}</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- CRM Status Card -->
+  <div class="status-card">
+    <h3>حالة CRM</h3>
+    <div class="status-grid">
+      <div class="status-item">
+        <span class="status-label">المرحلة:</span>
+        <span class="status-badge stage-{{ contact.stage }}">{{ contact.get_stage_display }}</span>
+      </div>
+      <div class="status-item">
+        <span class="status-label">الأولوية:</span>
+        <span class="status-badge priority-{{ contact.priority }}">{{ contact.get_priority_display }}</span>
+      </div>
+      <div class="status-item">
+        <span class="status-label">المصدر:</span>
+        <span class="status-value">{{ contact.get_source_display|default:"-" }}</span>
+      </div>
+      <div class="status-item">
+        <span class="status-label">القيمة المتوقعة:</span>
+        <span class="status-value">{{ contact.value|floatformat:0 }} د.ع</span>
+      </div>
+      <div class="status-item">
+        <span class="status-label">القيمة المحولة:</span>
+        <span class="status-value">{{ contact.converted_value|floatformat:0 }} د.ع</span>
+      </div>
+      <div class="status-item">
+        <span class="status-label">نشط:</span>
+        <span class="status-value">{% if contact.is_active %}✅ نعم{% else %}❌ لا{% endif %}</span>
+      </div>
+      <div class="status-item">
+        <span class="status-label">تم التحويل:</span>
+        <span class="status-value">{% if contact.is_converted %}✅ نعم{% else %}❌ لا{% endif %}</span>
+      </div>
+      <div class="status-item">
+        <span class="status-label">عدد التفاعلات:</span>
+        <span class="status-value">{{ contact.interaction_count }}</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Timeline Card -->
+  <div class="timeline-card">
+    <h3>التسلسل الزمني</h3>
+    <div class="timeline-list">
+      <div class="timeline-item">
+        <span class="timeline-label">أول اتصال:</span>
+        <span class="timeline-value">{{ contact.first_contact|date:"Y-m-d H:i" }}</span>
+      </div>
+      <div class="timeline-item">
+        <span class="timeline-label">آخر اتصال:</span>
+        <span class="timeline-value">{{ contact.last_contact|date:"Y-m-d H:i"|default:"-" }}</span>
+      </div>
+      <div class="timeline-item">
+        <span class="timeline-label">المتابعة القادمة:</span>
+        <span class="timeline-value">{{ contact.next_followup|date:"Y-m-d H:i"|default:"-" }}</span>
+      </div>
+      <div class="timeline-item">
+        <span class="timeline-label">أيام منذ آخر اتصال:</span>
+        <span class="timeline-value">{{ contact.get_days_since_last_contact|default:"-" }} يوم</span>
+      </div>
+      <div class="timeline-item">
+        <span class="timeline-label">المتابعة مستحقة:</span>
+        <span class="timeline-value">{% if contact.is_followup_due %}⚠️ نعم{% else %}✅ لا{% endif %}</span>
+      </div>
+      <div class="timeline-item">
+        <span class="timeline-label">تاريخ التحويل:</span>
+        <span class="timeline-value">{{ contact.conversion_date|date:"Y-m-d"|default:"-" }}</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Assignment Card -->
+  <div class="assignment-card">
+    <h3>التعيين والمسؤولية</h3>
+    <div class="assignment-list">
+      <div class="assignment-item">
+        <span class="assignment-label">المستخدم المرتبط:</span>
+        <span class="assignment-value">{{ contact.user.username|default:"-" }}</span>
+      </div>
+      <div class="assignment-item">
+        <span class="assignment-label">أنشأ بواسطة:</span>
+        <span class="assignment-value">{{ contact.created_by.username|default:"-" }}</span>
+      </div>
+      <div class="assignment-item">
+        <span class="assignment-label">مسند إلى:</span>
+        <span class="assignment-value">{{ contact.assigned_to.username|default:"-" }}</span>
+      </div>
+      <div class="assignment-item">
+        <span class="assignment-label">المحادثة المرتبطة:</span>
+        <span class="assignment-value">{% if contact.conversation %}محادثة #{{ contact.conversation.id }}{% else %}-{% endif %}</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Properties Interested -->
+  <div class="properties-card">
+    <h3>العقارات المهتم بها</h3>
+    <div class="properties-list">
+      {% for property in properties_interested %}
+      <div class="property-item">
+        <a href="{% url 'property_detail' property.slug %}" target="_blank" class="property-link">
+          {{ property.title|default:property.display_title }}
+        </a>
+        <span class="property-location">{{ property.district }}</span>
+        <span class="property-price">{{ property.price|floatformat:0 }} د.ع</span>
+      </div>
+      {% empty %}
+      <p class="no-data">لا توجد عقارات مهتم بها</p>
+      {% endfor %}
+    </div>
+  </div>
+
+  <!-- Notes Card -->
+  <div class="notes-card">
+    <h3>ملاحظات</h3>
+    <div class="notes-content">
+      {{ contact.notes|default:"لا توجد ملاحظات"|linebreaks }}
+    </div>
+  </div>
+
+  <!-- Actions -->
+  <div class="actions-card">
+    <h3>الإجراءات</h3>
+    <div class="actions-list">
+      <button class="btn btn-primary" onclick="convertToCustomer({{ contact.id }})">تحويل إلى عميل</button>
+      <button class="btn btn-outline" onclick="scheduleFollowup({{ contact.id }})">جدولة متابعة</button>
+      <button class="btn btn-outline" onclick="updateInteraction({{ contact.id }})">تحديث التفاعل</button>
+      <button class="btn btn-warning" onclick="archiveContact({{ contact.id }})">أرشفة</button>
+    </div>
+  </div>
+</div>
+
+<style>
+.contact-info-card,
+.status-card,
+.timeline-card,
+.assignment-card,
+.properties-card,
+.notes-card,
+.actions-card {
+  background: var(--card-bg);
+  padding: 1.5rem;
+  border-radius: var(--radius-sm);
+  box-shadow: var(--shadow);
+  border: 1px solid var(--border);
+  margin-bottom: 2rem;
+}
+
+.contact-info-card h3,
+.status-card h3,
+.timeline-card h3,
+.assignment-card h3,
+.properties-card h3,
+.notes-card h3,
+.actions-card h3 {
+  margin: 0 0 1rem 0;
+  font-size: 1.2rem;
+  color: var(--text);
+  border-bottom: 2px solid var(--border);
+  padding-bottom: 0.5rem;
+}
+
+.info-grid,
+.status-grid,
+.timeline-list,
+.assignment-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 1rem;
+}
+
+.info-item,
+.status-item,
+.timeline-item,
+.assignment-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.75rem;
+  background: var(--bg-alt);
+  border-radius: var(--radius-sm);
+}
+
+.info-label,
+.status-label,
+.timeline-label,
+.assignment-label {
+  color: var(--text);
+  font-weight: 500;
+}
+
+.info-value,
+.status-value,
+.timeline-value,
+.assignment-value {
+  color: var(--primary);
+  font-weight: 600;
+}
+
+.status-badge {
+  padding: 0.25rem 0.75rem;
+  border-radius: 20px;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.priority-hot { background: #dc3545; color: white; }
+.priority-warm { background: #ffc107; color: black; }
+.priority-cold { background: #6c757d; color: white; }
+
+.stage-lead { background: #17a2b8; color: white; }
+.stage-prospect { background: #28a745; color: white; }
+.stage-customer { background: #007bff; color: white; }
+.stage-churned { background: #6c757d; color: white; }
+
+.properties-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.property-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem;
+  background: var(--bg-alt);
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+}
+
+.property-link {
+  color: var(--primary);
+  text-decoration: none;
+  font-weight: 600;
+  flex: 1;
+}
+
+.property-link:hover {
+  text-decoration: underline;
+}
+
+.property-location,
+.property-price {
+  color: var(--text-light);
+  font-size: 0.9rem;
+}
+
+.notes-content {
+  background: var(--bg-alt);
+  padding: 1rem;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+  min-height: 100px;
+  white-space: pre-wrap;
+}
+
+.actions-list {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.no-data {
+  text-align: center;
+  color: var(--text-light);
+  padding: 2rem;
+  font-style: italic;
+}
+</style>
+
+<script>
+function convertToCustomer(contactId) {
+    fetch('/api/crm/management/', {
+        method: 'PUT',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            id: contactId,
+            convert_to_customer: true
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert('تم التحويل بنجاح');
+            location.reload();
+        } else {
+            alert('حدث خطأ: ' + data.error);
+        }
+    });
+}
+
+function scheduleFollowup(contactId) {
+    const date = prompt('أدخل تاريخ المتابعة (YYYY-MM-DD HH:MM):');
+    if (date) {
+        fetch('/api/crm/management/', {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                id: contactId,
+                next_followup: date
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert('تم جدولة المتابعة بنجاح');
+                location.reload();
+            } else {
+                alert('حدث خطأ: ' + data.error);
+            }
+        });
+    }
+}
+
+function updateInteraction(contactId) {
+    fetch('/api/crm/management/', {
+        method: 'PUT',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            id: contactId,
+            last_contact: true
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert('تم تحديث التفاعل بنجاح');
+            location.reload();
+        } else {
+            alert('حدث خطأ: ' + data.error);
+        }
+    });
+}
+
+function archiveContact(contactId) {
+    if (confirm('هل أنت متأكد من أرشفة جهة الاتصال؟')) {
+        fetch('/api/crm/management/', {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                id: contactId,
+                is_active: false
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert('تم الأرشفة بنجاح');
+                location.reload();
+            } else {
+                alert('حدث خطأ: ' + data.error);
+            }
+        });
+    }
+}
+</script>
+{% endblock %}

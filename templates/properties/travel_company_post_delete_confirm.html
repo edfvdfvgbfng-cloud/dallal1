@@ -1,0 +1,37 @@
+{% extends 'properties/base.html' %}
+{% load static %}
+
+{% block title %}حذف منشور {{ post.title }} - دلال{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card" style="background: #1a1a1a; border: 1px solid #2a2a2a; border-radius: 15px;">
+                <div class="card-body p-5">
+                    <div class="text-center mb-4">
+                        <div style="font-size: 4rem; margin-bottom: 20px;">⚠️</div>
+                        <h2 style="color: #ffffff; margin-bottom: 15px;">تأكيد الحذف</h2>
+                        <p style="color: #ccc; font-size: 1.1rem;">
+                            هل أنت متأكد من حذف المنشور <strong>{{ post.title }}</strong>؟
+                        </p>
+                        <p style="color: #dc3545; font-size: 0.95rem;">
+                            ⚠️ لا يمكن التراجع عن هذا الإجراء.
+                        </p>
+                    </div>
+                    
+                    <form method="post" style="display: flex; gap: 15px; justify-content: center;">
+                        {% csrf_token %}
+                        <a href="{% url 'travel_company_detail' company.id %}" class="btn btn-secondary" style="padding: 12px 30px; border-radius: 10px; background: transparent; border: 1px solid #2a2a2a; color: #e0e0e0; text-decoration: none;">
+                            إلغاء
+                        </a>
+                        <button type="submit" class="btn btn-danger" style="padding: 12px 30px; border-radius: 10px; background: #dc3545; border: none; color: white; font-weight: 600;">
+                            نعم، احذف المنشور
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

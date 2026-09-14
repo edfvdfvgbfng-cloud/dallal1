@@ -1,0 +1,203 @@
+{% extends 'properties/base.html' %}
+{% load static %}
+{% load custom_filters %}
+
+{% block title %}إحصائيات العقود{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h2>📊 إحصائيات العقود العقارية</h2>
+                    <a href="{% url 'contract_list' %}" class="btn btn-secondary">
+                        <span class="btn-icon">←</span>
+                        <span>العودة للقائمة</span>
+                    </a>
+                </div>
+                <div class="card-body">
+                    <!-- الإحصائيات العامة -->
+                    <div class="row mb-4">
+                        <div class="col-md-3 col-sm-6">
+                            <div class="stat-card">
+                                <div class="stat-icon">📄</div>
+                                <div class="stat-number">{{ stats.total_contracts }}</div>
+                                <div class="stat-label">إجمالي العقود</div>
+                            </div>
+                        </div>
+                        <div class="col-md-3 col-sm-6">
+                            <div class="stat-card">
+                                <div class="stat-icon">✅</div>
+                                <div class="stat-number">{{ stats.active_contracts }}</div>
+                                <div class="stat-label">العقود الفعالة</div>
+                            </div>
+                        </div>
+                        <div class="col-md-3 col-sm-6">
+                            <div class="stat-card">
+                                <div class="stat-icon">💰</div>
+                                <div class="stat-number">{{ stats.total_value }}</div>
+                                <div class="stat-label">إجمالي القيمة</div>
+                            </div>
+                        </div>
+                        <div class="col-md-3 col-sm-6">
+                            <div class="stat-card">
+                                <div class="stat-icon">📋</div>
+                                <div class="stat-number">{{ stats.expiring_soon }}</div>
+                                <div class="stat-label">قريبة من الانتهاء</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- إحصائيات حسب النوع -->
+                    <div class="section">
+                        <h3 class="section-title">حسب نوع العقد</h3>
+                        <div class="row">
+                            {% for type_name, count in stats.by_type.items %}
+                            <div class="col-md-4 col-sm-6 mb-3">
+                                <div class="info-item">
+                                    <strong>{{ type_name }}:</strong> {{ count }}
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+
+                    <!-- إحصائيات حسب الحالة -->
+                    <div class="section">
+                        <h3 class="section-title">حسب الحالة</h3>
+                        <div class="row">
+                            {% for status_name, count in stats.by_status.items %}
+                            <div class="col-md-4 col-sm-6 mb-3">
+                                <div class="info-item">
+                                    <strong>{{ status_name }}:</strong> {{ count }}
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+
+                    <!-- إحصائيات حسب العملة -->
+                    <div class="section">
+                        <h3 class="section-title">حسب العملة</h3>
+                        <div class="row">
+                            {% for currency_name, count in stats.by_currency.items %}
+                            <div class="col-md-4 col-sm-6 mb-3">
+                                <div class="info-item">
+                                    <strong>{{ currency_name }}:</strong> {{ count }}
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+
+                    <!-- إحصائيات العقود المنتهية -->
+                    <div class="section">
+                        <h3 class="section-title">العقود المنتهية</h3>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="info-item">
+                                    <strong>منتهية (7 أيام):</strong> {{ stats.expired_7_days }}
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="info-item">
+                                    <strong>منتهية (30 يوم):</strong> {{ stats.expired_30_days }}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- إحصائيات إضافية -->
+                    <div class="section">
+                        <h3 class="section-title">إحصائيات إضافية</h3>
+                        <div class="row">
+                            <div class="col-md-4">
+                                <div class="info-item">
+                                    <strong>إجمالي الوثائق:</strong> {{ stats.total_documents }}
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="info-item">
+                                    <strong>إجمالي الأطراف:</strong> {{ stats.total_parties }}
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="info-item">
+                                    <strong>العقود المؤرشفة:</strong> {{ stats.archived_contracts }}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.stat-card {
+    background: linear-gradient(135deg, #0A0A0A 0%, #0A0A0A 100%);
+    border: 1px solid #e67e22;
+    border-radius: 12px;
+    padding: 20px;
+    text-align: center;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.stat-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 30px rgba(230, 126, 34, 0.3);
+}
+
+.stat-icon {
+    font-size: 2.5rem;
+    margin-bottom: 10px;
+}
+
+.stat-number {
+    font-size: 2rem;
+    font-weight: bold;
+    color: #fff;
+    margin-bottom: 5px;
+}
+
+.stat-label {
+    font-size: 0.9rem;
+    color: #e67e22;
+    font-weight: 600;
+}
+
+.section {
+    background: #0A0A0A;
+    border: 1px solid #333;
+    border-radius: 10px;
+    padding: 25px;
+    margin-bottom: 25px;
+}
+
+.section-title {
+    color: #e67e22;
+    font-size: 1.2rem;
+    font-weight: 600;
+    margin-bottom: 20px;
+    padding-bottom: 10px;
+    border-bottom: 2px solid #e67e22;
+}
+
+.info-item {
+    margin-bottom: 15px;
+    color: #fff;
+}
+
+.info-item strong {
+    color: #e67e22;
+    font-weight: 600;
+    margin-left: 10px;
+}
+
+.btn-icon {
+    margin-left: 5px;
+}
+</style>
+{% endblock %}

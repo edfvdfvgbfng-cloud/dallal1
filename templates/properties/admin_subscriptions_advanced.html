@@ -1,0 +1,319 @@
+{% extends 'properties/dashboard_base.html' %}
+{% load static %}
+{% load humanize %}
+
+{% block title %}إدارة الاشتراكات المتقدمة{% endblock %}
+{% block dashboard_title %}إدارة <span>الاشتراكات المتقدمة</span>{% endblock %}
+
+{% block dashboard_actions %}
+<a href="{% url 'admin_panel' %}" class="btn btn-outline">عودة للوحة الإدارة</a>
+<a href="{% url 'admin_users_list' %}" class="btn btn-primary">👥 المستخدمين</a>
+<a href="/admin/" target="_blank" class="btn btn-dark">🔧 Django Admin</a>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+.subscriptions-management {
+  background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+  min-height: 100vh;
+  padding: 2rem;
+}
+
+.stats-summary {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1rem;
+  margin-bottom: 2rem;
+}
+
+.stat-card {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  padding: 1.5rem;
+  text-align: center;
+}
+
+.stat-value {
+  font-size: 2rem;
+  font-weight: bold;
+  color: #4ecdc4;
+  margin-bottom: 0.5rem;
+}
+
+.stat-label {
+  color: #a0a0a0;
+  font-size: 0.9rem;
+}
+
+.filters-panel {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  padding: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+.filters-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1rem;
+}
+
+.filter-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.filter-group label {
+  color: #a0a0a0;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.filter-group input,
+.filter-group select {
+  padding: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 8px;
+  background: rgba(0, 0, 0, 0.3);
+  color: #fff;
+  outline: none;
+}
+
+.subscriptions-table {
+  width: 100%;
+  border-collapse: collapse;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.subscriptions-table th,
+.subscriptions-table td {
+  padding: 15px;
+  text-align: left;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  color: #fff;
+}
+
+.subscriptions-table th {
+  background: rgba(255, 255, 255, 0.1);
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
+.subscriptions-table tr:hover {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.status-badge {
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.status-active {
+  background: rgba(34, 197, 94, 0.2);
+  color: #22c55e;
+}
+
+.status-inactive {
+  background: rgba(239, 68, 68, 0.2);
+  color: #ef4444;
+}
+
+.action-btn {
+  padding: 6px 12px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.85rem;
+  transition: all 0.3s ease;
+  margin-right: 5px;
+}
+
+.action-btn-edit {
+  background: #4ecdc4;
+  color: #fff;
+}
+
+.action-btn-delete {
+  background: #ef4444;
+  color: #fff;
+}
+
+.action-btn:hover {
+  opacity: 0.8;
+}
+</style>
+{% endblock %}
+
+{% block dashboard_content %}
+<div class="subscriptions-management">
+  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+    <h2 style="color: #fff;">💳 إدارة الاشتراكات المتقدمة</h2>
+    <button class="btn btn-success" onclick="exportSubscriptions()">📥 تصدير</button>
+  </div>
+  
+  <!-- Stats Summary -->
+  <div class="stats-summary">
+    <div class="stat-card">
+      <div class="stat-value">{{ total_subscriptions|intcomma }}</div>
+      <div class="stat-label">إجمالي الاشتراكات</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-value">{{ active_subscriptions|intcomma }}</div>
+      <div class="stat-label">اشتراكات نشطة</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-value">{{ expired_subscriptions|intcomma }}</div>
+      <div class="stat-label">اشتراكات منتهية</div>
+    </div>
+  </div>
+  
+  <!-- Filters Panel -->
+  <div class="filters-panel">
+    <form method="get" class="filters-grid">
+      <div class="filter-group">
+        <label>البحث</label>
+        <input type="text" name="q" placeholder="اسم المستخدم، بريد..." value="{{ search_query }}">
+      </div>
+      
+      <div class="filter-group">
+        <label>نوع الاشتراك</label>
+        <select name="type">
+          <option value="">الكل</option>
+          <option value="basic" {% if subscription_type == 'basic' %}selected{% endif %}>أساسي</option>
+          <option value="premium" {% if subscription_type == 'premium' %}selected{% endif %}>مميز</option>
+          <option value="gold" {% if subscription_type == 'gold' %}selected{% endif %}>ذهبي</option>
+        </select>
+      </div>
+      
+      <div class="filter-group">
+        <label>الحالة</label>
+        <select name="status">
+          <option value="">الكل</option>
+          <option value="active" {% if status == 'active' %}selected{% endif %}>نشط</option>
+          <option value="inactive" {% if status == 'inactive' %}selected{% endif %}>منتهي</option>
+        </select>
+      </div>
+      
+      <div class="filter-actions" style="grid-column: 1 / -1;">
+        <button type="submit" class="btn btn-primary">🔍 بحث</button>
+        <button type="button" class="btn btn-outline" onclick="clearFilters()">🗑️ مسح الفلاتر</button>
+      </div>
+    </form>
+  </div>
+  
+  <!-- Subscriptions Table -->
+  <table class="subscriptions-table">
+    <thead>
+      <tr>
+        <th>المستخدم</th>
+        <th>نوع الاشتراك</th>
+        <th>تاريخ البدء</th>
+        <th>تاريخ الانتهاء</th>
+        <th>الحالة</th>
+        <th>الإجراءات</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for subscription in subscriptions %}
+      <tr>
+        <td>{{ subscription.user.username }}</td>
+        <td>{{ subscription.get_subscription_type_display }}</td>
+        <td>{{ subscription.start_date|date:"Y-m-d" }}</td>
+        <td>{{ subscription.end_date|date:"Y-m-d" }}</td>
+        <td>
+          <span class="status-badge {% if subscription.is_active %}status-active{% else %}status-inactive{% endif %}">
+            {% if subscription.is_active %}نشط{% else %}منتهي{% endif %}
+          </span>
+        </td>
+        <td>
+          <button class="action-btn action-btn-edit" onclick="editSubscription({{ subscription.id }})">✏️</button>
+          <button class="action-btn action-btn-delete" onclick="deleteSubscription({{ subscription.id }})">🗑️</button>
+        </td>
+      </tr>
+      {% empty %}
+      <tr>
+        <td colspan="6" style="text-align: center; padding: 2rem; color: #a0a0a0;">
+          لا توجد اشتراكات مطابقة للبحث
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  
+  <!-- Pagination -->
+  {% if subscriptions.has_other_pages %}
+  <div class="pagination">
+    {% if subscriptions.has_previous %}
+    <a href="?page={{ subscriptions.previous_page_number }}{% if search_query %}&q={{ search_query }}{% endif %}{% if subscription_type %}&type={{ subscription_type }}{% endif %}{% if status %}&status={{ status }}{% endif %}" class="pagination-btn">السابق</a>
+    {% endif %}
+    
+    <span class="pagination-btn active">صفحة {{ subscriptions.number }} من {{ subscriptions.paginator.num_pages }}</span>
+    
+    {% if subscriptions.has_next %}
+    <a href="?page={{ subscriptions.next_page_number }}{% if search_query %}&q={{ search_query }}{% endif %}{% if subscription_type %}&type={{ subscription_type }}{% endif %}{% if status %}&status={{ status }}{% endif %}" class="pagination-btn">التالي</a>
+    {% endif %}
+  </div>
+  {% endif %}
+</div>
+
+<script>
+function clearFilters() {
+  window.location.href = '{% url "admin_subscriptions_list" %}';
+}
+
+function editSubscription(subscriptionId) {
+  // Open edit modal or redirect to edit page
+  window.location.href = `/admin/properties/subscription/${subscriptionId}/`;
+}
+
+function deleteSubscription(subscriptionId) {
+  if (confirm('هل أنت متأكد من حذف هذا الاشتراك؟')) {
+    fetch(`/api/subscriptions/${subscriptionId}/delete/`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRFToken': getCsrfToken()
+      }
+    })
+    .then(response => response.json())
+    .then(data => {
+      if (data.success) {
+        alert('تم حذف الاشتراك بنجاح');
+        location.reload();
+      } else {
+        alert('حدث خطأ في الحذف');
+      }
+    });
+  }
+}
+
+function exportSubscriptions() {
+  // Export subscriptions data
+  let csv = 'ID,User,Type,Start Date,End Date,Status\n';
+  document.querySelectorAll('.subscriptions-table tbody tr').forEach(row => {
+    const cells = row.querySelectorAll('td');
+    if (cells.length > 1) {
+      csv += `${cells[0].textContent},${cells[1].textContent},${cells[2].textContent},${cells[3].textContent},${cells[4].textContent}\n`;
+    }
+  });
+  
+  const blob = new Blob([csv], { type: 'text/csv' });
+  const url = window.URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'subscriptions_export.csv';
+  a.click();
+}
+
+function getCsrfToken() {
+  return document.querySelector('[name=csrfmiddlewaretoken]')?.value || '';
+}
+</script>
+{% endblock %}

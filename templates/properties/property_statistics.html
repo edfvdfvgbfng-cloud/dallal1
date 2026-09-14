@@ -1,0 +1,361 @@
+{% extends 'properties/base.html' %}
+
+{% block title %}إحصائيات العقارات{% endblock %}
+
+{% block content %}
+<div class="dashboard-container">
+  <div class="dashboard-header">
+    <div class="header-info">
+      <h1>إحصائيات العقارات</h1>
+      <p>إحصائيات متقدمة وتقارير العقارات</p>
+    </div>
+    <div class="dashboard-quick-links">
+      <a href="{% url 'dashboard' %}" class="btn btn-outline">← لوحة التحكم</a>
+      {% if request.user.is_staff or request.user.is_superuser %}
+      <a href="{% url 'activity_log' %}" class="btn btn-outline">📋 سجل النشاطات</a>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- General Stats Cards -->
+  <div class="stats-grid">
+    <div class="stats-card">
+      <h3>إجمالي العقارات</h3>
+      <div class="stat-number">{{ total_properties }}</div>
+    </div>
+    <div class="stats-card">
+      <h3>العقارات النشطة</h3>
+      <div class="stat-number">{{ active_properties }}</div>
+    </div>
+    <div class="stats-card">
+      <h3>العقارات المباعة</h3>
+      <div class="stat-number">{{ sold_properties }}</div>
+    </div>
+    <div class="stats-card">
+      <h3>العقارات المؤجرة</h3>
+      <div class="stat-number">{{ rented_properties }}</div>
+    </div>
+    <div class="stats-card">
+      <h3>العقارات المعلقة</h3>
+      <div class="stat-number">{{ pending_properties }}</div>
+    </div>
+    <div class="stats-card verified">
+      <h3>العقارات الموثقة ✅</h3>
+      <div class="stat-number">{{ verified_properties }}</div>
+      <div class="stat-sub">{{ verification_rate }}%</div>
+    </div>
+    <div class="stats-card pending">
+      <h3>قيد التحقق ⏳</h3>
+      <div class="stat-number">{{ pending_verification }}</div>
+    </div>
+    <div class="stats-card">
+      <h3>عقارات البيع</h3>
+      <div class="stat-number">{{ sale_properties }}</div>
+    </div>
+    <div class="stats-card">
+      <h3>عقارات الإيجار</h3>
+      <div class="stat-number">{{ rent_properties }}</div>
+    </div>
+  </div>
+
+  <!-- Price Statistics -->
+  <div class="stats-card full-width" style="margin-top: 2rem;">
+    <h3>إحصائيات الأسعار (البيع)</h3>
+    <div class="stats-list">
+      <div class="stat-item">
+        <span class="stat-label">متوسط السعر:</span>
+        <span class="stat-value">{{ price_stats.avg_price|floatformat:0|default:"-" }} د.ع</span>
+      </div>
+      <div class="stat-item">
+        <span class="stat-label">أقل سعر:</span>
+        <span class="stat-value">{{ price_stats.min_price|floatformat:0|default:"-" }} د.ع</span>
+      </div>
+      <div class="stat-item">
+        <span class="stat-label">أعلى سعر:</span>
+        <span class="stat-value">{{ price_stats.max_price|floatformat:0|default:"-" }} د.ع</span>
+      </div>
+      <div class="stat-item">
+        <span class="stat-label">إجمالي القيمة:</span>
+        <span class="stat-value">{{ price_stats.total_value|floatformat:0|default:"-" }} د.ع</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Rental Statistics -->
+  <div class="stats-card full-width" style="margin-top: 2rem;">
+    <h3>إحصائيات الإيجار الشهري</h3>
+    <div class="stats-list">
+      <div class="stat-item">
+        <span class="stat-label">متوسط الإيجار:</span>
+        <span class="stat-value">{{ rental_stats.avg_monthly_rent|floatformat:0|default:"-" }} د.ع</span>
+      </div>
+      <div class="stat-item">
+        <span class="stat-label">أقل إيجار:</span>
+        <span class="stat-value">{{ rental_stats.min_monthly_rent|floatformat:0|default:"-" }} د.ع</span>
+      </div>
+      <div class="stat-item">
+        <span class="stat-label">أعلى إيجار:</span>
+        <span class="stat-value">{{ rental_stats.max_monthly_rent|floatformat:0|default:"-" }} د.ع</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Property Type Statistics -->
+  <div class="stats-card" style="margin-top: 2rem;">
+    <h3>إحصائيات حسب النوع</h3>
+    <div class="stats-list">
+      {% for stat in type_stats %}
+      <div class="stat-item">
+        <span class="stat-label">{{ stat.property_type|default:"غير محدد" }}</span>
+        <span class="stat-value">{{ stat.count }}</span>
+      </div>
+      {% empty %}
+      <p class="no-data">لا توجد بيانات</p>
+      {% endfor %}
+    </div>
+  </div>
+
+  <!-- Governorate Statistics -->
+  <div class="stats-card" style="margin-top: 2rem;">
+    <h3>إحصائيات حسب المحافظة</h3>
+    <div class="stats-list">
+      {% for stat in governorate_stats %}
+      <div class="stat-item">
+        <span class="stat-label">{{ stat.governorate|default:"غير محدد" }}</span>
+        <span class="stat-value">{{ stat.count }}</span>
+      </div>
+      {% empty %}
+      <p class="no-data">لا توجد بيانات</p>
+      {% endfor %}
+    </div>
+  </div>
+
+  <!-- City Statistics -->
+  <div class="stats-card" style="margin-top: 2rem;">
+    <h3>إحصائيات حسب المدينة (أعلى 20)</h3>
+    <div class="stats-list">
+      {% for stat in city_stats %}
+      <div class="stat-item">
+        <span class="stat-label">{{ stat.city|default:"غير محدد" }}</span>
+        <span class="stat-value">{{ stat.count }}</span>
+      </div>
+      {% empty %}
+      <p class="no-data">لا توجد بيانات</p>
+      {% endfor %}
+    </div>
+  </div>
+
+  <!-- Broker Performance -->
+  <div class="stats-card" style="margin-top: 2rem;">
+    <h3>أداء الدلالين (أعلى 10)</h3>
+    <div class="stats-list">
+      {% for stat in broker_stats %}
+      <div class="stat-item">
+        <span class="stat-label">{{ stat.broker__display_name|default:"غير محدد" }}</span>
+        <span class="stat-value">{{ stat.property_count }} عقار</span>
+      </div>
+      {% empty %}
+      <p class="no-data">لا توجد بيانات</p>
+      {% endfor %}
+    </div>
+  </div>
+
+  <!-- Office Performance -->
+  <div class="stats-card" style="margin-top: 2rem;">
+    <h3>أداء المكاتب (أعلى 10)</h3>
+    <div class="stats-list">
+      {% for stat in office_stats %}
+      <div class="stat-item">
+        <span class="stat-label">{{ stat.office__name|default:"غير محدد" }}</span>
+        <span class="stat-value">{{ stat.property_count }} عقار</span>
+      </div>
+      {% empty %}
+      <p class="no-data">لا توجد بيانات</p>
+      {% endfor %}
+    </div>
+  </div>
+
+  <!-- Furnishing Status -->
+  <div class="stats-card" style="margin-top: 2rem;">
+    <h3>حالة التأثيث</h3>
+    <div class="stats-list">
+      {% for stat in furnishing_stats %}
+      <div class="stat-item">
+        <span class="stat-label">{{ stat.get_furnishing_status_display|default:"غير محدد" }}</span>
+        <span class="stat-value">{{ stat.count }}</span>
+      </div>
+      {% empty %}
+      <p class="no-data">لا توجد بيانات</p>
+      {% endfor %}
+    </div>
+  </div>
+
+  <!-- Property Condition -->
+  <div class="stats-card" style="margin-top: 2rem;">
+    <h3>حالة العقار</h3>
+    <div class="stats-list">
+      {% for stat in condition_stats %}
+      <div class="stat-item">
+        <span class="stat-label">{{ stat.get_property_condition_display|default:"غير محدد" }}</span>
+        <span class="stat-value">{{ stat.count }}</span>
+      </div>
+      {% empty %}
+      <p class="no-data">لا توجد بيانات</p>
+      {% endfor %}
+    </div>
+  </div>
+
+  <!-- Top Viewed Properties -->
+  <div class="stats-card" style="margin-top: 2rem;">
+    <h3>العقارات الأكثر مشاهدة</h3>
+    <div class="stats-list">
+      {% for prop in top_viewed %}
+      <div class="stat-item">
+        <span class="stat-label">{{ prop.title }}</span>
+        <span class="stat-value">{{ prop.views_count }} مشاهدة</span>
+      </div>
+      {% empty %}
+      <p class="no-data">لا توجد بيانات</p>
+      {% endfor %}
+    </div>
+  </div>
+
+  <!-- Activity Statistics -->
+  <div class="stats-card" style="margin-top: 2rem;">
+    <h3>إحصائيات النشاطات</h3>
+    <div class="stats-list">
+      {% for stat in activity_stats %}
+      <div class="stat-item">
+        <span class="stat-label">{{ stat.get_action_display }}</span>
+        <span class="stat-value">{{ stat.count }}</span>
+      </div>
+      {% empty %}
+      <p class="no-data">لا توجد بيانات</p>
+      {% endfor %}
+    </div>
+  </div>
+
+  <!-- Monthly Properties -->
+  <div class="stats-card full-width" style="margin-top: 2rem;">
+    <h3>إضافة العقارات شهرياً (الأشهر الستة الماضية)</h3>
+    <div class="monthly-activities">
+      {% for activity in monthly_properties %}
+      <div class="activity-month">
+        <div class="month-name">{{ activity.month|date:"F Y" }}</div>
+        <div class="activity-item">
+          <span>عقارات مضافة:</span>
+          <strong>{{ activity.count }}</strong>
+        </div>
+      </div>
+      {% empty %}
+      <p class="no-data">لا توجد بيانات</p>
+      {% endfor %}
+    </div>
+  </div>
+</div>
+
+<style>
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+.stats-card {
+  background: var(--card-bg);
+  padding: 1.5rem;
+  border-radius: var(--radius-sm);
+  box-shadow: var(--shadow);
+  border: 1px solid var(--border);
+}
+
+.stats-card.full-width {
+  grid-column: 1 / -1;
+}
+
+.stats-card.verified {
+  border-left: 4px solid #28a745;
+}
+
+.stats-card.pending {
+  border-left: 4px solid #ffc107;
+}
+
+.stats-card h3 {
+  margin: 0 0 1rem 0;
+  font-size: 1.1rem;
+  color: var(--text);
+  border-bottom: 2px solid var(--border);
+  padding-bottom: 0.5rem;
+}
+
+.stat-number {
+  font-size: 2.5rem;
+  font-weight: 700;
+  color: var(--primary);
+}
+
+.stats-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.stat-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.75rem;
+  background: var(--bg-alt);
+  border-radius: var(--radius-sm);
+}
+
+.stat-label {
+  color: var(--text);
+  font-weight: 500;
+}
+
+.stat-value {
+  color: var(--primary);
+  font-weight: 600;
+}
+
+.no-data {
+  text-align: center;
+  color: var(--text-light);
+  padding: 1rem;
+  font-style: italic;
+}
+
+.monthly-activities {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1rem;
+}
+
+.activity-month {
+  background: var(--bg-alt);
+  padding: 1rem;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+}
+
+.month-name {
+  font-weight: 600;
+  color: var(--text);
+  margin-bottom: 0.5rem;
+}
+
+.activity-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  color: var(--text-light);
+}
+
+.activity-item strong {
+  color: var(--primary);
+}
+</style>
+{% endblock %}

@@ -1,0 +1,230 @@
+{% extends "base.html" %}
+{% load static %}
+{% load i18n %}
+
+{% block title %}{% trans "السوق الموحد" %} - {% trans "دلال" %}{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-12">
+            <div class="card shadow mb-4">
+                <div class="card-header bg-primary text-white">
+                    <h2 class="h4 mb-0">
+                        <i class="fas fa-store ml-2"></i>
+                        {% trans "السوق الموحد" %}
+                    </h2>
+                </div>
+                <div class="card-body">
+                    <p class="text-muted mb-4">
+                        {% trans "ابحث في جميع أنواع الإعلانات: عقارات، فنادق، وظائف، خدمات، والمزيد" %}
+                    </p>
+                    
+                    <form method="get" class="unified-search-form">
+                        <div class="row">
+                            <div class="col-md-4">
+                                <div class="form-group">
+                                    <label for="q">{% trans "كلمة البحث" %}</label>
+                                    <input type="text" class="form-control" id="q" name="q" value="{{ search_query }}" placeholder="ابحث عن أي شيء...">
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="form-group">
+                                    <label for="category">{% trans "الفئة" %}</label>
+                                    <select class="form-control" id="category" name="category">
+                                        <option value="all" {% if category == 'all' %}selected{% endif %}>{% trans "جميع الفئات" %}</option>
+                                        <option value="properties" {% if category == 'properties' %}selected{% endif %}>{% trans "عقارات" %}</option>
+                                        <option value="hotels" {% if category == 'hotels' %}selected{% endif %}>{% trans "فنادق" %}</option>
+                                        <option value="jobs" {% if category == 'jobs' %}selected{% endif %}>{% trans "وظائف" %}</option>
+                                        <option value="services" {% if category == 'services' %}selected{% endif %}>{% trans "خدمات" %}</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="form-group">
+                                    <label for="location">{% trans "الموقع" %}</label>
+                                    <input type="text" class="form-control" id="location" name="location" value="{{ location }}" placeholder="مثال: بغداد">
+                                </div>
+                            </div>
+                            <div class="col-md-2">
+                                <div class="form-group">
+                                    <label>&nbsp;</label>
+                                    <button type="submit" class="btn btn-primary btn-block">
+                                        <i class="fas fa-search ml-1"></i>
+                                        {% trans "بحث" %}
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="min_price">{% trans "أقل سعر" %}</label>
+                                    <input type="number" class="form-control" id="min_price" name="min_price" value="{{ min_price }}" placeholder="0">
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="max_price">{% trans "أقصى سعر" %}</label>
+                                    <input type="number" class="form-control" id="max_price" name="max_price" value="{{ max_price }}" placeholder="100000000">
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="row">
+        <div class="col-12">
+            <h3 class="mb-3">
+                {% if search_query %}
+                    {% trans "نتائج البحث عن" %} "{{ search_query }}"
+                {% else %}
+                    {% trans "جميع الإعلانات" %}
+                {% endif %}
+                {% if category != 'all' %}
+                    - {{ category }}
+                {% endif %}
+            </h3>
+            
+            {% if results %}
+                <div class="row">
+                    {% for result in results %}
+                        <div class="col-md-6 col-lg-4 mb-4">
+                            <div class="card h-100">
+                                {% if result.type == 'property' %}
+                                    {% if result.item.images.first %}
+                                        <img src="{{ result.item.images.first.image.url }}" class="card-img-top" alt="{{ result.item.title }}">
+                                    {% else %}
+                                        <div class="card-img-top bg-light d-flex align-items-center justify-content-center" style="height: 200px;">
+                                            <i class="fas fa-home fa-3x text-muted"></i>
+                                        </div>
+                                    {% endif %}
+                                    
+                                    <div class="card-body">
+                                        <span class="badge badge-primary mb-2">{% trans "عقار" %}</span>
+                                        <h5 class="card-title">{{ result.item.title }}</h5>
+                                        <p class="card-text text-muted">{{ result.item.location }}</p>
+                                        
+                                        <div class="price">
+                                            <span class="h4 text-primary">{{ result.item.price }} {{ result.item.currency }}</span>
+                                        </div>
+                                        
+                                        <div class="details mt-2">
+                                            <small class="text-muted">
+                                                <i class="fas fa-bed ml-1"></i> {{ result.item.bedrooms }} |
+                                                <i class="fas fa-bath ml-1"></i> {{ result.item.bathrooms }} |
+                                                <i class="fas fa-ruler-combined ml-1"></i> {{ result.item.area }} م²
+                                            </small>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="card-footer">
+                                        <a href="{% url 'property_detail' result.item.id %}" class="btn btn-primary btn-block">
+                                            {% trans "عرض التفاصيل" %}
+                                        </a>
+                                    </div>
+                                    
+                                {% elif result.type == 'hotel' %}
+                                    {% if result.item.images.first %}
+                                        <img src="{{ result.item.images.first.image.url }}" class="card-img-top" alt="{{ result.item.name }}">
+                                    {% else %}
+                                        <div class="card-img-top bg-light d-flex align-items-center justify-content-center" style="height: 200px;">
+                                            <i class="fas fa-hotel fa-3x text-muted"></i>
+                                        </div>
+                                    {% endif %}
+                                    
+                                    <div class="card-body">
+                                        <span class="badge badge-success mb-2">{% trans "فندق" %}</span>
+                                        <h5 class="card-title">{{ result.item.name }}</h5>
+                                        <p class="card-text text-muted">{{ result.item.location }}</p>
+                                        
+                                        <div class="price">
+                                            <span class="h4 text-success">{{ result.item.price_per_night }} {{ result.item.currency }}/{% trans "ليلة" %}</span>
+                                        </div>
+                                        
+                                        <div class="rating mt-2">
+                                            <small class="text-muted">
+                                                <i class="fas fa-star text-warning"></i> {{ result.item.rating|default:"--" }}/5
+                                            </small>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="card-footer">
+                                        <a href="{% url 'hotel_detail' result.item.id %}" class="btn btn-success btn-block">
+                                            {% trans "عرض التفاصيل" %}
+                                        </a>
+                                    </div>
+                                    
+                                {% elif result.type == 'job' %}
+                                    <div class="card-img-top bg-light d-flex align-items-center justify-content-center" style="height: 200px;">
+                                        <i class="fas fa-briefcase fa-3x text-muted"></i>
+                                    </div>
+                                    
+                                    <div class="card-body">
+                                        <span class="badge badge-info mb-2">{% trans "وظيفة" %}</span>
+                                        <h5 class="card-title">{{ result.item.title }}</h5>
+                                        <p class="card-text text-muted">{{ result.item.location }}</p>
+                                        
+                                        <div class="salary">
+                                            <span class="h4 text-info">{{ result.item.salary|default:"--" }} {{ result.item.currency|default:"د.ع" }}</span>
+                                        </div>
+                                        
+                                        <div class="details mt-2">
+                                            <small class="text-muted">
+                                                <i class="fas fa-building ml-1"></i> {{ result.item.company }}
+                                            </small>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="card-footer">
+                                        <a href="{% url 'job_detail' result.item.id %}" class="btn btn-info btn-block">
+                                            {% trans "عرض التفاصيل" %}
+                                        </a>
+                                    </div>
+                                    
+                                {% elif result.type == 'service' %}
+                                    <div class="card-img-top bg-light d-flex align-items-center justify-content-center" style="height: 200px;">
+                                        <i class="fas fa-concierge-bell fa-3x text-muted"></i>
+                                    </div>
+                                    
+                                    <div class="card-body">
+                                        <span class="badge badge-warning mb-2">{% trans "خدمة" %}</span>
+                                        <h5 class="card-title">{{ result.item.title }}</h5>
+                                        <p class="card-text text-muted">{{ result.item.location }}</p>
+                                        
+                                        <div class="price">
+                                            <span class="h4 text-warning">{{ result.item.price|default:"--" }} {{ result.item.currency|default:"د.ع" }}</span>
+                                        </div>
+                                        
+                                        <div class="details mt-2">
+                                            <small class="text-muted">
+                                                <i class="fas fa-user ml-1"></i> {{ result.item.provider }}
+                                            </small>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="card-footer">
+                                        <a href="{% url 'service_detail' result.item.id %}" class="btn btn-warning btn-block">
+                                            {% trans "عرض التفاصيل" %}
+                                        </a>
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <div class="alert alert-info text-center">
+                    <i class="fas fa-search fa-2x mb-3"></i>
+                    <h4>{% trans "لا توجد نتائج" %}</h4>
+                    <p>{% trans "جرب تغيير كلمات البحث أو الفئات" %}</p>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

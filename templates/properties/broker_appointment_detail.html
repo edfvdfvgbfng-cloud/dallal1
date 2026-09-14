@@ -1,0 +1,194 @@
+{% extends 'properties/base.html' %}
+
+{% block title %}تفاصيل الموعد{% endblock %}
+
+{% block content %}
+<div class="container">
+  <div class="form-card" style="max-width: 800px; margin: 40px auto;">
+    <div class="form-header" style="text-align: center; margin-bottom: 30px;">
+      <h1 style="font-size: 2rem; color: var(--text); margin: 0 0 10px 0;">📅 تفاصيل الموعد</h1>
+    </div>
+
+    <div style="background: var(--card-bg); padding: 30px; border-radius: var(--radius); border: 1px solid var(--border);">
+      <!-- Appointment Status -->
+      <div style="margin-bottom: 30px; padding: 20px; border-radius: var(--radius); background: rgba(255, 122, 0, 0.1); border: 1px solid rgba(255, 122, 0, 0.3);">
+        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px;">
+          <div>
+            <h3 style="color: var(--text); margin: 0 0 5px 0;">الحالة الحالية</h3>
+            <span class="status-badge status-{{ appointment.status }}" style="padding: 8px 16px; border-radius: 20px; font-size: 1rem; font-weight: 600;">
+              {{ appointment.get_status_display }}
+            </span>
+          </div>
+          <div style="color: var(--text-light); font-size: 0.9rem;">
+            تم الحجز: {{ appointment.created_at|date:"Y-m-d H:i" }}
+          </div>
+        </div>
+      </div>
+
+      <!-- User Information -->
+      <div style="margin-bottom: 30px;">
+        <h3 style="color: var(--text); margin: 0 0 15px 0; border-bottom: 2px solid var(--border); padding-bottom: 10px;">معلومات المستخدم</h3>
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px;">
+          <div>
+            <label style="display: block; margin-bottom: 5px; color: var(--text-light); font-size: 0.9rem;">اسم المستخدم</label>
+            <div style="color: var(--text); font-weight: 600;">{{ appointment.user.username }}</div>
+          </div>
+          {% if appointment.user.email %}
+          <div>
+            <label style="display: block; margin-bottom: 5px; color: var(--text-light); font-size: 0.9rem;">البريد الإلكتروني</label>
+            <div style="color: var(--text);">{{ appointment.user.email }}</div>
+          </div>
+          {% endif %}
+        </div>
+      </div>
+
+      <!-- Appointment Details -->
+      <div style="margin-bottom: 30px;">
+        <h3 style="color: var(--text); margin: 0 0 15px 0; border-bottom: 2px solid var(--border); padding-bottom: 10px;">تفاصيل الموعد</h3>
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px;">
+          <div>
+            <label style="display: block; margin-bottom: 5px; color: var(--text-light); font-size: 0.9rem;">نوع الموعد</label>
+            <div style="color: var(--text); font-weight: 600;">{{ appointment.get_appointment_type_display }}</div>
+          </div>
+          <div>
+            <label style="display: block; margin-bottom: 5px; color: var(--text-light); font-size: 0.9rem;">التاريخ</label>
+            <div style="color: var(--text);">{{ appointment.appointment_date }}</div>
+          </div>
+          <div>
+            <label style="display: block; margin-bottom: 5px; color: var(--text-light); font-size: 0.9rem;">الوقت</label>
+            <div style="color: var(--text);">{{ appointment.appointment_time }}</div>
+          </div>
+          <div>
+            <label style="display: block; margin-bottom: 5px; color: var(--text-light); font-size: 0.9rem;">المدة</label>
+            <div style="color: var(--text);">{{ appointment.duration }} دقيقة</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Property Information (if applicable) -->
+      {% if appointment.property %}
+      <div style="margin-bottom: 30px;">
+        <h3 style="color: var(--text); margin: 0 0 15px 0; border-bottom: 2px solid var(--border); padding-bottom: 10px;">العقار</h3>
+        <div style="padding: 15px; background: rgba(255, 122, 0, 0.05); border-radius: var(--radius); border: 1px solid rgba(255, 122, 0, 0.2);">
+          <a href="{{ appointment.property.get_absolute_url }}" style="color: var(--text); text-decoration: none; font-weight: 600;">
+            {{ appointment.property.display_title }}
+          </a>
+          <div style="color: var(--text-light); margin-top: 5px;">
+            📍 {{ appointment.property.district }} - {{ appointment.property.governorate }}
+          </div>
+        </div>
+      </div>
+      {% endif %}
+
+      <!-- Location -->
+      {% if appointment.location %}
+      <div style="margin-bottom: 30px;">
+        <h3 style="color: var(--text); margin: 0 0 15px 0; border-bottom: 2px solid var(--border); padding-bottom: 10px;">الموقع</h3>
+        <div style="color: var(--text);">📍 {{ appointment.location }}</div>
+      </div>
+      {% endif %}
+
+      <!-- Notes -->
+      {% if appointment.notes %}
+      <div style="margin-bottom: 30px;">
+        <h3 style="color: var(--text); margin: 0 0 15px 0; border-bottom: 2px solid var(--border); padding-bottom: 10px;">ملاحظات المستخدم</h3>
+        <div style="color: var(--text); padding: 15px; background: rgba(255, 122, 0, 0.05); border-radius: var(--radius); border: 1px solid rgba(255, 122, 0, 0.2);">
+          {{ appointment.notes }}
+        </div>
+      </div>
+      {% endif %}
+
+      <!-- Broker Notes -->
+      <div style="margin-bottom: 30px;">
+        <h3 style="color: var(--text); margin: 0 0 15px 0; border-bottom: 2px solid var(--border); padding-bottom: 10px;">ملاحظاتك</h3>
+        <textarea class="form-control" rows="3" placeholder="أضف ملاحظاتك هنا...">{{ appointment.broker_notes }}</textarea>
+      </div>
+
+      <!-- Actions -->
+      {% if appointment.status == 'pending' %}
+      <div style="display: flex; gap: 15px; flex-wrap: wrap; padding-top: 20px; border-top: 1px solid var(--border);">
+        <form method="post" style="display: inline;">
+          {% csrf_token %}
+          <input type="hidden" name="action" value="confirm">
+          <button type="submit" class="btn btn-primary" style="background: #4caf50;">✅ تأكيد الموعد</button>
+        </form>
+        <form method="post" style="display: inline;">
+          {% csrf_token %}
+          <input type="hidden" name="action" value="cancel">
+          <button type="submit" class="btn btn-outline" style="border-color: #f44336; color: #f44336;">❌ إلغاء الموعد</button>
+        </form>
+      </div>
+      {% elif appointment.status == 'confirmed' %}
+      <div style="display: flex; gap: 15px; flex-wrap: wrap; padding-top: 20px; border-top: 1px solid var(--border);">
+        <form method="post" style="display: inline;">
+          {% csrf_token %}
+          <input type="hidden" name="action" value="complete">
+          <button type="submit" class="btn btn-primary" style="background: #2196f3;">✅ إكمال الموعد</button>
+        </form>
+        <form method="post" style="display: inline;">
+          {% csrf_token %}
+          <input type="hidden" name="action" value="no_show">
+          <button type="submit" class="btn btn-outline" style="border-color: #9e9e9e; color: #9e9e9e;">🚫 لم يحضر</button>
+        </form>
+      </div>
+      {% endif %}
+
+      <!-- Back Button -->
+      <div style="margin-top: 30px;">
+        <a href="{% url 'broker_appointments_list' %}" class="btn btn-outline">عودة للقائمة</a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<style>
+.form-control {
+  width: 100%;
+  padding: 12px 15px;
+  border: 2px solid var(--border);
+  border-radius: var(--radius);
+  background: white;
+  color: var(--text);
+  font-size: 1rem;
+}
+
+.btn-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+}
+
+.btn-outline:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+}
+
+.status-badge {
+  display: inline-block;
+}
+
+.status-badge.status-pending {
+  background: rgba(255, 152, 0, 0.2);
+  color: #ff9800;
+}
+
+.status-badge.status-confirmed {
+  background: rgba(76, 175, 80, 0.2);
+  color: #4caf50;
+}
+
+.status-badge.status-completed {
+  background: rgba(33, 150, 243, 0.2);
+  color: #2196f3;
+}
+
+.status-badge.status-cancelled {
+  background: rgba(244, 67, 54, 0.2);
+  color: #f44336;
+}
+
+.status-badge.status-no_show {
+  background: rgba(158, 158, 158, 0.2);
+  color: #9e9e9e;
+}
+</style>
+{% endblock %}

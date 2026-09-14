@@ -1,0 +1,118 @@
+{% extends "base.html" %}
+{% load static %}
+{% load i18n %}
+
+{% block title %}{% trans "نتائج البحث بالميزانية" %} - {% trans "دلال" %}{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-12">
+            <div class="card shadow mb-4">
+                <div class="card-header bg-success text-white">
+                    <h2 class="h4 mb-0">
+                        <i class="fas fa-check-circle ml-2"></i>
+                        {% trans "نتائج البحث بالميزانية" %}
+                    </h2>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <p class="mb-1">
+                                <strong>{% trans "ميزانيتك:" %}</strong>
+                                {{ budget_search.min_budget }} - {{ budget_search.max_budget }} {{ budget_search.currency }}
+                            </p>
+                            <p class="mb-1">
+                                <strong>{% trans "نوع البحث:" %}</strong>
+                                {% if budget_search.search_type == 'purchase' %}{% trans "شراء" %}{% else %}{% trans "إيجار" %}{% endif %}
+                            </p>
+                            <p class="mb-1">
+                                <strong>{% trans "نوع العقار:" %}</strong>
+                                {{ budget_search.get_property_type_display }}
+                            </p>
+                        </div>
+                        <div class="col-md-6">
+                            <p class="mb-1">
+                                <strong>{% trans "الموقع:" %}</strong>
+                                {% if budget_search.governorate %}
+                                    {{ budget_search.governorate }}{% if budget_search.city %}, {{ budget_search.city }}{% endif %}
+                                {% else %}
+                                    {% trans "كل العراق" %}
+                                {% endif %}
+                            </p>
+                            <p class="mb-1">
+                                <strong>{% trans "عدد النتائج:" %}</strong>
+                                {{ properties|length }} {% trans "عقار" %}
+                            </p>
+                        </div>
+                    </div>
+                    
+                    <hr>
+                    
+                    <a href="{% url 'budget_search' %}" class="btn btn-secondary">
+                        <i class="fas fa-redo ml-2"></i>
+                        {% trans "بحث جديد" %}
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="row">
+        <div class="col-12">
+            {% if properties %}
+                <div class="row">
+                    {% for property in properties %}
+                        <div class="col-md-6 col-lg-4 mb-4">
+                            <div class="card property-card h-100">
+                                {% if property.images.first %}
+                                    <img src="{{ property.images.first.image.url }}" class="card-img-top" alt="{{ property.title }}">
+                                {% else %}
+                                    <div class="card-img-top bg-light d-flex align-items-center justify-content-center" style="height: 200px;">
+                                        <i class="fas fa-home fa-3x text-muted"></i>
+                                    </div>
+                                {% endif %}
+                                
+                                <div class="card-body">
+                                    <h5 class="card-title">{{ property.title }}</h5>
+                                    <p class="card-text text-muted">{{ property.location }}</p>
+                                    
+                                    <div class="property-price">
+                                        <span class="h4 text-primary">{{ property.price }} {{ property.currency }}</span>
+                                    </div>
+                                    
+                                    <div class="property-details mt-2">
+                                        <small class="text-muted">
+                                            <i class="fas fa-bed ml-1"></i> {{ property.bedrooms }} |
+                                            <i class="fas fa-bath ml-1"></i> {{ property.bathrooms }} |
+                                            <i class="fas fa-ruler-combined ml-1"></i> {{ property.area }} م²
+                                        </small>
+                                    </div>
+                                    
+                                    <div class="affordability-score mt-2">
+                                        <small class="badge badge-info">
+                                            {% trans "درجة القدرة على الشراء:" %} {{ property.affordability_score|default:"--" }}/100
+                                        </small>
+                                    </div>
+                                </div>
+                                
+                                <div class="card-footer">
+                                    <a href="{% url 'property_detail' property.id %}" class="btn btn-primary btn-block">
+                                        {% trans "عرض التفاصيل" %}
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <div class="alert alert-info text-center">
+                    <i class="fas fa-info-circle fa-2x mb-3"></i>
+                    <h4>{% trans "لا توجد عقارات تطابق ميزانيتك" %}</h4>
+                    <p>{% trans "جرب زيادة ميزانيتك أو تغيير خيارات البحث" %}</p>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

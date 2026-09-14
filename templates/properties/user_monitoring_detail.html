@@ -1,0 +1,660 @@
+{% extends "properties/base.html" %}
+{% load static %}
+
+{% block title %}تفاصيل المستخدم - {{ user.username }}{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+                    <h3 class="mb-0">👤 تفاصيل المستخدم: {{ user.username }}</h3>
+                    <div>
+                        <a href="{% url 'user_monitoring_panel' %}" class="btn btn-light btn-sm">عودة للقائمة</a>
+                        <a href="{% url 'dashboard' %}" class="btn btn-light btn-sm">لوحة التحكم</a>
+                    </div>
+                </div>
+                <div class="card-body">
+                    {% if messages %}
+                        {% for message in messages %}
+                            <div class="alert alert-{{ message.tags }} alert-dismissible fade show">
+                                {{ message }}
+                                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                            </div>
+                        {% endfor %}
+                    {% endif %}
+
+                    <!-- معلومات الحساب الأساسية -->
+                    <div class="row mb-4">
+                        <div class="col-md-6">
+                            <div class="card">
+                                <div class="card-header bg-info text-white">
+                                    <h5 class="mb-0">📋 معلومات الحساب</h5>
+                                </div>
+                                <div class="card-body">
+                                    <table class="table table-bordered">
+                                        <tr>
+                                            <th>اسم المستخدم</th>
+                                            <td>{{ user.username }}</td>
+                                        </tr>
+                                        <tr>
+                                            <th>البريد الإلكتروني</th>
+                                            <td>{{ user.email }}</td>
+                                        </tr>
+                                        <tr>
+                                            <th>الاسم الأول</th>
+                                            <td>{{ user.first_name|default:"—" }}</td>
+                                        </tr>
+                                        <tr>
+                                            <th>اسم العائلة</th>
+                                            <td>{{ user.last_name|default:"—" }}</td>
+                                        </tr>
+                                        <tr>
+                                            <th>الحالة</th>
+                                            <td>
+                                                {% if user.is_active %}
+                                                    <span class="badge bg-success">نشط</span>
+                                                {% else %}
+                                                    <span class="badge bg-danger">معطل</span>
+                                                {% endif %}
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <th>مسؤول النظام</th>
+                                            <td>
+                                                {% if user.is_superuser %}
+                                                    <span class="badge bg-danger">نعم</span>
+                                                {% else %}
+                                                    <span class="badge bg-secondary">لا</span>
+                                                {% endif %}
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <th>طاقم العمل</th>
+                                            <td>
+                                                {% if user.is_staff %}
+                                                    <span class="badge bg-warning">نعم</span>
+                                                {% else %}
+                                                    <span class="badge bg-secondary">لا</span>
+                                                {% endif %}
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <th>تاريخ التسجيل</th>
+                                            <td>{{ user.date_joined|date:"Y-m-d H:i:s" }}</td>
+                                        </tr>
+                                        <tr>
+                                            <th>آخر دخول</th>
+                                            <td>
+                                                {% if user.last_login %}
+                                                    {{ user.last_login|date:"Y-m-d H:i:s" }}
+                                                {% else %}
+                                                    لم يسجل دخول
+                                                {% endif %}
+                                            </td>
+                                        </tr>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col-md-6">
+                            <div class="card">
+                                <div class="card-header bg-danger text-white">
+                                    <h5 class="mb-0">⚡ إجراءات الحساب</h5>
+                                </div>
+                                <div class="card-body">
+                                    <div class="d-grid gap-2">
+                                        {% if user.is_active %}
+                                            <button onclick="deactivateUser()" class="btn btn-warning">
+                                                🚫 تعطيل الحساب
+                                            </button>
+                                        {% else %}
+                                            <button onclick="activateUser()" class="btn btn-success">
+                                                ✅ تفعيل الحساب
+                                            </button>
+                                        {% endif %}
+
+                                        <button onclick="deleteUser()" class="btn btn-danger">
+                                            🗑️ حذف الحساب
+                                        </button>
+
+                                        <button onclick="showRestrictModal()" class="btn btn-secondary">
+                                                🔒 تقييد الحساب
+                                        </button>
+
+                                        <button onclick="showViolationModal()" class="btn btn-info">
+                                                ⚠️ إرسال مخالفة
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col-md-6">
+                            <div class="card">
+                                <div class="card-header bg-warning text-white">
+                                    <h5 class="mb-0">🔐 معلومات الأمان</h5>
+                                </div>
+                                <div class="card-body">
+                                    <table class="table table-bordered">
+                                        <tr>
+                                            <th>كلمة المرور</th>
+                                            <td>
+                                                <span id="password-display">••••••••</span>
+                                                <button onclick="showPassword()" class="btn btn-sm btn-outline-secondary ms-2">عرض</button>
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <th>آخر تغيير لكلمة المرور</th>
+                                            <td>
+                                                {% if user.password %}
+                                                    <span class="text-muted">مشفرة في قاعدة البيانات</span>
+                                                {% endif %}
+                                            </td>
+                                        </tr>
+                                    </table>
+                                </div>
+                            </div>
+
+                            {% if broker %}
+                            <div class="card mt-3">
+                                <div class="card-header bg-success text-white">
+                                    <h5 class="mb-0">👔 معلومات الدلال</h5>
+                                </div>
+                                <div class="card-body">
+                                    <table class="table table-bordered">
+                                        <tr>
+                                            <th>الاسم المعروض</th>
+                                            <td>{{ broker.display_name }}</td>
+                                        </tr>
+                                        <tr>
+                                            <th>رقم الهاتف</th>
+                                            <td>{{ broker.phone|default:"—" }}</td>
+                                        </tr>
+                                        <tr>
+                                            <th>المحافظة</th>
+                                            <td>{{ broker.governorate|default:"—" }}</td>
+                                        </tr>
+                                        <tr>
+                                            <th>المدينة</th>
+                                            <td>{{ broker.city|default:"—" }}</td>
+                                        </tr>
+                                        <tr>
+                                            <th>الدور</th>
+                                            <td>{{ broker.get_role_display }}</td>
+                                        </tr>
+                                        <tr>
+                                            <th>مفعل</th>
+                                            <td>
+                                                {% if broker.is_active %}
+                                                    <span class="badge bg-success">نعم</span>
+                                                {% else %}
+                                                    <span class="badge bg-danger">لا</span>
+                                                {% endif %}
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <th>موثق</th>
+                                            <td>
+                                                {% if broker.is_verified %}
+                                                    <span class="badge bg-success">نعم</span>
+                                                {% else %}
+                                                    <span class="badge bg-secondary">لا</span>
+                                                {% endif %}
+                                            </td>
+                                        </tr>
+                                    </table>
+                                </div>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <!-- الاشتراكات -->
+                    {% if subscriptions %}
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <div class="card">
+                                <div class="card-header bg-primary text-white">
+                                    <h5 class="mb-0">📊 الاشتراكات</h5>
+                                </div>
+                                <div class="card-body">
+                                    <div class="table-responsive">
+                                        <table class="table table-striped">
+                                            <thead>
+                                                <tr>
+                                                    <th>الخطة</th>
+                                                    <th>تاريخ البداية</th>
+                                                    <th>تاريخ النهاية</th>
+                                                    <th>الحالة</th>
+                                                    <th>العقارات المستخدمة</th>
+                                                    <th>الوقت المتبقي</th>
+                                                    <th>المبلغ المدفوع</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {% for sub in subscriptions %}
+                                                <tr>
+                                                    <td>{{ sub.plan.name }}</td>
+                                                    <td>{{ sub.start_date|date:"Y-m-d H:i" }}</td>
+                                                    <td>{{ sub.end_date|date:"Y-m-d H:i" }}</td>
+                                                    <td>
+                                                        {% if sub.status == 'active' %}
+                                                            <span class="badge bg-success">نشط</span>
+                                                        {% elif sub.status == 'expired' %}
+                                                            <span class="badge bg-danger">منتهي</span>
+                                                        {% elif sub.status == 'suspended' %}
+                                                            <span class="badge bg-warning">معلق</span>
+                                                        {% else %}
+                                                            <span class="badge bg-secondary">{{ sub.status }}</span>
+                                                        {% endif %}
+                                                    </td>
+                                                    <td>{{ sub.properties_used }} / {{ sub.plan.max_properties }}</td>
+                                                    <td>{{ sub.get_seconds_remaining }} ثانية</td>
+                                                    <td>{{ sub.total_paid|default:0 }} دينار</td>
+                                                </tr>
+                                                {% endfor %}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    <!-- العقارات -->
+                    {% if properties %}
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <div class="card">
+                                <div class="card-header bg-success text-white">
+                                    <h5 class="mb-0">🏠 العقارات ({{ properties|length }})</h5>
+                                </div>
+                                <div class="card-body">
+                                    <div class="table-responsive">
+                                        <table class="table table-striped">
+                                            <thead>
+                                                <tr>
+                                                    <th>العنوان</th>
+                                                    <th>السعر</th>
+                                                    <th>المنطقة</th>
+                                                    <th>الحالة</th>
+                                                    <th>المشاهدات</th>
+                                                    <th>تاريخ الإضافة</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {% for prop in properties %}
+                                                <tr>
+                                                    <td><a href="{{ prop.get_absolute_url }}" target="_blank">{{ prop.display_title|truncatechars:40 }}</a></td>
+                                                    <td>{{ prop.price_formatted }}</td>
+                                                    <td>{{ prop.district }}</td>
+                                                    <td>{{ prop.get_status_display }}</td>
+                                                    <td>{{ prop.views_count }}</td>
+                                                    <td>{{ prop.created_at|date:"Y-m-d" }}</td>
+                                                </tr>
+                                                {% endfor %}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    <!-- سجل النشاط -->
+                    {% if activity_logs %}
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <div class="card">
+                                <div class="card-header bg-secondary text-white">
+                                    <h5 class="mb-0">📝 سجل النشاط ({{ activity_logs|length }})</h5>
+                                </div>
+                                <div class="card-body">
+                                    <div class="table-responsive">
+                                        <table class="table table-striped">
+                                            <thead>
+                                                <tr>
+                                                    <th>الإجراء</th>
+                                                    <th>التاريخ</th>
+                                                    <th>عنوان IP</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {% for log in activity_logs %}
+                                                <tr>
+                                                    <td>{{ log.action }}</td>
+                                                    <td>{{ log.created_at|date:"Y-m-d H:i:s" }}</td>
+                                                    <td>{{ log.ip_address|default:"—" }}</td>
+                                                </tr>
+                                                {% endfor %}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    <!-- الرسائل -->
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="card">
+                                <div class="card-header bg-info text-white">
+                                    <h5 class="mb-0">📤 الرسائل المرسلة ({{ messages_sent|length }})</h5>
+                                </div>
+                                <div class="card-body">
+                                    {% if messages_sent %}
+                                    <div class="table-responsive">
+                                        <table class="table table-striped table-sm">
+                                            <thead>
+                                                <tr>
+                                                    <th>المستلم</th>
+                                                    <th>المحتوى</th>
+                                                    <th>التاريخ</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {% for msg in messages_sent %}
+                                                <tr>
+                                                    <td>{{ msg.recipient.username }}</td>
+                                                    <td>{{ msg.content|truncatechars:30 }}</td>
+                                                    <td>{{ msg.created_at|date:"Y-m-d H:i" }}</td>
+                                                </tr>
+                                                {% endfor %}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                    {% else %}
+                                    <p class="text-muted">لا توجد رسائل مرسلة</p>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col-md-6">
+                            <div class="card">
+                                <div class="card-header bg-info text-white">
+                                    <h5 class="mb-0">📥 الرسائل المستلمة ({{ messages_received|length }})</h5>
+                                </div>
+                                <div class="card-body">
+                                    {% if messages_received %}
+                                    <div class="table-responsive">
+                                        <table class="table table-striped table-sm">
+                                            <thead>
+                                                <tr>
+                                                    <th>المرسل</th>
+                                                    <th>المحتوى</th>
+                                                    <th>التاريخ</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {% for msg in messages_received %}
+                                                <tr>
+                                                    <td>{{ msg.sender.username }}</td>
+                                                    <td>{{ msg.content|truncatechars:30 }}</td>
+                                                    <td>{{ msg.created_at|date:"Y-m-d H:i" }}</td>
+                                                </tr>
+                                                {% endfor %}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                    {% else %}
+                                    <p class="text-muted">لا توجد رسائل مستلمة</p>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Restrict Modal -->
+<div class="modal fade" id="restrictModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-warning">
+                <h5 class="modal-title">🔒 تقييد الحساب</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="restrictForm">
+                    <div class="mb-3">
+                        <label class="form-label">نوع التقييد</label>
+                        <select class="form-select" name="restriction_type" required>
+                            <option value="posting">منع النشر</option>
+                            <option value="messaging">منع الرسائل</option>
+                            <option value="all">تقييد كامل</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">المدة (أيام)</label>
+                        <input type="number" class="form-control" name="duration_days" value="7" min="1" max="365" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">السبب</label>
+                        <textarea class="form-control" name="reason" rows="3" required></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">إلغاء</button>
+                <button type="button" onclick="restrictUser()" class="btn btn-warning">تقييد</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Violation Modal -->
+<div class="modal fade" id="violationModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-info">
+                <h5 class="modal-title">⚠️ إرسال مخالفة</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="violationForm">
+                    <div class="mb-3">
+                        <label class="form-label">نوع المخالفة</label>
+                        <select class="form-select" name="violation_type" required>
+                            <option value="general">عام</option>
+                            <option value="spam">إزعاج</option>
+                            <option value="harassment">تحرش</option>
+                            <option value="fraud">احتيال</option>
+                            <option value="inappropriate">محتوى غير لائق</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">الشدة</label>
+                        <select class="form-select" name="severity" required>
+                            <option value="warning">تحذير</option>
+                            <option value="minor">بسيطة</option>
+                            <option value="moderate">متوسطة</option>
+                            <option value="severe">شديدة</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">النقاط</label>
+                        <input type="number" class="form-control" name="points" value="1" min="1" max="10" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">الوصف</label>
+                        <textarea class="form-control" name="description" rows="3" required></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">إلغاء</button>
+                <button type="button" onclick="sendViolation()" class="btn btn-info">إرسال</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+const userId = {{ user.id }};
+
+function showPassword() {
+    const display = document.getElementById('password-display');
+    const btn = event.target;
+
+    if (display.textContent === '••••••••') {
+        display.textContent = 'غير متاح للعرض (مشفرة)';
+        btn.textContent = 'إخفاء';
+    } else {
+        display.textContent = '••••••••';
+        btn.textContent = 'عرض';
+    }
+}
+
+function deactivateUser() {
+    if (!confirm('هل أنت متأكد من تعطيل هذا الحساب؟')) return;
+
+    fetch(`/admin-panel/user-monitoring-panel/${userId}/deactivate/`, {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': getCookie('csrftoken'),
+            'Content-Type': 'application/json',
+        },
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert(data.message);
+            location.reload();
+        } else {
+            alert(data.error);
+        }
+    })
+    .catch(error => alert('حدث خطأ'));
+}
+
+function activateUser() {
+    if (!confirm('هل أنت متأكد من تفعيل هذا الحساب؟')) return;
+
+    fetch(`/admin-panel/user-monitoring-panel/${userId}/activate/`, {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': getCookie('csrftoken'),
+            'Content-Type': 'application/json',
+        },
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert(data.message);
+            location.reload();
+        } else {
+            alert(data.error);
+        }
+    })
+    .catch(error => alert('حدث خطأ'));
+}
+
+function deleteUser() {
+    if (!confirm('هل أنت متأكد من حذف هذا الحساب؟ لا يمكن التراجع عن هذا الإجراء!')) return;
+
+    fetch(`/admin-panel/user-monitoring-panel/${userId}/delete/`, {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': getCookie('csrftoken'),
+            'Content-Type': 'application/json',
+        },
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert(data.message);
+            window.location.href = '/admin-panel/user-monitoring-panel/';
+        } else {
+            alert(data.error);
+        }
+    })
+    .catch(error => alert('حدث خطأ'));
+}
+
+function showRestrictModal() {
+    const modal = new bootstrap.Modal(document.getElementById('restrictModal'));
+    modal.show();
+}
+
+function restrictUser() {
+    const form = document.getElementById('restrictForm');
+    const formData = new FormData(form);
+    const data = Object.fromEntries(formData.entries());
+
+    fetch(`/admin-panel/user-monitoring-panel/${userId}/restrict/`, {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': getCookie('csrftoken'),
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(data),
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert(data.message);
+            bootstrap.Modal.getInstance(document.getElementById('restrictModal')).hide();
+        } else {
+            alert(data.error);
+        }
+    })
+    .catch(error => alert('حدث خطأ'));
+}
+
+function showViolationModal() {
+    const modal = new bootstrap.Modal(document.getElementById('violationModal'));
+    modal.show();
+}
+
+function sendViolation() {
+    const form = document.getElementById('violationForm');
+    const formData = new FormData(form);
+    const data = Object.fromEntries(formData.entries());
+
+    fetch(`/admin-panel/user-monitoring-panel/${userId}/violation/`, {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': getCookie('csrftoken'),
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(data),
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert(data.message);
+            bootstrap.Modal.getInstance(document.getElementById('violationModal')).hide();
+        } else {
+            alert(data.error);
+        }
+    })
+    .catch(error => alert('حدث خطأ'));
+}
+
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+</script>
+{% endblock %}

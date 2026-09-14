@@ -1,0 +1,207 @@
+{% extends 'properties/dashboard_base.html' %}
+{% load static %}
+
+{% block title %}تحديث صور القناة - {{ channel.name }}{% endblock %}
+
+{% block dashboard_title %}تحديث صور القناة{% endblock %}
+
+{% block dashboard_subtitle %}
+<p style="margin:4px 0 0;color:var(--text-muted);font-size:0.9rem;">
+  تحديث صورة الغلاف والشعار لقناة {{ channel.name }}
+</p>
+{% endblock %}
+
+{% block dashboard_actions %}
+<a href="{% url 'my_channel' %}" class="btn btn-outline">← العودة لقناتي</a>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+.media-update-container {
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+.media-form {
+  background: var(--card-bg);
+  padding: 30px;
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+}
+
+.form-group {
+  margin-bottom: 30px;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 10px;
+  font-weight: 600;
+  color: var(--text);
+  font-size: 1.1rem;
+}
+
+.preview-container {
+  margin-top: 15px;
+  padding: 20px;
+  background: var(--bg);
+  border-radius: var(--radius);
+  border: 2px dashed var(--border);
+  text-align: center;
+}
+
+.preview-image {
+  max-width: 100%;
+  max-height: 300px;
+  border-radius: var(--radius);
+  object-fit: cover;
+}
+
+.preview-placeholder {
+  padding: 40px;
+  color: var(--text-muted);
+  font-size: 1.2rem;
+}
+
+.form-group input[type="file"] {
+  width: 100%;
+  padding: 12px 15px;
+  border: 2px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--bg);
+  color: var(--text);
+  font-size: 1rem;
+  transition: border-color 0.3s ease;
+}
+
+.form-group input[type="file"]:focus {
+  outline: none;
+  border-color: var(--primary);
+}
+
+.btn-submit {
+  background: var(--primary);
+  color: white;
+  border: none;
+  padding: 12px 30px;
+  border-radius: var(--radius);
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  width: 100%;
+}
+
+.btn-submit:hover {
+  background: var(--primary-dark);
+}
+
+.media-section {
+  margin-bottom: 40px;
+  padding-bottom: 30px;
+  border-bottom: 1px solid var(--border);
+}
+
+.media-section:last-child {
+  border-bottom: none;
+  margin-bottom: 0;
+  padding-bottom: 0;
+}
+
+.section-title {
+  font-size: 1.3rem;
+  font-weight: 600;
+  color: var(--text);
+  margin-bottom: 20px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.section-icon {
+  font-size: 1.5rem;
+}
+</style>
+{% endblock %}
+
+{% block dashboard_content %}
+<div class="media-update-container">
+  <form method="post" enctype="multipart/form-data" class="media-form">
+    {% csrf_token %}
+    
+    <!-- Cover Image Section -->
+    <div class="media-section">
+      <h3 class="section-title">
+        <span class="section-icon">🖼️</span>
+        صورة الغلاف
+      </h3>
+      
+      <div class="form-group">
+        <label for="cover_image">اختر صورة الغلاف</label>
+        <input type="file" name="cover_image" id="cover_image" accept="image/*" onchange="previewCover(this)">
+        
+        <div class="preview-container" id="cover-preview">
+          {% if channel.cover_image %}
+            <img src="{{ channel.cover_image.url }}" alt="صورة الغلاف الحالية" class="preview-image">
+          {% else %}
+            <div class="preview-placeholder">
+              📷
+              <p>لا توجد صورة غلاف حالياً</p>
+            </div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+    
+    <!-- Logo Section -->
+    <div class="media-section">
+      <h3 class="section-title">
+        <span class="section-icon">🎨</span>
+        شعار القناة
+      </h3>
+      
+      <div class="form-group">
+        <label for="logo">اختر شعار القناة</label>
+        <input type="file" name="logo" id="logo" accept="image/*" onchange="previewLogo(this)">
+        
+        <div class="preview-container" id="logo-preview">
+          {% if channel.logo %}
+            <img src="{{ channel.logo.url }}" alt="الشعار الحالي" class="preview-image" style="max-height: 150px;">
+          {% else %}
+            <div class="preview-placeholder">
+              🎯
+              <p>لا يوجد شعار حالياً</p>
+            </div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+    
+    <button type="submit" class="btn-submit">حفظ التغييرات</button>
+  </form>
+</div>
+
+<script>
+function previewCover(input) {
+  const preview = document.getElementById('cover-preview');
+  if (input.files && input.files[0]) {
+    const reader = new FileReader();
+    reader.onload = function(e) {
+      preview.innerHTML = '<img src="' + e.target.result + '" alt="معاينة الغلاف" class="preview-image">';
+    }
+    reader.readAsDataURL(input.files[0]);
+  }
+}
+
+function previewLogo(input) {
+  const preview = document.getElementById('logo-preview');
+  if (input.files && input.files[0]) {
+    const reader = new FileReader();
+    reader.onload = function(e) {
+      preview.innerHTML = '<img src="' + e.target.result + '" alt="معاينة الشعار" class="preview-image" style="max-height: 150px;">';
+    }
+    reader.readAsDataURL(input.files[0]);
+  }
+}
+</script>
+{% endblock %}

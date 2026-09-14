@@ -1,0 +1,1710 @@
+{% extends "properties/dashboard_base.html" %}
+{% load static %}
+
+{% block title %}طلبات تجديد الاشتراكات{% endblock %}
+{% block dashboard_title %}طلبات تجديد <span>الاشتراكات</span>{% endblock %}
+
+{% block dashboard_actions %}
+<a href="{% url 'dashboard' %}" class="btn btn-outline">لوحة التحكم الرئيسية</a>
+<a href="{% url 'admin_panel' %}" class="btn btn-primary">لوحة الإدارة</a>
+<a href="{% url 'subscription_renewal_request' %}" class="btn btn-success">➕ طلب تجديد جديد</a>
+{% endblock %}
+
+{% block dashboard_content %}
+<div class="container py-5">
+    <div class="row">
+        <div class="col-12">
+            <div class="card reveal visible">
+                <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+                    <h3 class="mb-0">📋 طلبات تجديد الاشتراكات</h3>
+                    <div class="btn-group">
+                        <a href="{% url 'dashboard' %}" class="btn btn-light btn-sm">عودة للوحة التحكم</a>
+                        <button class="btn btn-success btn-sm" onclick="exportExcel()">📊 تصدير Excel</button>
+                        <button class="btn btn-info btn-sm" onclick="exportRequests()">📥 تصدير JSON</button>
+                        <button class="btn btn-secondary btn-sm" onclick="printReport()">🖨️ طباعة</button>
+                        <button class="btn btn-warning btn-sm" onclick="showAnalytics()">📈 التحليلات</button>
+                    </div>
+                </div>
+                <div class="card-body">
+                    {% if messages %}
+                        {% for message in messages %}
+                            <div class="alert alert-{{ message.tags }} alert-dismissible fade show">
+                                {{ message }}
+                                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                            </div>
+                        {% endfor %}
+                    {% endif %}
+
+                    <!-- إحصائيات الطلبات مع رسوم بيانية -->
+                    <div class="row mb-4">
+                        <div class="col-md-3">
+                            <div class="card stat-card reveal visible">
+                                <div class="card-body text-center">
+                                    <h5 class="card-title">إجمالي الطلبات</h5>
+                                    <h3 class="stat-number">{{ stats.total }}</h3>
+                                    <div class="stat-trend text-success">↑ 12% من الشهر الماضي</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="card stat-card bg-warning reveal visible">
+                                <div class="card-body text-center">
+                                    <h5 class="card-title">قيد الانتظار</h5>
+                                    <h3 class="stat-number">{{ stats.pending }}</h3>
+                                    <div class="stat-trend text-warning">تحتاج مراجعة</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="card stat-card bg-success reveal visible">
+                                <div class="card-body text-center">
+                                    <h5 class="card-title">موافق عليه</h5>
+                                    <h3 class="stat-number">{{ stats.approved }}</h3>
+                                    <div class="stat-trend text-success">معدل قبول 85%</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="card stat-card bg-danger reveal visible">
+                                <div class="card-body text-center">
+                                    <h5 class="card-title">مرفوض</h5>
+                                    <h3 class="stat-number">{{ stats.rejected }}</h3>
+                                    <div class="stat-trend text-danger">معدل رفض 15%</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- رسوم بيانية سريعة -->
+                    <div class="row mb-4">
+                        <div class="col-md-6">
+                            <div class="card">
+                                <div class="card-header">
+                                    <h5 class="mb-0">📊 توزيع الحالات</h5>
+                                </div>
+                                <div class="card-body">
+                                    <canvas id="statusChart" height="200"></canvas>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="card">
+                                <div class="card-header">
+                                    <h5 class="mb-0">📈 الطلبات حسب النوع</h5>
+                                </div>
+                                <div class="card-body">
+                                    <canvas id="typeChart" height="200"></canvas>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- شريط البحث والتصفية المتقدم -->
+                    <div class="row mb-4">
+                        <div class="col-md-3">
+                            <input type="text" class="form-control" id="searchInput" placeholder="🔍 بحث بالاسم أو البريد...">
+                        </div>
+                        <div class="col-md-2">
+                            <select class="form-select" id="statusFilter">
+                                <option value="all">كل الحالات</option>
+                                <option value="pending">قيد الانتظار</option>
+                                <option value="approved">موافق عليه</option>
+                                <option value="rejected">مرفوض</option>
+                                <option value="completed">مكتمل</option>
+                            </select>
+                        </div>
+                        <div class="col-md-2">
+                            <select class="form-select" id="propertyTypeFilter">
+                                <option value="all">كل أنواع العقارات</option>
+                                <option value="properties_iraq">عقارات داخل العراق</option>
+                                <option value="properties_outside">عقارات خارج العراق</option>
+                                <option value="hotels">فنادق</option>
+                                <option value="resorts">منتجعات</option>
+                            </select>
+                        </div>
+                        <div class="col-md-2">
+                            <select class="form-select" id="subscriptionTypeFilter">
+                                <option value="all">كل أنواع الاشتراك</option>
+                                <option value="travel_company">شركة سفر</option>
+                                <option value="job_posting">نشر وظيفة</option>
+                                <option value="property">عقارات</option>
+                            </select>
+                        </div>
+                        <div class="col-md-2">
+                            <div class="input-group">
+                                <input type="date" class="form-control" id="dateFrom" placeholder="من تاريخ">
+                                <input type="date" class="form-control" id="dateTo" placeholder="إلى تاريخ">
+                            </div>
+                        </div>
+                        <div class="col-md-1">
+                            <button class="btn btn-primary w-100" onclick="filterRequests()">تطبيق</button>
+                        </div>
+                    </div>
+
+                    <!-- إجراءات جماعية -->
+                    <div class="row mb-3" id="bulkActionsBar" style="display: none;">
+                        <div class="col-12">
+                            <div class="alert alert-info d-flex justify-content-between align-items-center bulk-actions-bar">
+                                <span>تم تحديد <span id="selectedCount">0</span> طلب</span>
+                                <div class="btn-group">
+                                    <button class="btn btn-success btn-sm" onclick="bulkApprove()">✅ موافقة جماعية</button>
+                                    <button class="btn btn-danger btn-sm" onclick="bulkReject()">❌ رفض جماعي</button>
+                                    <button class="btn btn-primary btn-sm" onclick="bulkExport()">📥 تصدير المحدد</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="table-responsive">
+                        <table class="table table-striped table-hover" id="requestsTable">
+                            <thead>
+                                <tr>
+                                    <th style="width: 50px;">
+                                        <input type="checkbox" id="selectAllRequests" onchange="toggleAllRequests()">
+                                    </th>
+                                    <th>الدلال</th>
+                                    <th>الخطة</th>
+                                    <th>نوع الاشتراك</th>
+                                    <th>عادي</th>
+                                    <th>مميز</th>
+                                    <th>الأيام</th>
+                                    <th>التكلفة</th>
+                                    <th>أنواع العقارات</th>
+                                    <th>الحالة</th>
+                                    <th>تاريخ الطلب</th>
+                                    <th>الأولوية</th>
+                                    <th>إجراءات</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for request in requests %}
+                                <tr class="request-row" 
+                                    data-status="{{ request.status }}" 
+                                    data-name="{{ request.broker.display_name }}"
+                                    data-email="{{ request.broker.user.email }}"
+                                    data-property-types="{{ request.property_types|join:',' }}"
+                                    data-subscription-type="{{ request.subscription_type|default:'' }}"
+                                    data-created-at="{{ request.created_at|date:'Y-m-d' }}">
+                                    <td>
+                                        <input type="checkbox" class="request-checkbox" value="{{ request.id }}">
+                                    </td>
+                                    <td>
+                                        <div class="d-flex align-items-center">
+                                            {% if request.broker.profile_image %}
+                                                <img src="{{ request.broker.profile_image.url }}" 
+                                                     alt="{{ request.broker.display_name }}" 
+                                                     class="rounded-circle me-2" 
+                                                     width="40" height="40">
+                                            {% else %}
+                                                <div class="rounded-circle bg-secondary me-2 d-flex align-items-center justify-content-center" 
+                                                     style="width: 40px; height: 40px;">
+                                                    👤
+                                                </div>
+                                            {% endif %}
+                                            <div>
+                                                <div class="fw-bold">{{ request.broker.display_name }}</div>
+                                                <div class="small text-muted">{{ request.broker.user.email }}</div>
+                                                {% if request.broker.phone %}
+                                                <div class="small text-muted">{{ request.broker.phone }}</div>
+                                                {% endif %}
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        {% if request.plan %}
+                                            <span class="badge bg-primary">{{ request.plan.name }}</span>
+                                        {% else %}
+                                            <span class="text-muted">غير محدد</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if request.subscription_type %}
+                                            {% if request.subscription_type == 'travel_company' %}
+                                                <span class="badge bg-info">✈️ شركة سفر</span>
+                                            {% elif request.subscription_type == 'job_posting' %}
+                                                <span class="badge bg-primary">➕ نشر وظيفة</span>
+                                            {% endif %}
+                                        {% else %}
+                                            <span class="text-muted">-</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-light text-dark">{{ request.regular_count }}</span>
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-warning text-dark">{{ request.premium_count }}</span>
+                                    </td>
+                                    <td>
+                                        <div class="d-flex align-items-center">
+                                            <span>{{ request.days_requested }} يوم</span>
+                                            {% if request.days_requested >= 365 %}
+                                                <span class="badge bg-success ms-1">سنة</span>
+                                            {% elif request.days_requested >= 180 %}
+                                                <span class="badge bg-info ms-1">6 أشهر</span>
+                                            {% endif %}
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <div class="fw-bold text-success">{{ request.estimated_cost|floatformat:0 }} دينار</div>
+                                        {% if request.days_requested >= 180 %}
+                                            <small class="text-muted">(خصم متاح)</small>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <div class="d-flex flex-wrap gap-1">
+                                            {% for type in request.property_types %}
+                                                {% if type == 'properties_iraq' %}
+                                                    <span class="badge bg-secondary">🏠 داخل العراق</span>
+                                                {% elif type == 'properties_outside' %}
+                                                    <span class="badge bg-secondary">🌍 خارج العراق</span>
+                                                {% elif type == 'hotels' %}
+                                                    <span class="badge bg-secondary">🏨 فنادق</span>
+                                                {% elif type == 'resorts' %}
+                                                    <span class="badge bg-secondary">🏖️ منتجعات</span>
+                                                {% else %}
+                                                    <span class="badge bg-secondary">{{ type }}</span>
+                                                {% endif %}
+                                            {% endfor %}
+                                        </div>
+                                    </td>
+                                    <td>
+                                        {% if request.status == 'pending' %}
+                                            <span class="badge bg-warning">قيد الانتظار</span>
+                                        {% elif request.status == 'approved' %}
+                                            <span class="badge bg-success">موافق عليه</span>
+                                        {% elif request.status == 'rejected' %}
+                                            <span class="badge bg-danger">مرفوض</span>
+                                        {% elif request.status == 'completed' %}
+                                            <span class="badge bg-info">مكتمل</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <div class="small">{{ request.created_at|date:"Y-m-d" }}</div>
+                                        <div class="small text-muted">{{ request.created_at|time:"H:i" }}</div>
+                                    </td>
+                                    <td>
+                                        {% if request.priority == 'high' %}
+                                            <span class="badge bg-danger">عالية</span>
+                                        {% elif request.priority == 'medium' %}
+                                            <span class="badge bg-warning">متوسطة</span>
+                                        {% else %}
+                                            <span class="badge bg-secondary">عادية</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <div class="action-buttons">
+                                            <button class="btn btn-info" onclick="viewDetails({{ request.id }})" title="التفاصيل">
+                                                👁️ تفاصيل
+                                            </button>
+                                            <button class="btn btn-secondary" onclick="sendNotification({{ request.id }})" title="إرسال إشعار">
+                                                🔔 إشعار
+                                            </button>
+                                            <button class="btn btn-warning" onclick="changePriority({{ request.id }})" title="تغيير الأولوية">
+                                                ⚡ أولوية
+                                            </button>
+                                            {% if request.status == 'pending' %}
+                                                <button class="btn approve-btn" onclick="approveRequest({{ request.id }})" title="موافقة">
+                                                    ✅ موافقة
+                                                </button>
+                                                <button class="btn reject-btn" onclick="rejectRequest({{ request.id }})" title="رفض">
+                                                    ❌ رفض
+                                                </button>
+                                            {% elif request.status == 'approved' %}
+                                                <button class="btn btn-success" disabled title="تمت الموافقة">
+                                                    ✅ تمت الموافقة
+                                                </button>
+                                            {% elif request.status == 'rejected' %}
+                                                <button class="btn btn-danger" disabled title="مرفوض">
+                                                    ❌ مرفوض
+                                                </button>
+                                            {% endif %}
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="13" class="text-center py-4">
+                                        <div class="empty-state">
+                                            <div class="empty-icon">📋</div>
+                                            <div class="empty-text">لا توجد طلبات تجديد</div>
+                                            <a href="{% url 'subscription_renewal_request' %}" class="btn btn-primary mt-2">
+                                                إنشاء طلب جديد
+                                            </a>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    
+                    <!-- ترقيم الصفحات -->
+                    <div class="row mt-3">
+                        <div class="col-md-6">
+                            <div class="d-flex align-items-center">
+                                <span class="me-2">عرض</span>
+                                <select class="form-select form-select-sm" style="width: auto;" id="perPage" onchange="changePerPage()">
+                                    <option value="10">10</option>
+                                    <option value="25" selected>25</option>
+                                    <option value="50">50</option>
+                                    <option value="100">100</option>
+                                </select>
+                                <span class="ms-2">لكل صفحة</span>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <nav aria-label="Page navigation">
+                                <ul class="pagination justify-content-end">
+                                    <li class="page-item disabled">
+                                        <a class="page-link" href="#" tabindex="-1">السابق</a>
+                                    </li>
+                                    <li class="page-item active">
+                                        <a class="page-link" href="#">1</a>
+                                    </li>
+                                    <li class="page-item">
+                                        <a class="page-link" href="#">التالي</a>
+                                    </li>
+                                </ul>
+                            </nav>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal for request details -->
+<div class="modal fade" id="requestDetailsModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">تفاصيل طلب التجديد</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="requestDetailsContent">
+                <!-- Details will be loaded here -->
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">إغلاق</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal for analytics -->
+<div class="modal fade" id="analyticsModal" tabindex="-1">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">📈 تحليلات طلبات التجديد</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="card">
+                            <div class="card-header">
+                                <h5 class="mb-0">📊 الإحصائيات الشهرية</h5>
+                            </div>
+                            <div class="card-body">
+                                <canvas id="monthlyChart" height="250"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="card">
+                            <div class="card-header">
+                                <h5 class="mb-0">💰 إيرادات الاشتراكات</h5>
+                            </div>
+                            <div class="card-body">
+                                <canvas id="revenueChart" height="250"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="row mt-3">
+                    <div class="col-md-12">
+                        <div class="card">
+                            <div class="card-header">
+                                <h5 class="mb-0">🏆 أكثر الدلالين طلبات</h5>
+                            </div>
+                            <div class="card-body">
+                                <canvas id="topBrokersChart" height="200"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">إغلاق</button>
+                <button type="button" class="btn btn-primary" onclick="exportAnalyticsReport()">تصدير التقرير</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal for priority management -->
+<div class="modal fade" id="priorityModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">تغيير أولوية الطلب</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <label class="form-label">الأولوية</label>
+                    <select class="form-select" id="prioritySelect">
+                        <option value="low">عادية</option>
+                        <option value="medium">متوسطة</option>
+                        <option value="high">عالية</option>
+                        <option value="urgent">عاجلة</option>
+                    </select>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">ملاحظات</label>
+                    <textarea class="form-control" id="priorityNotes" rows="3"></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">إلغاء</button>
+                <button type="button" class="btn btn-primary" onclick="savePriority()">حفظ</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.stat-card {
+    border: none;
+    border-radius: 10px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    transition: transform 0.3s ease;
+}
+
+.stat-card:hover {
+    transform: translateY(-5px);
+}
+
+.stat-number {
+    font-size: 2rem;
+    font-weight: bold;
+    margin: 0;
+}
+
+.empty-state {
+    text-align: center;
+    padding: 2rem;
+}
+
+.empty-icon {
+    font-size: 3rem;
+    margin-bottom: 1rem;
+}
+
+.empty-text {
+    color: #6c757d;
+    margin-bottom: 1rem;
+}
+
+.request-row {
+    transition: background-color 0.2s ease;
+}
+
+.request-row:hover {
+    background-color: rgba(0,0,0,0.05);
+}
+
+.badge {
+    font-size: 0.85rem;
+    padding: 0.25rem 0.5rem;
+}
+
+.bulk-actions-bar {
+    animation: slideDown 0.3s ease;
+}
+
+@keyframes slideDown {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.stat-trend {
+    font-size: 0.85rem;
+    margin-top: 0.5rem;
+}
+
+.chart-container {
+    position: relative;
+    height: 200px;
+}
+
+.modal-xl {
+    max-width: 90%;
+}
+
+.card-header h5 {
+    margin: 0;
+}
+
+@media print {
+    .no-print {
+        display: none !important;
+    }
+    
+    .card {
+        border: 1px solid #ddd;
+        box-shadow: none;
+    }
+    
+    .btn {
+        display: none !important;
+    }
+}
+
+.btn-group-sm .btn {
+    padding: 0.25rem 0.5rem;
+    font-size: 0.875rem;
+}
+
+.btn-success:hover {
+    background-color: #198754;
+    transform: scale(1.05);
+}
+
+.btn-danger:hover {
+    background-color: #dc3545;
+    transform: scale(1.05);
+}
+
+.btn-info:hover {
+    background-color: #0dcaf0;
+    transform: scale(1.05);
+}
+
+.btn-secondary:hover {
+    background-color: #6c757d;
+    transform: scale(1.05);
+}
+
+.btn {
+    transition: all 0.2s ease;
+}
+
+.action-buttons {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.approve-btn {
+    background: linear-gradient(135deg, #28a745, #20c997);
+    border: none;
+    color: white;
+    font-weight: bold;
+}
+
+.reject-btn {
+    background: linear-gradient(135deg, #dc3545, #fd7e14);
+    border: none;
+    color: white;
+    font-weight: bold;
+}
+
+.approve-btn:hover {
+    background: linear-gradient(135deg, #218838, #1aa179);
+    box-shadow: 0 4px 8px rgba(40, 167, 69, 0.3);
+}
+
+.reject-btn:hover {
+    background: linear-gradient(135deg, #c82333, #e6650c);
+    box-shadow: 0 4px 8px rgba(220, 53, 69, 0.3);
+}
+</style>
+
+{% csrf_token %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+let statusChart, typeChart, monthlyChart, revenueChart, topBrokersChart;
+let currentPriorityRequestId = null;
+
+function getCSRFToken() {
+    const token = document.querySelector('[name=csrfmiddlewaretoken]');
+    if (token) {
+        return token.value;
+    }
+    // Fallback to cookie
+    const cookieValue = document.cookie
+        .split('; ')
+        .find(row => row.startsWith('csrftoken='))
+        ?.split('=')[1];
+    return cookieValue || '';
+}
+
+// Initialize charts when page loads
+document.addEventListener('DOMContentLoaded', function() {
+    initializeCharts();
+    setupRealTimeUpdates();
+});
+
+function initializeCharts() {
+    // Status distribution chart
+    const statusCtx = document.getElementById('statusChart').getContext('2d');
+    statusChart = new Chart(statusCtx, {
+        type: 'doughnut',
+        data: {
+            labels: ['قيد الانتظار', 'موافق عليه', 'مرفوض', 'مكتمل'],
+            datasets: [{
+                data: [{{ stats.pending }}, {{ stats.approved }}, {{ stats.rejected }}, {{ stats.completed|default:0 }}],
+                backgroundColor: ['#ffc107', '#28a745', '#dc3545', '#17a2b8'],
+                borderWidth: 2
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'bottom'
+                }
+            }
+        }
+    });
+
+    // Type distribution chart - Load real data
+    const typeCtx = document.getElementById('typeChart').getContext('2d');
+    
+    // Fetch real statistics
+    fetch('/api/statistics/')
+        .then(response => response.json())
+        .then(data => {
+            typeChart = new Chart(typeCtx, {
+                type: 'bar',
+                data: {
+                    labels: ['عقارات داخل العراق', 'عقارات خارج العراق', 'فنادق داخل العراق', 'فنادق خارج العراق', 'منتجعات داخل العراق', 'منتجعات خارج العراق', 'وظائف', 'طلبات بناء', 'مقدمي خدمات', 'مزادات'],
+                    datasets: [{
+                        label: 'عدد الطلبات',
+                        data: [
+                            data.properties.iraq,
+                            data.properties.foreign,
+                            data.hotels.iraq,
+                            data.hotels.foreign,
+                            data.resorts.iraq,
+                            data.resorts.foreign,
+                            data.jobs.total,
+                            data.services.providers,
+                            data.auctions.total
+                        ],
+                        backgroundColor: ['#007bff', '#6610f2', '#fd7e14', '#20c997', '#17a2b8', '#6c757d', '#e83e8c', '#343a40', '#28a745', '#ffc107'],
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true
+                        }
+                    }
+                }
+            });
+        })
+        .catch(error => {
+            console.error('Error loading statistics:', error);
+            // Fallback to default data
+            typeChart = new Chart(typeCtx, {
+                type: 'bar',
+                data: {
+                    labels: ['عقارات داخل العراق', 'عقارات خارج العراق', 'فنادق داخل العراق', 'فنادق خارج العراق', 'منتجعات داخل العراق', 'منتجعات خارج العراق', 'وظائف', 'طلبات بناء', 'مقدمي خدمات', 'مزادات'],
+                    datasets: [{
+                        label: 'عدد الطلبات',
+                        data: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                        backgroundColor: ['#007bff', '#6610f2', '#fd7e14', '#20c997', '#17a2b8', '#6c757d', '#e83e8c', '#343a40', '#28a745', '#ffc107'],
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true
+                        }
+                    }
+                }
+            });
+        });
+}
+
+function exportExcel() {
+    const rows = document.querySelectorAll('.request-row');
+    const data = [];
+    
+    // Header
+    data.push(['رقم الطلب', 'الدلال', 'البريد', 'الهاتف', 'الخطة', 'نوع الاشتراك', 'عادي', 'مميز', 'الأيام', 'التكلفة', 'أنواع العقارات', 'الحالة', 'تاريخ الطلب', 'الأولوية']);
+    
+    rows.forEach(row => {
+        const checkbox = row.querySelector('.request-checkbox');
+        const approveBtn = row.querySelector('button[onclick*="approveRequest"]');
+        
+        if (checkbox && approveBtn) {
+            const requestId = checkbox.value;
+            data.push([
+                requestId,
+                row.dataset.name,
+                row.dataset.email,
+                row.querySelector('.small.text-muted:last-child')?.textContent || '',
+                row.querySelector('.badge.bg-primary')?.textContent || 'غير محدد',
+                row.querySelector('.badge.bg-info')?.textContent || '-',
+                row.querySelector('.badge.bg-light')?.textContent || '0',
+                row.querySelector('.badge.bg-warning')?.textContent || '0',
+                row.querySelector('td:nth-child(7) span:first-child')?.textContent || '0',
+                row.querySelector('.fw-bold.text-success')?.textContent || '0',
+                row.dataset.propertyTypes,
+                row.dataset.status,
+                row.dataset.createdAt,
+                row.querySelector('.badge[data-component-name]')?.textContent || 'عادية'
+            ]);
+        }
+    });
+    
+    // Create CSV content
+    let csvContent = "data:text/csv;charset=utf-8,\uFEFF"; // BOM for Arabic support
+    data.forEach(row => {
+        csvContent += row.map(cell => `"${cell}"`).join(",") + "\n";
+    });
+    
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement("a");
+    link.setAttribute("href", encodedUri);
+    link.setAttribute("download", "subscription_requests.csv");
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+}
+
+function printReport() {
+    window.print();
+}
+
+function showAnalytics() {
+    const modal = document.getElementById('analyticsModal');
+    
+    // Initialize analytics charts
+    initializeAnalyticsCharts();
+    
+    try {
+        const modalInstance = new bootstrap.Modal(modal);
+        modalInstance.show();
+    } catch (e) {
+        alert('يرجى تثبيت Bootstrap JS لعرض التحليلات');
+    }
+}
+
+function initializeAnalyticsCharts() {
+    // Monthly chart
+    const monthlyCtx = document.getElementById('monthlyChart');
+    if (monthlyCtx && !monthlyChart) {
+        monthlyChart = new Chart(monthlyCtx.getContext('2d'), {
+            type: 'line',
+            data: {
+                labels: ['يناير', 'فبراير', 'مارس', 'أبريل', 'مايو', 'يونيو'],
+                datasets: [{
+                    label: 'الطلبات',
+                    data: [12, 19, 3, 5, 2, 3],
+                    borderColor: '#007bff',
+                    tension: 0.1
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false
+            }
+        });
+    }
+
+    // Revenue chart
+    const revenueCtx = document.getElementById('revenueChart');
+    if (revenueCtx && !revenueChart) {
+        revenueChart = new Chart(revenueCtx.getContext('2d'), {
+            type: 'bar',
+            data: {
+                labels: ['يناير', 'فبراير', 'مارس', 'أبريل', 'مايو', 'يونيو'],
+                datasets: [{
+                    label: 'الإيرادات (دينار)',
+                    data: [150000, 230000, 180000, 320000, 250000, 410000],
+                    backgroundColor: '#28a745'
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false
+            }
+        });
+    }
+
+    // Top brokers chart
+    const topBrokersCtx = document.getElementById('topBrokersChart');
+    if (topBrokersCtx && !topBrokersChart) {
+        topBrokersChart = new Chart(topBrokersCtx.getContext('2d'), {
+            type: 'bar',
+            data: {
+                labels: ['أحمد', 'محمد', 'علي', 'حسين', 'كريم'],
+                datasets: [{
+                    label: 'عدد الطلبات',
+                    data: [15, 12, 8, 6, 4],
+                    backgroundColor: ['#007bff', '#28a745', '#ffc107', '#dc3545', '#17a2b8']
+                }]
+            },
+            options: {
+                indexAxis: 'y',
+                responsive: true,
+                maintainAspectRatio: false
+            }
+        });
+    }
+}
+
+function exportAnalyticsReport() {
+    alert('جاري تصدير تقرير التحليلات...');
+    // Implementation for analytics export
+}
+
+function changePriority(requestId) {
+    currentPriorityRequestId = requestId;
+    const modal = document.getElementById('priorityModal');
+    
+    try {
+        const modalInstance = new bootstrap.Modal(modal);
+        modalInstance.show();
+    } catch (e) {
+        const priority = prompt('الأولوية (low/medium/high/urgent):');
+        if (priority) {
+            savePriority(priority);
+        }
+    }
+}
+
+function savePriority(priority) {
+    if (!priority) {
+        priority = document.getElementById('prioritySelect').value;
+    }
+    
+    const notes = document.getElementById('priorityNotes').value;
+    
+    // API call to save priority
+    fetch(`/api/subscription-renewal/${currentPriorityRequestId}/priority/`, {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': getCSRFToken(),
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            priority: priority,
+            notes: notes
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert('تم تحديث الأولوية بنجاح');
+            location.reload();
+        } else {
+            alert('حدث خطأ: ' + (data.error || 'غير معروف'));
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('حدث خطأ في الاتصال');
+    });
+}
+
+function setupRealTimeUpdates() {
+    // Check for updates every 30 seconds
+    setInterval(() => {
+        fetch('/api/subscription-renewals/stats/')
+            .then(response => response.json())
+            .then(data => {
+                updateStats(data);
+            })
+            .catch(error => console.error('Error fetching stats:', error));
+    }, 30000);
+}
+
+function updateStats(newStats) {
+    // Update stat numbers with animation
+    animateValue('total', {{ stats.total }}, newStats.total, 1000);
+    animateValue('pending', {{ stats.pending }}, newStats.pending, 1000);
+    animateValue('approved', {{ stats.approved }}, newStats.approved, 1000);
+    animateValue('rejected', {{ stats.rejected }}, newStats.rejected, 1000);
+    
+    // Update charts
+    if (statusChart) {
+        statusChart.data.datasets[0].data = [
+            newStats.pending, 
+            newStats.approved, 
+            newStats.rejected, 
+            newStats.completed
+        ];
+        statusChart.update();
+    }
+}
+
+function animateValue(id, start, end, duration) {
+    const obj = document.getElementById(id);
+    if (!obj) return;
+    
+    const range = end - start;
+    const increment = end > start ? 1 : -1;
+    const stepTime = Math.abs(Math.floor(duration / range));
+    
+    let current = start;
+    const timer = setInterval(() => {
+        current += increment;
+        obj.textContent = current;
+        if (current === end) {
+            clearInterval(timer);
+        }
+    }, stepTime);
+}
+
+function filterRequests() {
+    const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+    const statusFilter = document.getElementById('statusFilter').value;
+    const propertyTypeFilter = document.getElementById('propertyTypeFilter').value;
+    const subscriptionTypeFilter = document.getElementById('subscriptionTypeFilter').value;
+    const dateFrom = document.getElementById('dateFrom').value;
+    const dateTo = document.getElementById('dateTo').value;
+    
+    const rows = document.querySelectorAll('.request-row');
+    
+    rows.forEach(row => {
+        const name = row.dataset.name.toLowerCase();
+        const email = row.dataset.email.toLowerCase();
+        const status = row.dataset.status;
+        const propertyTypes = row.dataset.propertyTypes;
+        const subscriptionType = row.dataset.subscriptionType;
+        const createdAt = row.dataset.createdAt;
+        
+        let show = true;
+        
+        // Search filter
+        if (searchTerm && !name.includes(searchTerm) && !email.includes(searchTerm)) {
+            show = false;
+        }
+        
+        // Status filter
+        if (statusFilter !== 'all' && status !== statusFilter) {
+            show = false;
+        }
+        
+        // Property type filter
+        if (propertyTypeFilter !== 'all' && !propertyTypes.includes(propertyTypeFilter)) {
+            show = false;
+        }
+        
+        // Subscription type filter
+        if (subscriptionTypeFilter !== 'all' && subscriptionType !== subscriptionTypeFilter) {
+            show = false;
+        }
+        
+        // Date range filter
+        if (dateFrom && createdAt < dateFrom) {
+            show = false;
+        }
+        if (dateTo && createdAt > dateTo) {
+            show = false;
+        }
+        
+        row.style.display = show ? '' : 'none';
+    });
+}
+
+function toggleAllRequests() {
+    const selectAll = document.getElementById('selectAllRequests');
+    const checkboxes = document.querySelectorAll('.request-checkbox');
+    
+    checkboxes.forEach(checkbox => {
+        checkbox.checked = selectAll.checked;
+    });
+    
+    updateBulkActions();
+}
+
+function updateBulkActions() {
+    const checkboxes = document.querySelectorAll('.request-checkbox:checked');
+    const bulkActionsBar = document.getElementById('bulkActionsBar');
+    const selectedCount = document.getElementById('selectedCount');
+    
+    if (checkboxes.length > 0) {
+        bulkActionsBar.style.display = 'block';
+        selectedCount.textContent = checkboxes.length;
+    } else {
+        bulkActionsBar.style.display = 'none';
+    }
+}
+
+function bulkApprove() {
+    const checkboxes = document.querySelectorAll('.request-checkbox:checked');
+    const requestIds = Array.from(checkboxes).map(cb => cb.value);
+    
+    if (requestIds.length === 0) {
+        alert('يرجى تحديد طلب واحد على الأقل');
+        return;
+    }
+    
+    if (confirm(`هل تريد الموافقة على ${requestIds.length} طلب؟`)) {
+        let processed = 0;
+        requestIds.forEach(id => {
+            approveRequest(id);
+        });
+    }
+}
+
+function bulkReject() {
+    const checkboxes = document.querySelectorAll('.request-checkbox:checked');
+    const requestIds = Array.from(checkboxes).map(cb => cb.value);
+    
+    if (requestIds.length === 0) {
+        alert('يرجى تحديد طلب واحد على الأقل');
+        return;
+    }
+    
+    const reason = prompt('سبب الرفض للطلبات المحددة:');
+    if (reason === null) return;
+    
+    if (confirm(`هل تريد رفض ${requestIds.length} طلب؟`)) {
+        let processed = 0;
+        requestIds.forEach(id => {
+            const formData = new FormData();
+            formData.append('csrfmiddlewaretoken', getCSRFToken());
+            formData.append('reason', reason);
+            
+            fetch("{% url 'reject_subscription_renewal' 0 %}".replace('0', id), {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': getCSRFToken(),
+                },
+                body: formData
+            }).then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    processed++;
+                    if (processed === requestIds.length) {
+                        alert('تم رفض جميع الطلبات بنجاح');
+                        location.reload();
+                    }
+                }
+            }).catch(error => {
+                console.error('Error:', error);
+            });
+        });
+    }
+}
+
+function bulkExport() {
+    const checkboxes = document.querySelectorAll('.request-checkbox:checked');
+    const selectedRequests = [];
+    
+    checkboxes.forEach(checkbox => {
+        const row = checkbox.closest('.request-row');
+        selectedRequests.push({
+            id: checkbox.value,
+            name: row.dataset.name,
+            email: row.dataset.email,
+            status: row.dataset.status,
+            propertyTypes: row.dataset.propertyTypes,
+            subscriptionType: row.dataset.subscriptionType,
+            createdAt: row.dataset.createdAt
+        });
+    });
+    
+    const dataStr = JSON.stringify(selectedRequests, null, 2);
+    const dataBlob = new Blob([dataStr], { type: 'application/json' });
+    const url = URL.createObjectURL(dataBlob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = 'selected_requests.json';
+    link.click();
+    URL.revokeObjectURL(url);
+}
+
+function sendNotification(requestId) {
+    const message = prompt('رسالة الإشعار:');
+    if (message === null) return;
+    
+    // This would typically call an API endpoint to send notification
+    alert('تم إرسال الإشعار: ' + message);
+}
+
+function changePerPage() {
+    const perPage = document.getElementById('perPage').value;
+    // This would typically call an API endpoint with pagination parameters
+    alert('تغيير عدد العناصر لكل صفحة: ' + perPage);
+    location.reload();
+}
+
+function viewDetails(requestId) {
+    const rows = document.querySelectorAll('.request-row');
+    let requestData = null;
+    
+    rows.forEach(row => {
+        const approveBtn = row.querySelector('button[onclick*="approveRequest"]');
+        if (approveBtn && approveBtn.getAttribute('onclick').includes(requestId)) {
+            requestData = {
+                id: requestId,
+                name: row.dataset.name,
+                email: row.dataset.email,
+                status: row.dataset.status,
+                propertyTypes: row.dataset.propertyTypes,
+                subscriptionType: row.dataset.subscriptionType,
+                createdAt: row.dataset.createdAt
+            };
+        }
+    });
+    
+    if (requestData) {
+        const modal = document.getElementById('requestDetailsModal');
+        const content = document.getElementById('requestDetailsContent');
+        
+        content.innerHTML = `
+            <div class="row">
+                <div class="col-md-6">
+                    <p><strong>رقم الطلب:</strong> ${requestData.id}</p>
+                    <p><strong>الدلال:</strong> ${requestData.name}</p>
+                    <p><strong>البريد:</strong> ${requestData.email}</p>
+                    <p><strong>الحالة:</strong> ${requestData.status}</p>
+                </div>
+                <div class="col-md-6">
+                    <p><strong>نوع الاشتراك:</strong> ${requestData.subscriptionType || 'عقارات'}</p>
+                    <p><strong>أنواع العقارات:</strong> ${requestData.propertyTypes}</p>
+                    <p><strong>تاريخ الطلب:</strong> ${requestData.createdAt}</p>
+                </div>
+            </div>
+        `;
+        
+        // Show modal (requires Bootstrap JS)
+        try {
+            const modalInstance = new bootstrap.Modal(modal);
+            modalInstance.show();
+        } catch (e) {
+            // Fallback if Bootstrap is not available
+            alert('تفاصيل الطلب:\n' + JSON.stringify(requestData, null, 2));
+        }
+    }
+}
+
+function approveRequest(requestId) {
+    if (confirm('هل تريد الموافقة على هذا الطلب؟\n\nسيتم:\n- تفعيل الاشتراك للدلال\n- تحديث تاريخ نهاية الاشتراك\n- إرسال إشعار للدلال')) {
+        const formData = new FormData();
+        formData.append('csrfmiddlewaretoken', getCSRFToken());
+        
+        // Show loading state
+        const approveBtn = document.querySelector(`button[onclick="approveRequest(${requestId})"]`);
+        if (approveBtn) {
+            approveBtn.disabled = true;
+            approveBtn.innerHTML = '⏳ جاري الموافقة...';
+        }
+        
+        fetch("{% url 'approve_subscription_renewal' 0 %}".replace('0', requestId), {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': getCSRFToken(),
+            },
+            body: formData
+        }).then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert('✅ تمت الموافقة على الطلب بنجاح!\n\nتم تفعيل الاشتراك للدلال وتحديث التواريخ.');
+                location.reload();
+            } else {
+                alert('❌ حدث خطأ: ' + (data.error || 'غير معروف'));
+                // Restore button state
+                if (approveBtn) {
+                    approveBtn.disabled = false;
+                    approveBtn.innerHTML = '✅ موافقة';
+                }
+            }
+        }).catch(error => {
+            console.error('Error:', error);
+            alert('❌ حدث خطأ في الاتصال بالخادم');
+            // Restore button state
+            if (approveBtn) {
+                approveBtn.disabled = false;
+                approveBtn.innerHTML = '✅ موافقة';
+            }
+        });
+    }
+}
+
+function rejectRequest(requestId) {
+    const reason = prompt('سبب الرفض:\n\nيرجى تحديد سبب الرفض ليتم إرساله للدلال:');
+    if (reason === null) return;
+    
+    if (reason.trim() === '') {
+        alert('يرجى تحديد سبب الرفض');
+        return;
+    }
+    
+    if (confirm('هل تريد رفض هذا الطلب؟\n\nالسبب: ' + reason + '\n\nسيتم إرسال سبب الرفض للدلال.')) {
+        const formData = new FormData();
+        formData.append('csrfmiddlewaretoken', getCSRFToken());
+        formData.append('reason', reason);
+        
+        // Show loading state
+        const rejectBtn = document.querySelector(`button[onclick="rejectRequest(${requestId})"]`);
+        if (rejectBtn) {
+            rejectBtn.disabled = true;
+            rejectBtn.innerHTML = '⏳ جاري الرفض...';
+        }
+        
+        fetch("{% url 'reject_subscription_renewal' 0 %}".replace('0', requestId), {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': getCSRFToken(),
+            },
+            body: formData
+        }).then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert('❌ تم رفض الطلب بنجاح!\n\nتم إرسال سبب الرفض للدلال.');
+                location.reload();
+            } else {
+                alert('❌ حدث خطأ: ' + (data.error || 'غير معروف'));
+                // Restore button state
+                if (rejectBtn) {
+                    rejectBtn.disabled = false;
+                    rejectBtn.innerHTML = '❌ رفض';
+                }
+            }
+        }).catch(error => {
+            console.error('Error:', error);
+            alert('❌ حدث خطأ في الاتصال بالخادم');
+            // Restore button state
+            if (rejectBtn) {
+                rejectBtn.disabled = false;
+                rejectBtn.innerHTML = '❌ رفض';
+            }
+        });
+    }
+}
+
+function exportRequests() {
+    const rows = document.querySelectorAll('.request-row');
+    const requests = [];
+    
+    rows.forEach(row => {
+        const approveBtn = row.querySelector('button[onclick*="approveRequest"]');
+        if (approveBtn) {
+            const requestId = approveBtn.getAttribute('onclick').match(/\d+/)[0];
+            requests.push({
+                id: requestId,
+                name: row.dataset.name,
+                email: row.dataset.email,
+                status: row.dataset.status,
+                propertyTypes: row.dataset.propertyTypes,
+                subscriptionType: row.dataset.subscriptionType,
+                createdAt: row.dataset.createdAt
+            });
+        }
+    });
+    
+    const dataStr = JSON.stringify(requests, null, 2);
+    const dataBlob = new Blob([dataStr], { type: 'application/json' });
+    const url = URL.createObjectURL(dataBlob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = 'subscription_requests.json';
+    link.click();
+    URL.revokeObjectURL(url);
+}
+
+// Add event listeners for real-time filtering
+document.addEventListener('DOMContentLoaded', function() {
+    document.getElementById('searchInput').addEventListener('input', filterRequests);
+    document.getElementById('statusFilter').addEventListener('change', filterRequests);
+    document.getElementById('propertyTypeFilter').addEventListener('change', filterRequests);
+    document.getElementById('subscriptionTypeFilter').addEventListener('change', filterRequests);
+    document.getElementById('dateFrom').addEventListener('change', filterRequests);
+    document.getElementById('dateTo').addEventListener('change', filterRequests);
+    
+    // Add event listeners for checkboxes
+    document.querySelectorAll('.request-checkbox').forEach(checkbox => {
+        checkbox.addEventListener('change', updateBulkActions);
+    });
+});
+
+function filterRequests() {
+    const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+    const statusFilter = document.getElementById('statusFilter').value;
+    const propertyTypeFilter = document.getElementById('propertyTypeFilter').value;
+    const subscriptionTypeFilter = document.getElementById('subscriptionTypeFilter').value;
+    const dateFrom = document.getElementById('dateFrom').value;
+    const dateTo = document.getElementById('dateTo').value;
+    
+    const rows = document.querySelectorAll('.request-row');
+    
+    rows.forEach(row => {
+        const name = row.dataset.name.toLowerCase();
+        const email = row.dataset.email.toLowerCase();
+        const status = row.dataset.status;
+        const propertyTypes = row.dataset.propertyTypes;
+        const subscriptionType = row.dataset.subscriptionType;
+        const createdAt = row.dataset.createdAt;
+        
+        let show = true;
+        
+        // Search filter
+        if (searchTerm && !name.includes(searchTerm) && !email.includes(searchTerm)) {
+            show = false;
+        }
+        
+        // Status filter
+        if (statusFilter !== 'all' && status !== statusFilter) {
+            show = false;
+        }
+        
+        // Property type filter
+        if (propertyTypeFilter !== 'all' && !propertyTypes.includes(propertyTypeFilter)) {
+            show = false;
+        }
+        
+        // Subscription type filter
+        if (subscriptionTypeFilter !== 'all' && subscriptionType !== subscriptionTypeFilter) {
+            show = false;
+        }
+        
+        // Date range filter
+        if (dateFrom && createdAt < dateFrom) {
+            show = false;
+        }
+        if (dateTo && createdAt > dateTo) {
+            show = false;
+        }
+        
+        row.style.display = show ? '' : 'none';
+    });
+}
+
+function toggleAllRequests() {
+    const selectAll = document.getElementById('selectAllRequests');
+    const checkboxes = document.querySelectorAll('.request-checkbox');
+    
+    checkboxes.forEach(checkbox => {
+        checkbox.checked = selectAll.checked;
+    });
+    
+    updateBulkActions();
+}
+
+function updateBulkActions() {
+    const checkboxes = document.querySelectorAll('.request-checkbox:checked');
+    const bulkActionsBar = document.getElementById('bulkActionsBar');
+    const selectedCount = document.getElementById('selectedCount');
+    
+    if (checkboxes.length > 0) {
+        bulkActionsBar.style.display = 'block';
+        selectedCount.textContent = checkboxes.length;
+    } else {
+        bulkActionsBar.style.display = 'none';
+    }
+}
+
+function bulkApprove() {
+    const checkboxes = document.querySelectorAll('.request-checkbox:checked');
+    const requestIds = Array.from(checkboxes).map(cb => cb.value);
+    
+    if (requestIds.length === 0) {
+        alert('يرجى تحديد طلب واحد على الأقل');
+        return;
+    }
+    
+    if (confirm(`هل تريد الموافقة على ${requestIds.length} طلب؟`)) {
+        let processed = 0;
+        requestIds.forEach(id => {
+            approveRequest(id);
+        });
+    }
+}
+
+function bulkReject() {
+    const checkboxes = document.querySelectorAll('.request-checkbox:checked');
+    const requestIds = Array.from(checkboxes).map(cb => cb.value);
+    
+    if (requestIds.length === 0) {
+        alert('يرجى تحديد طلب واحد على الأقل');
+        return;
+    }
+    
+    const reason = prompt('سبب الرفض للطلبات المحددة:');
+    if (reason === null) return;
+    
+    if (confirm(`هل تريد رفض ${requestIds.length} طلب؟`)) {
+        let processed = 0;
+        requestIds.forEach(id => {
+            const formData = new FormData();
+            formData.append('csrfmiddlewaretoken', getCSRFToken());
+            formData.append('reason', reason);
+            
+            fetch("{% url 'reject_subscription_renewal' 0 %}".replace('0', id), {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': getCSRFToken(),
+                },
+                body: formData
+            }).then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    processed++;
+                    if (processed === requestIds.length) {
+                        alert('تم رفض جميع الطلبات بنجاح');
+                        location.reload();
+                    }
+                }
+            }).catch(error => {
+                console.error('Error:', error);
+            });
+        });
+    }
+}
+
+function bulkExport() {
+    const checkboxes = document.querySelectorAll('.request-checkbox:checked');
+    const selectedRequests = [];
+    
+    checkboxes.forEach(checkbox => {
+        const row = checkbox.closest('.request-row');
+        selectedRequests.push({
+            id: checkbox.value,
+            name: row.dataset.name,
+            email: row.dataset.email,
+            status: row.dataset.status,
+            propertyTypes: row.dataset.propertyTypes,
+            subscriptionType: row.dataset.subscriptionType,
+            createdAt: row.dataset.createdAt
+        });
+    });
+    
+    const dataStr = JSON.stringify(selectedRequests, null, 2);
+    const dataBlob = new Blob([dataStr], { type: 'application/json' });
+    const url = URL.createObjectURL(dataBlob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = 'selected_requests.json';
+    link.click();
+    URL.revokeObjectURL(url);
+}
+
+function sendNotification(requestId) {
+    const message = prompt('رسالة الإشعار:');
+    if (message === null) return;
+    
+    // This would typically call an API endpoint to send notification
+    alert('تم إرسال الإشعار: ' + message);
+}
+
+function changePerPage() {
+    const perPage = document.getElementById('perPage').value;
+    // This would typically call an API endpoint with pagination parameters
+    alert('تغيير عدد العناصر لكل صفحة: ' + perPage);
+    location.reload();
+}
+
+function viewDetails(requestId) {
+    const rows = document.querySelectorAll('.request-row');
+    let requestData = null;
+    
+    rows.forEach(row => {
+        const approveBtn = row.querySelector('button[onclick*="approveRequest"]');
+        if (approveBtn && approveBtn.getAttribute('onclick').includes(requestId)) {
+            requestData = {
+                id: requestId,
+                name: row.dataset.name,
+                email: row.dataset.email,
+                status: row.dataset.status,
+                propertyTypes: row.dataset.propertyTypes,
+                subscriptionType: row.dataset.subscriptionType,
+                createdAt: row.dataset.createdAt
+            };
+        }
+    });
+    
+    if (requestData) {
+        const modal = document.getElementById('requestDetailsModal');
+        const content = document.getElementById('requestDetailsContent');
+        
+        content.innerHTML = `
+            <div class="row">
+                <div class="col-md-6">
+                    <p><strong>رقم الطلب:</strong> ${requestData.id}</p>
+                    <p><strong>الدلال:</strong> ${requestData.name}</p>
+                    <p><strong>البريد:</strong> ${requestData.email}</p>
+                    <p><strong>الحالة:</strong> ${requestData.status}</p>
+                </div>
+                <div class="col-md-6">
+                    <p><strong>نوع الاشتراك:</strong> ${requestData.subscriptionType || 'عقارات'}</p>
+                    <p><strong>أنواع العقارات:</strong> ${requestData.propertyTypes}</p>
+                    <p><strong>تاريخ الطلب:</strong> ${requestData.createdAt}</p>
+                </div>
+            </div>
+        `;
+        
+        // Show modal (requires Bootstrap JS)
+        try {
+            const modalInstance = new bootstrap.Modal(modal);
+            modalInstance.show();
+        } catch (e) {
+            // Fallback if Bootstrap is not available
+            alert('تفاصيل الطلب:\n' + JSON.stringify(requestData, null, 2));
+        }
+    }
+}
+
+function approveRequest(requestId) {
+    if (confirm('هل تريد الموافقة على هذا الطلب؟\n\nسيتم:\n- تفعيل الاشتراك للدلال\n- تحديث تاريخ نهاية الاشتراك\n- إرسال إشعار للدلال')) {
+        const formData = new FormData();
+        formData.append('csrfmiddlewaretoken', getCSRFToken());
+        
+        // Show loading state
+        const approveBtn = document.querySelector(`button[onclick="approveRequest(${requestId})"]`);
+        if (approveBtn) {
+            approveBtn.disabled = true;
+            approveBtn.innerHTML = '⏳ جاري الموافقة...';
+        }
+        
+        fetch("{% url 'approve_subscription_renewal' 0 %}".replace('0', requestId), {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': getCSRFToken(),
+            },
+            body: formData
+        }).then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert('✅ تمت الموافقة على الطلب بنجاح!\n\nتم تفعيل الاشتراك للدلال وتحديث التواريخ.');
+                location.reload();
+            } else {
+                alert('❌ حدث خطأ: ' + (data.error || 'غير معروف'));
+                // Restore button state
+                if (approveBtn) {
+                    approveBtn.disabled = false;
+                    approveBtn.innerHTML = '✅ موافقة';
+                }
+            }
+        }).catch(error => {
+            console.error('Error:', error);
+            alert('❌ حدث خطأ في الاتصال بالخادم');
+            // Restore button state
+            if (approveBtn) {
+                approveBtn.disabled = false;
+                approveBtn.innerHTML = '✅ موافقة';
+            }
+        });
+    }
+}
+
+function rejectRequest(requestId) {
+    const reason = prompt('سبب الرفض:\n\nيرجى تحديد سبب الرفض ليتم إرساله للدلال:');
+    if (reason === null) return;
+    
+    if (reason.trim() === '') {
+        alert('يرجى تحديد سبب الرفض');
+        return;
+    }
+    
+    if (confirm('هل تريد رفض هذا الطلب؟\n\nالسبب: ' + reason + '\n\nسيتم إرسال سبب الرفض للدلال.')) {
+        const formData = new FormData();
+        formData.append('csrfmiddlewaretoken', getCSRFToken());
+        formData.append('reason', reason);
+        
+        // Show loading state
+        const rejectBtn = document.querySelector(`button[onclick="rejectRequest(${requestId})"]`);
+        if (rejectBtn) {
+            rejectBtn.disabled = true;
+            rejectBtn.innerHTML = '⏳ جاري الرفض...';
+        }
+        
+        fetch("{% url 'reject_subscription_renewal' 0 %}".replace('0', requestId), {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': getCSRFToken(),
+            },
+            body: formData
+        }).then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert('❌ تم رفض الطلب بنجاح!\n\nتم إرسال سبب الرفض للدلال.');
+                location.reload();
+            } else {
+                alert('❌ حدث خطأ: ' + (data.error || 'غير معروف'));
+                // Restore button state
+                if (rejectBtn) {
+                    rejectBtn.disabled = false;
+                    rejectBtn.innerHTML = '❌ رفض';
+                }
+            }
+        }).catch(error => {
+            console.error('Error:', error);
+            alert('❌ حدث خطأ في الاتصال بالخادم');
+            // Restore button state
+            if (rejectBtn) {
+                rejectBtn.disabled = false;
+                rejectBtn.innerHTML = '❌ رفض';
+            }
+        });
+    }
+}
+
+function exportRequests() {
+    const rows = document.querySelectorAll('.request-row');
+    const requests = [];
+    
+    rows.forEach(row => {
+        const approveBtn = row.querySelector('button[onclick*="approveRequest"]');
+        if (approveBtn) {
+            const requestId = approveBtn.getAttribute('onclick').match(/\d+/)[0];
+            requests.push({
+                id: requestId,
+                name: row.dataset.name,
+                email: row.dataset.email,
+                status: row.dataset.status,
+                propertyTypes: row.dataset.propertyTypes,
+                subscriptionType: row.dataset.subscriptionType,
+                createdAt: row.dataset.createdAt
+            });
+        }
+    });
+    
+    const dataStr = JSON.stringify(requests, null, 2);
+    const dataBlob = new Blob([dataStr], { type: 'application/json' });
+    const url = URL.createObjectURL(dataBlob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = 'subscription_requests.json';
+    link.click();
+    URL.revokeObjectURL(url);
+}
+
+// Add event listeners for real-time filtering
+document.addEventListener('DOMContentLoaded', function() {
+    document.getElementById('searchInput').addEventListener('input', filterRequests);
+    document.getElementById('statusFilter').addEventListener('change', filterRequests);
+    document.getElementById('propertyTypeFilter').addEventListener('change', filterRequests);
+    document.getElementById('subscriptionTypeFilter').addEventListener('change', filterRequests);
+    document.getElementById('dateFrom').addEventListener('change', filterRequests);
+    document.getElementById('dateTo').addEventListener('change', filterRequests);
+    
+    // Add event listeners for checkboxes
+    document.querySelectorAll('.request-checkbox').forEach(checkbox => {
+        checkbox.addEventListener('change', updateBulkActions);
+    });
+});
+</script>
+{% endblock %}

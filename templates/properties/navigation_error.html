@@ -1,0 +1,51 @@
+{% extends 'properties/base.html' %}
+
+{% block title %}الصفحة غير متوفرة - دلال{% endblock %}
+
+{% block content %}
+<div class="error-container" style="min-height: 60vh; display: flex; align-items: center; justify-content: center; padding: 40px 20px;">
+  <div class="error-content" style="text-align: center; max-width: 500px;">
+    <div style="font-size: 64px; margin-bottom: 20px;">🗺️</div>
+    <h1 style="font-size: 2rem; color: #f8fafc; margin-bottom: 16px;">الصفحة غير متوفرة حاليًا</h1>
+    <p style="color: #94a3b8; font-size: 1.1rem; margin-bottom: 32px;">
+      عذراً، الصفحة التي تبحث عنها غير متوفرة حاليًا أو قد تم نقلها.
+    </p>
+    <div style="display: flex; gap: 12px; justify-content: center; flex-wrap: wrap;">
+      <a href="{% url 'service_categories' %}" class="btn btn-primary" style="padding: 12px 24px; border-radius: 8px; text-decoration: none; display: inline-block;">
+        🗺️ خريطة المنصة
+      </a>
+      <a href="{% url 'home' %}" class="btn btn-outline" style="padding: 12px 24px; border-radius: 8px; text-decoration: none; display: inline-block; border: 1px solid #334155; color: #f8fafc;">
+        🏠 الرئيسية
+      </a>
+    </div>
+  </div>
+</div>
+
+<style>
+.error-container {
+  background: #0f172a;
+}
+
+.btn {
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  font-weight: 500;
+  transition: all 0.2s ease;
+}
+
+.btn-primary {
+  background: #f97316;
+  color: white;
+  border: none;
+}
+
+.btn-primary:hover {
+  background: #ea580c;
+  transform: translateY(-2px);
+}
+
+.btn-outline:hover {
+  background: #1e293b;
+  transform: translateY(-2px);
+}
+</style>
+{% endblock %}

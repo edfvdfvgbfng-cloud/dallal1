@@ -1,0 +1,190 @@
+{% load static %}
+
+<!-- Leaflet CSS -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css" />
+<link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css" />
+
+<!-- Leaflet JS -->
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
+
+<!-- Interactive Map JS -->
+<script src="{% static 'js/interactive-map.js' %}" defer></script>
+
+<!-- Map Section -->
+<section class="listing-map-section" id="map-section">
+    <div class="map-header">
+        <h2>🗺️ البحث على الخريطة</h2>
+        <p>حدد المنطقة على الخريطة للبحث عن العقارات القريبة</p>
+    </div>
+
+    <div class="map-container">
+        <div id="interactive-map" style="height: 500px; width: 100%;"></div>
+    </div>
+
+    <div class="map-controls">
+        <button class="map-toggle-btn" id="toggle-map-btn">إخفاء الخريطة</button>
+    </div>
+</section>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialize interactive map
+    const map = new InteractiveMap('interactive-map', {
+        enableGPS: true,
+        enableDistanceSearch: true,
+        enableClustering: true
+    });
+
+    // Add markers from Django context
+    const mapItems = [
+        {% for item in page_obj %}
+        {
+            id: {{ item.id }},
+            type: 'property',
+            title: '{{ item.title|escapejs }}',
+            latitude: {{ item.latitude|default:0 }},
+            longitude: {{ item.longitude|default:0 }},
+            location: '{{ item.district|default:"" }}{{ item.governorate|default:"" }}',
+            price: '{{ item.price_formatted|default:"" }}',
+            image: '{{ item.get_main_image|escapejs }}',
+            url: '/property/{{ item.slug }}/'
+        }{% if not forloop.last %},{% endif %}
+        {% endfor %}
+    ];
+
+    // Filter items with valid coordinates
+    const validItems = mapItems.filter(item => item.latitude !== 0 && item.longitude !== 0);
+
+    if (validItems.length > 0) {
+        map.addMarkers(validItems);
+        map.fitBounds();
+    }
+
+    // Handle distance filter
+    document.getElementById('interactive-map').addEventListener('distanceFilterApplied', function(e) {
+        const { latitude, longitude, distance } = e.detail;
+        // Update URL with distance parameters
+        const url = new URL(window.location);
+        url.searchParams.set('lat', latitude);
+        url.searchParams.set('lng', longitude);
+        url.searchParams.set('distance', distance);
+        // Preserve existing filters
+        const currentParams = new URLSearchParams(window.location.search);
+        currentParams.forEach((value, key) => {
+            if (!['lat', 'lng', 'distance'].includes(key)) {
+                url.searchParams.set(key, value);
+            }
+        });
+        window.location.href = url.toString();
+    });
+
+    // Handle map location selection
+    document.getElementById('interactive-map').addEventListener('mapLocationSelected', function(e) {
+        const { latitude, longitude } = e.detail;
+        // Update URL with location parameters
+        const url = new URL(window.location);
+        url.searchParams.set('lat', latitude);
+        url.searchParams.set('lng', longitude);
+        // Preserve existing filters
+        const currentParams = new URLSearchParams(window.location.search);
+        currentParams.forEach((value, key) => {
+            if (!['lat', 'lng'].includes(key)) {
+                url.searchParams.set(key, value);
+            }
+        });
+        window.location.href = url.toString();
+    });
+
+    // Toggle map visibility
+    const toggleBtn = document.getElementById('toggle-map-btn');
+    const mapSection = document.getElementById('map-section');
+
+    toggleBtn.addEventListener('click', function() {
+        if (mapSection.classList.contains('map-collapsed')) {
+            mapSection.classList.remove('map-collapsed');
+            toggleBtn.textContent = 'إخفاء الخريطة';
+        } else {
+            mapSection.classList.add('map-collapsed');
+            toggleBtn.textContent = 'عرض الخريطة';
+        }
+    });
+});
+</script>
+
+<style>
+.listing-map-section {
+    margin: 40px 0;
+    padding: 30px;
+    background: var(--card-bg, #161616);
+    border-radius: 16px;
+}
+
+.map-header {
+    text-align: center;
+    margin-bottom: 20px;
+}
+
+.map-header h2 {
+    margin: 0 0 10px 0;
+    font-size: 1.8rem;
+    color: var(--text, #FFFFFF);
+}
+
+.map-header p {
+    margin: 0;
+    color: var(--text-muted, #888);
+}
+
+.map-container {
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+}
+
+.map-controls {
+    text-align: center;
+    margin-top: 20px;
+}
+
+.map-toggle-btn {
+    background: var(--primary, #FF7A00);
+    color: #000;
+    border: none;
+    padding: 12px 24px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 600;
+    transition: background 0.2s ease;
+}
+
+.map-toggle-btn:hover {
+    background: var(--primary-dark, #FF9500);
+}
+
+.map-section.map-collapsed .map-container {
+    display: none;
+}
+
+/* RTL support */
+[dir="rtl"] .map-header h2 {
+    direction: rtl;
+}
+
+/* Mobile responsive */
+@media (max-width: 768px) {
+    .listing-map-section {
+        padding: 20px;
+        margin: 20px 0;
+    }
+
+    .map-header h2 {
+        font-size: 1.4rem;
+    }
+
+    #interactive-map {
+        height: 400px;
+    }
+}
+</style>

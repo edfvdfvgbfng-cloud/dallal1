@@ -1,0 +1,36 @@
+{% extends 'properties/base.html' %}
+{% load static %}
+{% load i18n %}
+
+{% block title %}تفعيل الحساب - دلال{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h4 class="mb-0">📧 تفعيل الحساب</h4>
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-info">
+                        <strong>شكراً لتسجيلك في دلال!</strong>
+                        <br>
+                        لقد تم إرسال رابط التفعيل إلى بريدك الإلكتروني.
+                        <br>
+                        يرجى الضغط على الرابط لتفعيل حسابك.
+                        <br><br>
+                        <small>إذا لم تتلق الرابط، يرجى التحقق من مجلد البريد الإلكتروني أو التواصل مع الإدارة.</small>
+                    </div>
+                    
+                    <div class="text-center mt-4">
+                        <a href="{% url 'login' %}" class="btn btn-primary">
+                            العودة إلى تسجيل الدخول
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

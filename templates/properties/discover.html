@@ -1,0 +1,691 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}اكتشف - دلال{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/property-feed.css' %}">
+<link rel="stylesheet" href="{% static 'css/listing-pages.css' %}">
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'js/property-feed.js' %}" defer></script>
+<script src="{% static 'js/user-behavior-tracker.js' %}" defer></script>
+{% endblock %}
+
+{% block content %}
+<div class="discover-page">
+    <!-- Skip to content for accessibility -->
+    <a href="#discover-content" class="skip-to-content">انتقل إلى المحتوى الرئيسي</a>
+
+    <!-- Hero Section -->
+    <section class="discover-hero">
+        <div class="discover-hero-content">
+            <span class="discover-hero-icon">🌍</span>
+            <h1 class="discover-hero-title">اكتشف عالم العقارات</h1>
+            <p class="discover-hero-subtitle">عقارات، فنادق، منتجعات، وظائف، وخدمات من جميع أنحاء العالم</p>
+        </div>
+    </section>
+
+    <!-- Navigation Tabs -->
+    <nav class="discover-nav" id="discover-content">
+        <button class="discover-tab active" data-category="all" aria-label="الكل">
+            <span class="tab-icon">🌍</span>
+            <span class="tab-label">الكل</span>
+        </button>
+        <button class="discover-tab" data-category="properties" aria-label="عقارات">
+            <span class="tab-icon">🏠</span>
+            <span class="tab-label">عقارات</span>
+        </button>
+        <button class="discover-tab" data-category="hotels" aria-label="فنادق">
+            <span class="tab-icon">🏨</span>
+            <span class="tab-label">فنادق</span>
+        </button>
+        <button class="discover-tab" data-category="resorts" aria-label="منتجعات">
+            <span class="tab-icon">🏝️</span>
+            <span class="tab-label">منتجعات</span>
+        </button>
+        <button class="discover-tab" data-category="jobs" aria-label="وظائف">
+            <span class="tab-icon">💼</span>
+            <span class="tab-label">وظائف</span>
+        </button>
+    </nav>
+
+    <!-- Personalized Section -->
+    <section class="personalized-section">
+        <div class="personalized-header">
+            <h2>👤 مخصص لك</h2>
+            <p class="personalized-subtitle">اقتراحات بناءً على اهتماماتك</p>
+        </div>
+        
+        <div class="personalized-feed" id="personalized-feed">
+            <!-- Personalized recommendations will be loaded here -->
+        </div>
+    </section>
+
+    <!-- Main Feed Section -->
+    <section class="feed-section">
+        <div class="feed-header">
+            <h2>🔥 مميز عالمياً</h2>
+            <div class="feed-filters">
+                <button class="filter-btn active" data-filter="featured">مميز</button>
+                <button class="filter-btn" data-filter="new">جديد</button>
+                <button class="filter-btn" data-filter="nearby">قريب مني</button>
+            </div>
+        </div>
+
+        <div class="property-feed" id="property-feed" 
+             data-feed='{{ feed_data|safe }}'>
+            <!-- Feed will be initialized by JavaScript -->
+        </div>
+    </section>
+
+    <!-- Recently Viewed Section -->
+    <section class="recently-viewed-section">
+        <div class="section-header">
+            <h2>👁️ شوهدت مؤخراً</h2>
+            <button class="clear-history-btn" id="clearHistory">مسح السجل</button>
+        </div>
+        
+        <div class="recently-viewed-grid" id="recentlyViewed">
+            <!-- Recently viewed items will be loaded here -->
+        </div>
+    </section>
+
+    <!-- Discovery Sections -->
+    <section class="discovery-sections">
+        <!-- Trending Properties -->
+        <div class="discovery-section">
+            <div class="section-header">
+                <h2>📈 العقارات الرائجة</h2>
+                <a href="/category/inside-iraq/" class="view-all-btn">عرض الكل →</a>
+            </div>
+            <div class="discovery-grid" id="trendingProperties">
+                <!-- Trending properties will be loaded here -->
+            </div>
+        </div>
+
+        <!-- International Hotels -->
+        <div class="discovery-section">
+            <div class="section-header">
+                <h2>🌐 فنادق عالمية</h2>
+                <a href="/category/hotels-outside/" class="view-all-btn">عرض الكل →</a>
+            </div>
+            <div class="discovery-grid" id="internationalHotels">
+                <!-- International hotels will be loaded here -->
+            </div>
+        </div>
+
+        <!-- Luxury Resorts -->
+        <div class="discovery-section">
+            <div class="section-header">
+                <h2>✨ منتجعات فاخرة</h2>
+                <a href="/resorts-inside-iraq/" class="view-all-btn">عرض الكل →</a>
+            </div>
+            <div class="discovery-grid" id="luxuryResorts">
+                <!-- Luxury resorts will be loaded here -->
+            </div>
+        </div>
+
+        <!-- International Jobs -->
+        <div class="discovery-section">
+            <div class="section-header">
+                <h2>💼 وظائف دولية</h2>
+                <a href="/jobs/" class="view-all-btn">عرض الكل →</a>
+            </div>
+            <div class="discovery-grid" id="internationalJobs">
+                <!-- International jobs will be loaded here -->
+            </div>
+        </div>
+    </section>
+
+    <!-- Smart Notifications Section -->
+    <section class="notifications-section">
+        <div class="notifications-header">
+            <h2>🔔 تنبيهات ذكية</h2>
+            <p class="notifications-subtitle">تنبيهات مخصصة حسب اهتماماتك</p>
+        </div>
+        
+        <div class="notifications-list" id="smartNotifications">
+            <!-- Smart notifications will be loaded here -->
+        </div>
+    </section>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialize behavior tracker
+    const tracker = userBehaviorTracker;
+
+    // Handle tab switching
+    const tabs = document.querySelectorAll('.discover-tab');
+    tabs.forEach(tab => {
+        tab.addEventListener('click', function() {
+            tabs.forEach(t => t.classList.remove('active'));
+            this.classList.add('active');
+            
+            const category = this.dataset.category;
+            loadCategoryContent(category);
+        });
+    });
+
+    // Handle filter buttons
+    const filterBtns = document.querySelectorAll('.filter-btn');
+    filterBtns.forEach(btn => {
+        btn.addEventListener('click', function() {
+            filterBtns.forEach(b => b.classList.remove('active'));
+            this.classList.add('active');
+            
+            const filter = this.dataset.filter;
+            applyFilter(filter);
+        });
+    });
+
+    // Load personalized recommendations
+    loadPersonalizedRecommendations();
+
+    // Load recently viewed
+    loadRecentlyViewed();
+
+    // Load discovery sections
+    loadDiscoverySections();
+
+    // Load smart notifications
+    loadSmartNotifications();
+
+    // Clear history button
+    document.getElementById('clearHistory').addEventListener('click', function() {
+        if (confirm('هل أنت متأكد من مسح سجل المشاهدات؟')) {
+            tracker.clearHistory();
+            loadRecentlyViewed();
+        }
+    });
+
+    // Track card events
+    document.getElementById('property-feed').addEventListener('cardViewed', function(e) {
+        tracker.trackView(e.detail.item);
+    });
+
+    document.getElementById('property-feed').addEventListener('cardSaved', function(e) {
+        tracker.trackSave(e.detail.item);
+    });
+
+    document.getElementById('property-feed').addEventListener('cardShared', function(e) {
+        tracker.trackShare(e.detail.item, 'discover');
+    });
+});
+
+function loadCategoryContent(category) {
+    // Load content based on category
+    const feedContainer = document.getElementById('property-feed');
+    
+    // In production, this would make an API call
+    // For now, we'll just reload the page with category parameter
+    if (category !== 'all') {
+        window.location.href = `/discover/?category=${category}`;
+    }
+}
+
+function applyFilter(filter) {
+    // Apply filter to feed
+    // In production, this would update the feed with filtered items
+    console.log('Applying filter:', filter);
+}
+
+function loadPersonalizedRecommendations() {
+    const container = document.getElementById('personalized-feed');
+    
+    // Get user's personalized recommendations
+    const allItems = JSON.parse(document.getElementById('property-feed').dataset.feed || '[]');
+    const personalized = userBehaviorTracker.getPersonalizedRecommendations(allItems, 5);
+    
+    if (personalized.length > 0) {
+        container.innerHTML = personalized.map(item => `
+            <div class="personalized-card">
+                <img src="${item.image || '/static/img/placeholder-property.svg'}" alt="${item.title}">
+                <div class="personalized-info">
+                    <h3>${item.title}</h3>
+                    <p class="personalized-price">${item.price}</p>
+                    <p class="personalized-reasons">${item.recommendationReasons.join('، ')}</p>
+                    <a href="${item.url}" class="personalized-btn">عرض التفاصيل</a>
+                </div>
+            </div>
+        `).join('');
+    } else {
+        container.innerHTML = `
+            <div class="personalized-empty">
+                <p>تصفح المزيد من العقارات للحصول على اقتراحات مخصصة!</p>
+            </div>
+        `;
+    }
+}
+
+function loadRecentlyViewed() {
+    const container = document.getElementById('recentlyViewed');
+    const recentlyViewed = userBehaviorTracker.getRecentlyViewed(8);
+    
+    if (recentlyViewed.length > 0) {
+        container.innerHTML = recentlyViewed.map(view => `
+            <div class="recently-viewed-card">
+                <img src="${view.metadata?.image || '/static/img/placeholder-property.svg'}" alt="عقار">
+                <div class="recently-viewed-info">
+                    <h4>${view.metadata?.title || 'عقار'}</h4>
+                    <p class="view-time">${formatTimeAgo(view.timestamp)}</p>
+                </div>
+            </div>
+        `).join('');
+    } else {
+        container.innerHTML = `
+            <div class="recently-viewed-empty">
+                <p>لم تشاهد أي عقارات بعد</p>
+            </div>
+        `;
+    }
+}
+
+function loadDiscoverySections() {
+    // Load trending properties
+    loadSection('trendingProperties', '/api/discover/trending/');
+    
+    // Load international hotels
+    loadSection('internationalHotels', '/api/discover/international-hotels/');
+    
+    // Load luxury resorts
+    loadSection('luxuryResorts', '/api/discover/luxury-resorts/');
+    
+    // Load international jobs
+    loadSection('internationalJobs', '/api/discover/international-jobs/');
+}
+
+function loadSection(containerId, apiUrl) {
+    const container = document.getElementById(containerId);
+    
+    // In production, this would make an API call
+    // For now, we'll add placeholder content
+    container.innerHTML = `
+        <div class="discovery-placeholder">
+            <p>جاري التحميل...</p>
+        </div>
+    `;
+}
+
+function loadSmartNotifications() {
+    const container = document.getElementById('smartNotifications');
+    const insights = userBehaviorTracker.getBehaviorInsights();
+    
+    if (insights.recommendations.length > 0) {
+        container.innerHTML = insights.recommendations.map(rec => `
+            <div class="notification-item">
+                <span class="notification-icon">💡</span>
+                <span class="notification-text">${rec}</span>
+            </div>
+        `).join('');
+    } else {
+        container.innerHTML = `
+            <div class="notifications-empty">
+                <p>تصفح المزيد من المحتوى للحصول على تنبيهات مخصصة!</p>
+            </div>
+        `;
+    }
+}
+
+function formatTimeAgo(timestamp) {
+    const date = new Date(timestamp);
+    const now = new Date();
+    const diff = (now - date) / 1000; // seconds
+    
+    if (diff < 60) return 'الآن';
+    if (diff < 3600) return `منذ ${Math.floor(diff / 60)} دقيقة`;
+    if (diff < 86400) return `منذ ${Math.floor(diff / 3600)} ساعة`;
+    if (diff < 604800) return `منذ ${Math.floor(diff / 86400)} يوم`;
+    return `منذ ${Math.floor(diff / 604800)} أسبوع`;
+}
+</script>
+
+<style>
+.discover-page {
+    min-height: 100vh;
+    background: var(--bg, #0A0A0A);
+    color: var(--text, #FFFFFF);
+}
+
+.discover-hero {
+    background: linear-gradient(135deg, var(--primary, #FF7A00) 0%, var(--primary-dark, #FF9500) 100%);
+    padding: 60px 20px;
+    text-align: center;
+    border-radius: 0 0 30px 30px;
+}
+
+.discover-hero-content {
+    max-width: 800px;
+    margin: 0 auto;
+}
+
+.discover-hero-icon {
+    font-size: 4rem;
+    margin-bottom: 20px;
+}
+
+.discover-hero-title {
+    font-size: 2.5rem;
+    font-weight: 700;
+    margin: 0 0 15px 0;
+}
+
+.discover-hero-subtitle {
+    font-size: 1.2rem;
+    opacity: 0.9;
+    margin: 0;
+}
+
+.discover-nav {
+    display: flex;
+    gap: 10px;
+    padding: 20px;
+    overflow-x: auto;
+    background: var(--card-bg, #161616);
+    border-bottom: 1px solid var(--border-color, #2A2A2A);
+}
+
+.discover-tab {
+    flex-shrink: 0;
+    background: transparent;
+    border: none;
+    color: var(--text-muted, #888);
+    padding: 12px 20px;
+    border-radius: 25px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transition: all 0.2s ease;
+    white-space: nowrap;
+}
+
+.discover-tab:hover {
+    background: var(--bg-secondary, #1E1E1E);
+    color: var(--text, #FFFFFF);
+}
+
+.discover-tab.active {
+    background: var(--primary, #FF7A00);
+    color: #000;
+}
+
+.tab-icon {
+    font-size: 1.5rem;
+}
+
+.tab-label {
+    font-weight: 600;
+}
+
+.personalized-section,
+.feed-section,
+.recently-viewed-section,
+.discovery-sections,
+.notifications-section {
+    padding: 30px 20px;
+}
+
+.section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.section-header h2 {
+    margin: 0;
+    font-size: 1.5rem;
+}
+
+.view-all-btn {
+    background: var(--primary, #FF7A00);
+    color: #000;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 20px;
+    font-weight: 600;
+    cursor: pointer;
+    text-decoration: none;
+    transition: background 0.2s ease;
+}
+
+.view-all-btn:hover {
+    background: var(--primary-dark, #FF9500);
+}
+
+.feed-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.feed-filters {
+    display: flex;
+    gap: 10px;
+}
+
+.filter-btn {
+    background: var(--bg-secondary, #1E1E1E);
+    border: 1px solid var(--border-color, #2A2A2A);
+    color: var(--text, #FFFFFF);
+    padding: 8px 16px;
+    border-radius: 20px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.filter-btn:hover {
+    border-color: var(--primary, #FF7A00);
+}
+
+.filter-btn.active {
+    background: var(--primary, #not (FF7A00);
+    color: #000;
+    border-color: var(--primary, #FF7A00);
+}
+
+.clear-history-btn {
+    background: transparent;
+    border: 1px solid var(--border-color, #2A2A2A);
+    color: var(--text-muted, #888);
+    padding: 6px 12px;
+    border-radius: 15px;
+    cursor: pointer;
+    font-size: 0.85rem;
+    transition: all 0.2s ease;
+}
+
+.clear-history-btn:hover {
+    border-color: var(--primary, #FF7A00);
+    color: var(--primary, #FF7A00);
+}
+
+.personalized-feed,
+.recently-viewed-grid,
+.discovery-grid,
+.notifications-list {
+    display: grid;
+    gap: 20px;
+}
+
+.personalized-feed {
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+}
+
+.recently-viewed-grid {
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+}
+
+.discovery-grid {
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+}
+
+.personalized-card,
+.recently-viewed-card {
+    background: var(--card-bg, #161616);
+    border-radius: 12px;
+    overflow: hidden;
+    transition: transform 0.2s ease;
+}
+
+.personalized-card:hover,
+.recently-viewed-card:hover {
+    transform: translateY(-5px);
+}
+
+.personalized-card img,
+.recently-viewed-card img {
+    width: 100%;
+    height: 150px;
+    object-fit: cover;
+}
+
+.personalized-info,
+.recently-viewed-info {
+    padding: 15px;
+}
+
+.personalized-info h3,
+.recently-viewed-info h4 {
+    margin: 0 0 10px 0;
+    font-size: 1rem;
+    color: var(--text, #FFFFFF);
+}
+
+.personalized-price {
+    color: var(--primary, #FF7A00);
+    font-weight: 700;
+    margin-bottom: 10px;
+}
+
+.personalized-reasons {
+    font-size: 0.85rem;
+    color: var(--text-muted, #888);
+    margin-bottom: 15px;
+}
+
+.personalized-btn {
+    display: block;
+    background: var(--primary, #FF7A00);
+    color: #000;
+    text-align: center;
+    padding: 8px 16px;
+    border-radius: 8px;
+    text-decoration: none;
+    font-weight: 600;
+    transition: background 0.2s ease;
+}
+
+.personalized-btn:hover {
+    background: var(--primary-dark, #FF9500);
+}
+
+.view-time {
+    font-size: 0.8rem;
+    color: var(--text-muted, #notifications-section);
+    margin: 0;
+}
+
+.discovery-section {
+    margin-bottom: 40px;
+}
+
+.discovery-placeholder {
+    text-align: center;
+    padding: 40px;
+    color: var(--text-muted, #888);
+}
+
+.notifications-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.notification-item {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    background: var(--card-bg, #161616);
+    padding: 15px;
+    border-radius: 10px;
+    border-left: 3px solid var(--primary, #FF7A00);
+}
+
+.notification-icon {
+    font-size: 1.5rem;
+}
+
+.notification-text {
+    flex: 1;
+    color: var(--text, #FFFFFF);
+}
+
+.personalized-empty,
+.recently-viewed-empty,
+.notifications-empty {
+    text-align: center;
+    padding: 40px;
+    color: var(--text-muted, #888);
+}
+
+/* RTL support */
+[dir="rtl"] .discover-nav {
+    direction: rtl;
+}
+
+[dir="rtl"] .section-header {
+    flex-direction: row-reverse;
+}
+
+[dir="rtl"] .notification-item {
+    flex-direction: row-reverse;
+}
+
+/* Mobile responsive */
+@media (max-width: 768px) {
+    .discover-hero {
+        padding: 40px 15px;
+    }
+
+    .discover-hero-title {
+        font-size: 2rem;
+    }
+
+    .discover-hero-subtitle {
+        font-size: 1rem;
+    }
+
+    .discover-nav {
+        padding: 15px;
+    }
+
+    .discover-tab {
+        padding: 10px 15px;
+    }
+
+    .tab-label {
+        font-size: 0.9rem;
+    }
+
+    .personalized-section,
+    .feed-section,
+    .recently-viewed-section,
+    .discovery-sections,
+    .notifications-section {
+        padding: 20px 15px;
+    }
+
+    .section-header h2 {
+        font-size: 1.2rem;
+    }
+
+    .discovery-grid {
+        grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    }
+}
+</style>

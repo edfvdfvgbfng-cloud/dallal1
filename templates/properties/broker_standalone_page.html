@@ -1,0 +1,1404 @@
+{% extends 'properties/base.html' %}
+{% load static %}
+{% load custom_filters %}
+
+{% block title %}{% if broker.seo_title %}{{ broker.seo_title }}{% else %}{{ broker.display_name }} - صفحة مستقلة{% endif %}{% endblock %}
+
+{% block extra_head %}
+{% if broker.seo_description %}
+<meta name="description" content="{{ broker.seo_description }}">
+{% endif %}
+{% if broker.seo_keywords %}
+<meta name="keywords" content="{{ broker.seo_keywords }}">
+{% endif %}
+{% if broker.og_image %}
+<meta property="og:image" content="{{ broker.og_image.url }}">
+{% elif broker.cover_image %}
+<meta property="og:image" content="{{ broker.cover_image.url }}">
+{% endif %}
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<style>
+:root {
+  --broker-primary: {{ broker.page_color|default:'#FF7A00' }};
+  --broker-primary-dark: #E56D00;
+  --broker-primary-light: #FF9F1C;
+  --broker-button: {{ broker.button_color|default:'#FF7A00' }};
+  --broker-text: #FFFFFF;
+  --broker-bg: #0B0B0B;
+  --broker-bg-secondary: #0F0F0F;
+  --broker-card-bg: #1A1A1A;
+  --broker-card-bg-hover: #222222;
+  --broker-font: 'Cairo', sans-serif;
+  --gradient-primary: linear-gradient(135deg, #FF7A00 0%, #FF9F1C 50%, #FF7A00 100%);
+  --gradient-card: linear-gradient(145deg, #1A1A1A 0%, #222222 100%);
+  --glass-bg: rgba(26, 26, 26, 0.8);
+  --glass-border: rgba(255, 122, 0, 0.2);
+  --shadow-card: 0 8px 32px rgba(0, 0, 0, 0.4);
+  --shadow-hover: 0 12px 40px rgba(255, 122, 0, 0.3);
+  --shadow-glow: 0 0 30px rgba(255, 122, 0, 0.2);
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: var(--broker-font);
+  color: var(--broker-text);
+  background: var(--broker-bg);
+  background: linear-gradient(135deg, #0B0B0B 0%, #0F0F0F 50%, #0B0B0B 100%);
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+{% if broker.background_image %}
+body {
+  background-image: url('{{ broker.background_image.url }}');
+  background-attachment: fixed;
+  background-size: cover;
+  background-position: center;
+}
+body::before {
+  content: '';
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(11, 11, 11, 0.85);
+  z-index: -1;
+}
+{% endif %}
+
+/* Modern Header */
+.broker-standalone-header {
+  background: var(--glass-bg);
+  backdrop-filter: blur(20px);
+  border-bottom: 1px solid var(--glass-border);
+  padding: 3rem 0;
+  position: relative;
+  overflow: hidden;
+}
+
+.broker-standalone-header::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: var(--gradient-primary);
+  animation: gradientMove 20s ease infinite;
+  opacity: 0.1;
+  z-index: -1;
+}
+
+@keyframes gradientMove {
+  0%, 100% { transform: translate(-30%, -30%) rotate(0deg); }
+  50% { transform: translate(30%, 30%) rotate(180deg); }
+}
+
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 2rem;
+}
+
+.broker-info {
+  display: flex;
+  align-items: center;
+  gap: 2rem;
+  position: relative;
+  z-index: 1;
+}
+
+.broker-avatar {
+  position: relative;
+  flex-shrink: 0;
+}
+
+.broker-avatar img {
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 4px solid var(--broker-primary);
+  box-shadow: var(--shadow-glow);
+  transition: all 0.3s ease;
+}
+
+.broker-avatar img:hover {
+  transform: scale(1.05);
+  box-shadow: 0 0 40px rgba(255, 122, 0, 0.4);
+}
+
+.avatar-placeholder {
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  background: var(--gradient-card);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 3rem;
+  border: 4px solid var(--broker-primary);
+  box-shadow: var(--shadow-glow);
+}
+
+.broker-details {
+  flex: 1;
+}
+
+.broker-details h1 {
+  font-size: 2.5rem;
+  font-weight: 800;
+  margin-bottom: 0.5rem;
+  background: var(--gradient-primary);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  animation: gradientText 3s ease infinite;
+  background-size: 200% auto;
+}
+
+@keyframes gradientText {
+  0%, 100% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+}
+
+.broker-details p {
+  color: rgba(255, 255, 255, 0.8);
+  margin: 0.5rem 0;
+  font-size: 1.1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.broker-role {
+  background: rgba(255, 122, 0, 0.15);
+  color: var(--broker-primary);
+  padding: 0.3rem 1rem;
+  border-radius: 20px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  display: inline-block;
+}
+
+.verified-badge {
+  background: linear-gradient(135deg, #22C55E 0%, #16A34A 100%);
+  color: white;
+  padding: 0.5rem 1rem;
+  border-radius: 20px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  box-shadow: 0 4px 15px rgba(34, 197, 94, 0.3);
+}
+
+.broker-actions {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.broker-actions .btn {
+  padding: 1rem 2rem;
+  border-radius: 30px;
+  font-weight: 600;
+  text-decoration: none;
+  transition: all 0.3s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  border: none;
+  cursor: pointer;
+  backdrop-filter: blur(10px);
+}
+
+.broker-actions .btn-primary {
+  background: var(--gradient-primary);
+  color: white;
+  box-shadow: var(--shadow-glow);
+}
+
+.broker-actions .btn-primary:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 10px 30px rgba(255, 200, 0, 0.4);
+}
+
+.broker-actions .btn-whatsapp {
+  background: linear-gradient(135deg, #25D366 0%, #128C7E 100%);
+  color: white;
+  box-shadow: 0 4px 15px rgba(37, 211, 102, 0.3);
+}
+
+.broker-actions .btn-whatsapp:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 10px 30px rgba(37, 211, 102, 0.4);
+}
+
+.broker-actions .btn-website {
+  background: rgba(255, 255, 255, 0.1);
+  color: white;
+  border: 2px solid rgba(255, 255, 255, 0.2);
+}
+
+.broker-actions .btn-website:hover {
+  background: rgba(255, 255, 255, 0.2);
+  transform: translateY(-3px);
+}
+
+/* Modern Stats Section */
+.broker-stats {
+  background: var(--glass-bg);
+  backdrop-filter: blur(20px);
+  border: 1px solid var(--glass-border);
+  border-radius: 24px;
+  padding: 2rem;
+  margin: 2rem auto;
+  max-width: 1200px;
+  box-shadow: var(--shadow-card);
+}
+
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1.5rem;
+}
+
+.stat-card {
+  background: var(--gradient-card);
+  border: 1px solid var(--glass-border);
+  border-radius: 16px;
+  padding: 1.5rem;
+  text-align: center;
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.stat-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: var(--gradient-primary);
+  transform: scaleX(0);
+  transition: transform 0.3s ease;
+}
+
+.stat-card:hover::before {
+  transform: scaleX(1);
+}
+
+.stat-card:hover {
+  transform: translateY(-5px);
+  box-shadow: var(--shadow-hover);
+  border-color: var(--broker-primary);
+}
+
+.stat-icon {
+  font-size: 2rem;
+  margin-bottom: 1rem;
+  background: var(--gradient-primary);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.stat-value {
+  font-size: 2rem;
+  font-weight: 800;
+  color: var(--broker-text);
+  margin-bottom: 0.5rem;
+}
+
+.stat-label {
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+
+/* Modern Properties Section */
+.broker-properties-section {
+  padding: 2rem 0;
+  margin: 3rem auto;
+  max-width: 1200px;
+}
+
+.section-title {
+  font-size: 2rem;
+  font-weight: 800;
+  margin-bottom: 2rem;
+  background: var(--gradient-primary);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  animation: gradientText 3s ease infinite;
+  background-size: 200% auto;
+}
+
+.properties-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 2rem;
+}
+
+.property-card {
+  background: var(--gradient-card);
+  border: 1px solid var(--glass-border);
+  border-radius: 20px;
+  overflow: hidden;
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  box-shadow: var(--shadow-card);
+}
+
+.property-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: var(--gradient-primary);
+  transform: scaleX(0);
+  transition: transform 0.4s ease;
+}
+
+.property-card:hover::before {
+  transform: scaleX(1);
+}
+
+.property-card:hover {
+  transform: translateY(-10px);
+  box-shadow: var(--shadow-hover);
+  border-color: var(--broker-primary);
+}
+
+.property-image {
+  width: 100%;
+  height: 220px;
+  object-fit: cover;
+  position: relative;
+}
+
+.property-image-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(to top, rgba(0, 0, 0, 0.8) 0%, transparent 50%);
+}
+
+.property-content {
+  padding: 1.5rem;
+}
+
+.property-title {
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: var(--broker-text);
+  margin-bottom: 0.5rem;
+  line-height: 1.4;
+}
+
+.property-price {
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: var(--broker-primary);
+  margin-bottom: 1rem;
+  background: var(--gradient-primary);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.property-details {
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 0.9rem;
+  margin-bottom: 0.5rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.property-location {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: rgba(255, 255, 255, 0.6);
+  font-size: 0.85rem;
+  margin-bottom: 1rem;
+}
+
+.property-features {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  margin-bottom: 1rem;
+}
+
+.feature-tag {
+  background: rgba(255, 122, 0, 0.1);
+  color: var(--broker-primary);
+  padding: 0.3rem 0.8rem;
+  border-radius: 20px;
+  font-size: 0.8rem;
+  font-weight: 500;
+}
+
+.property-actions {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.property-actions .btn {
+  flex: 1;
+  padding: 0.8rem 1rem;
+  border-radius: 20px;
+  font-size: 0.9rem;
+  text-align: center;
+  text-decoration: none;
+  border: none;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.property-actions .btn-primary {
+  background: var(--gradient-primary);
+  color: white;
+}
+
+.property-actions .btn-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(255, 122, 0, 0.3);
+}
+
+.property-actions .btn-outline {
+  background: transparent;
+  border: 2px solid rgba(255, 255, 255, 0.2);
+  color: white;
+}
+
+.property-actions .btn-outline:hover {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: var(--broker-primary);
+}
+
+/* Modern Empty State */
+.empty-state {
+  background: var(--glass-bg);
+  backdrop-filter: blur(20px);
+  border: 1px solid var(--glass-border);
+  border-radius: 24px;
+  padding: 4rem 2rem;
+  text-align: center;
+  margin: 3rem auto;
+  max-width: 600px;
+  box-shadow: var(--shadow-card);
+}
+
+.empty-state i {
+  font-size: 4rem;
+  margin-bottom: 1.5rem;
+  background: var(--gradient-primary);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.empty-state h3 {
+  font-size: 1.5rem;
+  color: var(--broker-text);
+  margin-bottom: 1rem;
+}
+
+.empty-state p {
+  color: rgba(255, 255, 255, 0.7);
+  margin-bottom: 2rem;
+  font-size: 1.1rem;
+}
+
+.empty-state .btn {
+  background: var(--gradient-primary);
+  color: white;
+  padding: 1rem 2.5rem;
+  border-radius: 30px;
+  font-weight: 600;
+  text-decoration: none;
+  border: none;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: var(--shadow-glow);
+}
+
+.empty-state .btn:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 10px 30px rgba(255, 122, 0, 0.4);
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .broker-info {
+    flex-direction: column;
+    text-align: center;
+    gap: 1.5rem;
+  }
+  
+  .broker-avatar img,
+  .avatar-placeholder {
+    width: 100px;
+    height: 100px;
+  }
+  
+  .broker-details h1 {
+    font-size: 1.8rem;
+  }
+  
+  .broker-actions {
+    justify-content: center;
+  }
+  
+  .stats-grid {
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  }
+  
+  .properties-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .broker-standalone-header {
+    padding: 2rem 1rem;
+  }
+  
+  .container {
+    padding: 0 1rem;
+  }
+}
+
+/* Floating Elements */
+.floating-shapes {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 0;
+  overflow: hidden;
+}
+
+.shape {
+  position: absolute;
+  border-radius: 50%;
+  background: var(--gradient-primary);
+  opacity: 0.05;
+  animation: float 20s ease-in-out infinite;
+}
+
+.shape:nth-child(1) {
+  width: 300px;
+  height: 300px;
+  top: 10%;
+  left: 10%;
+  animation-delay: 0s;
+}
+
+.shape:nth-child(2) {
+  width: 200px;
+  height: 200px;
+  top: 60%;
+  right: 15%;
+  animation-delay: 5s;
+}
+
+.shape:nth-child(3) {
+  width: 150px;
+  height: 150px;
+  bottom: 20%;
+  left: 20%;
+  animation-delay: 10s;
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0) rotate(0deg); }
+  50% { transform: translateY(-30px) rotate(180deg); }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Floating Background Elements -->
+<div class="floating-shapes">
+  <div class="shape"></div>
+  <div class="shape"></div>
+  <div class="shape"></div>
+</div>
+
+{% if broker.banner_image %}
+<section class="broker-banner" style="background-image: url('{{ broker.banner_image.url }}'); background-size: cover; background-position: center; height: 300px; position: relative;">
+  <div style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0, 0, 0, 0.4);"></div>
+</section>
+{% endif %}
+
+<section class="broker-standalone-header" {% if broker.cover_image %}style="background-image: url('{{ broker.cover_image.url }}'); background-size: cover; background-position: center;"{% endif %}>
+  <div class="container">
+    <div class="broker-info">
+      <div class="broker-avatar">
+        {% if broker.logo %}
+        <img src="{{ broker.logo.url }}" alt="{{ broker.site_name|default:broker.display_name }}" class="logo-image">
+        {% endif %}
+        {% if broker.profile_image %}
+        <img src="{{ broker.profile_image.url }}" alt="{{ broker.display_name }}" class="avatar-image">
+        {% else %}
+        <div class="avatar-placeholder"><i class="fas fa-user"></i></div>
+        {% endif %}
+      </div>
+      <div class="broker-details">
+        {% if broker.site_name %}
+        <h1>{{ broker.site_name }}</h1>
+        {% else %}
+        <h1>{{ broker.display_name }}</h1>
+        {% endif %}
+        {% if broker.job_title %}
+        <p class="broker-role">{{ broker.job_title }}</p>
+        {% else %}
+        <p class="broker-role">{{ broker.get_role_display }}</p>
+        {% endif %}
+        {% if broker.office_name %}
+        <p class="broker-office"><i class="fas fa-building"></i> {{ broker.office_name }}</p>
+        {% endif %}
+        {% if broker.show_phone and broker.phone %}
+        <p class="broker-phone"><i class="fas fa-phone"></i> {{ broker.phone }}</p>
+        {% endif %}
+        {% if broker.governorate %}
+        <p class="broker-location"><i class="fas fa-map-marker-alt"></i> {{ broker.governorate }}</p>
+        {% endif %}
+        {% if broker.working_governorates %}
+        <p class="broker-governorates"><i class="fas fa-map"></i> {{ broker.working_governorates }}</p>
+        {% endif %}
+        {% if broker.bio %}
+        <p class="broker-bio">{{ broker.bio }}</p>
+        {% endif %}
+        {% if broker.mission %}
+        <p class="broker-mission"><i class="fas fa-bullseye"></i> {{ broker.mission }}</p>
+        {% endif %}
+        {% if broker.vision %}
+        <p class="broker-vision"><i class="fas fa-eye"></i> {{ broker.vision }}</p>
+        {% endif %}
+        {% if broker.is_verified %}
+        <span class="verified-badge"><i class="fas fa-check-circle"></i> دلال موثق</span>
+        {% endif %}
+      </div>
+      <div class="broker-actions">
+        {% if request.user.is_authenticated %}
+        <a href="{% url 'start_broker_conversation' broker.id %}" class="btn btn-primary"><i class="fas fa-comment"></i> مراسلة الدلال</a>
+        {% else %}
+        <a href="/login/?next={% url 'start_broker_conversation' broker.id %}" class="btn btn-primary"><i class="fas fa-comment"></i> مراسلة الدلال</a>
+        {% endif %}
+        {% if broker.show_phone and broker.phone %}
+        <a href="tel:{{ broker.phone }}" class="btn btn-primary"><i class="fas fa-phone"></i> اتصل الآن</a>
+        {% endif %}
+        {% if broker.show_whatsapp and broker.whatsapp %}
+        <a href="https://wa.me/{{ broker.whatsapp|cut:' ' }}" class="btn btn-whatsapp"><i class="fab fa-whatsapp"></i> واتساب</a>
+        {% endif %}
+        {% if broker.website %}
+        <a href="{{ broker.website }}" target="_blank" class="btn btn-website"><i class="fas fa-globe"></i> الموقع</a>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</section>
+
+{% if broker.show_stats %}
+<section class="broker-stats">
+  <div class="container">
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-icon"><i class="fas fa-home"></i></div>
+        <div class="stat-value">{{ property_count }}</div>
+        <div class="stat-label">عقار منشور</div>
+      </div>
+      {% if property_limit %}
+      <div class="stat-card">
+        <div class="stat-icon"><i class="fas fa-plus-circle"></i></div>
+        <div class="stat-value">{{ remaining_properties }}</div>
+        <div class="stat-label">عقار متبقي</div>
+      </div>
+      {% endif %}
+      {% if broker.years_of_experience %}
+      <div class="stat-card">
+        <div class="stat-icon"><i class="fas fa-calendar-alt"></i></div>
+        <div class="stat-value">{{ broker.years_of_experience }}</div>
+        <div class="stat-label">سنوات خبرة</div>
+      </div>
+      {% endif %}
+      {% if broker.clients_count %}
+      <div class="stat-card">
+        <div class="stat-icon"><i class="fas fa-users"></i></div>
+        <div class="stat-value">{{ broker.clients_count }}</div>
+        <div class="stat-label">عميل سعيد</div>
+      </div>
+      {% endif %}
+      <div class="stat-card">
+        <div class="stat-icon"><i class="fas fa-clock"></i></div>
+        <div class="stat-value">{{ days_elapsed }}</div>
+        <div class="stat-label">أيام منذ التسجيل</div>
+      </div>
+      {% if days_remaining %}
+      <div class="stat-card">
+        <div class="stat-icon"><i class="fas fa-hourglass-half"></i></div>
+        <div class="stat-value">{{ days_remaining }}</div>
+        <div class="stat-label">أيام متبقية</div>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+</section>
+{% endif %}
+
+{% if broker.show_contact or broker.show_social_media %}
+<section class="broker-contact-section" style="background: var(--glass-bg); backdrop-filter: blur(20px); border: 1px solid var(--glass-border); border-radius: 24px; padding: 2rem; margin: 2rem auto; max-width: 1200px; box-shadow: var(--shadow-card);">
+  <div class="container">
+    <div class="contact-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 2rem;">
+      {% if broker.show_contact %}
+      <div class="contact-card" style="background: var(--gradient-card); border: 1px solid var(--glass-border); border-radius: 16px; padding: 2rem;">
+        <h3 style="font-size: 1.5rem; font-weight: 700; margin-bottom: 1.5rem; background: var(--gradient-primary); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;"><i class="fas fa-phone-alt"></i> معلومات التواصل</h3>
+        {% if broker.show_phone and broker.phone %}
+        <p style="color: rgba(255, 255, 255, 0.8); margin: 0.8rem 0; display: flex; align-items: center; gap: 0.5rem;"><i class="fas fa-phone" style="color: var(--broker-primary);"></i> {{ broker.phone }}</p>
+        {% endif %}
+        {% if broker.show_whatsapp and broker.whatsapp %}
+        <p style="color: rgba(255, 255, 255, 0.8); margin: 0.8rem 0; display: flex; align-items: center; gap: 0.5rem;"><i class="fab fa-whatsapp" style="color: #25D366;"></i> {{ broker.whatsapp }}</p>
+        {% endif %}
+        {% if broker.telegram %}
+        <p style="color: rgba(255, 255, 255, 0.8); margin: 0.8rem 0; display: flex; align-items: center; gap: 0.5rem;"><i class="fab fa-telegram" style="color: #0088cc;"></i> {{ broker.telegram }}</p>
+        {% endif %}
+        {% if broker.show_email and broker.email %}
+        <p style="color: rgba(255, 255, 255, 0.8); margin: 0.8rem 0; display: flex; align-items: center; gap: 0.5rem;"><i class="fas fa-envelope" style="color: var(--broker-primary);"></i> {{ broker.email }}</p>
+        {% endif %}
+        {% if broker.website %}
+        <p style="color: rgba(255, 255, 255, 0.8); margin: 0.8rem 0; display: flex; align-items: center; gap: 0.5rem;"><i class="fas fa-globe" style="color: var(--broker-primary);"></i> <a href="{{ broker.website }}" target="_blank" style="color: var(--broker-primary); text-decoration: none;">{{ broker.website }}</a></p>
+        {% endif %}
+        {% if broker.show_address and broker.address %}
+        <p style="color: rgba(255, 255, 255, 0.8); margin: 0.8rem 0; display: flex; align-items: center; gap: 0.5rem;"><i class="fas fa-map-marker-alt" style="color: var(--broker-primary);"></i> {{ broker.address }}</p>
+        {% endif %}
+        {% if broker.show_working_hours and broker.working_hours %}
+        <p style="color: rgba(255, 255, 255, 0.8); margin: 0.8rem 0; display: flex; align-items: center; gap: 0.5rem;"><i class="fas fa-clock" style="color: var(--broker-primary);"></i> {{ broker.working_hours }}</p>
+        {% endif %}
+        {% if broker.google_maps_url %}
+        <a href="{{ broker.google_maps_url }}" target="_blank" class="btn btn-maps" style="display: inline-block; margin-top: 1rem; padding: 0.8rem 1.5rem; background: var(--gradient-primary); color: white; border-radius: 20px; text-decoration: none; font-weight: 600; box-shadow: var(--shadow-glow); transition: all 0.3s ease;"><i class="fas fa-map"></i> عرض على الخريطة</a>
+        {% endif %}
+      </div>
+      {% endif %}
+      
+      {% if broker.show_social_media %}
+      <div class="social-card" style="background: var(--gradient-card); border: 1px solid var(--glass-border); border-radius: 16px; padding: 2rem;">
+        <h3 style="font-size: 1.5rem; font-weight: 700; margin-bottom: 1.5rem; background: var(--gradient-primary); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;"><i class="fas fa-share-alt"></i> تابعنا على</h3>
+        <div class="social-links" style="display: flex; gap: 1rem; flex-wrap: wrap;">
+          {% if broker.facebook %}
+          <a href="{{ broker.facebook }}" target="_blank" class="social-link facebook" style="width: 50px; height: 50px; background: linear-gradient(135deg, #1877F2 0%, #42A5F5 100%); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-size: 1.2rem; text-decoration: none; transition: all 0.3s ease; box-shadow: 0 4px 15px rgba(24, 119, 242, 0.3);"><i class="fab fa-facebook-f"></i></a>
+          {% endif %}
+          {% if broker.instagram %}
+          <a href="{{ broker.instagram }}" target="_blank" class="social-link instagram" style="width: 50px; height: 50px; background: linear-gradient(135deg, #E4405F 0%, #C13584 50%, #833AB4 100%); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-size: 1.2rem; text-decoration: none; transition: all 0.3s ease; box-shadow: 0 4px 15px rgba(228, 64, 95, 0.3);"><i class="fab fa-instagram"></i></a>
+          {% endif %}
+          {% if broker.twitter %}
+          <a href="{{ broker.twitter }}" target="_blank" class="social-link twitter" style="width: 50px; height: 50px; background: linear-gradient(135deg, #1DA1F2 0%, #0D8BD9 100%); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-size: 1.2rem; text-decoration: none; transition: all 0.3s ease; box-shadow: 0 4px 15px rgba(29, 161, 242, 0.3);"><i class="fab fa-twitter"></i></a>
+          {% endif %}
+          {% if broker.youtube %}
+          <a href="{{ broker.youtube }}" target="_blank" class="social-link youtube" style="width: 50px; height: 50px; background: linear-gradient(135deg, #FF0000 0%, #CC0000 100%); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-size: 1.2rem; text-decoration: none; transition: all 0.3s ease; box-shadow: 0 4px 15px rgba(255, 0, 0, 0.3);"><i class="fab fa-youtube"></i></a>
+          {% endif %}
+          {% if broker.tiktok %}
+          <a href="{{ broker.tiktok }}" target="_blank" class="social-link tiktok" style="width: 50px; height: 50px; background: linear-gradient(135deg, #000000 0%, #25F4EE 50%, #FE2C55 100%); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-size: 1.2rem; text-decoration: none; transition: all 0.3s ease; box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);"><i class="fab fa-tiktok"></i></a>
+          {% endif %}
+          {% if broker.snapchat %}
+          <a href="{{ broker.snapchat }}" target="_blank" class="social-link snapchat" style="width: 50px; height: 50px; background: linear-gradient(135deg, #FFFC00 0%, #FF9900 100%); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: black; font-size: 1.2rem; text-decoration: none; transition: all 0.3s ease; box-shadow: 0 4px 15px rgba(255, 252, 0, 0.3);"><i class="fab fa-snapchat-ghost"></i></a>
+          {% endif %}
+          {% if broker.linkedin %}
+          <a href="{{ broker.linkedin }}" target="_blank" class="social-link linkedin" style="width: 50px; height: 50px; background: linear-gradient(135deg, #0077B5 0%, #00A0DC 100%); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-size: 1.2rem; text-decoration: none; transition: all 0.3s ease; box-shadow: 0 4px 15px rgba(0, 119, 181, 0.3);"><i class="fab fa-linkedin-in"></i></a>
+          {% endif %}
+        </div>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+</section>
+{% endif %}
+
+{% if broker.show_properties %}
+<section class="broker-properties-section">
+  <div class="container">
+    <h2 class="section-title">عقارات {{ broker.display_name }}</h2>
+    
+    {% if properties %}
+    <div class="properties-grid">
+      {% for property in properties %}
+      <div class="property-card">
+        <a href="/property/{{ property.id }}/" class="property-link" style="text-decoration: none; color: inherit;">
+          <div class="property-image-wrapper">
+            {% if property.cover_image %}
+            <img src="{{ property.cover_image.url }}" alt="{{ property.display_title }}" class="property-image">
+            <div class="property-image-overlay"></div>
+            {% else %}
+            <div class="property-placeholder" style="width: 100%; height: 220px; background: var(--gradient-card); display: flex; align-items: center; justify-content: center; font-size: 4rem; color: var(--broker-primary);"><i class="fas fa-home"></i></div>
+            {% endif %}
+            {% if property.is_featured %}
+            <div class="featured-badge" style="position: absolute; top: 15px; right: 15px; background: var(--gradient-primary); color: white; padding: 0.5rem 1rem; border-radius: 20px; font-size: 0.8rem; font-weight: 600; box-shadow: 0 4px 15px rgba(255, 122, 0, 0.3); z-index: 10;"><i class="fas fa-star"></i> مميز</div>
+            {% endif %}
+            {% if property.status == 'sold' %}
+            <div class="sold-badge" style="position: absolute; top: 15px; left: 15px; background: rgba(239, 68, 68, 0.9); color: white; padding: 0.5rem 1rem; border-radius: 20px; font-size: 0.8rem; font-weight: 600; box-shadow: 0 4px 15px rgba(239, 68, 68, 0.3); z-index: 10;"><i class="fas fa-handshake"></i> تم البيع</div>
+            {% endif %}
+          </div>
+          <div class="property-content">
+            <h3 class="property-title">{{ property.display_title }}</h3>
+            <div class="property-location"><i class="fas fa-map-marker-alt" style="color: var(--broker-primary);"></i> {{ property.district }}{% if property.city %}, {{ property.city }}{% endif %}</div>
+            <div class="property-price">{{ property.price|floatformat:0 }} د.ع</div>
+            <div class="property-details">
+              {% if property.area %}
+              <span><i class="fas fa-ruler-combined" style="color: var(--broker-primary);"></i> {{ property.area }} م²</span>
+              {% endif %}
+              {% if property.bedrooms %}
+              <span><i class="fas fa-bed" style="color: var(--broker-primary);"></i> {{ property.bedrooms }} غرفة</span>
+              {% endif %}
+              {% if property.bathrooms %}
+              <span><i class="fas fa-bath" style="color: var(--broker-primary);"></i> {{ property.bathrooms }} حمام</span>
+              {% endif %}
+            </div>
+            <div class="property-features">
+              {% if property.floor_number %}
+              <span class="feature-tag">الطابق {{ property.floor_number }}</span>
+              {% endif %}
+              {% if property.parking_spaces %}
+              <span class="feature-tag">{{ property.parking_spaces }} موقف</span>
+              {% endif %}
+              {% if property.furnished %}
+              <span class="feature-tag">مفروش</span>
+              {% endif %}
+              {% if property.has_ac %}
+              <span class="feature-tag">مكيف</span>
+              {% endif %}
+            </div>
+            <div class="property-actions">
+              <a href="/property/{{ property.id }}/" class="btn btn-primary">التفاصيل</a>
+              <a href="tel:{{ broker.phone }}" class="btn btn-outline"><i class="fas fa-phone"></i> اتصل</a>
+            </div>
+          </div>
+        </a>
+      </div>
+      {% endfor %}
+    </div>
+    
+    {% if page_obj.has_other_pages %}
+    <div class="pagination" style="display: flex; justify-content: center; align-items: center; gap: 1rem; margin-top: 3rem; flex-wrap: wrap;">
+      {% if page_obj.has_previous %}
+      <a href="?page={{ page_obj.previous_page_number }}{% if query_string %}&{{ query_string }}{% endif %}" class="btn btn-outline" style="background: transparent; border: 2px solid rgba(255, 255, 255, 0.2); color: white; padding: 0.8rem 1.5rem; border-radius: 20px; text-decoration: none; transition: all 0.3s ease;"><i class="fas fa-chevron-right"></i> السابق</a>
+      {% endif %}
+      
+      <span class="page-info" style="color: rgba(255, 255, 255, 0.8); font-size: 1rem;">صفحة {{ page_obj.number }} من {{ page_obj.paginator.num_pages }}</span>
+      
+      {% if page_obj.has_next %}
+      <a href="?page={{ page_obj.next_page_number }}{% if query_string %}&{{ query_string }}{% endif %}" class="btn btn-outline" style="background: transparent; border: 2px solid rgba(255, 255, 255, 0.2); color: white; padding: 0.8rem 1.5rem; border-radius: 20px; text-decoration: none; transition: all 0.3s ease;">التالي <i class="fas fa-chevron-left"></i></a>
+      {% endif %}
+    </div>
+    {% endif %}
+    {% else %}
+    <div class="empty-state">
+      <i class="fas fa-home"></i>
+      <h3>لا توجد عقارات منشورة حالياً</h3>
+      <p>لم يقم الدلال بنشر أي عقارات حتى الآن</p>
+    </div>
+    {% endif %}
+  </div>
+</section>
+{% endif %}
+
+<!-- About Section -->
+{% if broker.bio or broker.mission or broker.vision %}
+<section class="about-section" style="background: var(--glass-bg); backdrop-filter: blur(20px); border: 1px solid var(--glass-border); border-radius: 24px; padding: 3rem 2rem; margin: 3rem auto; max-width: 1200px; box-shadow: var(--shadow-card);">
+  <div class="container">
+    <h2 class="section-title">نبذة عني</h2>
+    <div class="about-content" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 2rem;">
+      {% if broker.bio %}
+      <div class="about-text" style="color: rgba(255, 255, 255, 0.8); line-height: 1.8; font-size: 1.1rem;">
+        <h3 style="font-size: 1.3rem; font-weight: 700; margin-bottom: 1rem; color: var(--text);"><i class="fas fa-user" style="color: var(--broker-primary);"></i> من أنا</h3>
+        <p>{{ broker.bio }}</p>
+      </div>
+      {% endif %}
+      {% if broker.mission %}
+      <div class="about-mission" style="color: rgba(255, 255, 255, 0.8); line-height: 1.8; font-size: 1.1rem;">
+        <h3 style="font-size: 1.3rem; font-weight: 700; margin-bottom: 1rem; color: var(--text);"><i class="fas fa-bullseye" style="color: var(--broker-primary);"></i> مهمتي</h3>
+        <p>{{ broker.mission }}</p>
+      </div>
+      {% endif %}
+      {% if broker.vision %}
+      <div class="about-vision" style="color: rgba(255, 255, 255, 0.8); line-height: 1.8; font-size: 1.1rem;">
+        <h3 style="font-size: 1.3rem; font-weight: 700; margin-bottom: 1rem; color: var(--text);"><i class="fas fa-eye" style="color: var(--broker-primary);"></i> رؤيتي</h3>
+        <p>{{ broker.vision }}</p>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+</section>
+{% endif %}
+
+<!-- Services Section -->
+<section class="services-section" style="background: var(--glass-bg); backdrop-filter: blur(20px); border: 1px solid var(--glass-border); border-radius: 24px; padding: 3rem 2rem; margin: 3rem auto; max-width: 1200px; box-shadow: var(--shadow-card);">
+  <div class="container">
+    <h2 class="section-title">خدماتي</h2>
+    <div class="services-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1.5rem;">
+      <div class="service-card" style="background: var(--gradient-card); border: 1px solid var(--glass-border); border-radius: 16px; padding: 1.5rem; text-align: center; transition: all 0.3s ease;">
+        <div class="service-icon" style="font-size: 2.5rem; margin-bottom: 1rem; background: var(--gradient-primary); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;"><i class="fas fa-home"></i></div>
+        <h3 style="font-size: 1.1rem; font-weight: 700; margin-bottom: 0.5rem; color: var(--text);">بيع العقارات</h3>
+        <p style="color: rgba(255, 255, 255, 0.7); font-size: 0.9rem;">مساعدة في بيع عقاراتك بأفضل الأسعار</p>
+      </div>
+      <div class="service-card" style="background: var(--gradient-card); border: 1px solid var(--glass-border); border-radius: 16px; padding: 1.5rem; text-align: center; transition: all 0.3s ease;">
+        <div class="service-icon" style="font-size: 2.5rem; margin-bottom: 1rem; background: var(--gradient-primary); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;"><i class="fas fa-key"></i></div>
+        <h3 style="font-size: 1.1rem; font-weight: 700; margin-bottom: 0.5rem; color: var(--text);">شراء العقارات</h3>
+        <p style="color: rgba(255, 255, 255, 0.7); font-size: 0.9rem;">البحث عن العقارات المناسبة لك</p>
+      </div>
+      <div class="service-card" style="background: var(--gradient-card); border: 1px solid var(--glass-border); border-radius: 16px; padding: 1.5rem; text-align: center; transition: all 0.3s ease;">
+        <div class="service-icon" style="font-size: 2.5rem; margin-bottom: 1rem; background: var(--gradient-primary); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;"><i class="fas fa-exchange-alt"></i></div>
+        <h3 style="font-size: 1.1rem; font-weight: 700; margin-bottom: 0.5rem; color: var(--text);">الإيجار</h3>
+        <p style="color: rgba(255, 255, 255, 0.7); font-size: 0.9rem;">تأجير العقارات بأفضل الشروط</p>
+      </div>
+      <div class="service-card" style="background: var(--gradient-card); border: 1px solid var(--glass-border); border-radius: 16px; padding: 1.5rem; text-align: center; transition: all 0.3s ease;">
+        <div class="service-icon" style="font-size: 2.5rem; margin-bottom: 1rem; background: var(--gradient-primary); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;"><i class="fas fa-chart-line"></i></div>
+        <h3 style="font-size: 1.1rem; font-weight: 700; margin-bottom: 0.5rem; color: var(--text);">الاستشارات</h3>
+        <p style="color: rgba(255, 255, 255, 0.7); font-size: 0.9rem;">استشارات عقارية احترافية</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Contact Form Section -->
+<section class="contact-form-section" style="background: var(--glass-bg); backdrop-filter: blur(20px); border: 1px solid var(--glass-border); border-radius: 24px; padding: 3rem 2rem; margin: 3rem auto; max-width: 1200px; box-shadow: var(--shadow-card);">
+  <div class="container">
+    <h2 class="section-title">تواصل معي</h2>
+    <div class="contact-form-wrapper" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 2rem;">
+      <div class="contact-info" style="color: rgba(255, 255, 255, 0.8);">
+        <h3 style="font-size: 1.3rem; font-weight: 700; margin-bottom: 1.5rem; color: var(--text);">معلومات التواصل</h3>
+        {% if broker.phone %}
+        <div style="margin-bottom: 1rem; display: flex; align-items: center; gap: 1rem;">
+          <i class="fas fa-phone" style="color: var(--broker-primary); font-size: 1.2rem;"></i>
+          <span>{{ broker.phone }}</span>
+        </div>
+        {% endif %}
+        {% if broker.whatsapp %}
+        <div style="margin-bottom: 1rem; display: flex; align-items: center; gap: 1rem;">
+          <i class="fab fa-whatsapp" style="color: #25D366; font-size: 1.2rem;"></i>
+          <span>{{ broker.whatsapp }}</span>
+        </div>
+        {% endif %}
+        {% if broker.email %}
+        <div style="margin-bottom: 1rem; display: flex; align-items: center; gap: 1rem;">
+          <i class="fas fa-envelope" style="color: var(--broker-primary); font-size: 1.2rem;"></i>
+          <span>{{ broker.email }}</span>
+        </div>
+        {% endif %}
+        {% if broker.governorate %}
+        <div style="margin-bottom: 1rem; display: flex; align-items: center; gap: 1rem;">
+          <i class="fas fa-map-marker-alt" style="color: var(--broker-primary); font-size: 1.2rem;"></i>
+          <span>{{ broker.governorate }}</span>
+        </div>
+        {% endif %}
+        {% if broker.working_hours %}
+        <div style="margin-bottom: 1rem; display: flex; align-items: center; gap: 1rem;">
+          <i class="fas fa-clock" style="color: var(--broker-primary); font-size: 1.2rem;"></i>
+          <span>{{ broker.working_hours }}</span>
+        </div>
+        {% endif %}
+      </div>
+      <form class="contact-form" style="display: flex; flex-direction: column; gap: 1rem;">
+        <div class="form-group">
+          <label style="color: var(--text-muted); margin-bottom: 0.5rem; font-size: 0.9rem;">الاسم</label>
+          <input type="text" class="form-control" style="background: var(--bg-secondary); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 0.8rem 1rem; color: var(--text); width: 100%;" placeholder="أدخل اسمك">
+        </div>
+        <div class="form-group">
+          <label style="color: var(--text-muted); margin-bottom: 0.5rem; font-size: 0.9rem;">البريد الإلكتروني</label>
+          <input type="email" class="form-control" style="background: var(--bg-secondary); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 0.8rem 1rem; color: var(--text); width: 100%;" placeholder="أدخل بريدك الإلكتروني">
+        </div>
+        <div class="form-group">
+          <label style="color: var(--text-muted); margin-bottom: 0.5rem; font-size: 0.9rem;">رقم الهاتف</label>
+          <input type="tel" class="form-control" style="background: var(--bg-secondary); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 0.8rem 1rem; color: var(--text); width: 100%;" placeholder="أدخل رقم هاتفك">
+        </div>
+        <div class="form-group">
+          <label style="color: var(--text-muted); margin-bottom: 0.5rem; font-size: 0.9rem;">الرسالة</label>
+          <textarea class="form-control" style="background: var(--bg-secondary); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 0.8rem 1rem; color: var(--text); width: 100%; min-height: 120px;" placeholder="اكتب رسالتك هنا..."></textarea>
+        </div>
+        <button type="submit" class="btn btn-primary" style="justify-content: center; width: 100%;">
+          <i class="fas fa-paper-plane"></i> إرسال الرسالة
+        </button>
+      </form>
+    </div>
+  </div>
+</section>
+
+<!-- WhatsApp Floating Button -->
+{% if broker.whatsapp %}
+<div class="whatsapp-float" style="position: fixed; bottom: 30px; left: 30px; z-index: 1000;">
+  <a href="https://wa.me/{{ broker.whatsapp|cut:' ' }}" target="_blank" style="display: flex; align-items: center; justify-content: center; width: 60px; height: 60px; background: linear-gradient(135deg, #25D366 0%, #128C7E 100%); border-radius: 50%; box-shadow: 0 4px 20px rgba(37, 211, 102, 0.4); text-decoration: none; transition: all 0.3s ease; animation: pulse 2s infinite;">
+    <i class="fab fa-whatsapp" style="color: white; font-size: 2rem;"></i>
+  </a>
+</div>
+{% endif %}
+
+<style>
+.whatsapp-float a:hover {
+  transform: scale(1.1);
+  box-shadow: 0 6px 30px rgba(37, 211, 102, 0.5);
+}
+
+@keyframes pulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.05); }
+}
+
+.service-card:hover {
+  transform: translateY(-5px);
+  box-shadow: var(--shadow-hover);
+  border-color: var(--primary);
+}
+
+.contact-form .form-control:focus {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(255, 122, 0, 0.2);
+}
+
+.sold-badge {
+  position: absolute;
+  top: 15px;
+  left: 15px;
+  background: rgba(239, 68, 68, 0.9);
+  color: white;
+  padding: 0.5rem 1rem;
+  border-radius: 20px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  box-shadow: 0 4px 15px rgba(239, 68, 68, 0.3);
+  z-index: 10;
+}
+
+{% if broker.show_properties %}
+<section class="broker-properties-section">
+  <div class="container">
+    <h2 class="section-title">عقارات {{ broker.display_name }}</h2>
+    
+    {% if properties %}
+    <div class="properties-grid">
+      {% for property in properties %}
+      <div class="property-card">
+        <a href="/property/{{ property.id }}/" class="property-link" style="text-decoration: none; color: inherit;">
+          <div class="property-image-wrapper">
+            {% if property.cover_image %}
+            <img src="{{ property.cover_image.url }}" alt="{{ property.display_title }}" class="property-image">
+            <div class="property-image-overlay"></div>
+            {% else %}
+            <div class="property-placeholder" style="width: 100%; height: 220px; background: var(--gradient-card); display: flex; align-items: center; justify-content: center; font-size: 4rem; color: var(--broker-primary);"><i class="fas fa-home"></i></div>
+            {% endif %}
+            {% if property.is_featured %}
+            <div class="featured-badge" style="position: absolute; top: 15px; right: 15px; background: var(--gradient-primary); color: white; padding: 0.5rem 1rem; border-radius: 20px; font-size: 0.8rem; font-weight: 600; box-shadow: 0 4px 15px rgba(255, 122, 0, 0.3); z-index: 10;"><i class="fas fa-star"></i> مميز</div>
+            {% endif %}
+            {% if property.status == 'sold' %}
+            <div class="sold-badge" style="position: absolute; top: 15px; left: 15px; background: rgba(239, 68, 68, 0.9); color: white; padding: 0.5rem 1rem; border-radius: 20px; font-size: 0.8rem; font-weight: 600; box-shadow: 0 4px 15px rgba(239, 68, 68, 0.3); z-index: 10;"><i class="fas fa-handshake"></i> تم البيع</div>
+            {% endif %}
+          </div>
+          <div class="property-content">
+            <h3 class="property-title">{{ property.display_title }}</h3>
+            <div class="property-location"><i class="fas fa-map-marker-alt" style="color: var(--broker-primary);"></i> {{ property.district }}{% if property.city %}, {{ property.city }}{% endif %}</div>
+            <div class="property-price">{{ property.price|floatformat:0 }} د.ع</div>
+            <div class="property-details">
+              {% if property.area %}
+              <span><i class="fas fa-ruler-combined" style="color: var(--broker-primary);"></i> {{ property.area }} م²</span>
+              {% endif %}
+              {% if property.bedrooms %}
+              <span><i class="fas fa-bed" style="color: var(--broker-primary);"></i> {{ property.bedrooms }} غرفة</span>
+              {% endif %}
+              {% if property.bathrooms %}
+              <span><i class="fas fa-bath" style="color: var(--broker-primary);"></i> {{ property.bathrooms }} حمام</span>
+              {% endif %}
+            </div>
+            <div class="property-features">
+              {% if property.floor_number %}
+              <span class="feature-tag">الطابق {{ property.floor_number }}</span>
+              {% endif %}
+              {% if property.parking_spaces %}
+              <span class="feature-tag">{{ property.parking_spaces }} موقف</span>
+              {% endif %}
+              {% if property.furnished %}
+              <span class="feature-tag">مفروش</span>
+              {% endif %}
+              {% if property.has_ac %}
+              <span class="feature-tag">مكيف</span>
+              {% endif %}
+            </div>
+            <div class="property-actions">
+              <a href="/property/{{ property.id }}/" class="btn btn-primary">التفاصيل</a>
+              <a href="tel:{{ broker.phone }}" class="btn btn-outline"><i class="fas fa-phone"></i> اتصل</a>
+            </div>
+          </div>
+        </a>
+      </div>
+      {% endfor %}
+    </div>
+    
+    {% if page_obj.has_other_pages %}
+    <div class="pagination" style="display: flex; justify-content: center; align-items: center; gap: 1rem; margin-top: 3rem; flex-wrap: wrap;">
+      {% if page_obj.has_previous %}
+      <a href="?page={{ page_obj.previous_page_number }}{% if query_string %}&{{ query_string }}{% endif %}" class="btn btn-outline" style="background: transparent; border: 2px solid rgba(255, 255, 255, 0.2); color: white; padding: 0.8rem 1.5rem; border-radius: 20px; text-decoration: none; transition: all 0.3s ease;"><i class="fas fa-chevron-right"></i> السابق</a>
+      {% endif %}
+      
+      <span class="page-info" style="color: rgba(255, 255, 255, 0.8); font-size: 1rem;">صفحة {{ page_obj.number }} من {{ page_obj.paginator.num_pages }}</span>
+      
+      {% if page_obj.has_next %}
+      <a href="?page={{ page_obj.next_page_number }}{% if query_string %}&{{ query_string }}{% endif %}" class="btn btn-outline" style="background: transparent; border: 2px solid rgba(255, 255, 255, 0.2); color: white; padding: 0.8rem 1.5rem; border-radius: 20px; text-decoration: none; transition: all 0.3s ease;">التالي <i class="fas fa-chevron-left"></i></a>
+      {% endif %}
+    </div>
+    {% endif %}
+    {% else %}
+    <div class="empty-state">
+      <i class="fas fa-home"></i>
+      <h3>لا توجد عقارات منشورة حالياً</h3>
+      <p>لم يقم الدلال بنشر أي عقارات حتى الآن</p>
+    </div>
+    {% endif %}
+  </div>
+</section>
+{% endif %}
+
+<!-- About Section -->
+{% if broker.bio or broker.mission or broker.vision %}
+<section class="about-section" style="background: var(--glass-bg); backdrop-filter: blur(20px); border: 1px solid var(--glass-border); border-radius: 24px; padding: 3rem 2rem; margin: 3rem auto; max-width: 1200px; box-shadow: var(--shadow-card);">
+  <div class="container">
+    <h2 class="section-title">نبذة عني</h2>
+    <div class="about-content" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 2rem;">
+      {% if broker.bio %}
+      <div class="about-text" style="color: rgba(255, 255, 255, 0.8); line-height: 1.8; font-size: 1.1rem;">
+        <h3 style="font-size: 1.3rem; font-weight: 700; margin-bottom: 1rem; color: var(--text);"><i class="fas fa-user" style="color: var(--broker-primary);"></i> من أنا</h3>
+        <p>{{ broker.bio }}</p>
+      </div>
+      {% endif %}
+      {% if broker.mission %}
+      <div class="about-mission" style="color: rgba(255, 255, 255, 0.8); line-height: 1.8; font-size: 1.1rem;">
+        <h3 style="font-size: 1.3rem; font-weight: 700; margin-bottom: 1rem; color: var(--text);"><i class="fas fa-bullseye" style="color: var(--broker-primary);"></i> مهمتي</h3>
+        <p>{{ broker.mission }}</p>
+      </div>
+      {% endif %}
+      {% if broker.vision %}
+      <div class="about-vision" style="color: rgba(255, 255, 255, 0.8); line-height: 1.8; font-size: 1.1rem;">
+        <h3 style="font-size: 1.3rem; font-weight: 700; margin-bottom: 1rem; color: var(--text);"><i class="fas fa-eye" style="color: var(--broker-primary);"></i> رؤيتي</h3>
+        <p>{{ broker.vision }}</p>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+</section>
+{% endif %}
+
+<!-- Services Section -->
+<section class="services-section" style="background: var(--glass-bg); backdrop-filter: blur(20px); border: 1px solid var(--glass-border); border-radius: 24px; padding: 3rem 2rem; margin: 3rem auto; max-width: 1200px; box-shadow: var(--shadow-card);">
+  <div class="container">
+    <h2 class="section-title">خدماتي</h2>
+    <div class="services-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1.5rem;">
+      <div class="service-card" style="background: var(--gradient-card); border: 1px solid var(--glass-border); border-radius: 16px; padding: 1.5rem; text-align: center; transition: all 0.3s ease;">
+        <div class="service-icon" style="font-size: 2.5rem; margin-bottom: 1rem; background: var(--gradient-primary); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;"><i class="fas fa-home"></i></div>
+        <h3 style="font-size: 1.1rem; font-weight: 700; margin-bottom: 0.5rem; color: var(--text);">بيع العقارات</h3>
+        <p style="color: rgba(255, 255, 255, 0.7); font-size: 0.9rem;">مساعدة في بيع عقاراتك بأفضل الأسعار</p>
+      </div>
+      <div class="service-card" style="background: var(--gradient-card); border: 1px solid var(--glass-border); border-radius: 16px; padding: 1.5rem; text-align: center; transition: all 0.3s ease;">
+        <div class="service-icon" style="font-size: 2.5rem; margin-bottom: 1rem; background: var(--gradient-primary); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;"><i class="fas fa-key"></i></div>
+        <h3 style="font-size: 1.1rem; font-weight: 700; margin-bottom: 0.5rem; color: var(--text);">شراء العقارات</h3>
+        <p style="color: rgba(255, 255, 255, 0.7); font-size: 0.9rem;">البحث عن العقارات المناسبة لك</p>
+      </div>
+      <div class="service-card" style="background: var(--gradient-card); border: 1px solid var(--glass-border); border-radius: 16px; padding: 1.5rem; text-align: center; transition: all 0.3s ease;">
+        <div class="service-icon" style="font-size: 2.5rem; margin-bottom: 1rem; background: var(--gradient-primary); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;"><i class="fas fa-exchange-alt"></i></div>
+        <h3 style="font-size: 1.1rem; font-weight: 700; margin-bottom: 0.5rem; color: var(--text);">الإيجار</h3>
+        <p style="color: rgba(255, 255, 255, 0.7); font-size: 0.9rem;">تأجير العقارات بأفضل الشروط</p>
+      </div>
+      <div class="service-card" style="background: var(--gradient-card); border: 1px solid var(--glass-border); border-radius: 16px; padding: 1.5rem; text-align: center; transition: all 0.3s ease;">
+        <div class="service-icon" style="font-size: 2.5rem; margin-bottom: 1rem; background: var(--gradient-primary); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;"><i class="fas fa-chart-line"></i></div>
+        <h3 style="font-size: 1.1rem; font-weight: 700; margin-bottom: 0.5rem; color: var(--text);">الاستشارات</h3>
+        <p style="color: rgba(255, 255, 255, 0.7); font-size: 0.9rem;">استشارات عقارية احترافية</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Contact Form Section -->
+<section class="contact-form-section" style="background: var(--glass-bg); backdrop-filter: blur(20px); border: 1px solid var(--glass-border); border-radius: 24px; padding: 3rem 2rem; margin: 3rem auto; max-width: 1200px; box-shadow: var(--shadow-card);">
+  <div class="container">
+    <h2 class="section-title">تواصل معي</h2>
+    <div class="contact-form-wrapper" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 2rem;">
+      <div class="contact-info" style="color: rgba(255, 255, 255, 0.8);">
+        <h3 style="font-size: 1.3rem; font-weight: 700; margin-bottom: 1.5rem; color: var(--text);">معلومات التواصل</h3>
+        {% if broker.phone %}
+        <div style="margin-bottom: 1rem; display: flex; align-items: center; gap: 1rem;">
+          <i class="fas fa-phone" style="color: var(--broker-primary); font-size: 1.2rem;"></i>
+          <span>{{ broker.phone }}</span>
+        </div>
+        {% endif %}
+        {% if broker.whatsapp %}
+        <div style="margin-bottom: 1rem; display: flex; align-items: center; gap: 1rem;">
+          <i class="fab fa-whatsapp" style="color: #25D366; font-size: 1.2rem;"></i>
+          <span>{{ broker.whatsapp }}</span>
+        </div>
+        {% endif %}
+        {% if broker.email %}
+        <div style="margin-bottom: 1rem; display: flex; align-items: center; gap: 1rem;">
+          <i class="fas fa-envelope" style="color: var(--broker-primary); font-size: 1.2rem;"></i>
+          <span>{{ broker.email }}</span>
+        </div>
+        {% endif %}
+        {% if broker.governorate %}
+        <div style="margin-bottom: 1rem; display: flex; align-items: center; gap: 1rem;">
+          <i class="fas fa-map-marker-alt" style="color: var(--broker-primary); font-size: 1.2rem;"></i>
+          <span>{{ broker.governorate }}</span>
+        </div>
+        {% endif %}
+        {% if broker.working_hours %}
+        <div style="margin-bottom: 1rem; display: flex; align-items: center; gap: 1rem;">
+          <i class="fas fa-clock" style="color: var(--broker-primary); font-size: 1.2rem;"></i>
+          <span>{{ broker.working_hours }}</span>
+        </div>
+        {% endif %}
+      </div>
+      <form class="contact-form" style="display: flex; flex-direction: column; gap: 1rem;">
+        <div class="form-group">
+          <label style="color: var(--text-muted); margin-bottom: 0.5rem; font-size: 0.9rem;">الاسم</label>
+          <input type="text" class="form-control" style="background: var(--bg-secondary); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 0.8rem 1rem; color: var(--text); width: 100%;" placeholder="أدخل اسمك">
+        </div>
+        <div class="form-group">
+          <label style="color: var(--text-muted); margin-bottom: 0.5rem; font-size: 0.9rem;">البريد الإلكتروني</label>
+          <input type="email" class="form-control" style="background: var(--bg-secondary); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 0.8rem 1rem; color: var(--text); width: 100%;" placeholder="أدخل بريدك الإلكتروني">
+        </div>
+        <div class="form-group">
+          <label style="color: var(--text-muted); margin-bottom: 0.5rem; font-size: 0.9rem;">رقم الهاتف</label>
+          <input type="tel" class="form-control" style="background: var(--bg-secondary); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 0.8rem 1rem; color: var(--text); width: 100%;" placeholder="أدخل رقم هاتفك">
+        </div>
+        <div class="form-group">
+          <label style="color: var(--text-muted); margin-bottom: 0.5rem; font-size: 0.9rem;">الرسالة</label>
+          <textarea class="form-control" style="background: var(--bg-secondary); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 0.8rem 1rem; color: var(--text); width: 100%; min-height: 120px;" placeholder="اكتب رسالتك هنا..."></textarea>
+        </div>
+        <button type="submit" class="btn btn-primary" style="justify-content: center; width: 100%;">
+          <i class="fas fa-paper-plane"></i> إرسال الرسالة
+        </button>
+      </form>
+    </div>
+  </div>
+</section>
+
+<!-- WhatsApp Floating Button -->
+{% if broker.whatsapp %}
+<div class="whatsapp-float" style="position: fixed; bottom: 30px; left: 30px; z-index: 1000;">
+  <a href="https://wa.me/{{ broker.whatsapp|cut:' ' }}" target="_blank" style="display: flex; align-items: center; justify-content: center; width: 60px; height: 60px; background: linear-gradient(135deg, #25D366 0%, #128C7E 100%); border-radius: 50%; box-shadow: 0 4px 20px rgba(37, 211, 102, 0.4); text-decoration: none; transition: all 0.3s ease; animation: pulse 2s infinite;">
+    <i class="fab fa-whatsapp" style="color: white; font-size: 2rem;"></i>
+  </a>
+</div>
+{% endif %}
+
+<section class="broker-share-section" style="background: var(--glass-bg); backdrop-filter: blur(20px); border: 1px solid var(--glass-border); border-radius: 24px; padding: 2rem; margin: 3rem auto; max-width: 1200px; box-shadow: var(--shadow-card);">
+  <div class="container">
+    <div class="share-card" style="text-align: center;">
+      <h3 style="font-size: 1.5rem; font-weight: 700; margin-bottom: 1.5rem; background: var(--gradient-primary); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;"><i class="fas fa-share-alt"></i> مشاركة الصفحة</h3>
+      <div class="share-buttons" style="display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap; margin-bottom: 2rem;">
+        <button onclick="sharePage('facebook')" class="share-btn facebook" style="width: 50px; height: 50px; background: linear-gradient(135deg, #1877F2 0%, #42A5F5 100%); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-size: 1.2rem; border: none; cursor: pointer; transition: all 0.3s ease; box-shadow: 0 4px 15px rgba(24, 119, 242, 0.3);"><i class="fab fa-facebook-f"></i></button>
+        <button onclick="sharePage('twitter')" class="share-btn twitter" style="width: 50px; height: 50px; background: linear-gradient(135deg, #1DA1F2 0%, #0D8BD9 100%); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-size: 1.2rem; border: none; cursor: pointer; transition: all 0.3s ease; box-shadow: 0 4px 15px rgba(29, 161, 242, 0.3);"><i class="fab fa-twitter"></i></button>
+        <button onclick="sharePage('whatsapp')" class="share-btn whatsapp" style="width: 50px; height: 50px; background: linear-gradient(135deg, #25D366 0%, #128C7E 100%); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-size: 1.2rem; border: none; cursor: pointer; transition: all 0.3s ease; box-shadow: 0 4px 15px rgba(37, 211, 102, 0.3);"><i class="fab fa-whatsapp"></i></button>
+        <button onclick="copyLink()" class="share-btn copy" style="width: 50px; height: 50px; background: var(--gradient-primary); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-size: 1.2rem; border: none; cursor: pointer; transition: all 0.3s ease; box-shadow: var(--shadow-glow);"><i class="fas fa-link"></i></button>
+      </div>
+      <div class="qr-code" id="qr-code" style="background: var(--gradient-card); border: 1px solid var(--glass-border); border-radius: 16px; padding: 1.5rem; display: inline-block;">
+        <p style="color: rgba(255, 255, 255, 0.8); margin-bottom: 1rem; font-size: 0.9rem;">QR Code للصفحة</p>
+        {% if qr_code %}
+        <img src="data:image/png;base64,{{ qr_code }}" alt="QR Code" style="width: 200px; height: 200px; border-radius: 12px;">
+        {% else %}
+        <div id="qr-placeholder" style="width: 200px; height: 200px; background: var(--broker-bg-secondary); border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 4rem; color: var(--broker-primary);"><i class="fas fa-qrcode"></i></div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</section>
+
+<style>
+.whatsapp-float a:hover {
+  transform: scale(1.1);
+  box-shadow: 0 6px 30px rgba(37, 211, 102, 0.5);
+}
+
+@keyframes pulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.05); }
+}
+
+.service-card:hover {
+  transform: translateY(-5px);
+  box-shadow: var(--shadow-hover);
+  border-color: var(--primary);
+}
+
+.contact-form .form-control:focus {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(255, 122, 0, 0.2);
+}
+
+.sold-badge {
+  position: absolute;
+  top: 15px;
+  left: 15px;
+  background: rgba(239, 68, 68, 0.9);
+  color: white;
+  padding: 0.5rem 1rem;
+  border-radius: 20px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  box-shadow: 0 4px 15px rgba(239, 68, 68, 0.3);
+  z-index: 10;
+}
+</style>
+    </div>
+  </div>
+</section>
+
+
+
+<script>
+function sharePage(platform) {
+  const url = window.location.href;
+  const title = document.title;
+  
+  let shareUrl;
+  
+  switch(platform) {
+    case 'facebook':
+      shareUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}`;
+      break;
+    case 'twitter':
+      shareUrl = `https://twitter.com/intent/tweet?url=${encodeURIComponent(url)}&text=${encodeURIComponent(title)}`;
+      break;
+    case 'whatsapp':
+      shareUrl = `https://wa.me/?text=${encodeURIComponent(title + ' ' + url)}`;
+      break;
+  }
+  
+  if (shareUrl) {
+    window.open(shareUrl, '_blank', 'width=600,height=400');
+  }
+}
+
+function copyLink() {
+  const url = window.location.href;
+  navigator.clipboard.writeText(url).then(() => {
+    alert('تم نسخ الرابط بنجاح!');
+  });
+}
+</script>
+{% endblock %}

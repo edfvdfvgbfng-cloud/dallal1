@@ -1,0 +1,716 @@
+/**
+ * Property Feed Styles - Instagram-like Experience
+ * Mobile-first design with smooth animations
+ */
+
+/* ============================================================================
+   FEED CONTAINER
+   ============================================================================ */
+
+.property-feed-container {
+    position: relative;
+    width: 100%;
+    max-width: 480px;
+    margin: 0 auto;
+    background: var(--bg, #0A0A0A);
+    border-radius: 20px;
+    overflow: hidden;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+}
+
+.feed-wrapper {
+    position: relative;
+    width: 100%;
+    height: 600px;
+    overflow: hidden;
+}
+
+/* ============================================================================
+   FEED CARD
+   ============================================================================ */
+
+.feed-card {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: var(--card-bg, #161616);
+    border-radius: 16px;
+    overflow: hidden;
+    transform-origin: center center;
+    will-change: transform;
+}
+
+@keyframes cardSlideIn {
+    from {
+        opacity: 0;
+        transform: scale(0.95) translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1) translateY(0);
+    }
+}
+
+/* ============================================================================
+   CARD IMAGE
+   ============================================================================ */
+
+.card-image-container {
+    position: relative;
+    width: 100%;
+    height: 70%;
+    overflow: hidden;
+}
+
+.card-image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.3s ease;
+}
+
+.feed-card:hover .card-image {
+    transform: scale(1.05);
+}
+
+.card-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(
+        to bottom,
+        transparent 0%,
+        transparent 50%,
+        rgba(0, 0, 0, 0.7) 100%
+    );
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    padding: 15px;
+}
+
+.card-likes {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: white;
+    font-weight: 600;
+    font-size: 1.1rem;
+}
+
+.card-badge {
+    position: absolute;
+    top: 15px;
+    right: 15px;
+    background: var(--primary, #FF7A00);
+    color: #000;
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    z-index: 10;
+}
+
+.card-badge.featured {
+    background: linear-gradient(135deg, #FFD700, #FFA500);
+    color: #000;
+}
+
+/* ============================================================================
+   CARD CONTENT
+   ============================================================================ */
+
+.card-content {
+    padding: 15px;
+    background: var(--card-bg, #161616);
+}
+
+.card-title {
+    margin: 0 0 10px 0;
+    font-size: 1.2rem;
+    font-weight: 600;
+    color: var(--text, #FFFFFF);
+    line-height: 1.4;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+}
+
+.card-meta {
+    display: flex;
+    gap: 15px;
+    margin-bottom: 10px;
+    font-size: 0.9rem;
+    color: var(--text-muted, #888);
+}
+
+.card-location {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.card-rating {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    color: #FFD700;
+}
+
+.card-price {
+    font-size: 1.3rem;
+    font-weight: 700;
+    color: var(--primary, #FF7A00);
+    margin-bottom: 10px;
+}
+
+.card-details {
+    display: flex;
+    gap: 15px;
+    flex-wrap: wrap;
+    font-size: 0.85rem;
+    color: var(--text-muted, #888);
+}
+
+.card-details span {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+/* ============================================================================
+   SWIPE INDICATORS
+   ============================================================================ */
+
+.card-actions-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    pointer-events: none;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px;
+}
+
+.swipe-indicator {
+    padding: 12px 24px;
+    border-radius: 30px;
+    font-size: 1.2rem;
+    font-weight: 700;
+    color: white;
+    opacity: 0;
+    transition: opacity 0.2s ease;
+    pointer-events: none;
+}
+
+.swipe-indicator.left {
+    background: linear-gradient(135deg, #4CAF50, #8BC34A);
+}
+
+.swipe-indicator.right {
+    background: linear-gradient(135deg, #F44336, #E91E63);
+}
+
+/* ============================================================================
+   NAVIGATION CONTROLS
+   ============================================================================ */
+
+.feed-navigation {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 20px;
+    padding: 15px;
+    background: var(--card-bg, #161616);
+    border-top: 1px solid var(--border-color, #2A2A2A);
+}
+
+.nav-btn {
+    background: var(--bg-secondary, #1E1E1E);
+    border: none;
+    color: var(--text, #FFFFFF);
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+}
+
+.nav-btn:hover:not(:disabled) {
+    background: var(--primary, #FF7A00);
+    color: #000;
+    transform: scale(1.1);
+}
+
+.nav-btn:disabled {
+    opacity: 0.3;
+    cursor: not-allowed;
+}
+
+.page-indicator {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.9rem;
+    color: var(--text-muted, #888);
+}
+
+.current-page {
+    color: var(--text, #FFFFFF);
+    font-weight: 600;
+}
+
+.page-separator {
+    color: var(--text-muted, #888);
+}
+
+/* ============================================================================
+   ACTION BUTTONS
+   ============================================================================ */
+
+.feed-actions {
+    display: flex;
+    justify-content: space-around;
+    padding: 15px;
+    background: var(--card-bg, #161616);
+    border-top: 1px solid var(--border-color, #2A2A2A);
+}
+
+.action-btn {
+    background: var(--bg-secondary, #1E1E1E);
+    border: none;
+    color: var(--text, #FFFFFF);
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+}
+
+.action-btn:hover {
+    background: var(--primary, #FF7A00);
+    color: #000;
+    transform: scale(1.1);
+}
+
+.action-btn.active {
+    background: #E91E63;
+    color: white;
+    animation: pulse 0.3s ease;
+}
+
+.action-btn.save-btn.active {
+    background: #E91E63;
+}
+
+@keyframes pulse {
+    0%, 100% {
+        transform: scale(1);
+    }
+    50% {
+        transform: scale(1.2);
+    }
+}
+
+.action-btn.whatsapp-btn:hover {
+    background: #25D366;
+    color: white;
+}
+
+/* ============================================================================
+   SHARE MODAL
+   ============================================================================ */
+
+.share-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.8);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 10000;
+    animation: fadeIn 0.2s ease;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
+
+.share-modal-content {
+    background: var(--card-bg, #161616);
+    border-radius: 20px;
+    max-width: 400px;
+    width: 90%;
+    max-height: 80vh;
+    overflow-y: auto;
+    animation: slideUp 0.3s ease;
+}
+
+@keyframes slideUp {
+    from {
+        transform: translateY(50px);
+        opacity: 0;
+    }
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+.share-modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px;
+    border-bottom: 1px solid var(--border-color, #2A2A2A);
+}
+
+.share-modal-header h3 {
+    margin: 0;
+    font-size: 1.2rem;
+    color: var(--text, #FFFFFF);
+}
+
+.close-modal {
+    background: none;
+    border: none;
+    color: var(--text-muted, #888);
+    font-size: 1.5rem;
+    cursor: pointer;
+    padding: 5px;
+    transition: color 0.2s ease;
+}
+
+.close-modal:hover {
+    color: var(--text, #FFFFFF);
+}
+
+.share-modal-body {
+    padding: 20px;
+}
+
+.share-options {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 15px;
+}
+
+.share-option {
+    background: var(--bg-secondary, #1E1E1E);
+    border: 2px solid var(--border-color, #2A2A2A);
+    border-radius: 12px;
+    padding: 20px;
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    transition: all 0.2s ease;
+}
+
+.share-option:hover {
+    border-color: var(--primary, #FF7A00);
+    background: var(--primary, #FF7A00);
+    color: #000;
+    transform: translateY(-2px);
+}
+
+.share-option span:first-child {
+    font-size: 2rem;
+}
+
+.share-option span:last-child {
+    font-size: 0.9rem;
+    font-weight: 600;
+}
+
+.share-option.whatsapp:hover {
+    background: #25D366;
+    border-color: #25D366;
+    color: white;
+}
+
+.share-option.facebook:hover {
+    background: #1877F2;
+    border-color: #1877F2;
+    color: white;
+}
+
+.share-option.twitter:hover {
+    background: #1DA1F2;
+    border-color: #1DA1F2;
+    color: white;
+}
+
+.share-option.telegram:hover {
+    background: #0088cc;
+    border-color: #0088cc;
+    color: white;
+}
+
+/* ============================================================================
+   RTL SUPPORT
+   ============================================================================ */
+
+[dir="rtl"] .feed-wrapper {
+    direction: rtl;
+}
+
+[dir="rtl"] .card-likes {
+    flex-direction: row-reverse;
+}
+
+[dir="rtl"] .swipe-indicator.left {
+    background: linear-gradient(135deg, #F44336, #E91E63);
+}
+
+[dir="rtl"] .swipe-indicator.right {
+    background: linear-gradient(135deg, #4CAF50, #8BC34A);
+}
+
+[dir="rtl"] .swipe-indicator.left span::after {
+    content: '→';
+}
+
+[dir="rtl"] .swipe-indicator.right span::after {
+    content: '←';
+}
+
+/* ============================================================================
+   RESPONSIVE DESIGN
+   ============================================================================ */
+
+@media (max-width: 768px) {
+    .property-feed-container {
+        border-radius: 0;
+        max-width: 100%;
+        height: 100vh;
+    }
+
+    .feed-wrapper {
+        height: calc(100vh - 120px);
+    }
+
+    .feed-card {
+        border-radius: 0;
+    }
+
+    .card-title {
+        font-size: 1.1rem;
+    }
+
+    .card-price {
+        font-size: 1.2rem;
+    }
+
+    .feed-actions {
+        padding: 12px;
+    }
+
+    .action-btn {
+        width: 45px;
+        height: 45px;
+    }
+
+    .share-options {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 10px;
+    }
+
+    .share-option {
+        padding: 15px;
+    }
+}
+
+@media (max-width: 480px) {
+    .card-image-container {
+        height: 65%;
+    }
+
+    .card-content {
+        padding: 12px;
+    }
+
+    .card-title {
+        font-size: 1rem;
+    }
+
+    .card-meta {
+        font-size: 0.85rem;
+        gap: 10px;
+    }
+
+    .card-details {
+        font-size: 0.8rem;
+        gap: 10px;
+    }
+
+    .feed-navigation {
+        padding: 12px;
+    }
+
+    .nav-btn {
+        width: 35px;
+        height: 35px;
+    }
+
+    .page-indicator {
+        font-size: 0.85rem;
+    }
+}
+
+/* ============================================================================
+   DARK MODE SUPPORT
+   ============================================================================ */
+
+@media (prefers-color-scheme: dark) {
+    .property-feed-container {
+        background: #0A0A0A;
+    }
+
+    .feed-card {
+        background: #161616;
+    }
+
+    .card-content {
+        background: #161616;
+    }
+
+    .feed-navigation,
+    .feed-actions {
+        background: #161616;
+        border-top-color: #2A2A2A;
+    }
+
+    .nav-btn,
+    .action-btn {
+        background: #1E1E1E;
+    }
+}
+
+/* ============================================================================
+   ACCESSIBILITY
+   ============================================================================ */
+
+.action-btn:focus,
+.nav-btn:focus {
+    outline: 2px solid var(--primary, #FF7A00);
+    outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .feed-card,
+    .card-image,
+    .action-btn,
+    .nav-btn,
+    .share-modal-content {
+        transition: none;
+        animation: none;
+    }
+
+    @keyframes cardSlideIn {
+        from {
+            opacity: 0;
+        }
+        to {
+            opacity: 1;
+        }
+    }
+}
+
+/* ============================================================================
+   LOADING STATE
+   ============================================================================ */
+
+.feed-loading {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 600px;
+    background: var(--card-bg, #161616);
+    color: var(--text-muted, #888);
+}
+
+.feed-loading::after {
+    content: 'جاري التحميل...';
+    animation: loading 1.5s infinite;
+}
+
+@keyframes loading {
+    0%, 100% {
+        opacity: 0.5;
+    }
+    50% {
+        opacity: 1;
+    }
+}
+
+/* ============================================================================
+   EMPTY STATE
+   ============================================================================ */
+
+.feed-empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 600px;
+    background: var(--card-bg, #161616);
+    color: var(--text-muted, #888);
+    text-align: center;
+    padding: 20px;
+}
+
+.feed-empty-icon {
+    font-size: 4rem;
+    margin-bottom: 20px;
+}
+
+.feed-empty-title {
+    font-size: 1.2rem;
+    color: var(--text, #FFFFFF);
+    margin-bottom: 10px;
+}
+
+.feed-empty-text {
+    font-size: 0.9rem;
+    margin-bottom: 20px;
+}
+
+.feed-empty-action {
+    background: var(--primary, #FF7A00);
+    color: #000;
+    border: none;
+    padding: 12px 24px;
+    border-radius: 8px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s ease;
+}
+
+.feed-empty-action:hover {
+    background: var(--primary-dark, #FF9500);
+}

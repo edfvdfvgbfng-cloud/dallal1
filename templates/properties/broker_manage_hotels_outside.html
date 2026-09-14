@@ -1,0 +1,69 @@
+{% extends 'properties/dashboard_base.html' %}
+
+{% block title %}إدارة الفنادق الخارجية{% endblock %}
+
+{% block dashboard_title %}🟪 إدارة صفحات الفنادق خارج العراق{% endblock %}
+
+{% block dashboard_subtitle %}
+<p style="margin:4px 0 0;color:var(--text-muted);font-size:0.9rem;">
+  إدارة جميع صفحات الفنادق الخارجية التي أنشأتها
+</p>
+{% endblock %}
+
+{% block dashboard_actions %}
+<a href="{% url 'dallal_hotel_outside_create' %}" class="btn btn-primary btn-sm">🟩 إنشاء صفحة فندق خارجي</a>
+<a href="{% url 'broker_hotels_outside' %}" class="btn btn-secondary btn-sm">🟦 إنشاء منشور داخل فندق</a>
+<a href="{% url 'dashboard' %}" class="btn btn-outline btn-sm">رجوع للوحة التحكم</a>
+{% endblock %}
+
+{% block dashboard_content %}
+<div class="card" style="padding: 28px;">
+  {% if hotels %}
+    <div style="margin-bottom: 30px;">
+      <h3 style="color: var(--text); margin-bottom: 20px;">🌍🏨 صفحات الفنادق الخارجية الخاصة بك</h3>
+      <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(350px, 1fr)); gap: 20px;">
+        {% for hotel in hotels %}
+        <div style="background: var(--bg-alt); border: 2px solid var(--border); border-radius: 12px; padding: 20px; transition: all 0.3s ease;">
+          <div style="display: flex; align-items: center; gap: 15px; margin-bottom: 15px;">
+            {% if hotel.logo %}
+            <img src="{{ hotel.logo.url }}" alt="{{ hotel.name }}" style="width: 70px; height: 70px; border-radius: 50%; object-fit: cover; border: 2px solid #9C27B0;">
+            {% else %}
+            <div style="width: 70px; height: 70px; border-radius: 50%; background: rgba(156, 39, 176, 0.2); display: flex; align-items: center; justify-content: center; color: #9C27B0; font-size: 1.8rem;">🌍🏨</div>
+            {% endif %}
+            <div>
+              <h4 style="color: var(--text); margin: 0 0 5px 0; font-size: 1.1rem;">{{ hotel.name }}</h4>
+              <p style="color: var(--text-muted); margin: 0; font-size: 0.85rem;">{{ hotel.country }} - {{ hotel.city }}</p>
+              <div style="display: flex; gap: 10px; margin-top: 5px;">
+                {% if hotel.is_verified %}
+                <span style="background: rgba(0, 200, 83, 0.1); color: #00c853; padding: 2px 8px; border-radius: 10px; font-size: 0.75rem;">✓ موثق</span>
+                {% endif %}
+                <span style="background: rgba(255, 122, 0, 0.1); color: #FF7A00; padding: 2px 8px; border-radius: 10px; font-size: 0.75rem;">⭐ {{ hotel.rating }}</span>
+                <span style="background: rgba(96, 125, 139, 0.1); color: #607d8b; padding: 2px 8px; border-radius: 10px; font-size: 0.75rem;">👥 {{ hotel.followers_count }}</span>
+              </div>
+            </div>
+          </div>
+          <div style="margin-bottom: 15px;">
+            <p style="color: var(--text-muted); font-size: 0.85rem; margin: 0;">📞 {{ hotel.phone }}</p>
+          </div>
+          <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+            <a href="{% url 'hotel_outside_post_create' hotel.id %}" style="background: rgba(156, 39, 176, 0.1); color: #9C27B0; padding: 8px 16px; border-radius: 20px; font-size: 0.85rem; text-decoration: none;">➕ منشور</a>
+            <a href="{% url 'dallal_hotel_outside_edit' hotel.id %}" style="background: rgba(0, 122, 255, 0.1); color: #007bff; padding: 8px 16px; border-radius: 20px; font-size: 0.85rem; text-decoration: none;">✏️ تعديل</a>
+            <a href="{% url 'hotel_page_detail_by_id' hotel.id %}" style="background: rgba(255, 122, 0, 0.1); color: #FF7A00; padding: 8px 16px; border-radius: 20px; font-size: 0.85rem; text-decoration: none;">👁️ عرض</a>
+            <a href="{% url 'dallal_hotel_outside_delete' hotel.id %}" style="background: rgba(244, 67, 54, 0.1); color: #f44336; padding: 8px 16px; border-radius: 20px; font-size: 0.85rem; text-decoration: none;">🗑️ حذف</a>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+  {% else %}
+    <div style="text-align: center; padding: 60px 20px; background: var(--bg-alt); border-radius: 12px; border: 2px dashed var(--border);">
+      <div style="font-size: 4rem; margin-bottom: 20px;">🌍🏨</div>
+      <h3 style="color: var(--text); margin-bottom: 15px;">لا توجد صفحات فنادق خارجية بعد</h3>
+      <p style="color: var(--text-muted); margin-bottom: 25px;">ابدأ بإنشاء صفحة فندق خارجي جديد لنشر عروضك وخدماتك</p>
+      <a href="{% url 'dallal_hotel_outside_create' %}" class="btn btn-primary" style="background: linear-gradient(135deg, #9C27B0 0%, #E91E63 100%); border: none; padding: 12px 24px;">
+        🟩 إنشاء صفحة فندق خارج العراق
+      </a>
+    </div>
+  {% endif %}
+</div>
+{% endblock %}

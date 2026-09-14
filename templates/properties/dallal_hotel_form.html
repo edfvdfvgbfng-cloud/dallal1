@@ -1,0 +1,430 @@
+{% extends 'properties/dashboard_base.html' %}
+
+{% block title %}إنشاء صفحة فندق{% endblock %}
+
+{% block dashboard_title %}🟩 إنشاء صفحة فندق داخل العراق{% endblock %}
+
+{% block dashboard_subtitle %}
+<p style="margin:4px 0 0;color:var(--text-muted);font-size:0.9rem;">
+  أنشئ صفحة فندق جديدة لنشر عروضك وخدماتك
+</p>
+{% endblock %}
+
+{% block dashboard_actions %}
+<a href="{% url 'broker_manage_hotels' %}" class="btn btn-outline btn-sm">🟪 إدارة الفنادق</a>
+<a href="{% url 'dashboard' %}" class="btn btn-outline btn-sm">رجوع للوحة التحكم</a>
+{% endblock %}
+
+{% block dashboard_content %}
+<div class="card" style="padding: 28px;">
+  <form method="post" enctype="multipart/form-data">
+    {% csrf_token %}
+    
+    <h3 style="color: var(--text); margin-bottom: 20px;">🏨 المعلومات الأساسية</h3>
+    
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; margin-bottom: 30px;">
+      <div style="grid-column: 1 / -1;">
+        <label style="display: block; color: var(--text); font-weight: 600; margin-bottom: 8px;">اسم الفندق <span style="color: #dc3545;">*</span></label>
+        <input type="text" name="name" class="form-control" placeholder="اسم الفندق" required style="width: 100%; padding: 12px; border: 2px solid var(--border); border-radius: 10px; background: var(--bg-alt); color: var(--text);">
+      </div>
+      
+      <div style="grid-column: 1 / -1;">
+        <label style="display: block; color: var(--text); font-weight: 600; margin-bottom: 8px;">العنوان الرئيسي / اسم الصفحة <span style="color: #dc3545;">*</span></label>
+        <input type="text" name="page_name" class="form-control" placeholder="العنوان الرئيسي" required style="width: 100%; padding: 12px; border: 2px solid var(--border); border-radius: 10px; background: var(--bg-alt); color: var(--text);">
+      </div>
+      
+      <div style="grid-column: 1 / -1;">
+        <label style="display: block; color: var(--text); font-weight: 600; margin-bottom: 8px;">وصف الفندق <span style="color: #dc3545;">*</span></label>
+        <textarea name="description" class="form-control" placeholder="نبذة عن الفندق" required rows="4" style="width: 100%; padding: 12px; border: 2px solid var(--border); border-radius: 10px; background: var(--bg-alt); color: var(--text);"></textarea>
+      </div>
+      
+      <div>
+        <label style="display: block; color: var(--text); font-weight: 600; margin-bottom: 8px;">نوع الفندق <span style="color: #dc3545;">*</span></label>
+        <select name="page_type" class="form-control" required style="width: 100%; padding: 12px; border: 2px solid var(--border); border-radius: 10px; background: var(--bg-alt); color: var(--text);">
+          <option value="">اختر نوع الفندق</option>
+          <option value="hotel">فندق</option>
+          <option value="resort">منتجع</option>
+          <option value="chalet">شاليه</option>
+          <option value="cabin">كوخ</option>
+          <option value="guesthouse">بيت ضيافة</option>
+          <option value="inn">نُزل</option>
+        </select>
+      </div>
+      
+      <div>
+        <label style="display: block; color: var(--text); font-weight: 600; margin-bottom: 8px;">عدد النجوم <span style="color: #dc3545;">*</span></label>
+        <select name="star_rating" class="form-control" required style="width: 100%; padding: 12px; border: 2px solid var(--border); border-radius: 10px; background: var(--bg-alt); color: var(--text);">
+          <option value="">اختر عدد النجوم</option>
+          <option value="1">1 نجوم</option>
+          <option value="2">2 نجوم</option>
+          <option value="3">3 نجوم</option>
+          <option value="4">4 نجوم</option>
+          <option value="5">5 نجوم</option>
+        </select>
+      </div>
+      
+      <div>
+        <label style="display: block; color: var(--text); font-weight: 600; margin-bottom: 8px;">سنة التأسيس</label>
+        <input type="number" name="establishment_year" class="form-control" placeholder="سنة التأسيس" style="width: 100%; padding: 12px; border: 2px solid var(--border); border-radius: 10px; background: var(--bg-alt); color: var(--text);">
+      </div>
+      
+      <div>
+        <label style="display: block; color: var(--text); font-weight: 600; margin-bottom: 8px;">اسم المالك</label>
+        <input type="text" name="owner_name" class="form-control" placeholder="اسم المالك" style="width: 100%; padding: 12px; border: 2px solid var(--border); border-radius: 10px; background: var(--bg-alt); color: var(--text);">
+      </div>
+      
+      <div>
+        <label style="display: block; color: var(--text); font-weight: 600; margin-bottom: 8px;">اسم المدير</label>
+        <input type="text" name="manager_name" class="form-control" placeholder="اسم المدير" style="width: 100%; padding: 12px; border: 2px solid var(--border); border-radius: 10px; background: var(--bg-alt); color: var(--text);">
+      </div>
+      
+      <div>
+        <label style="display: block; color: var(--text); font-weight: 600; margin-bottom: 8px;">رقم ترخيص الفندق</label>
+        <input type="text" name="license_number" class="form-control" placeholder="رقم الترخيص" style="width: 100%; padding: 12px; border: 2px solid var(--border); border-radius: 10px; background: var(--bg-alt); color: var(--text);">
+      </div>
+      
+      <div>
+        <label style="display: block; color: var(--text); font-weight: 600; margin-bottom: 8px;">جهة الترخيص</label>
+        <input type="text" name="licensing_authority" class="form-control" placeholder="جهة الترخيص" style="width: 100%; padding: 12px; border: 2px solid var(--border); border-radius: 10px; background: var(--bg-alt); color: var(--text);">
+      </div>
+    </div>
+    
+    <h3 style="color: var(--text); margin-bottom: 20px;">📍 الموقع</h3>
+    
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; margin-bottom: 30px;">
+      <div>
+        <label style="display: block; color: var(--text); font-weight: 600; margin-bottom: 8px;">المحافظة <span style="color: #dc3545;">*</span></label>
+        <select name="governorate" class="form-control" required style="width: 100%; padding: 12px; border: 2px solid var(--border); border-radius: 10px; background: var(--bg-alt); color: var(--text);">
+          <option value="">اختر المحافظة</option>
+          <option value="BAG">بغداد</option>
+          <option value="BAS">البصرة</option>
+          <option value="NIN">نينوى</option>
+          <option value="ERB">أربيل</option>
+          <option value="NAJ">النجف</option>
+          <option value="KAR">كربلاء</option>
+          <option value="BAB">بابل</option>
+          <option value="DHI">ذي قار</option>
+          <option value="DIA">ديالى</option>
+          <option value="KIR">كركوك</option>
+          <option value="ANB">الأنبار</option>
+          <option value="WAS">واسط</option>
+          <option value="MUT">ميسان</option>
+          <option value="MUTH">المثنى</option>
+          <option value="QAD">القادسية</option>
+          <option value="SAL">صلاح الدين</option>
+          <option value="DUH">دهوك</option>
+          <option value="SUL">السليمانية</option>
+          <option value="HAL">حلبجة</option>
+        </select>
+      </div>
+      
+      <div>
+        <label style="display: block; color: var(--text); font-weight: 600; margin-bottom: 8px;">المدينة <span style="color: #dc3545;">*</span></label>
+        <input type="text" name="city" class="form-control" placeholder="المدينة" required style="width: 100%; padding: 12px; border: 2px solid var(--border); border-radius: 10px; background: var(--bg-alt); color: var(--text);">
+      </div>
+      
+      <div>
+        <label style="display: block; color: var(--text); font-weight: 600; margin-bottom: 8px;">القضاء</label>
+        <input type="text" name="district" class="form-control" placeholder="القضاء" style="width: 100%; padding: 12px; border: 2px solid var(--border); border-radius: 10px; background: var(--bg-alt); color: var(--text);">
+      </div>
+      
+      <div>
+        <label style="display: block; color: var(--text); font-weight: 600; margin-bottom: 8px;">الناحية</label>
+        <input type="text" name="subdistrict" class="form-control" placeholder="الناحية" style="width: 100%; padding: 12px; border: 2px solid var(--border); border-radius: 10px; background: var(--bg-alt); color: var(--text);">
+      </div>
+      
+      <div>
+        <label style="display: block; color: var(--text); font-weight: 600; margin-bottom: 8px;">المنطقة</label>
+        <input type="text" name="area" class="form-control" placeholder="المنطقة" style="width: 100%; padding: 12px; border: 2px solid var(--border); border-radius: 10px; background: var(--bg-alt); color: var(--text);">
+      </div>
+      
+      <div>
+        <label style="display: block; color: var(--text); font-weight: 600; margin-bottom: 8px;">الحي</label>
+        <input type="text" name="neighborhood" class="form-control" placeholder="الحي" style="width: 100%; padding: 12px; border: 2px solid var(--border); border-radius: 10px; background: var(--bg-alt); color: var(--text);">
+      </div>
+      
+      <div style="grid-column: 1 / -1;">
+        <label style="display: block; color: var(--text); font-weight: 600; margin-bottom: 8px;">العنوان التفصيلي <span style="color: #dc3545;">*</span></label>
+        <input type="text" name="address" class="form-control" placeholder="العنوان التفصيلي" required style="width: 100%; padding: 12px; border: 2px solid var(--border); border-radius: 10px; background: var(--bg-alt); color: var(--text);">
+      </div>
+      
+      <div>
+        <label style="display: block; color: var(--text); font-weight: 600; margin-bottom: 8px;">اسم المنطقة السياحية</label>
+        <input type="text" name="tourist_area" class="form-control" placeholder="اسم المنطقة السياحية" style="width: 100%; padding: 12px; border: 2px solid var(--border); border-radius: 10px; background: var(--bg-alt); color: var(--text);">
+      </div>
+      
+      <div>
+        <label style="display: block; color: var(--text); font-weight: 600; margin-bottom: 8px;">أقرب مطار</label>
+        <input type="text" name="nearest_airport" class="form-control" placeholder="أقرب مطار" style="width: 100%; padding: 12px; border: 2px solid var(--border); border-radius: 10px; background: var(--bg-alt); color: var(--text);">
+      </div>
+      
+      <div>
+        <label style="display: block; color: var(--text); font-weight: 600; margin-bottom: 8px;">المسافة إلى المطار</label>
+        <input type="text" name="distance_to_airport" class="form-control" placeholder="المسافة" style="width: 100%; padding: 12px; border: 2px solid var(--border); border-radius: 10px; background: var(--bg-alt); color: var(--text);">
+      </div>
+      
+      <div>
+        <label style="display: block; color: var(--text); font-weight: 600; margin-bottom: 8px;">المسافة إلى مركز المدينة</label>
+        <input type="text" name="distance_to_city_center" class="form-control" placeholder="المسافة" style="width: 100%; padding: 12px; border: 2px solid var(--border); border-radius: 10px; background: var(--bg-alt); color: var(--text);">
+      </div>
+    </div>
+    
+    <h3 style="color: var(--text); margin-bottom: 20px;">📞 معلومات التواصل</h3>
+    
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; margin-bottom: 30px;">
+      <div>
+        <label style="display: block; color: var(--text); font-weight: 600; margin-bottom: 8px;">رقم الهاتف الرئيسي <span style="color: #dc3545;">*</span></label>
+        <input type="tel" name="phone" class="form-control" placeholder="رقم الهاتف" required style="width: 100%; padding: 12px; border: 2px solid var(--border); border-radius: 10px; background: var(--bg-alt); color: var(--text);">
+      </div>
+      
+      <div>
+        <label style="display: block; color: var(--text); font-weight: 600; margin-bottom: 8px;">رقم هاتف إضافي</label>
+        <input type="tel" name="phone_secondary" class="form-control" placeholder="رقم إضافي" style="width: 100%; padding: 12px; border: 2px solid var(--border); border-radius: 10px; background: var(--bg-alt); color: var(--text);">
+      </div>
+      
+      <div>
+        <label style="display: block; color: var(--text); font-weight: 600; margin-bottom: 8px;">واتساب</label>
+        <input type="tel" name="whatsapp" class="form-control" placeholder="واتساب" style="width: 100%; padding: 12px; border: 2px solid var(--border); border-radius: 10px; background: var(--bg-alt); color: var(--text);">
+      </div>
+      
+      <div>
+        <label style="display: block; color: var(--text); font-weight: 600; margin-bottom: 8px;">البريد الإلكتروني <span style="color: #dc3545;">*</span></label>
+        <input type="email" name="email" class="form-control" placeholder="البريد الإلكتروني" required style="width: 100%; padding: 12px; border: 2px solid var(--border); border-radius: 10px; background: var(--bg-alt); color: var(--text);">
+      </div>
+      
+      <div>
+        <label style="display: block; color: var(--text); font-weight: 600; margin-bottom: 8px;">موقع الفندق الإلكتروني</label>
+        <input type="url" name="website" class="form-control" placeholder="الموقع الإلكتروني" style="width: 100%; padding: 12px; border: 2px solid var(--border); border-radius: 10px; background: var(--bg-alt); color: var(--text);">
+      </div>
+      
+      <div>
+        <label style="display: block; color: var(--text); font-weight: 600; margin-bottom: 8px;">رابط الحجز</label>
+        <input type="url" name="booking_url" class="form-control" placeholder="رابط الحجز" style="width: 100%; padding: 12px; border: 2px solid var(--border); border-radius: 10px; background: var(--bg-alt); color: var(--text);">
+      </div>
+      
+      <div>
+        <label style="display: block; color: var(--text); font-weight: 600; margin-bottom: 8px;">فيسبوك</label>
+        <input type="url" name="facebook" class="form-control" placeholder="فيسبوك" style="width: 100%; padding: 12px; border: 2px solid var(--border); border-radius: 10px; background: var(--bg-alt); color: var(--text);">
+      </div>
+      
+      <div>
+        <label style="display: block; color: var(--text); font-weight: 600; margin-bottom: 8px;">إنستغرام</label>
+        <input type="url" name="instagram" class="form-control" placeholder="إنستغرام" style="width: 100%; padding: 12px; border: 2px solid var(--border); border-radius: 10px; background: var(--bg-alt); color: var(--text);">
+      </div>
+      
+      <div>
+        <label style="display: block; color: var(--text); font-weight: 600; margin-bottom: 8px;">تليغرام</label>
+        <input type="text" name="telegram" class="form-control" placeholder="تليغرام" style="width: 100%; padding: 12px; border: 2px solid var(--border); border-radius: 10px; background: var(--bg-alt); color: var(--text);">
+      </div>
+      
+      <div>
+        <label style="display: block; color: var(--text); font-weight: 600; margin-bottom: 8px;">تيك توك</label>
+        <input type="url" name="tiktok" class="form-control" placeholder="تيك توك" style="width: 100%; padding: 12px; border: 2px solid var(--border); border-radius: 10px; background: var(--bg-alt); color: var(--text);">
+      </div>
+    </div>
+    
+    <h3 style="color: var(--text); margin-bottom: 20px;">🛏️ معلومات الإقامة</h3>
+    
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; margin-bottom: 30px;">
+      <div>
+        <label style="display: block; color: var(--text); font-weight: 600; margin-bottom: 8px;">عدد الغرف <span style="color: #dc3545;">*</span></label>
+        <input type="number" name="total_rooms" class="form-control" placeholder="عدد الغرف" required style="width: 100%; padding: 12px; border: 2px solid var(--border); border-radius: 10px; background: var(--bg-alt); color: var(--text);">
+      </div>
+      
+      <div>
+        <label style="display: block; color: var(--text); font-weight: 600; margin-bottom: 8px;">عدد الأجنحة</label>
+        <input type="number" name="suites" class="form-control" placeholder="عدد الأجنحة" style="width: 100%; padding: 12px; border: 2px solid var(--border); border-radius: 10px; background: var(--bg-alt); color: var(--text);">
+      </div>
+      
+      <div>
+        <label style="display: block; color: var(--text); font-weight: 600; margin-bottom: 8px;">عدد الغرف العائلية</label>
+        <input type="number" name="family_rooms" class="form-control" placeholder="عدد الغرف العائلية" style="width: 100%; padding: 12px; border: 2px solid var(--border); border-radius: 10px; background: var(--bg-alt); color: var(--text);">
+      </div>
+      
+      <div>
+        <label style="display: block; color: var(--text); font-weight: 600; margin-bottom: 8px;">عدد الغرف الفردية</label>
+        <input type="number" name="single_rooms" class="form-control" placeholder="عدد الغرف الفردية" style="width: 100%; padding: 12px; border: 2px solid var(--border); border-radius: 10px; background: var(--bg-alt); color: var(--text);">
+      </div>
+      
+      <div>
+        <label style="display: block; color: var(--text); font-weight: 600; margin-bottom: 8px;">عدد الغرف المزدوجة</label>
+        <input type="number" name="double_rooms" class="form-control" placeholder="عدد الغرف المزدوجة" style="width: 100%; padding: 12px; border: 2px solid var(--border); border-radius: 10px; background: var(--bg-alt); color: var(--text);">
+      </div>
+      
+      <div>
+        <label style="display: block; color: var(--text); font-weight: 600; margin-bottom: 8px;">عدد الغرف الثلاثية</label>
+        <input type="number" name="triple_rooms" class="form-control" placeholder="عدد الغرف الثلاثية" style="width: 100%; padding: 12px; border: 2px solid var(--border); border-radius: 10px; background: var(--bg-alt); color: var(--text);">
+      </div>
+      
+      <div>
+        <label style="display: block; color: var(--text); font-weight: 600; margin-bottom: 8px;">عدد الأسرة</label>
+        <input type="number" name="suites_count" class="form-control" placeholder="عدد الأسرة" style="width: 100%; padding: 12px; border: 2px solid var(--border); border-radius: 10px; background: var(--bg-alt); color: var(--text);">
+      </div>
+      
+      <div>
+        <label style="display: block; color: var(--text); font-weight: 600; margin-bottom: 8px;">عدد الطوابق</label>
+        <input type="number" name="floors" class="form-control" placeholder="عدد الطوابق" style="width: 100%; padding: 12px; border: 2px solid var(--border); border-radius: 10px; background: var(--bg-alt); color: var(--text);">
+      </div>
+      
+      <div>
+        <label style="display: block; color: var(--text); font-weight: 600; margin-bottom: 8px;">عدد المصاعد</label>
+        <input type="number" name="elevators" class="form-control" placeholder="عدد المصاعد" style="width: 100%; padding: 12px; border: 2px solid var(--border); border-radius: 10px; background: var(--bg-alt); color: var(--text);">
+      </div>
+      
+      <div>
+        <label style="display: block; color: var(--text); font-weight: 600; margin-bottom: 8px;">أقصى عدد للنزلاء</label>
+        <input type="number" name="max_capacity" class="form-control" placeholder="أقصى عدد النزلاء" style="width: 100%; padding: 12px; border: 2px solid var(--border); border-radius: 10px; background: var(--bg-alt); color: var(--text);">
+      </div>
+    </div>
+    
+    <h3 style="color: var(--text); margin-bottom: 20px;">💰 أسعار الفندق</h3>
+    
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; margin-bottom: 30px;">
+      <div>
+        <label style="display: block; color: var(--text); font-weight: 600; margin-bottom: 8px;">السعر يبدأ من</label>
+        <input type="number" name="price_start" class="form-control" placeholder="السعر يبدأ من" style="width: 100%; padding: 12px; border: 2px solid var(--border); border-radius: 10px; background: var(--bg-alt); color: var(--text);">
+      </div>
+      
+      <div>
+        <label style="display: block; color: var(--text); font-weight: 600; margin-bottom: 8px;">السعر يصل إلى</label>
+        <input type="number" name="price_end" class="form-control" placeholder="السعر يصل إلى" style="width: 100%; padding: 12px; border: 2px solid var(--border); border-radius: 10px; background: var(--bg-alt); color: var(--text);">
+      </div>
+      
+      <div>
+        <label style="display: block; color: var(--text); font-weight: 600; margin-bottom: 8px;">العملة</label>
+        <select name="currency" class="form-control" style="width: 100%; padding: 12px; border: 2px solid var(--border); border-radius: 10px; background: var(--bg-alt); color: var(--text);">
+          <option value="IQD">دينار عراقي</option>
+          <option value="USD">دولار أمريكي</option>
+        </select>
+      </div>
+      
+      <div>
+        <label style="display: block; color: var(--text); font-weight: 600; margin-bottom: 8px;">متوسط سعر الليلة</label>
+        <input type="number" name="average_price_per_night" class="form-control" placeholder="متوسط سعر الليلة" style="width: 100%; padding: 12px; border: 2px solid var(--border); border-radius: 10px; background: var(--bg-alt); color: var(--text);">
+      </div>
+      
+      <div>
+        <label style="display: block; color: var(--text); font-weight: 600; margin-bottom: 8px;">سعر الغرفة الفردية</label>
+        <input type="number" name="single_room_price" class="form-control" placeholder="سعر الغرفة الفردية" style="width: 100%; padding: 12px; border: 2px solid var(--border); border-radius: 10px; background: var(--bg-alt); color: var(--text);">
+      </div>
+      
+      <div>
+        <label style="display: block; color: var(--text); font-weight: 600; margin-bottom: 8px;">سعر الغرفة المزدوجة</label>
+        <input type="number" name="double_room_price" class="form-control" placeholder="سعر الغرفة المزدوجة" style="width: 100%; padding: 12px; border: 2px solid var(--border); border-radius: 10px; background: var(--bg-alt); color: var(--text);">
+      </div>
+      
+      <div>
+        <label style="display: block; color: var(--text); font-weight: 600; margin-bottom: 8px;">سعر الغرفة العائلية</label>
+        <input type="number" name="family_room_price" class="form-control" placeholder="سعر الغرفة العائلية" style="width: 100%; padding: 12px; border: 2px solid var(--border); border-radius: 10px; background: var(--bg-alt); color: var(--text);">
+      </div>
+      
+      <div>
+        <label style="display: block; color: var(--text); font-weight: 600; margin-bottom: 8px;">سعر الجناح</label>
+        <input type="number" name="suite_price" class="form-control" placeholder="سعر الجناح" style="width: 100%; padding: 12px; border: 2px solid var(--border); border-radius: 10px; background: var(--bg-alt); color: var(--text);">
+      </div>
+      
+      <div>
+        <label style="display: block; color: var(--text); font-weight: 600; margin-bottom: 8px;">هل الأسعار تشمل الضريبة؟</label>
+        <select name="includes_tax" class="form-control" style="width: 100%; padding: 12px; border: 2px solid var(--border); border-radius: 10px; background: var(--bg-alt); color: var(--text);">
+          <option value="yes">نعم</option>
+          <option value="no">لا</option>
+        </select>
+      </div>
+      
+      <div>
+        <label style="display: block; color: var(--text); font-weight: 600; margin-bottom: 8px;">هل الإفطار مشمول؟</label>
+        <select name="includes_breakfast" class="form-control" style="width: 100%; padding: 12px; border: 2px solid var(--border); border-radius: 10px; background: var(--bg-alt); color: var(--text);">
+          <option value="yes">نعم</option>
+          <option value="no">لا</option>
+        </select>
+      </div>
+      
+      <div>
+        <label style="display: block; color: var(--text); font-weight: 600; margin-bottom: 8px;">هل السعر قابل للتغيير؟</label>
+        <select name="price_variable" class="form-control" style="width: 100%; padding: 12px; border: 2px solid var(--border); border-radius: 10px; background: var(--bg-alt); color: var(--text);">
+          <option value="yes">نعم</option>
+          <option value="no">لا</option>
+        </select>
+      </div>
+    </div>
+    
+    <h3 style="color: var(--text); margin-bottom: 20px;">📸 الوسائط</h3>
+    
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; margin-bottom: 30px;">
+      <div style="grid-column: 1 / -1;">
+        <label style="display: block; color: var(--text); font-weight: 600; margin-bottom: 8px;">شعار الفندق <span style="color: #dc3545;">*</span></label>
+        <input type="file" name="logo" accept="image/*" class="form-control" required style="width: 100%; padding: 12px; border: 2px solid var(--border); border-radius: 10px; background: var(--bg-alt); color: var(--text);">
+      </div>
+      
+      <div style="grid-column: 1 / -1;">
+        <label style="display: block; color: var(--text); font-weight: 600; margin-bottom: 8px;">صورة الغلاف <span style="color: #dc3545;">*</span></label>
+        <input type="file" name="cover_image" accept="image/*" class="form-control" required style="width: 100%; padding: 12px; border: 2px solid var(--border); border-radius: 10px; background: var(--bg-alt); color: var(--text);">
+      </div>
+      
+      <div style="grid-column: 1 / -1;">
+        <label style="display: block; color: var(--text); font-weight: 600; margin-bottom: 8px;">صور الفندق</label>
+        <input type="file" name="hotel_images" accept="image/*" multiple class="form-control" style="width: 100%; padding: 12px; border: 2px solid var(--border); border-radius: 10px; background: var(--bg-alt); color: var(--text);">
+      </div>
+      
+      <div style="grid-column: 1 / -1;">
+        <label style="display: block; color: var(--text); font-weight: 600; margin-bottom: 8px;">صور الغرف</label>
+        <input type="file" name="room_images" accept="image/*" multiple class="form-control" style="width: 100%; padding: 12px; border: 2px solid var(--border); border-radius: 10px; background: var(--bg-alt); color: var(--text);">
+      </div>
+      
+      <div style="grid-column: 1 / -1;">
+        <label style="display: block; color: var(--text); font-weight: 600; margin-bottom: 8px;">صور الأجنحة</label>
+        <input type="file" name="suite_images" accept="image/*" multiple class="form-control" style="width: 100%; padding: 12px; border: 2px solid var(--border); border-radius: 10px; background: var(--bg-alt); color: var(--text);">
+      </div>
+      
+      <div style="grid-column: 1 / -1;">
+        <label style="display: block; color: var(--text); font-weight: 600; margin-bottom: 8px;">صور المطعم</label>
+        <input type="file" name="restaurant_images" accept="image/*" multiple class="form-control" style="width: 100%; padding: 12px; border: 2px solid var(--border); border-radius: 10px; background: var(--bg-alt); color: var(--text);">
+      </div>
+      
+      <div style="grid-column: 1 / -1;">
+        <label style="display: block; color: var(--text); font-weight: 600; margin-bottom: 8px;">صور المسبح</label>
+        <input type="file" name="pool_images" accept="image/*" multiple class="form-control" style="width: 100%; padding: 12px; border: 2px solid var(--border); border-radius: 10px; background: var(--bg-alt); color: var(--text);">
+      </div>
+      
+      <div style="grid-column: 1 / -1;">
+        <label style="display: block; color: var(--text); font-weight: 600; margin-bottom: 8px;">صور المرافق</label>
+        <input type="file" name="facility_images" accept="image/*" multiple class="form-control" style="width: 100%; padding: 12px; border: 2px solid var(--border); border-radius: 10px; background: var(--bg-alt); color: var(--text);">
+      </div>
+      
+      <div style="grid-column: 1 / -1;">
+        <label style="display: block; color: var(--text); font-weight: 600; margin-bottom: 8px;">صور الإطلالة</label>
+        <input type="file" name="view_images" accept="image/*" multiple class="form-control" style="width: 100%; padding: 12px; border: 2px solid var(--border); border-radius: 10px; background: var(--bg-alt); color: var(--text);">
+      </div>
+      
+      <div style="grid-column: 1 / -1;">
+        <label style="display: block; color: var(--text); font-weight: 600; margin-bottom: 8px;">فيديو الفندق</label>
+        <input type="file" name="hotel_video" accept="video/*" class="form-control" style="width: 100%; padding: 12px; border: 2px solid var(--border); border-radius: 10px; background: var(--bg-alt); color: var(--text);">
+      </div>
+      
+      <div style="grid-column: 1 / -1;">
+        <label style="display: block; color: var(--text); font-weight: 600; margin-bottom: 8px;">فيديو جولة داخل الفندق</label>
+        <input type="file" name="tour_video" accept="video/*" class="form-control" style="width: 100%; padding: 12px; border: 2px solid var(--border); border-radius: 10px; background: var(--bg-alt); color: var(--text);">
+      </div>
+      
+      <div style="grid-column: 1 / -1;">
+        <label style="display: block; color: var(--text); font-weight: 600; margin-bottom: 8px;">صور 360°</label>
+        <input type="file" name="360_images" accept="image/*" multiple class="form-control" style="width: 100%; padding: 12px; border: 2px solid var(--border); border-radius: 10px; background: var(--bg-alt); color: var(--text);">
+      </div>
+      
+      <div style="grid-column: 1 / -1;">
+        <label style="display: block; color: var(--text); font-weight: 600; margin-bottom: 8px;">جولة افتراضية 360°</label>
+        <input type="file" name="virtual_tour_video" accept="video/*" class="form-control" style="width: 100%; padding: 12px; border: 2px solid var(--border); border-radius: 10px; background: var(--bg-alt); color: var(--text);">
+      </div>
+    </div>
+    
+    <div style="display: flex; gap: 15px; margin-top: 30px;">
+      <button type="submit" class="btn btn-primary" style="background: linear-gradient(135deg, #009688 0%, #00BFA5 100%); border: none; padding: 12px 24px;">
+        🏨 إنشاء صفحة الفندق
+      </button>
+      <a href="{% url 'dashboard' %}" class="btn btn-outline" style="border: 2px solid var(--border); padding: 12px 24px;">
+        إلغاء
+      </a>
+    </div>
+  </form>
+</div>
+{% endblock %}

@@ -1,0 +1,381 @@
+{% extends "properties/dashboard_base.html" %}
+{% load static %}
+
+{% block title %}إرسال إشعارات{% endblock %}
+
+{% block dashboard_title %}إرسال إشعارات{% endblock %}
+
+{% block dashboard_subtitle %}
+<p style="margin:4px 0 0;color:var(--text-muted);font-size:0.9rem;">
+  إرسال إشعارات للمستخدمين والدلالين من لوحة الإدارة
+</p>
+{% endblock %}
+
+{% block dashboard_actions %}
+<a href="{% url 'dashboard' %}" class="btn btn-outline btn-sm">← لوحة التحكم</a>
+<a href="{% url 'notification_center' %}" class="btn btn-outline btn-sm">🔔 مركز الإشعارات</a>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+  .notification-form-container {
+    background: var(--card-bg, #161616);
+    border: 1px solid var(--border-primary, rgba(255, 122, 0, 0.15));
+    border-radius: var(--radius-lg, 16px);
+    padding: 2rem;
+    margin-bottom: 2rem;
+    box-shadow: var(--shadow-lg, 0 10px 15px rgba(0, 0, 0, 0.5));
+  }
+
+  .form-section {
+    margin-bottom: 2rem;
+    padding-bottom: 1.5rem;
+    border-bottom: 1px solid var(--border-primary, rgba(255, 122, 0, 0.15));
+  }
+
+  .form-section:last-child {
+    border-bottom: none;
+    margin-bottom: 0;
+    padding-bottom: 0;
+  }
+
+  .section-title {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: var(--text-primary, #FFFFFF);
+    margin-bottom: 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+  }
+
+  .section-icon {
+    font-size: 1.5rem;
+  }
+
+  .form-label {
+    font-weight: 600;
+    color: var(--text-primary, #FFFFFF);
+    margin-bottom: 0.5rem;
+  }
+
+  .form-control {
+    background: var(--bg-secondary, #1a1a1a);
+    border: 1px solid var(--border-primary, rgba(255, 122, 0, 0.15));
+    border-radius: var(--radius-sm, 8px);
+    color: var(--text-primary, #FFFFFF);
+    padding: 0.75rem 1rem;
+  }
+
+  .form-control:focus {
+    outline: none;
+    border-color: var(--primary, #FF7A00);
+    box-shadow: 0 0 0 3px rgba(255, 122, 0, 0.2);
+  }
+
+  .btn-primary {
+    background: var(--primary, #FF7A00);
+    border-color: var(--primary, #FF7A00);
+    color: #FFFFFF;
+    padding: 0.75rem 2rem;
+    border-radius: var(--radius-sm, 8px);
+    font-weight: 600;
+    transition: all 0.3s ease;
+  }
+
+  .btn-primary:hover {
+    background: #ff9500;
+    border-color: #ff9500;
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(255, 122, 0, 0.3);
+  }
+
+  .conditional-field {
+    display: none;
+    margin-top: 1rem;
+    padding: 1rem;
+    background: rgba(255, 122, 0, 0.05);
+    border: 1px solid rgba(255, 122, 0, 0.2);
+    border-radius: var(--radius-sm, 8px);
+  }
+
+  .conditional-field.active {
+    display: block;
+    animation: fadeIn 0.3s ease;
+  }
+
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(-10px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .help-text {
+    font-size: 0.85rem;
+    color: var(--text-muted, rgba(255, 255, 255, 0.6));
+    margin-top: 0.5rem;
+  }
+
+  .notification-preview {
+    background: var(--bg-secondary, #1a1a1a);
+    border: 1px solid var(--border-primary, rgba(255, 122, 0, 0.15));
+    border-radius: var(--radius-lg, 16px);
+    padding: 1.5rem;
+    margin-top: 2rem;
+  }
+
+  .preview-title {
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--text-primary, #FFFFFF);
+    margin-bottom: 1rem;
+  }
+
+  .preview-content {
+    background: var(--card-bg, #161616);
+    border: 1px solid var(--border-primary, rgba(255, 122, 0, 0.15));
+    border-radius: var(--radius-sm, 8px);
+    padding: 1rem;
+  }
+
+  @media (max-width: 768px) {
+    .notification-form-container {
+      padding: 1.5rem;
+    }
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="notification-form-container">
+  <form method="post" id="notificationForm">
+    {% csrf_token %}
+    
+    <!-- Target Audience Section -->
+    <div class="form-section">
+      <h3 class="section-title">
+        <span class="section-icon">🎯</span>
+        الجمهور المستهدف
+      </h3>
+      
+      <div class="mb-3">
+        <label class="form-label">من تريد إرسال الإشعار إليه؟</label>
+        {{ form.target_audience }}
+        <p class="help-text">اختر الجمهور الذي تريد استهدافه بالإشعار</p>
+      </div>
+      
+      <div id="specificUsersField" class="conditional-field">
+        <label class="form-label">المستخدمين المحددون</label>
+        {{ form.specific_users }}
+        <p class="help-text">اختر المستخدمين الذين تريد إرسال الإشعار إليهم</p>
+      </div>
+      
+      <div id="specificBrokersField" class="conditional-field">
+        <label class="form-label">الدلالين المحددون</label>
+        {{ form.specific_brokers }}
+        <p class="help-text">اختر الدلالين الذين تريد إرسال الإشعار إليهم</p>
+      </div>
+    </div>
+    
+    <!-- Notification Content Section -->
+    <div class="form-section">
+      <h3 class="section-title">
+        <span class="section-icon">📝</span>
+        محتوى الإشعار
+      </h3>
+      
+      <div class="mb-3">
+        <label class="form-label">العنوان</label>
+        {{ form.title }}
+        <p class="help-text">عنوان واضح ومختصر للإشعار</p>
+      </div>
+      
+      <div class="mb-3">
+        <label class="form-label">المحتوى</label>
+        {{ form.message }}
+        <p class="help-text">اكتب محتوى الإشعار بالتفصيل</p>
+      </div>
+    </div>
+    
+    <!-- Notification Settings Section -->
+    <div class="form-section">
+      <h3 class="section-title">
+        <span class="section-icon">⚙️</span>
+        إعدادات الإشعار
+      </h3>
+      
+      <div class="row">
+        <div class="col-md-6 mb-3">
+          <label class="form-label">نوع الإشعار</label>
+          {{ form.notification_type }}
+        </div>
+        
+        <div class="col-md-6 mb-3">
+          <label class="form-label">الأولوية</label>
+          {{ form.priority }}
+        </div>
+      </div>
+      
+      <div class="row">
+        <div class="col-md-6 mb-3">
+          <label class="form-label">الأيقونة</label>
+          {{ form.icon }}
+          <p class="help-text">رمز تعبيري (مثل: 🔔, 📢, ⚡)</p>
+        </div>
+        
+        <div class="col-md-6 mb-3">
+          <label class="form-label">اللون</label>
+          {{ form.color }}
+        </div>
+      </div>
+      
+      <div class="row">
+        <div class="col-md-6 mb-3">
+          <label class="form-label">رابط الإجراء (اختياري)</label>
+          {{ form.action_url }}
+          <p class="help-text">رابط الصفحة التي سيتم التوجيه إليها عند النقر</p>
+        </div>
+        
+        <div class="col-md-6 mb-3">
+          <label class="form-label">نص الإجراء (اختياري)</label>
+          {{ form.action_text }}
+          <p class="help-text">نص الزر (مثل: عرض التفاصيل)</p>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Delivery Options Section -->
+    <div class="form-section">
+      <h3 class="section-title">
+        <span class="section-icon">📤</span>
+        خيارات الإرسال
+      </h3>
+      
+      <div class="mb-3">
+        <div class="form-check">
+          {{ form.send_immediately }}
+          <label class="form-check-label" for="{{ form.send_immediately.id }}">
+            إرسال فوري
+          </label>
+        </div>
+        <p class="help-text">أرسل الإشعار فوراً أو حدد تاريخاً للجدولة</p>
+      </div>
+      
+      <div id="scheduleDateField" class="conditional-field">
+        <label class="form-label">تاريخ الجدولة</label>
+        {{ form.schedule_date }}
+        <p class="help-text">حدد التاريخ والوقت لإرسال الإشعار</p>
+      </div>
+    </div>
+    
+    <!-- Preview Section -->
+    <div class="notification-preview">
+      <h4 class="preview-title">معاينة الإشعار</h4>
+      <div class="preview-content" id="notificationPreview">
+        <div style="padding: 1rem; border-left: 4px solid #0d9488; background: rgba(13, 148, 136, 0.1);">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem;">
+            <span style="display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.4rem 0.8rem; border-radius: 20px; font-size: 0.85rem; font-weight: 600; background: rgba(13, 148, 136, 0.2); color: #0d9488;">
+              <span>🔔</span>
+              <span>معلومة</span>
+            </span>
+          </div>
+          <h5 style="font-size: 1.1rem; font-weight: 700; color: #FFFFFF; margin-bottom: 0.5rem;">عنوان الإشعار</h5>
+          <p style="color: #B5B5B5; font-size: 0.95rem; margin-bottom: 0.75rem;">محتوى الإشعار...</p>
+          <div style="font-size: 0.85rem; color: rgba(255, 255, 255, 0.5);">
+            <span>📅 الآن</span>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Submit Button -->
+    <div class="text-center mt-4">
+      <button type="submit" class="btn btn-primary btn-lg">
+        📤 إرسال الإشعار
+      </button>
+    </div>
+  </form>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  const targetAudience = document.getElementById('id_target_audience');
+  const specificUsersField = document.getElementById('specificUsersField');
+  const specificBrokersField = document.getElementById('specificBrokersField');
+  const sendImmediately = document.getElementById('id_send_immediately');
+  const scheduleDateField = document.getElementById('scheduleDateField');
+  
+  // Toggle conditional fields based on target audience
+  targetAudience.addEventListener('change', function() {
+    specificUsersField.classList.remove('active');
+    specificBrokersField.classList.remove('active');
+    
+    if (this.value === 'specific_users') {
+      specificUsersField.classList.add('active');
+    } else if (this.value === 'specific_brokers') {
+      specificBrokersField.classList.add('active');
+    }
+  });
+  
+  // Toggle schedule date field
+  sendImmediately.addEventListener('change', function() {
+    if (this.checked) {
+      scheduleDateField.classList.remove('active');
+    } else {
+      scheduleDateField.classList.add('active');
+    }
+  });
+  
+  // Live preview
+  const titleInput = document.getElementById('id_title');
+  const messageInput = document.getElementById('id_message');
+  const notificationType = document.getElementById('id_notification_type');
+  const iconInput = document.getElementById('id_icon');
+  const colorInput = document.getElementById('id_color');
+  const previewContent = document.getElementById('notificationPreview');
+  
+  function updatePreview() {
+    const title = titleInput.value || 'عنوان الإشعار';
+    const message = messageInput.value || 'محتوى الإشعار...';
+    const type = notificationType.value;
+    const icon = iconInput.value || '🔔';
+    const color = colorInput.value || '#0d9488';
+    
+    const typeLabels = {
+      'info': 'معلومة',
+      'success': 'نجاح',
+      'warning': 'تحذير',
+      'error': 'خطأ',
+      'property': 'عقار',
+      'message': 'رسالة',
+      'rating': 'تقييم',
+      'subscription': 'اشتراك',
+      'auction': 'مزاد',
+      'building': 'بناء',
+      'system': 'نظام'
+    };
+    
+    previewContent.innerHTML = `
+      <div style="padding: 1rem; border-left: 4px solid ${color}; background: ${color}20;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem;">
+          <span style="display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.4rem 0.8rem; border-radius: 20px; font-size: 0.85rem; font-weight: 600; background: ${color}40; color: ${color};">
+            <span>${icon}</span>
+            <span>${typeLabels[type] || 'معلومة'}</span>
+          </span>
+        </div>
+        <h5 style="font-size: 1.1rem; font-weight: 700; color: #FFFFFF; margin-bottom: 0.5rem;">${title}</h5>
+        <p style="color: #B5B5B5; font-size: 0.95rem; margin-bottom: 0.75rem;">${message}</p>
+        <div style="font-size: 0.85rem; color: rgba(255, 255, 255, 0.5);">
+          <span>📅 الآن</span>
+        </div>
+      </div>
+    `;
+  }
+  
+  titleInput.addEventListener('input', updatePreview);
+  messageInput.addEventListener('input', updatePreview);
+  notificationType.addEventListener('change', updatePreview);
+  iconInput.addEventListener('input', updatePreview);
+  colorInput.addEventListener('input', updatePreview);
+});
+</script>
+{% endblock %}

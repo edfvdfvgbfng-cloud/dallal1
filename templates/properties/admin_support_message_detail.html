@@ -1,0 +1,135 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}{{ support_message.subject }} - إدارة{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-md-8 mx-auto">
+            <div class="card">
+                <div class="card-header bg-success text-white d-flex justify-content-between align-items-center">
+                    <h4 class="mb-0">👨‍💼 {{ support_message.subject }}</h4>
+                    <a href="{% url 'admin_support_message_list' %}" class="btn btn-light btn-sm">
+                        <i class="fas fa-arrow-right"></i> عودة
+                    </a>
+                </div>
+                <div class="card-body">
+                    <!-- Message Info -->
+                    <div class="row mb-4">
+                        <div class="col-md-6">
+                            <strong>المستخدم:</strong> {{ support_message.user.username }}
+                        </div>
+                        <div class="col-md-6">
+                            <strong>النوع:</strong> {{ support_message.get_message_type_display }}
+                        </div>
+                    </div>
+                    
+                    <div class="row mb-4">
+                        <div class="col-md-6">
+                            <strong>الحالة:</strong>
+                            {% if support_message.status == 'pending' %}
+                                <span class="badge badge-warning">قيد الانتظار</span>
+                            {% elif support_message.status == 'in_progress' %}
+                                <span class="badge badge-info">قيد المعالجة</span>
+                            {% elif support_message.status == 'resolved' %}
+                                <span class="badge badge-success">تم الحل</span>
+                            {% elif support_message.status == 'closed' %}
+                                <span class="badge badge-secondary">مغلقة</span>
+                            {% endif %}
+                        </div>
+                        <div class="col-md-6">
+                            <strong>الأولوية:</strong>
+                            {% if support_message.priority == 'urgent' %}
+                                <span class="badge badge-danger">عاجلة</span>
+                            {% elif support_message.priority == 'high' %}
+                                <span class="badge badge-warning">عالية</span>
+                            {% elif support_message.priority == 'medium' %}
+                                <span class="badge badge-info">متوسطة</span>
+                            {% else %}
+                                <span class="badge badge-secondary">منخفضة</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <div class="row mb-4">
+                        <div class="col-md-6">
+                            <strong>تاريخ الإرسال:</strong> {{ support_message.created_at|date:"Y-m-d H:i" }}
+                        </div>
+                        <div class="col-md-6">
+                            <strong>معين إلى:</strong> 
+                            {% if support_message.assigned_to %}
+                                {{ support_message.assigned_to.username }}
+                            {% else %}
+                                غير معين
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <!-- User Message -->
+                    <div class="card mb-4">
+                        <div class="card-header bg-light">
+                            <strong>👤 رسالة المستخدم:</strong>
+                        </div>
+                        <div class="card-body">
+                            <p class="mb-0">{{ support_message.content|linebreaks }}</p>
+                        </div>
+                    </div>
+                    
+                    <!-- Admin Response Form -->
+                    <div class="card mb-4">
+                        <div class="card-header bg-primary text-white">
+                            <strong>👨‍💼 رد الإدارة:</strong>
+                        </div>
+                        <div class="card-body">
+                            <form method="post">
+                                {% csrf_token %}
+                                
+                                <div class="form-group mb-3">
+                                    <label for="admin_response" class="form-label">اكتب ردك هنا:</label>
+                                    <textarea 
+                                        name="admin_response" 
+                                        id="admin_response" 
+                                        class="form-control" 
+                                        rows="5"
+                                        placeholder="اكتب ردك هنا...">{{ support_message.admin_response }}</textarea>
+                                </div>
+                                
+                                <div class="form-group mb-3">
+                                    <label for="status" class="form-label">تحديث الحالة:</label>
+                                    <select name="status" id="status" class="form-control">
+                                        <option value="pending" {% if support_message.status == 'pending' %}selected{% endif %}>قيد الانتظار</option>
+                                        <option value="in_progress" {% if support_message.status == 'in_progress' %}selected{% endif %}>قيد المعالجة</option>
+                                        <option value="resolved" {% if support_message.status == 'resolved' %}selected{% endif %}>تم الحل</option>
+                                        <option value="closed" {% if support_message.status == 'closed' %}selected{% endif %}>مغلقة</option>
+                                    </select>
+                                </div>
+                                
+                                <button type="submit" class="btn btn-success">
+                                    <i class="fas fa-paper-plane"></i> إرسال الرد
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                    
+                    <!-- Resolved Info -->
+                    {% if support_message.resolved_at %}
+                    <div class="alert alert-success">
+                        <i class="fas fa-check-circle"></i>
+                        تم حل المشكلة في: {{ support_message.resolved_at|date:"Y-m-d H:i" }}
+                    </div>
+                    {% endif %}
+                    
+                    <!-- Overdue Warning -->
+                    {% if support_message.is_overdue %}
+                    <div class="alert alert-danger">
+                        <i class="fas fa-exclamation-triangle"></i>
+                        هذه الرسالة متأخرة أكثر من 48 ساعة!
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

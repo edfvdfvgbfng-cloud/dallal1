@@ -1,0 +1,79 @@
+{% extends 'properties/base.html' %}
+
+{% block title %}حجز موعد{% endblock %}
+
+{% block content %}
+<div class="container" style="max-width: 900px; margin: 40px auto;">
+  <div class="form-header" style="text-align: center; margin-bottom: 40px;">
+    <h1 style="font-size: 2.5rem; color: var(--text); margin: 0 0 15px 0;">📅 حجز موعد</h1>
+    <p style="color: var(--text-light); margin: 0; font-size: 1.1rem;">اختر نوع الموعد الذي تريد حجزه</p>
+  </div>
+
+  <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 30px;">
+    <!-- Book with Broker -->
+    <div class="form-card" style="background: var(--card-bg); padding: 30px; border-radius: var(--radius); border: 2px solid var(--border); text-align: center; transition: all 0.3s ease; cursor: pointer;" onclick="document.getElementById('broker-booking-section').style.display = 'block';">
+      <div style="font-size: 4rem; margin-bottom: 20px;">👨‍💼</div>
+      <h2 style="color: var(--text); margin: 0 0 15px 0; font-size: 1.5rem;">حجز موعد مع دلال</h2>
+      <p style="color: var(--text-light); margin: 0 0 20px 0;">احجز موعداً مع أحد الدلالين المتخصصين</p>
+      <a href="#broker-booking-section" class="btn btn-primary" style="display: inline-block; padding: 12px 30px; background: var(--primary); color: white; border: none; border-radius: var(--radius); text-decoration: none; font-weight: 600; transition: all 0.3s ease;">
+        اختر دلال
+      </a>
+    </div>
+
+    <!-- Book with Admin -->
+    <div class="form-card" style="background: var(--card-bg); padding: 30px; border-radius: var(--radius); border: 2px solid var(--border); text-align: center; transition: all 0.3s ease; cursor: pointer;" onclick="window.location.href='{% url 'admin_appointment_booking' %}'">
+      <div style="font-size: 4rem; margin-bottom: 20px;">🏢</div>
+      <h2 style="color: var(--text); margin: 0 0 15px 0; font-size: 1.5rem;">حجز موعد مع الإدارة</h2>
+      <p style="color: var(--text-light); margin: 0 0 20px 0;">احجز موعداً مع إدارة المنصة</p>
+      <a href="{% url 'admin_appointment_booking' %}" class="btn btn-secondary" style="display: inline-block; padding: 12px 30px; background: var(--primary-dark); color: white; border: none; border-radius: var(--radius); text-decoration: none; font-weight: 600; transition: all 0.3s ease;">
+        احجز الآن
+      </a>
+    </div>
+  </div>
+
+  <!-- Broker Selection Section -->
+  <div id="broker-booking-section" style="display: none; margin-top: 40px; background: var(--bg-alt); padding: 30px; border-radius: var(--radius); border: 2px solid var(--border);">
+    <h3 style="color: var(--text); margin: 0 0 20px 0; font-size: 1.3rem; border-bottom: 2px solid var(--border); padding-bottom: 10px;">اختر الدلال</h3>
+
+    {% if active_brokers %}
+      <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 20px;">
+        {% for broker in active_brokers %}
+          <div style="background: var(--card-bg); padding: 20px; border-radius: var(--radius); border: 1px solid var(--border); transition: all 0.3s ease;">
+            <div style="text-align: center; margin-bottom: 15px;">
+              {% if broker.profile_image %}
+                <img src="{{ broker.profile_image.url }}" alt="{{ broker.display_name }}" style="width: 80px; height: 80px; border-radius: 50%; object-fit: cover; border: 3px solid var(--primary);">
+              {% else %}
+                <div style="width: 80px; height: 80px; border-radius: 50%; background: var(--primary); display: flex; align-items: center; justify-content: center; margin: 0 auto; font-size: 2rem; color: white;">
+                  {{ broker.display_name|first|upper }}
+                </div>
+              {% endif %}
+            </div>
+            <h4 style="color: var(--text); margin: 0 0 10px 0; text-align: center;">{{ broker.display_name }}</h4>
+            <p style="color: var(--text-light); margin: 0 0 15px 0; text-align: center; font-size: 0.9rem;">{{ broker.specialty|default:'دلال عام' }}</p>
+            <a href="{% url 'broker_appointment_booking' broker.id %}" class="btn btn-primary" style="display: block; text-align: center; padding: 10px; background: var(--primary); color: white; border: none; border-radius: var(--radius); text-decoration: none; font-weight: 600;">
+              احجز موعد
+            </a>
+          </div>
+        {% endfor %}
+      </div>
+    {% else %}
+      <div style="text-align: center; padding: 40px; color: var(--text-light);">
+        <p>لا يوجد دلالين متاحين حالياً</p>
+        <a href="{% url 'public_broker_search' %}" class="btn btn-outline" style="display: inline-block; margin-top: 15px; padding: 10px 20px;">ابحث عن دلال</a>
+      </div>
+    {% endif %}
+
+    <div style="margin-top: 20px; text-align: center;">
+      <a href="{% url 'public_broker_search' %}" class="btn btn-secondary" style="display: inline-block; padding: 10px 20px;">عرض جميع الدلالين</a>
+    </div>
+  </div>
+</div>
+
+<style>
+.form-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 8px 25px rgba(255, 122, 0, 0.2);
+  border-color: var(--primary);
+}
+</style>
+{% endblock %}

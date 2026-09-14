@@ -1,0 +1,269 @@
+{% extends 'properties/base.html' %}
+{% load static %}
+
+{% block title %}عقارات داخل العراق 🇮🇶{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/listing-pages.css' %}">
+<link rel="stylesheet" href="{% static 'css/lazy-loading.css' %}">
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'js/listing-pages.js' %}" defer></script>
+<script src="{% static 'js/lazy-loading.js' %}" defer></script>
+<script src="{% static 'js/search-autocomplete.js' %}" defer></script>
+{% endblock %}
+
+{% block content %}
+<div class="listing-page">
+    <!-- Skip to content for accessibility -->
+    <a href="#listings-container" class="skip-to-content">انتقل إلى المحتوى الرئيسي</a>
+
+    <!-- Hero Section -->
+    <section class="listing-hero">
+        <div class="listing-hero-content">
+            <span class="listing-hero-icon">🇮🇶</span>
+            <h1 class="listing-hero-title">عقارات داخل العراق</h1>
+            <p class="listing-hero-subtitle">اكتشف أفضل العقارات في جميع المحافظات العراقية</p>
+        </div>
+    </section>
+
+    <!-- Search & Filters Toolbar -->
+    <div class="listing-toolbar">
+        <div class="listing-toolbar-content">
+            <!-- Search Box -->
+            <div class="listing-search-box">
+                <input type="text"
+                       id="search-input"
+                       class="listing-search-input property-search-input"
+                       placeholder="ابحث عن عقارك..."
+                       name="search"
+                       value="{{ request.GET.search|default:'' }}"
+                       autocomplete="off">
+                <span class="listing-search-icon">🔍</span>
+            </div>
+
+            <!-- Actions -->
+            <div class="listing-actions">
+                <!-- View Toggle -->
+                <div class="listing-view-toggle">
+                    <button class="listing-view-btn active" data-view="grid" aria-label="عرض شبكي">
+                        ▦
+                    </button>
+                    <button class="listing-view-btn" data-view="list" aria-label="عرض قائمة">
+                        ☰
+                    </button>
+                </div>
+
+                <!-- Filter Button (Mobile) -->
+                <button class="listing-filter-btn" aria-label="الفلاتر">
+                    <span>🔍</span>
+                    <span>الفلاتر</span>
+                </button>
+
+                <!-- Sort -->
+                <select class="listing-sort-select" name="sort">
+                    <option value="newest" {% if request.GET.sort == 'newest' %}selected{% endif %}>الأحدث</option>
+                    <option value="price_low" {% if request.GET.sort == 'price_low' %}selected{% endif %}>الأقل سعرًا</option>
+                    <option value="price_high" {% if request.GET.sort == 'price_high' %}selected{% endif %}>الأعلى سعرًا</option>
+                    <option value="popular" {% if request.GET.sort == 'popular' %}selected{% endif %}>الأكثر مشاهدة</option>
+                    <option value="featured" {% if request.GET.sort == 'featured' %}selected{% endif %}>المميز أولًا</option>
+                </select>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Layout -->
+    <div class="listing-layout" id="listings-container">
+        <!-- Filters Sidebar -->
+        <aside class="listing-filters">
+            <div class="listing-filters-header">
+                <h2 class="listing-filters-title">الفلاتر</h2>
+                <button class="listing-filters-clear" type="button">مسح الكل</button>
+            </div>
+
+            <form class="listing-filters-form" method="get" action="{% url 'category_inside_iraq' %}">
+                <!-- Purpose -->
+                <div class="listing-filter-group">
+                    <label class="listing-filter-label">الغرض</label>
+                    <select name="purpose" class="listing-filter-select">
+                        <option value="">كل الأغراض</option>
+                        <option value="sale" {% if request.GET.purpose == 'sale' %}selected{% endif %}>بيع</option>
+                        <option value="rent" {% if request.GET.purpose == 'rent' %}selected{% endif %}>إيجار</option>
+                        <option value="investment" {% if request.GET.purpose == 'investment' %}selected{% endif %}>استثمار</option>
+                        <option value="auction" {% if request.GET.purpose == 'auction' %}selected{% endif %}>مزاد</option>
+                    </select>
+                </div>
+
+                <!-- Property Type -->
+                <div class="listing-filter-group">
+                    <label class="listing-filter-label">نوع العقار</label>
+                    <select name="type" class="listing-filter-select">
+                        <option value="">كل الأنواع</option>
+                        <option value="apartment" {% if request.GET.type == 'apartment' %}selected{% endif %}>شقة</option>
+                        <option value="house" {% if request.GET.type == 'house' %}selected{% endif %}>منزل</option>
+                        <option value="villa" {% if request.GET.type == 'villa' %}selected{% endif %}>فيلا</option>
+                        <option value="duplex" {% if request.GET.type == 'duplex' %}selected{% endif %}>دوبلكس</option>
+                        <option value="residential_complex" {% if request.GET.type == 'residential_complex' %}selected{% endif %}>مجمع سكني</option>
+                        <option value="shop" {% if request.GET.type == 'shop' %}selected{% endif %}>محل تجاري</option>
+                        <option value="office" {% if request.GET.type == 'office' %}selected{% endif %}>مكتب</option>
+                        <option value="residential_building" {% if request.GET.type == 'residential_building' %}selected{% endif %}>بناية سكنية</option>
+                        <option value="commercial_building" {% if request.GET.type == 'commercial_building' %}selected{% endif %}>عمارة تجارية</option>
+                        <option value="residential_land" {% if request.GET.type == 'residential_land' %}selected{% endif %}>أرض سكنية</option>
+                        <option value="agricultural_land" {% if request.GET.type == 'agricultural_land' %}selected{% endif %}>أرض زراعية</option>
+                        <option value="commercial_land" {% if request.GET.type == 'commercial_land' %}selected{% endif %}>أرض تجارية</option>
+                    </select>
+                </div>
+
+                <!-- Governorate -->
+                <div class="listing-filter-group">
+                    <label class="listing-filter-label">المحافظة</label>
+                    <select name="governorate" class="listing-filter-select">
+                        <option value="">كل المحافظات</option>
+                        {% for gov_code, gov_name in governorates %}
+                        <option value="{{ gov_name }}" {% if request.GET.governorate == gov_name %}selected{% endif %}>{{ gov_name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <!-- City/District -->
+                <div class="listing-filter-group">
+                    <label class="listing-filter-label">المنطقة / المدينة</label>
+                    <input type="text" 
+                           name="district" 
+                           class="listing-filter-input" 
+                           placeholder="اكتب اسم المنطقة..."
+                           value="{{ request.GET.district|default:'' }}">
+                </div>
+
+                <!-- Price Range -->
+                <div class="listing-filter-group">
+                    <label class="listing-filter-label">السعر (د.ع)</label>
+                    <div class="listing-filter-range">
+                        <input type="number" 
+                               name="price_min" 
+                               class="listing-filter-input" 
+                               placeholder="من"
+                               value="{{ request.GET.price_min|default:'' }}">
+                        <span class="listing-filter-range-separator">—</span>
+                        <input type="number" 
+                               name="price_max" 
+                               class="listing-filter-input" 
+                               placeholder="إلى"
+                               value="{{ request.GET.price_max|default:'' }}">
+                    </div>
+                </div>
+
+                <!-- Area Range -->
+                <div class="listing-filter-group">
+                    <label class="listing-filter-label">المساحة (م²)</label>
+                    <div class="listing-filter-range">
+                        <input type="number" 
+                               name="area_min" 
+                               class="listing-filter-input" 
+                               placeholder="من"
+                               value="{{ request.GET.area_min|default:'' }}">
+                        <span class="listing-filter-range-separator">—</span>
+                        <input type="number" 
+                               name="area_max" 
+                               class="listing-filter-input" 
+                               placeholder="إلى"
+                               value="{{ request.GET.area_max|default:'' }}">
+                    </div>
+                </div>
+
+                <!-- Bedrooms -->
+                <div class="listing-filter-group">
+                    <label class="listing-filter-label">غرف النوم</label>
+                    <select name="bedrooms" class="listing-filter-select">
+                        <option value="">الكل</option>
+                        <option value="1" {% if request.GET.bedrooms == '1' %}selected{% endif %}>1+</option>
+                        <option value="2" {% if request.GET.bedrooms == '2' %}selected{% endif %}>2+</option>
+                        <option value="3" {% if request.GET.bedrooms == '3' %}selected{% endif %}>3+</option>
+                        <option value="4" {% if request.GET.bedrooms == '4' %}selected{% endif %}>4+</option>
+                        <option value="5" {% if request.GET.bedrooms == '5' %}selected{% endif %}>5+</option>
+                    </select>
+                </div>
+
+                <!-- Featured Only -->
+                <div class="listing-filter-group">
+                    <label class="listing-filter-label" style="display: flex; align-items: center; gap: 8px;">
+                        <input type="checkbox" 
+                               name="featured" 
+                               {% if request.GET.featured %}checked{% endif %}>
+                        <span>المميزة فقط</span>
+                    </label>
+                </div>
+
+                <!-- Apply Button -->
+                <button type="submit" class="listing-filter-apply">
+                    <span>🔍</span>
+                    <span>تصفية النتائج</span>
+                </button>
+            </form>
+        </aside>
+
+        <!-- Listings Container -->
+        <div class="listings-container">
+            <!-- Header -->
+            <div class="listings-header">
+                <span class="listings-count">
+                    {% if properties %}
+                    {{ properties|length }} عقار
+                    {% else %}
+                    لا توجد نتائج
+                    {% endif %}
+                </span>
+            </div>
+
+            <!-- Listings Grid -->
+            {% if properties %}
+            <div class="listings-grid">
+                {% for property in properties %}
+                {% include 'properties/_listing_card.html' with listing=property %}
+                {% endfor %}
+            </div>
+
+            <!-- Pagination -->
+            {% if is_paginated %}
+            <div class="listing-pagination">
+                {% if page_obj.has_previous %}
+                <a href="?page={{ page_obj.previous_page_number }}" class="listing-pagination-btn">→</a>
+                {% endif %}
+
+                {% for num in page_obj.paginator.page_range %}
+                {% if page_obj.number == num %}
+                <span class="listing-pagination-btn active">{{ num }}</span>
+                {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                <a href="?page={{ num }}" class="listing-pagination-btn">{{ num }}</a>
+                {% endif %}
+                {% endfor %}
+
+                {% if page_obj.has_next %}
+                <a href="?page={{ page_obj.next_page_number }}" class="listing-pagination-btn">←</a>
+                {% endif %}
+            </div>
+            {% endif %}
+
+            {% else %}
+            <!-- Empty State -->
+            <div class="listing-empty-state">
+                <div class="listing-empty-icon">🔍</div>
+                <h3 class="listing-empty-title">لا توجد نتائج مطابقة</h3>
+                <p class="listing-empty-text">جرّب تغيير الفلاتر أو البحث عن موقع مختلف</p>
+                <button class="listing-empty-action" onclick="window.location.href='{% url 'category_inside_iraq' %}'">
+                    <span>🔄</span>
+                    <span>مسح الفلاتر</span>
+                </button>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Interactive Map Section -->
+    {% include 'properties/_map_section.html' %}
+</div>
+
+<!-- Mobile Filters Overlay -->
+<div class="listing-filters-overlay"></div>
+{% endblock %}

@@ -1,0 +1,176 @@
+{% extends "base.html" %}
+{% load static %}
+{% load i18n %}
+
+{% block title %}{% trans "ماذا أستطيع شراء بميزانيتي" %} - {% trans "دلال" %}{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-lg-8 mx-auto">
+            <div class="card shadow">
+                <div class="card-header bg-primary text-white">
+                    <h2 class="h4 mb-0">
+                        <i class="fas fa-search-dollar ml-2"></i>
+                        {% trans "ماذا أستطيع شراء بميزانيتي" %}
+                    </h2>
+                </div>
+                <div class="card-body">
+                    <p class="text-muted mb-4">
+                        {% trans "أدخل ميزانيتك وستحصل على جميع العقارات التي يمكنك شراؤها بالأسعار الحالية" %}
+                    </p>
+                    
+                    <form method="post" class="budget-search-form">
+                        {% csrf_token %}
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="min_budget">{% trans "أقل ميزانية" %}</label>
+                                    <input type="number" class="form-control" id="min_budget" name="min_budget" placeholder="0">
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="max_budget">{% trans "أقصى ميزانية" %}</label>
+                                    <input type="number" class="form-control" id="max_budget" name="max_budget" required placeholder="100000000">
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="currency">{% trans "العملة" %}</label>
+                                    <select class="form-control" id="currency" name="currency">
+                                        <option value="د.ع">دينار عراقي (د.ع)</option>
+                                        <option value="$">دولار أمريكي ($)</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="search_type">{% trans "نوع البحث" %}</label>
+                                    <select class="form-control" id="search_type" name="search_type">
+                                        <option value="purchase">{% trans "شراء" %}</option>
+                                        <option value="rent">{% trans "إيجار" %}</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="property_type">{% trans "نوع العقار" %}</label>
+                            <select class="form-control" id="property_type" name="property_type">
+                                <option value="all">{% trans "جميع أنواع العقارات" %}</option>
+                                <option value="apartment">{% trans "شقة" %}</option>
+                                <option value="house">{% trans "بيت" %}</option>
+                                <option value="villa">{% trans "فيلا" %}</option>
+                                <option value="land">{% trans "أرض" %}</option>
+                                <option value="commercial">{% trans "تجاري" %}</option>
+                            </select>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="governorate">{% trans "المحافظة" %}</label>
+                                    <select class="form-control" id="governorate" name="governorate">
+                                        <option value="">{% trans "كل العراق" %}</option>
+                                        <option value="بغداد">بغداد</option>
+                                        <option value="البصرة">البصرة</option>
+                                        <option value="نينوى">نينوى</option>
+                                        <option value="أربيل">أربيل</option>
+                                        <option value="النجف">النجف</option>
+                                        <option value="كربلاء">كربلاء</option>
+                                        <option value="كركوك">كركوك</option>
+                                        <option value="السليمانية">السليمانية</option>
+                                        <option value="الديوانية">الديوانية</option>
+                                        <option value="القادسية">القادسية</option>
+                                        <option value="ميسان">ميسان</option>
+                                        <option value="ذي قار">ذي قار</option>
+                                        <option value="بابل">بابل</option>
+                                        <option value="واسط">واسط</option>
+                                        <option value="صلاح الدين">صلاح الدين</option>
+                                        <option value="ديالى">ديالى</option>
+                                        <option value="الأنبار">الأنبار</option>
+                                        <option value="المثنى">المثنى</option>
+                                        <option value="دهوك">دهوك</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="city">{% trans "المدينة" %}</label>
+                                    <input type="text" class="form-control" id="city" name="city" placeholder="مثال: الكرادة">
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="form-check mb-3">
+                            <input type="checkbox" class="form-check-input" id="include_all_iraq" name="include_all_iraq" checked>
+                            <label class="form-check-label" for="include_all_iraq">
+                                {% trans "تضمين جميع محافظات العراق" %}
+                            </label>
+                        </div>
+                        
+                        <hr>
+                        
+                        <h5 class="mb-3">{% trans "خيارات إضافية" %}</h5>
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="min_area">{% trans "أقل مساحة (م²)" %}</label>
+                                    <input type="number" class="form-control" id="min_area" name="min_area" placeholder="0">
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="max_area">{% trans "أقصى مساحة (م²)" %}</label>
+                                    <input type="number" class="form-control" id="max_area" name="max_area" placeholder="500">
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="min_bedrooms">{% trans "أقل عدد غرف" %}</label>
+                                    <input type="number" class="form-control" id="min_bedrooms" name="min_bedrooms" placeholder="1">
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="max_bedrooms">{% trans "أقصى عدد غرف" %}</label>
+                                    <input type="number" class="form-control" id="max_bedrooms" name="max_bedrooms" placeholder="5">
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <button type="submit" class="btn btn-primary btn-lg btn-block mt-4">
+                            <i class="fas fa-search ml-2"></i>
+                            {% trans "ابحث عن العقارات" %}
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Add currency symbol to budget inputs
+    const currencySelect = document.getElementById('currency');
+    const minBudgetInput = document.getElementById('min_budget');
+    const maxBudgetInput = document.getElementById('max_budget');
+    
+    currencySelect.addEventListener('change', function() {
+        const symbol = this.value === 'د.ع' ? 'د.ع' : '$';
+        minBudgetInput.placeholder = `0 ${symbol}`;
+        maxBudgetInput.placeholder = `100000000 ${symbol}`;
+    });
+});
+</script>
+{% endblock %}
