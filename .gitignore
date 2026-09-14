@@ -1,0 +1,134 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+ENV/
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+.venv/
+env.bak/
+venv.bak/
+
+# Django
+*.log
+local_settings.py
+db.sqlite3
+db.sqlite3-journal
+*.sqlite3
+*.sqlite3-journal
+muq.sqlite3
+muq.sqlite3-journal
+/staticfiles/
+/media/
+
+# إضافة لمنع تتبع ملفات قاعدة البيانات المحلية
+# للحفاظ على البيانات عند تحديث Git
+
+# Environment
+.env
+.env.local
+.env.production
+# .env.example should be tracked for reference
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.cursor/
+.windsurf/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Database migrations (optional - uncomment if you don't want to track migrations)
+# properties/migrations/
+
+# Backup files
+*.bak
+*.backup
+*.zip
+*.tar.gz
+
+# Local backup/OneDrive folders and links
+/OneDrive/
+*.lnk
+
+# Force Railway redeploy marker files
+.force-railway-rebuild*
+.force-rebuild*
+.railway-force-rebuild*
+.railway-rebuild
+force_rebuild.txt
+
+# Logs directory
+/logs/
+
+# Temporary files
+*.tmp
+*.temp
+.cache/
+
+# PyCharm
+.idea/
+
+# VS Code
+.vscode/
+*.code-workspace
+
+# Jupyter Notebook
+.ipynb_checkpoints/
+*.ipynb
+
+# pytest
+.pytest_cache/
+.coverage
+htmlcov/
+
+# MyPy
+.mypy_cache/
+.dmypy.json
+dmypy.json
+
+# Celery
+celerybeat-schedule
+celerybeat.pid
+
+# Sphinx documentation
+docs/_build/
+
+# Distribution / Packaging
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+pip-wheel-metadata/
+pip-delete-this-directory.txt

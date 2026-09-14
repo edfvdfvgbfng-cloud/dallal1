@@ -1,0 +1,9 @@
+[phases.build]
+cmds = ["pip install -r requirements.txt"]
+
+[phases.start]
+cmd = "chmod +x start.sh && ./start.sh"
+
+[static]
+# Set the root directory for the build
+site.path = "/"

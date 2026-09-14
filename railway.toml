@@ -1,5 +1,8 @@
 [build]
-builder = "DOCKER"
+builder = "NIXPACKS"
+
+[build.env]
+NIXPACKS_BUILD_ARGS = "--rebuild"
 
 [deploy]
 healthcheckPath = "/"

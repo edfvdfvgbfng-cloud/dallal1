@@ -1,6 +1,6 @@
-# Stage 1: Build
-# Force rebuild - 2026-09-14 - Fix file copying to ensure all project files are included
-FROM python:3.11-slim AS builder
+# Simplified Dockerfile for Railway deployment
+# Force rebuild - 2026-09-14-16-00 - Fix missing manage.py issue
+FROM python:3.11-slim
 
 WORKDIR /app
 
@@ -10,6 +10,8 @@ RUN apt-get update && apt-get install -y \
     postgresql-client \
     python3-dev \
     libpq-dev \
+    libpq5 \
+    curl \
     && rm -rf /var/lib/apt/lists/*
 
 # Copy requirements and install Python dependencies
@@ -18,42 +20,12 @@ RUN pip install --upgrade pip
 RUN pip install --no-cache-dir -r requirements.txt
 RUN pip install gunicorn
 
-# Stage 2: Runtime
-FROM python:3.11-slim
+# Copy all application files at once
+COPY . .
 
-WORKDIR /app
-
-# Install runtime dependencies
-RUN apt-get update && apt-get install -y \
-    postgresql-client \
-    libpq5 \
-    curl \
-    && rm -rf /var/lib/apt/lists/*
-
-# Copy Python dependencies from builder
-COPY --from=builder /usr/local/lib/python3.11/site-packages /usr/local/lib/python3.11/site-packages
-COPY --from=builder /usr/local/bin /usr/local/bin
-
-# Install gunicorn in runtime if not copied
-RUN pip install gunicorn
-
-# Copy application code - explicit copy to ensure manage.py is at /app
-COPY manage.py /app/manage.py
-COPY requirements.txt /app/requirements.txt
-COPY dalal_project /app/dalal_project
-COPY templates /app/templates
-COPY static /app/static
-COPY assets /app/assets
-COPY properties /app/properties
-COPY scripts /app/scripts
-COPY entrypoint.sh /app/entrypoint.sh
-COPY start.sh /app/start.sh
-COPY create_admin_user.py /app/create_admin_user.py
-COPY *.md /app/
-
-# Copy entrypoint script
-RUN chmod +x /app/entrypoint.sh
-RUN chmod +x /app/start.sh
+# Make scripts executable
+RUN chmod +x /app/entrypoint.sh 2>/dev/null || true
+RUN chmod +x /app/start.sh 2>/dev/null || true
 
 # Create static files directory
 RUN mkdir -p staticfiles media static
