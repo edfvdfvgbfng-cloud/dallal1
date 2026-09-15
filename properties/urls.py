@@ -162,6 +162,9 @@ urlpatterns = [
     path('travel-companies/', views.unified_search_view, name='travel_companies'),
     path('advertisements/public/', views.unified_search_view, name='public_service_advertisements'),
     
+    # Channel routes
+    path('channels/', views.admin_channels_list, name='channels_list'),
+    
     # Travel companies
     
     # Travel packages

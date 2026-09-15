@@ -457,37 +457,25 @@ else:
     # Minimal logging in production - only CRITICAL errors
     LOGGING = {
         'version': 1,
-        'disable_existing_loggers': False,  # Enable logging for debugging
-        'formatters': {
-            'simple': {
-                'format': '{levelname} {asctime} {module} {message}',
-                'style': '{',
-            },
-        },
+        'disable_existing_loggers': True,  # Disable all loggers
         'handlers': {
-            'console': {
-                'class': 'logging.StreamHandler',
-                'formatter': 'simple',
+            'null': {
+                'class': 'logging.NullHandler',
             },
         },
         'root': {
-            'handlers': ['console'],
-            'level': 'ERROR',
+            'handlers': ['null'],
+            'level': 'CRITICAL',
         },
         'loggers': {
             'django.db.backends': {
-                'handlers': ['console'],
-                'level': 'ERROR',
+                'handlers': ['null'],
+                'level': 'CRITICAL',
                 'propagate': False,
             },
             'django': {
-                'handlers': ['console'],
-                'level': 'ERROR',
-                'propagate': False,
-            },
-            'properties': {
-                'handlers': ['console'],
-                'level': 'ERROR',
+                'handlers': ['null'],
+                'level': 'CRITICAL',
                 'propagate': False,
             },
         },
