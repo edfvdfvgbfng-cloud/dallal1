@@ -6,7 +6,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('properties', '0234_add_subscription_to_property'),
+        ('properties', '0233_merge_20260910_0503'),
     ]
 
     operations = [

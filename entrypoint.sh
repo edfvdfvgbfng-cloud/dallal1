@@ -33,23 +33,9 @@ if [ -z "$SECRET_KEY" ]; then
 fi
 
 # Run migrations first (for fresh database)
-# Check if migration 0234 should be skipped via environment variable
-if [ "$SKIP_MIGRATION_0234" = "true" ]; then
-    echo "Skipping migration 0234 due to SKIP_MIGRATION_0234=true"
-    python manage.py migrate properties 0234 --fake 2>/dev/null || true
-fi
+python manage.py migrate --noinput
 
-# Try normal migrate, if it fails on 0234, fake it and continue
-python manage.py migrate --noinput 2>&1 | tee /tmp/migrate.log
-
-# Check if migration failed on 0234
-if grep -q "0234_add_subscription_to_property" /tmp/migrate.log && grep -q "property_id.*does not exist" /tmp/migrate.log; then
-    echo "Migration 0234 failed due to Railway cache, faking it..."
-    python manage.py migrate properties 0234 --fake
-    python manage.py migrate --noinput
-fi
-
-# Exit if migrations still fail
+# Exit if migrations fail
 if [ $? -ne 0 ]; then
     echo "ERROR: Migrations failed"
     exit 1
