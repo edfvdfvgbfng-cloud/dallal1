@@ -6828,3 +6828,9 @@ def api_translate_message(request):
     return JsonResponse({'status': 'ok', 'message': 'Translate message endpoint'})
 
 
+@login_required
+def create_admin_conversation(request):
+    """Create admin conversation - placeholder function."""
+    return JsonResponse({'status': 'ok', 'message': 'Admin conversation endpoint'})
+
+
