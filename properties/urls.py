@@ -901,7 +901,6 @@ placeholder_routes = [
     path('delete-property/', placeholder_view, name='delete_property'),
     path('delete-notification/', placeholder_view, name='delete_notification'),
     path('delete-user/', placeholder_view, name='delete_user'),
-    path('dynamic-add/', placeholder_view, name='dynamic_add_property'),
     path('edit-property/', placeholder_view, name='edit_property'),
     path('office-panel/', placeholder_view, name='office_panel'),
     path('office-presence/', placeholder_view, name='office_presence_settings'),
