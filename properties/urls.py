@@ -24,6 +24,14 @@ def offline_view(request):
     return render(request, 'properties/offline.html')
 
 
+def placeholder_view(request, *args, **kwargs):
+    """Generic placeholder view for unimplemented routes"""
+    return render(request, 'properties/placeholder.html', {
+        'title': 'Feature Coming Soon',
+        'message': 'This feature is under development. Please check back later.'
+    })
+
+
 urlpatterns = [
     path('sw.js', service_worker_view, name='service_worker'),
     path('offline/', offline_view, name='offline'),
@@ -164,6 +172,10 @@ urlpatterns = [
     
     # Channel routes
     path('channels/', views.admin_channels_list, name='channels_list'),
+    
+    # Catch-all placeholder for missing routes (redirect to home)
+    # This will be updated as specific views are implemented
+    path('brokers/search/', views.unified_search_view, name='public_broker_search'),
     
     # Travel companies
     
@@ -365,3 +377,255 @@ urlpatterns += [
     
     # Unified Marketplace - Marketplace موحد للبحث
 ]
+
+# Catch-all placeholder for missing routes (add at the end)
+# This handles URLs that are referenced in templates but not yet implemented
+placeholder_routes = [
+    # Admin routes
+    path('admin/analytics/', placeholder_view, name='admin_analytics_panel'),
+    path('admin/appointments/', placeholder_view, name='admin_appointment_booking'),
+    path('admin/chat/', placeholder_view, name='admin_chat'),
+    path('admin/presence/', placeholder_view, name='admin_presence_dashboard'),
+    path('admin/presence/update/', placeholder_view, name='admin_update_presence'),
+    path('admin/reports/', placeholder_view, name='admin_reports_panel'),
+    path('admin/users/toggle/', placeholder_view, name='admin_toggle_user'),
+    path('admin/warnings/', placeholder_view, name='issue_user_warning'),
+    
+    # Broker routes
+    path('brokers/search/', placeholder_view, name='public_broker_search'),
+    path('brokers/appointments/', placeholder_view, name='broker_appointments_list'),
+    path('brokers/appointments/booking/', placeholder_view, name='broker_appointment_booking'),
+    path('brokers/appointments/<int:id>/', placeholder_view, name='broker_appointment_detail'),
+    path('brokers/auctions/', placeholder_view, name='broker_auctions'),
+    path('brokers/bulk-messaging/', placeholder_view, name='broker_bulk_messaging'),
+    path('brokers/channel/<int:id>/', placeholder_view, name='broker_channel_detail'),
+    path('brokers/channel/<int:id>/settings/', placeholder_view, name='broker_channel_settings'),
+    path('brokers/channel/<int:id>/stats/', placeholder_view, name='broker_channel_stats'),
+    path('brokers/conversations/', placeholder_view, name='broker_conversation_list'),
+    path('brokers/conversations/<int:id>/', placeholder_view, name='broker_conversation_detail'),
+    path('brokers/hotels/', placeholder_view, name='broker_hotels'),
+    path('brokers/hotels-outside/', placeholder_view, name='broker_hotels_outside'),
+    path('brokers/messages/', placeholder_view, name='broker_messages'),
+    path('brokers/messaging/', placeholder_view, name='broker_messaging'),
+    path('brokers/resorts/', placeholder_view, name='broker_resorts'),
+    path('brokers/resorts-outside/', placeholder_view, name='broker_resorts_outside'),
+    path('brokers/statistics/', placeholder_view, name='broker_statistics'),
+    path('brokers/travel-companies/', placeholder_view, name='broker_travel_companies'),
+    
+    # Channel routes
+    path('channels/search/', placeholder_view, name='channel_search'),
+    
+    # Contract routes
+    path('contracts/', placeholder_view, name='contract_list'),
+    path('contracts/create/', placeholder_view, name='contract_create'),
+    path('contracts/<int:id>/', placeholder_view, name='contract_detail'),
+    path('contracts/<int:id>/edit/', placeholder_view, name='contract_edit'),
+    path('contracts/<int:id>/delete/', placeholder_view, name='contract_delete'),
+    path('contracts/<int:id>/archive/', placeholder_view, name='contract_archive'),
+    path('contracts/<int:id>/documents/add/', placeholder_view, name='contract_document_add'),
+    path('contracts/<int:id>/documents/<int:doc_id>/delete/', placeholder_view, name='contract_document_delete'),
+    path('contracts/<int:id>/documents/<int:doc_id>/', placeholder_view, name='contract_document_view'),
+    path('contracts/<int:id>/parties/add/', placeholder_view, name='contract_party_add'),
+    path('contracts/statistics/', placeholder_view, name='contract_statistics'),
+    
+    # CRM routes
+    path('crm/', placeholder_view, name='crm_dashboard'),
+    path('crm/management/', placeholder_view, name='crm_management'),
+    path('crm/contacts/<int:id>/', placeholder_view, name='crm_contact_detail'),
+    path('crm/customers/', placeholder_view, name='customers_management'),
+    path('crm/customers/create/', placeholder_view, name='customer_create'),
+    path('crm/customers/<int:id>/', placeholder_view, name='customer_detail'),
+    path('crm/agents/', placeholder_view, name='agents_management'),
+    path('crm/agents/create/', placeholder_view, name='agent_create'),
+    path('crm/agents/<int:id>/', placeholder_view, name='agent_detail'),
+    
+    # Dallal routes
+    path('dallal/settings/', placeholder_view, name='dallal_settings'),
+    path('dallal/subscriptions/', placeholder_view, name='dallal_subscriptions_list'),
+    path('dallal/subscriptions/create/', placeholder_view, name='dallal_subscription_create'),
+    path('dallal/subscriptions/<int:id>/edit/', placeholder_view, name='dallal_subscription_edit'),
+    path('dallal/hotels/create/', placeholder_view, name='dallal_hotel_create'),
+    path('dallal/hotels/<int:id>/edit/', placeholder_view, name='dallal_hotel_edit'),
+    path('dallal/hotels-outside/create/', placeholder_view, name='dallal_hotel_outside_create'),
+    path('dallal/hotels-outside/<int:id>/edit/', placeholder_view, name='dallal_hotel_outside_edit'),
+    path('dallal/hotels-outside/<int:id>/delete/', placeholder_view, name='dallal_hotel_outside_delete'),
+    path('dallal/resorts/create/', placeholder_view, name='dallal_resort_create'),
+    path('dallal/resorts/<int:id>/edit/', placeholder_view, name='dallal_resort_edit'),
+    path('dallal/resorts/<int:id>/delete/', placeholder_view, name='dallal_resort_delete'),
+    path('dallal/resorts-outside/create/', placeholder_view, name='dallal_resort_outside_create'),
+    path('dallal/resorts-outside/<int:id>/edit/', placeholder_view, name='dallal_resort_outside_edit'),
+    path('dallal/resorts-outside/<int:id>/delete/', placeholder_view, name='dallal_resort_outside_delete'),
+    path('dallal/travel-companies/create/', placeholder_view, name='dallal_travel_company_create'),
+    path('dallal/travel-companies/<int:id>/edit/', placeholder_view, name='dallal_travel_company_edit'),
+    path('dallal/travel-companies/<int:id>/delete/', placeholder_view, name='dallal_travel_company_delete'),
+    
+    # Discovery routes
+    path('discover/', placeholder_view, name='discover'),
+    
+    # Financial routes
+    path('financial/', placeholder_view, name='financial_dashboard'),
+    path('financial/reports/', placeholder_view, name='financial_reports'),
+    path('financial/add-transaction/', placeholder_view, name='add_financial_transaction'),
+    path('financial/add-expense/', placeholder_view, name='add_expense'),
+    path('financial/add-profit/', placeholder_view, name='add_profit'),
+    
+    # Hotel routes
+    path('hotels/', placeholder_view, name='hotels_list'),
+    path('hotels/create-inside/', placeholder_view, name='hotel_create_inside_iraq'),
+    path('hotels/create-outside/', placeholder_view, name='hotel_create_outside_iraq'),
+    path('hotels/<str:slug>/', placeholder_view, name='hotel_detail'),
+    path('hotels/<int:id>/', placeholder_view, name='hotel_page_detail_by_id'),
+    path('hotels/<int:id>/follow/', placeholder_view, name='hotel_page_follow'),
+    path('hotels/<int:id>/unfollow/', placeholder_view, name='hotel_page_unfollow'),
+    path('hotels/list/', placeholder_view, name='hotel_page_list'),
+    path('hotels/<int:id>/post/', placeholder_view, name='hotel_post_create'),
+    path('hotels-outside/<int:id>/post/', placeholder_view, name='hotel_outside_post_create'),
+    path('hotels/<int:id>/rating/', placeholder_view, name='hotel_rating_create'),
+    
+    # Job routes
+    path('jobs/', placeholder_view, name='jobs'),
+    path('jobs/post/', placeholder_view, name='job_post'),
+    path('jobs/<int:id>/apply/', placeholder_view, name='job_apply'),
+    
+    # Message routes
+    path('messages/', placeholder_view, name='message_notification_settings'),
+    path('messages/create/', placeholder_view, name='message_create'),
+    path('messages/send/', placeholder_view, name='send_message'),
+    path('messages/user/', placeholder_view, name='send_user_message'),
+    path('messages/broker/', placeholder_view, name='send_broker_message'),
+    path('messages/<int:id>/', placeholder_view, name='message_notification_settings'),
+    path('conversations/', placeholder_view, name='conversations_list'),
+    path('conversations/<int:id>/', placeholder_view, name='conversation_detail'),
+    path('conversations/<int:id>/archive/', placeholder_view, name='conversation_archive'),
+    path('conversations/<int:id>/delete/', placeholder_view, name='conversation_delete'),
+    path('conversations/broker/<int:id>/', placeholder_view, name='broker_conversation_detail'),
+    path('conversations/broker/start/', placeholder_view, name='start_broker_conversation'),
+    path('conversations/user/<int:id>/', placeholder_view, name='user_message_detail'),
+    path('user-messages/', placeholder_view, name='user_messages'),
+    path('user-messages/<int:id>/', placeholder_view, name='user_message_detail'),
+    path('user-messages/<int:id>/delete/', placeholder_view, name='delete_user_message'),
+    path('broker-messages/', placeholder_view, name='broker_message_list'),
+    path('broker-messages/<int:id>/', placeholder_view, name='broker_message_detail'),
+    
+    # Notification routes
+    path('notifications/', placeholder_view, name='notifications'),
+    path('notifications/center/', placeholder_view, name='notification_center'),
+    path('notifications/settings/', placeholder_view, name='notification_settings'),
+    
+    # Property routes
+    path('properties/create/', placeholder_view, name='property_create'),
+    path('properties/map/', placeholder_view, name='properties_map'),
+    path('properties/contracts/', placeholder_view, name='property_contracts'),
+    path('properties/<int:id>/contracts/', placeholder_view, name='real_estate_contracts'),
+    path('properties/<int:id>/verification/', placeholder_view, name='property_verification_admin'),
+    path('properties/<int:id>/verify/', placeholder_view, name='property_verify'),
+    path('properties/<int:id>/commissions/', placeholder_view, name='property_view_commissions'),
+    path('properties/<int:id>/statistics/', placeholder_view, name='property_statistics'),
+    path('properties/<int:id>/publication/', placeholder_view, name='property_publication'),
+    
+    # Resort routes
+    path('resorts/', placeholder_view, name='resorts_list'),
+    path('resorts/create-inside/', placeholder_view, name='resort_create_inside_iraq'),
+    path('resorts/create-outside/', placeholder_view, name='resort_create_outside_iraq'),
+    path('resorts/<int:id>/', placeholder_view, name='resort_detail'),
+    path('resorts/inside/<int:id>/', placeholder_view, name='resort_inside_detail'),
+    path('resorts/outside/<int:id>/', placeholder_view, name='resort_outside_detail'),
+    path('resorts/<int:id>/post/', placeholder_view, name='resort_post_create'),
+    path('resorts/outside/<int:id>/post/', placeholder_view, name='resort_outside_post_create'),
+    path('resorts/<int:id>/booking/', placeholder_view, name='resort_booking'),
+    path('resorts/<int:id>/review/', placeholder_view, name='resort_review'),
+    
+    # Service provider routes
+    path('services/', placeholder_view, name='service_categories'),
+    path('services/providers/', placeholder_view, name='service_provider_list'),
+    path('services/providers/create/', placeholder_view, name='service_provider_create'),
+    path('services/providers/<int:id>/', placeholder_view, name='service_provider_detail'),
+    path('services/providers/<int:id>/follow/', placeholder_view, name='service_provider_follow'),
+    path('services/providers/<int:id>/unfollow/', placeholder_view, name='service_provider_unfollow'),
+    path('services/providers/<int:id>/quote/', placeholder_view, name='service_provider_quote'),
+    path('services/providers/<int:id>/contact/', placeholder_view, name='service_provider_contact'),
+    path('services/providers/<int:id>/rating/', placeholder_view, name='service_provider_rating_create'),
+    path('services/providers/dashboard/', placeholder_view, name='service_provider_dashboard'),
+    path('services/advertisements/', placeholder_view, name='public_service_advertisements'),
+    path('services/advertisements/create/', placeholder_view, name='create_service_advertisement'),
+    path('services/advertisements/<int:id>/', placeholder_view, name='service_advertisement_detail'),
+    path('services/advertisements/<int:id>/edit/', placeholder_view, name='edit_service_advertisement'),
+    path('services/advertisements/<int:id>/delete/', placeholder_view, name='delete_service_advertisement'),
+    path('services/<int:id>/', placeholder_view, name='service_detail'),
+    
+    # Settings routes
+    path('settings/hub/', placeholder_view, name='settings_hub'),
+    
+    # Sub-broker routes
+    path('sub-brokers/', placeholder_view, name='sub_broker_panel'),
+    path('sub-brokers/properties/', placeholder_view, name='sub_broker_properties'),
+    path('sub-brokers/commissions/', placeholder_view, name='sub_broker_commissions'),
+    path('sub-brokers/settings/', placeholder_view, name='sub_broker_settings'),
+    
+    # Subscription routes
+    path('subscriptions/', placeholder_view, name='subscription_plans_list'),
+    path('subscriptions/plans/', placeholder_view, name='subscription_plans'),
+    path('subscriptions/plans/create/', placeholder_view, name='subscription_plan_create'),
+    path('subscriptions/plans/<int:id>/edit/', placeholder_view, name='subscription_plan_edit'),
+    path('subscriptions/plans/<int:id>/delete/', placeholder_view, name='subscription_plan_delete'),
+    path('subscriptions/renewals/', placeholder_view, name='subscription_renewal_requests_list'),
+    path('subscriptions/renewals/create/', placeholder_view, name='subscription_renewal_request'),
+    path('subscriptions/renewals/<int:id>/approve/', placeholder_view, name='approve_subscription_renewal'),
+    path('subscriptions/renewals/<int:id>/reject/', placeholder_view, name='reject_subscription_renewal'),
+    
+    # Support routes
+    path('support/', placeholder_view, name='support_message_list'),
+    path('support/create/', placeholder_view, name='support_message_create'),
+    path('support/<int:id>/', placeholder_view, name='support_message_detail'),
+    
+    # Travel routes
+    path('travel/', placeholder_view, name='travel_companies'),
+    path('travel/companies/', placeholder_view, name='travel_companies'),
+    path('travel/companies/<int:id>/', placeholder_view, name='travel_company_detail'),
+    path('travel/companies/<int:id>/post/', placeholder_view, name='travel_company_post_create'),
+    path('travel/companies/<int:id>/post/<int:post_id>/edit/', placeholder_view, name='travel_company_post_edit'),
+    path('travel/companies/<int:id>/post/<int:post_id>/delete/', placeholder_view, name='travel_company_post_delete'),
+    path('travel/packages/', placeholder_view, name='travel_packages'),
+    path('travel/packages/create/', placeholder_view, name='travel_package_create'),
+    path('travel/packages/<int:id>/', placeholder_view, name='travel_package_detail'),
+    
+    # User routes
+    path('user/settings/', placeholder_view, name='user_settings'),
+    path('user/settings/account/', placeholder_view, name='user_settings_account'),
+    path('user/settings/activity/', placeholder_view, name='user_settings_activity'),
+    path('user/settings/favorites/', placeholder_view, name='user_settings_favorites'),
+    path('user/settings/messages/', placeholder_view, name='user_settings_messages'),
+    path('user/settings/notifications/', placeholder_view, name='user_settings_notifications'),
+    path('user/settings/preferences/', placeholder_view, name='user_settings_preferences'),
+    path('user/settings/privacy/', placeholder_view, name='user_settings_privacy'),
+    path('user/settings/profile/', placeholder_view, name='user_settings_profile'),
+    path('user/settings/security/', placeholder_view, name='user_settings_security'),
+    path('user/monitoring/', placeholder_view, name='user_monitoring_panel'),
+    path('user/monitoring/<int:id>/', placeholder_view, name='user_monitoring_detail'),
+    path('user/moderation/', placeholder_view, name='user_moderation_panel'),
+    path('user/moderation/<int:id>/', placeholder_view, name='user_moderation_detail'),
+    
+    # Wallet routes
+    path('wallet/', placeholder_view, name='wallet_details'),
+    
+    # Additional missing routes
+    path('add-property/', placeholder_view, name='add_property'),
+    path('add-note/', placeholder_view, name='add_note'),
+    path('delete-note/', placeholder_view, name='delete_note'),
+    path('delete-property-image/', placeholder_view, name='delete_property_image'),
+    path('delete-property/', placeholder_view, name='delete_property'),
+    path('delete-notification/', placeholder_view, name='delete_notification'),
+    path('delete-user/', placeholder_view, name='delete_user'),
+    path('dynamic-add/', placeholder_view, name='dynamic_add_property'),
+    path('edit-property/', placeholder_view, name='edit_property'),
+    path('office-panel/', placeholder_view, name='office_panel'),
+    path('office-presence/', placeholder_view, name='office_presence_settings'),
+    path('preferences/', placeholder_view, name='preferences_settings'),
+    path('privacy/', placeholder_view, name='privacy_settings'),
+    path('property-verification/', placeholder_view, name='property_verify'),
+    path('security/', placeholder_view, name='security_settings'),
+    path('social-auth/', placeholder_view, name='social_settings'),
+    path('unified-search/', placeholder_view, name='unified_search'),
+]
+
+urlpatterns += placeholder_routes
