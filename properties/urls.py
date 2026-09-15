@@ -148,6 +148,8 @@ urlpatterns = [
     # Tourism section
     
     # New category views
+    path('category/inside-iraq/', views.unified_search_view, name='category_inside_iraq'),
+    path('category/outside-iraq/', views.unified_search_view, name='category_outside_iraq'),
     
     # Travel companies
     
