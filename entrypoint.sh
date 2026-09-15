@@ -33,12 +33,11 @@ if [ -z "$SECRET_KEY" ]; then
 fi
 
 # Run migrations first (for fresh database)
-# Try normal migrate first, if it fails try fake for the problematic migration
-python manage.py migrate --noinput 2>/dev/null || {
-    echo "Normal migrate failed, trying to fake problematic migration..."
-    python manage.py migrate properties 0234 --fake 2>/dev/null || true
-    python manage.py migrate --noinput
-}
+# Pre-fake the problematic migration to avoid cache issues
+python manage.py migrate properties 0234 --fake 2>/dev/null || true
+
+# Try normal migrate
+python manage.py migrate --noinput
 
 # Skip fix_database for fresh database to avoid migration conflicts
 # python manage.py fix_database 2>/dev/null || true
