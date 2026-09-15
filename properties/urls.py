@@ -151,6 +151,17 @@ urlpatterns = [
     path('category/inside-iraq/', views.unified_search_view, name='category_inside_iraq'),
     path('category/outside-iraq/', views.unified_search_view, name='category_outside_iraq'),
     
+    # Auction routes
+    path('auctions/', views.unified_search_view, name='auctions_list'),
+    
+    # Hotel/Resort/Travel routes (placeholder)
+    path('category/hotels/', views.unified_search_view, name='category_hotels'),
+    path('category/hotels-outside/', views.unified_search_view, name='category_hotels_outside'),
+    path('resorts/inside-iraq/', views.unified_search_view, name='resorts_inside_iraq'),
+    path('resorts/outside-iraq/', views.unified_search_view, name='resorts_outside_iraq'),
+    path('travel-companies/', views.unified_search_view, name='travel_companies'),
+    path('advertisements/public/', views.unified_search_view, name='public_service_advertisements'),
+    
     # Travel companies
     
     # Travel packages
