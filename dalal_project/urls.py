@@ -75,6 +75,8 @@ urlpatterns = [
     path('', include('properties.urls')),
     # Admin panel
     path('admin/', admin.site.urls),
+    # API endpoints - disabled due to Railway cache issues
+    # path('api/', include('properties.api_urls')),
     # Social Authentication
     path('social/', include('social_django.urls', namespace='social')),
     # API Documentation
