@@ -6432,6 +6432,20 @@ def add_virtual_tour(request, property_id):
         return redirect('property_detail', property.slug)
     
     if request.method == 'POST':
+        form = VirtualTour360Form(request.POST, request.FILES)
+        if form.is_valid():
+            tour = form.save(commit=False)
+            tour.property = property
+            tour.save()
+            messages.success(request, 'تم إضافة الجولة الافتراضية بنجاح')
+            return redirect('property_detail', property.slug)
+    else:
+        form = VirtualTour360Form()
+    
+    return render(request, 'properties/add_virtual_tour.html', {
+        'form': form,
+        'property': property,
+    })
 
 
 @login_required
@@ -6453,20 +6467,6 @@ def dynamic_add_property_view(request):
     return render(request, 'properties/dynamic_add_property.html', {
         'form': form,
         'category': request.GET.get('category', ''),
-    })
-        form = VirtualTour360Form(request.POST, request.FILES)
-        if form.is_valid():
-            tour = form.save(commit=False)
-            tour.property = property
-            tour.save()
-            messages.success(request, 'تم إضافة الجولة الافتراضية بنجاح')
-            return redirect('property_detail', property.slug)
-    else:
-        form = VirtualTour360Form()
-    
-    return render(request, 'properties/add_virtual_tour.html', {
-        'form': form,
-        'property': property,
     })
 
 
