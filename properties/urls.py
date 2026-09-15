@@ -271,6 +271,7 @@ urlpatterns = [
     path('api/conversations/check/', views.api_check_conversation, name='api_check_conversation'),
     path('api/conversations/create/', views.api_create_conversation, name='api_create_conversation'),
     path('api/notifications/unread/', views.api_notifications_unread, name='api_notifications_unread'),
+    path('api/notifications/unread-count/', views.api_notifications_unread, name='api_notifications_unread_count'),
     
     # Developer Panel APIs
     path('api/conversations/<uuid:conversation_id>/messages/', views.api_send_message, name='api_send_message_uuid'),
