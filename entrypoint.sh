@@ -33,6 +33,12 @@ if [ -z "$SECRET_KEY" ]; then
 fi
 
 # Run migrations first (for fresh database)
+# Check if migration 0234 should be skipped via environment variable
+if [ "$SKIP_MIGRATION_0234" = "true" ]; then
+    echo "Skipping migration 0234 due to SKIP_MIGRATION_0234=true"
+    python manage.py migrate properties 0234 --fake 2>/dev/null || true
+fi
+
 # Try normal migrate, if it fails on 0234, fake it and continue
 python manage.py migrate --noinput 2>&1 | tee /tmp/migrate.log
 
