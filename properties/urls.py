@@ -145,7 +145,6 @@ urlpatterns = [
     path('subscription-plans/', views.subscription_plans, name='subscription_plans'),
     path('user-dashboard/', views.user_dashboard, name='user_dashboard'),
     path('dashboard/', views.dashboard, name='dashboard'),
-    path('dashboard/add/', placeholder_view, name='dashboard_add'),
     path('dashboard/my-posts/', views.my_posts, name='my_posts'),
     path('dashboard/advanced-reports/', views.advanced_reports, name='advanced_reports'),
     path('api/property/<int:property_id>/toggle-featured/', views.toggle_property_featured, name='toggle_property_featured'),
