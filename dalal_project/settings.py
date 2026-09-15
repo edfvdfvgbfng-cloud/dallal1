@@ -122,6 +122,7 @@ if DEBUG:
         'https://muq.up.railway.app',
         'https://muqq.up.railway.app',
         'https://dallal1-production.up.railway.app',
+        'https://allal1-production.up.railway.app',
         'https://dallal2-production.up.railway.app',
         'https://dallal3-production.up.railway.app',
         'https://dallal4-production.up.railway.app',
@@ -144,6 +145,7 @@ else:
         'https://muq.up.railway.app',
         'https://muqq.up.railway.app',
         'https://dallal1-production.up.railway.app',
+        'https://allal1-production.up.railway.app',
         'https://dallal2-production.up.railway.app',
     ] + _parse_csv_env('CSRF_TRUSTED_ORIGINS'))
 
