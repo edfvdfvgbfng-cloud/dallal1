@@ -248,8 +248,8 @@ urlpatterns = [
 
 
     # Dynamic property addition
-    path('add/dynamic/', placeholder_view, name='add_dynamic'),
-    path('dynamic-add/', placeholder_view, name='dynamic_add_property'),
+    path('add/dynamic/', views.dynamic_add_property_view, name='add_dynamic'),
+    path('dynamic-add/', views.dynamic_add_property_view, name='dynamic_add_property'),
     
 
     # Service Providers

@@ -6432,6 +6432,28 @@ def add_virtual_tour(request, property_id):
         return redirect('property_detail', property.slug)
     
     if request.method == 'POST':
+
+
+@login_required
+def dynamic_add_property_view(request):
+    """Dynamic property addition view"""
+    try:
+        form = DynamicPropertyForm(request.POST or None, request.FILES or None)
+        if request.method == 'POST':
+            if form.is_valid():
+                property = form.save(commit=False)
+                property.owner = request.user
+                property.save()
+                messages.success(request, 'تم إضافة العقار بنجاح')
+                return redirect('property_detail', slug=property.slug)
+    except Exception as e:
+        logger.error(f"Error in dynamic_add_property_view: {e}")
+        form = DynamicPropertyForm()
+    
+    return render(request, 'properties/dynamic_add_property.html', {
+        'form': form,
+        'category': request.GET.get('category', ''),
+    })
         form = VirtualTour360Form(request.POST, request.FILES)
         if form.is_valid():
             tour = form.save(commit=False)
