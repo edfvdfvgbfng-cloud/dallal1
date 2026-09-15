@@ -26,10 +26,70 @@ def offline_view(request):
 
 def placeholder_view(request, *args, **kwargs):
     """Generic placeholder view for unimplemented routes"""
-    return render(request, 'properties/placeholder.html', {
-        'title': 'Feature Coming Soon',
-        'message': 'This feature is under development. Please check back later.'
-    })
+    from django.http import HttpResponse
+    html = """
+    <!DOCTYPE html>
+    <html lang="ar" dir="rtl">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Feature Coming Soon</title>
+        <style>
+            body {
+                font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                margin: 0;
+                padding: 0;
+                min-height: 100vh;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+            }
+            .container {
+                max-width: 600px;
+                margin: 20px;
+                background: white;
+                padding: 40px;
+                border-radius: 15px;
+                box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+                text-align: center;
+            }
+            h1 {
+                color: #333;
+                margin-bottom: 20px;
+                font-size: 28px;
+            }
+            p {
+                color: #666;
+                font-size: 18px;
+                margin-bottom: 30px;
+                line-height: 1.6;
+            }
+            .btn {
+                display: inline-block;
+                padding: 12px 30px;
+                background: #FF7A00;
+                color: white;
+                text-decoration: none;
+                border-radius: 5px;
+                font-weight: bold;
+                transition: background 0.3s;
+            }
+            .btn:hover {
+                background: #ff9500;
+            }
+        </style>
+    </head>
+    <body>
+        <div class="container">
+            <h1>Feature Coming Soon</h1>
+            <p>This feature is under development. Please check back later.</p>
+            <a href="/" class="btn">العودة للصفحة الرئيسية</a>
+        </div>
+    </body>
+    </html>
+    """
+    return HttpResponse(html)
 
 
 urlpatterns = [
