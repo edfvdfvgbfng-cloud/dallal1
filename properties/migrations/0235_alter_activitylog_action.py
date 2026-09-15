@@ -6,7 +6,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('properties', '0234_add_subscription_to_property'),
+        ('properties', '0234_skip_property_field_removal'),
     ]
 
     operations = [
