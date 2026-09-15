@@ -33,16 +33,17 @@ if [ -z "$SECRET_KEY" ]; then
 fi
 
 # Run migrations first (for fresh database)
-# Pre-fake the problematic migration to avoid cache issues
-python manage.py migrate properties 0234 --fake 2>/dev/null || true
+# Try normal migrate, if it fails on 0234, fake it and continue
+python manage.py migrate --noinput 2>&1 | tee /tmp/migrate.log
 
-# Try normal migrate
-python manage.py migrate --noinput
+# Check if migration failed on 0234
+if grep -q "0234_add_subscription_to_property" /tmp/migrate.log && grep -q "property_id.*does not exist" /tmp/migrate.log; then
+    echo "Migration 0234 failed due to Railway cache, faking it..."
+    python manage.py migrate properties 0234 --fake
+    python manage.py migrate --noinput
+fi
 
-# Skip fix_database for fresh database to avoid migration conflicts
-# python manage.py fix_database 2>/dev/null || true
-
-# Exit if migrations fail
+# Exit if migrations still fail
 if [ $? -ne 0 ]; then
     echo "ERROR: Migrations failed"
     exit 1
