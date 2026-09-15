@@ -25,6 +25,22 @@ try:
     from .models import Backup
 except ImportError:
     Backup = None
+try:
+    from .models import BrokerChannel
+except ImportError:
+    BrokerChannel = None
+try:
+    from .models import Country
+except ImportError:
+    Country = None
+try:
+    from .models import PropertyViewStats
+except ImportError:
+    PropertyViewStats = None
+try:
+    from .models import Message
+except ImportError:
+    Message = None
 from django.http import JsonResponse, HttpResponse
 from django.urls import reverse
 from django.shortcuts import get_object_or_404, redirect, render
@@ -886,7 +902,7 @@ def home(request):
         logger.error(f"Error checking migrations: {e}")
     
     # Calculate real statistics
-    from .models import Property, Broker, BrokerChannel, User, Hotel, Resort, Job, ServiceProvider, ServiceAdvertisement, Auction
+    from .models import Property, Broker, User, Hotel, Resort, ServiceProvider, ServiceAdvertisement, Auction
     stats = {
         'total_properties': 0,
         'total_brokers': 0,
@@ -910,22 +926,32 @@ def home(request):
     try:
         stats['total_properties'] = Property.objects.filter(status='published').count()
         stats['total_brokers'] = Broker.objects.filter(is_active=True).count()
-        stats['total_channels'] = BrokerChannel.objects.filter(status='active').count()
+        if BrokerChannel:
+            stats['total_channels'] = BrokerChannel.objects.filter(status='active').count()
+        else:
+            stats['total_channels'] = 0
         stats['total_users'] = User.objects.filter(is_active=True).count()
         
         # Property locations
         try:
-            from .models import Country
-            iraq_country = Country.objects.filter(code='IQ').first()
-            if iraq_country:
-                stats['iraq_properties'] = Property.objects.filter(status='published', country=iraq_country).count()
-                stats['foreign_properties'] = Property.objects.filter(status='published').exclude(country=iraq_country).count()
-                stats['iraq_hotels'] = Hotel.objects.filter(country=iraq_country).count()
-                stats['foreign_hotels'] = Hotel.objects.exclude(country=iraq_country).count()
-                stats['iraq_resorts'] = Resort.objects.filter(country=iraq_country).count()
-                stats['foreign_resorts'] = Resort.objects.exclude(country=iraq_country).count()
+            if Country:
+                iraq_country = Country.objects.filter(code='IQ').first()
+                if iraq_country:
+                    stats['iraq_properties'] = Property.objects.filter(status='published', country=iraq_country).count()
+                    stats['foreign_properties'] = Property.objects.filter(status='published').exclude(country=iraq_country).count()
+                    stats['iraq_hotels'] = Hotel.objects.filter(country=iraq_country).count()
+                    stats['foreign_hotels'] = Hotel.objects.exclude(country=iraq_country).count()
+                    stats['iraq_resorts'] = Resort.objects.filter(country=iraq_country).count()
+                    stats['foreign_resorts'] = Resort.objects.exclude(country=iraq_country).count()
+                else:
+                    # Fallback if Iraq country doesn't exist
+                    stats['iraq_properties'] = 0
+                    stats['foreign_properties'] = Property.objects.filter(status='published').count()
+                    stats['iraq_hotels'] = 0
+                    stats['foreign_hotels'] = Hotel.objects.count()
+                    stats['iraq_resorts'] = 0
+                    stats['foreign_resorts'] = Resort.objects.count()
             else:
-                # Fallback if Iraq country doesn't exist
                 stats['iraq_properties'] = 0
                 stats['foreign_properties'] = Property.objects.filter(status='published').count()
                 stats['iraq_hotels'] = 0
@@ -942,36 +968,34 @@ def home(request):
             stats['foreign_resorts'] = Resort.objects.count()
         
         # Jobs
-        stats['total_jobs'] = Job.objects.count()
+        if Job:
+            stats['total_jobs'] = Job.objects.count()
+        else:
+            stats['total_jobs'] = 0
         
         # Services
         stats['service_providers'] = ServiceProvider.objects.count()
         stats['service_advertisements'] = ServiceAdvertisement.objects.count()
         
         # Auctions
-        stats['auctions'] = Auction.objects.count()
+        if Auction:
+            stats['auctions'] = Auction.objects.count()
+        else:
+            stats['auctions'] = 0
         
         # Calculate total views from PropertyViewStats
         try:
-            from .models import PropertyViewStats
-            if PropertyViewStats.objects.exists():
-                total_views = PropertyViewStats.objects.aggregate(total_views=Sum('total_views'))
-                stats['total_views'] = total_views['total_views'] or 0
+            if PropertyViewStats:
+                if PropertyViewStats.objects.exists():
+                    total_views = PropertyViewStats.objects.aggregate(total_views=Sum('total_views'))
+                    stats['total_views'] = total_views['total_views'] or 0
+                else:
+                    stats['total_views'] = 0
             else:
                 stats['total_views'] = 0
         except Exception as e:
             logger.warning(f"Error calculating total views: {e}")
             stats['total_views'] = 0
-        
-        # Fallback: calculate total views from PropertyViewStats objects
-        if stats['total_views'] == 0:
-            try:
-                from .models import PropertyViewStats
-                total_views = PropertyViewStats.objects.aggregate(total_views=Sum('total_views'))
-                stats['total_views'] = total_views['total_views'] or 0
-            except Exception as e:
-                logger.warning(f"Error calculating total views from property view stats: {e}")
-                stats['total_views'] = 0
         
         # Calculate successful transactions (using Message count as proxy)
         try:
