@@ -55,12 +55,11 @@ class Migration(migrations.Migration):
             ],
         ),
         # Fix: Use SeparateDatabaseAndState to handle missing property_id column gracefully
+        # Skip this operation entirely - field doesn't exist in Railway database
+        # The state operations can remain but we need to handle the database state properly
         migrations.SeparateDatabaseAndState(
             state_operations=[
-                migrations.RemoveField(
-                    model_name='notification',
-                    name='property',
-                ),
+                # No state changes - keep the model as is
             ],
             database_operations=[
                 # No database operation - field doesn't exist in Railway database
